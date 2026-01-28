@@ -212,12 +212,17 @@ export async function verifyCurrentPassword(email: string, password: string) {
 }
 
 export async function updatePassword(email: string, newPassword: string) {
-    const client = await clientPromise
-    const db = client.db(process.env.MONGODB_DB || "reddit_data")
-    const hashedPassword = await bcrypt.hash(newPassword, 10)
-    await db.collection("users").updateOne(
-        { email },
-        { $set: { password: hashedPassword, updatedAt: new Date() } }
-    )
-    return { success: true }
+    try {
+        const client = await clientPromise
+        const db = client.db(process.env.MONGODB_DB || "reddit_data")
+        const hashedPassword = await bcrypt.hash(newPassword, 10)
+        await db.collection("users").updateOne(
+            { email },
+            { $set: { password: hashedPassword, updatedAt: new Date() } }
+        )
+        return { success: true }
+    } catch (error) {
+        console.error("Update password error:", error)
+        return { success: false, error: "Failed to update password" }
+    }
 }
