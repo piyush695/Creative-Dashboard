@@ -395,7 +395,7 @@ export default function LoginPage() {
                                         <div className="space-y-4">
                                             <Input
                                                 value={regOtp}
-                                                onChange={e => setRegOtp(e.target.value)}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRegOtp(e.target.value)}
                                                 placeholder="• • • • • •"
                                                 maxLength={6}
                                                 className={`h-14 md:h-20 text-center text-3xl md:text-5xl font-black tracking-[0.3em] rounded-[1.5rem] transition-all duration-300 border-2 ${theme === "dark" ? "bg-black border-white/10 focus:border-[#007AFF] text-white" : "bg-white border-zinc-200 focus:border-[#007AFF] text-[#007AFF]"}`}
@@ -418,7 +418,7 @@ export default function LoginPage() {
                                         <form onSubmit={handleForgotEmailSubmit} className="space-y-6">
                                             <div className="space-y-2">
                                                 <Label htmlFor="f-email" className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest ml-1 ${theme === "dark" ? "text-zinc-500" : "text-[#081329]"}`}>Registered Email</Label>
-                                                <Input id="f-email" type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="your@email.com" className={`h-11 md:h-14 rounded-2xl text-sm transition-all duration-300 border-2 ${theme === "dark" ? "bg-[#000] border-white/5 focus:border-[#007AFF]/50 text-white" : "bg-zinc-50 border-transparent focus:bg-white focus:border-[#007AFF]/20 text-[#081329]"}`} required />
+                                                <Input id="f-email" type="email" value={forgotEmail} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForgotEmail(e.target.value)} placeholder="your@email.com" className={`h-11 md:h-14 rounded-2xl text-sm transition-all duration-300 border-2 ${theme === "dark" ? "bg-[#000] border-white/5 focus:border-[#007AFF]/50 text-white" : "bg-zinc-50 border-transparent focus:bg-white focus:border-[#007AFF]/20 text-[#081329]"}`} required />
                                             </div>
                                             <Button type="submit" className="w-full bg-[#007AFF] hover:bg-[#0062CC] text-white h-14 rounded-full font-black text-sm shadow-[0_10px_30px_rgba(0,122,255,0.3)]" disabled={isLoading}>
                                                 {isLoading ? "Tracing Account..." : "Initiate Recovery Sequence"}
@@ -431,7 +431,7 @@ export default function LoginPage() {
                                             <KeyRound className="w-16 h-16 text-[#007AFF] mx-auto mb-4 drop-shadow-[0_0_15px_rgba(0,122,255,0.3)]" />
                                             <Input
                                                 value={forgotOtp}
-                                                onChange={e => setForgotOtp(e.target.value)}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForgotOtp(e.target.value)}
                                                 placeholder="• • • • • •"
                                                 maxLength={6}
                                                 className={`h-20 text-center text-5xl font-black tracking-[0.3em] rounded-[1.5rem] border-2 ${theme === "dark" ? "bg-black border-white/10 text-white focus:border-[#007AFF]" : "bg-white border-zinc-200 text-[#007AFF] focus:border-[#007AFF]"}`}
@@ -447,11 +447,11 @@ export default function LoginPage() {
                                         <form onSubmit={handleResetPasswordSubmit} className="space-y-5">
                                             <div className="space-y-2">
                                                 <Label htmlFor="new-pass" className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest ml-1 ${theme === "dark" ? "text-zinc-500" : "text-[#081329]"}`}>New Security Key</Label>
-                                                <Input id="new-pass" type={showResetPassword ? "text" : "password"} value={newResetPassword} onChange={e => setNewResetPassword(e.target.value)} placeholder="••••••••" className={`h-11 md:h-14 rounded-2xl text-sm border-2 ${theme === "dark" ? "bg-black border-white/5 text-white" : "bg-zinc-50 border-zinc-100"}`} required />
+                                                <Input id="new-pass" type={showResetPassword ? "text" : "password"} value={newResetPassword} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewResetPassword(e.target.value)} placeholder="••••••••" className={`h-11 md:h-14 rounded-2xl text-sm border-2 ${theme === "dark" ? "bg-black border-white/5 text-white" : "bg-zinc-50 border-zinc-100"}`} required />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="confirm-pass" className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest ml-1 ${theme === "dark" ? "text-zinc-500" : "text-[#081329]"}`}>Confirm Key</Label>
-                                                <Input id="confirm-pass" type={showConfirmResetPassword ? "text" : "password"} value={confirmResetPassword} onChange={e => setConfirmResetPassword(e.target.value)} placeholder="••••••••" className={`h-11 md:h-14 rounded-2xl text-sm border-2 ${theme === "dark" ? "bg-black border-white/5 text-white" : "bg-zinc-50 border-zinc-100"}`} required />
+                                                <Input id="confirm-pass" type={showConfirmResetPassword ? "text" : "password"} value={confirmResetPassword} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmResetPassword(e.target.value)} placeholder="••••••••" className={`h-11 md:h-14 rounded-2xl text-sm border-2 ${theme === "dark" ? "bg-black border-white/5 text-white" : "bg-zinc-50 border-zinc-100"}`} required />
                                             </div>
                                             <Button type="submit" className="w-full bg-green-600 hover:bg-green-500 text-white h-14 rounded-full font-black text-sm shadow-[0_10px_30px_rgba(34,197,94,0.3)]" disabled={isLoading}>
                                                 Commit Key Update

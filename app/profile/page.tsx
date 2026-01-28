@@ -28,6 +28,10 @@ export default function ProfilePage() {
     })
 
     useEffect(() => {
+        // Force cleanup of body lock on mount
+        document.body.style.pointerEvents = 'auto'
+        document.body.style.overflow = ''
+
         if (session?.user) {
             setFormData({
                 name: session.user.name || "",
@@ -108,7 +112,7 @@ export default function ProfilePage() {
                                 <Input
                                     id="name"
                                     value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
                                     className="pl-10 h-11 bg-zinc-800/50 border-zinc-700 text-white placeholder:text-zinc-600 focus:border-blue-500 transition-colors"
                                     required
                                 />

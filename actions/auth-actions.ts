@@ -3,7 +3,7 @@
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import clientPromise from "@/lib/mongodb-client"
 import bcrypt from "bcryptjs"
-import { signIn } from "@/auth"
+import { signIn } from "@/lib/auth"
 import { sendVerificationEmail, sendResetPasswordEmail } from "@/lib/mail"
 import jwt from "jsonwebtoken"
 

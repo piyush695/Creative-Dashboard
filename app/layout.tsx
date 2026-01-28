@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
@@ -7,10 +7,21 @@ import "./globals.css"
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+}
+
 export const metadata: Metadata = {
-  title: "AI Creative Analyzer - Dashboard",
-  description: "Analyze and optimize your ad creatives with AI-powered insights",
-  generator: "v0.app",
+  title: "Hola Prime | AI Creative Performance Analyzer",
+  description: "Analyze and optimize your ad creatives with AI-powered insights, visual engagement tracking, and conversion impact analysis.",
+  generator: "Hola Prime",
+  keywords: ["AI Ad Analyzer", "Creative Performance", "Ad Optimization", "Marketing AI"],
+  authors: [{ name: "Hola Prime Team" }],
   icons: {
     icon: [
       {

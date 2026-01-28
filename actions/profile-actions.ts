@@ -1,7 +1,7 @@
 "use server"
 
 import clientPromise from "@/lib/mongodb-client"
-import { auth } from "@/auth"
+import { auth } from "@/lib/auth"
 
 export async function updateProfile(data: { name: string; email: string }) {
     const session = await auth()

@@ -51,8 +51,19 @@ export default function MetricsGrid({ adData, selectedMetricLabel, onSelectMetri
   const metrics = getMetricsList(adData)
 
   return (
-    <div className="space-y-6 w-full">
-      <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Performance Metrics</h3>
+    <div className="space-y-6 w-full relative">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Performance Metrics</h3>
+
+        {/* Desktop Hint Message - Professionally positioned above the grid */}
+        {!isClickable && (
+          <div className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-500 animate-in fade-in slide-in-from-right-4 duration-500">
+            <TrendingUp className="h-3.5 w-3.5" />
+            <span className="text-[11px] font-bold uppercase tracking-wider">Search an Ad ID first to see results or metrics</span>
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-4">
         {metrics.map((metric) => {
           const Icon = metric.icon
@@ -68,6 +79,7 @@ export default function MetricsGrid({ adData, selectedMetricLabel, onSelectMetri
               onClick={() => isClickable && onSelectMetric(metric.label)}
             >
               <div className={cn("absolute inset-0 bg-gradient-to-br opacity-30 dark:opacity-20 transition-opacity group-hover:opacity-50 dark:group-hover:opacity-40", metric.color)} />
+
               <CardContent className="p-3 relative z-10">
                 <div className="flex flex-col items-center md:items-start gap-1">
                   <div className="flex items-center justify-between w-full mb-0.5">
@@ -79,6 +91,7 @@ export default function MetricsGrid({ adData, selectedMetricLabel, onSelectMetri
                     <span className="text-[8px] font-bold text-zinc-500 dark:text-zinc-400">{metric.unit}</span>
                   </div>
                 </div>
+
               </CardContent>
             </Card>
           )

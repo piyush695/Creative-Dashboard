@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Search, ChevronDown, BarChart3, Zap, TestTube, Loader2, ChevronsLeft, ChevronsRight, Settings, LogOut, User, LayoutDashboard, Lock, Menu, RefreshCcw, X, Activity } from "lucide-react"
+import { Search, ChevronDown, BarChart3, Zap, TestTube, Loader2, ChevronsLeft, ChevronsRight, Settings, LogOut, User, LayoutDashboard, Lock, Menu, RefreshCcw, X, Activity, Maximize2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -56,7 +56,15 @@ function DashboardContent() {
   const [newEntriesCount, setNewEntriesCount] = useState(0)
   const [isSyncing, setIsSyncing] = useState(false)
   const [showRefreshText, setShowRefreshText] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [enlargedImage, setEnlargedImage] = useState<{ url: string; title: string } | null>(null)
   const isMobile = useIsMobile()
+
+  // Force cleanup of body lock on mount
+  useEffect(() => {
+    document.body.style.pointerEvents = 'auto'
+    document.body.style.overflow = ''
+  }, [])
 
   // Update relative time text every minute
   useEffect(() => {
@@ -161,7 +169,7 @@ function DashboardContent() {
   }, [searchParams, router, toast, session, status])
 
   // 3. Memoized displayed ads (Isolated filtering)
-  const displayedAds = useMemo(() => {
+  const { displayedAds, hasAdsInAccount } = useMemo(() => {
     let filteredAds = ads
 
     // First filter by account
@@ -169,16 +177,26 @@ function DashboardContent() {
       filteredAds = ads.filter(ad => ad.adAccountId === selectedAccountId)
     }
 
+    const accountHasAds = filteredAds.length > 0
     const query = searchQuery.trim().toLowerCase()
 
+    let results = []
     if (!query) {
-      return filteredAds.filter(ad => ad.performanceLabel === "TOP_PERFORMER").slice(0, 10)
+      // Fallback: If no top performers, show newest ads from this account
+      const topPerformers = filteredAds.filter(ad => ad.performanceLabel === "TOP_PERFORMER")
+      if (topPerformers.length > 0) {
+        results = topPerformers.slice(0, 10)
+      } else {
+        results = filteredAds.slice(0, 10)
+      }
+    } else {
+      results = filteredAds.filter(ad => {
+        const idStr = String(ad.adId || "").toLowerCase()
+        return idStr.includes(query)
+      })
     }
 
-    return filteredAds.filter(ad => {
-      const idStr = String(ad.adId || "").toLowerCase()
-      return idStr.includes(query)
-    })
+    return { displayedAds: results, hasAdsInAccount: accountHasAds }
   }, [ads, searchQuery, selectedAccountId])
 
   // 4. Selection Sync
@@ -200,8 +218,8 @@ function DashboardContent() {
         const firstId = displayedAds[0].id
         setSelectedAdId(firstId)
         updateHistory(firstId)
-        setActiveAnalysis(null)
       }
+      setActiveAnalysis(null) // Instant hide when search is cleared
     }
   }, [searchQuery, displayedAds, selectedAdId])
 
@@ -225,18 +243,7 @@ function DashboardContent() {
     .filter((ad): ad is AdData => !!ad)
 
   const handleAction = (action: string) => {
-    console.log(`Action: ${action}`)
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background text-foreground">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-lg font-medium">Analyzing Creative Data...</p>
-        </div>
-      </div>
-    )
+    // Action handled here
   }
 
   return (
@@ -362,7 +369,7 @@ function DashboardContent() {
                 <Input
                   placeholder="Search ads by ID..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                   className="pl-8 pr-8 h-8 text-xs bg-muted/40 dark:bg-zinc-800/40 border-muted dark:border-zinc-700/50 focus-visible:ring-primary/20 rounded-lg"
                 />
                 {searchQuery && (
@@ -425,15 +432,11 @@ function DashboardContent() {
 
         {/* Main Content Area */}
         <main className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent scroll-smooth transition-all duration-300 relative z-10">
-          {/* Keep visible header for breadcrumbs but hide User Profile inside it if needed. 
-            For now, I'll keep DashboardHeader but user might see duplicate profile. 
-            The user asked for profile in sidebar. I'll stick to that.
-        */}
           <div className="flex items-center justify-between px-4 md:px-12 h-14 md:h-16 md:py-[5px] border-b border-border bg-background/50 dark:bg-black/40 backdrop-blur-xl sticky top-0 z-10 transition-all duration-300">
             <div className="flex items-center gap-1.5 md:gap-3 min-w-0 overflow-hidden">
               {/* Mobile Sidebar Trigger */}
               <div className="md:hidden flex-shrink-0">
-                <Sheet>
+                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <Menu className="h-4.5 w-4.5 text-zinc-700 dark:text-zinc-300" />
@@ -464,14 +467,14 @@ function DashboardContent() {
                           <DropdownMenuContent align="start" className="w-60">
                             <SheetClose asChild>
                               <DropdownMenuItem asChild className="cursor-pointer">
-                                <Link href="/profile">
+                                <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
                                   <User className="mr-2 h-4 w-4" /> Profile
                                 </Link>
                               </DropdownMenuItem>
                             </SheetClose>
                             <SheetClose asChild>
                               <DropdownMenuItem asChild className="cursor-pointer">
-                                <Link href="/profile">
+                                <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
                                   <Settings className="mr-2 h-4 w-4" /> Settings
                                 </Link>
                               </DropdownMenuItem>
@@ -576,7 +579,6 @@ function DashboardContent() {
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0 ml-1">
-              {/* Update Button - Hidden on Mobile, moved to Sidebar/Menu */}
               <button
                 onClick={() => loadData(true)}
                 disabled={isSyncing}
@@ -598,13 +600,10 @@ function DashboardContent() {
                   </span>
                 </div>
               </button>
-              {/* Mobile Profile Icon */}
-              {/* Desktop Theme Toggle */}
               <div className="hidden md:block">
                 <ModeToggle />
               </div>
 
-              {/* Mobile Actions Menu (Combined Refresh & Theme) */}
               <div className="md:hidden">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -645,68 +644,84 @@ function DashboardContent() {
           </div>
 
           <div className={cn(
-            "p-4 md:p-8 space-y-6 md:space-y-12 transition-all duration-300 flex-1",
-            activeAnalysis && !isMobile && "md:pr-[280px] xl:pr-[320px] 2xl:pr-[360px]"
+            "p-4 md:p-8 space-y-6 md:space-y-12 transition-all duration-300 flex-1 flex flex-col",
+            activeAnalysis && !isMobile && searchQuery.trim() && "md:pr-[280px] xl:pr-[320px] 2xl:pr-[360px]"
           )}>
-            {/* Mobile Search Box - Only visible on mobile */}
-            <div className="md:hidden space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-10 bg-white dark:bg-zinc-900 shadow-sm border-gray-200 dark:border-zinc-800"
-                />
+            {isLoading ? (
+              <div className="flex flex-1 items-center justify-center p-12">
+                <div className="flex flex-col items-center gap-4">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                  <p className="text-lg font-medium">Analyzing Creative Data...</p>
+                </div>
               </div>
-            </div>
-
-
-
-            {/* Ad Grid Section (UNCHANGED logic, just rendering) */}
-            <section className="space-y-4">
-              <SampleAds
-                ads={displayedAds}
-                searchQuery={searchQuery}
-                selectedAdId={selectedAdId}
-                onSelect={handleSelectAd}
-              />
-            </section>
-
-            {displayedAds.length > 0 && (
-              <div className="space-y-6 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {/* Core Metrics */}
-                <div className="pt-6 border-t border-border">
-                  <MetricsGrid
-                    adData={selectedAdData}
-                    selectedMetricLabel={activeAnalysis?.type === 'metric' ? activeAnalysis.name : null}
-                    onSelectMetric={(label) => setActiveAnalysis({ type: 'metric', name: label })}
-                    isClickable={!!searchQuery.trim()}
-                  />
+            ) : (
+              <>
+                <div className="md:hidden space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                      className="pl-10 h-10 bg-white dark:bg-zinc-900 shadow-sm border-gray-200 dark:border-zinc-800"
+                    />
+                  </div>
                 </div>
 
-                {/* Scores & Insights - ONLY visible when searching */}
-                {searchQuery.trim() && (
-                  <>
-                    {/* Scores */}
-                    <section className="pt-4 border-t border-border">
-                      <ScoresSection
-                        adData={selectedAdData}
-                        selectedScoreName={activeAnalysis?.type === 'score' ? activeAnalysis.name : null}
-                        onSelectScore={(name) => setActiveAnalysis({ type: 'score', name: name })}
-                      />
-                    </section>
+                <section className="space-y-4">
+                  <SampleAds
+                    ads={displayedAds}
+                    hasAdsInAccount={hasAdsInAccount}
+                    searchQuery={searchQuery}
+                    selectedAdId={selectedAdId}
+                    onSelect={handleSelectAd}
+                    onEnlargeImage={(url, title) => setEnlargedImage({ url, title })}
+                  />
+                </section>
 
-                    {/* Insights */}
-                    <section className="pt-4 border-t border-border pb-12">
-                      <InsightsSection adData={selectedAdData} />
-                    </section>
-                  </>
+                {displayedAds.length > 0 && (
+                  <div className="space-y-6 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {!searchQuery.trim() && hasAdsInAccount && (
+                      <div className="md:hidden flex flex-col items-center -mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <div className="px-4 py-2 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-xl">
+                          <p className="text-[10px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-widest text-center">
+                            Search an Ad ID first to see results or metrics
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-6 border-t border-border">
+                      <MetricsGrid
+                        adData={selectedAdData}
+                        selectedMetricLabel={activeAnalysis?.type === 'metric' ? activeAnalysis.name : null}
+                        onSelectMetric={(label) => setActiveAnalysis({ type: 'metric', name: label })}
+                        isClickable={!!searchQuery.trim()}
+                      />
+                    </div>
+
+                    {searchQuery.trim() && (
+                      <>
+                        <section className="pt-4 border-t border-border">
+                          <ScoresSection
+                            adData={selectedAdData}
+                            selectedScoreName={activeAnalysis?.type === 'score' ? activeAnalysis.name : null}
+                            onSelectScore={(name) => setActiveAnalysis({ type: 'score', name: name })}
+                          />
+                        </section>
+
+                        <section className="pt-4 border-t border-border pb-12">
+                          <InsightsSection adData={selectedAdData} />
+                        </section>
+                      </>
+                    )}
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
           <div className={cn(
+            "mt-auto",
             activeAnalysis && !isMobile && "md:pr-[280px] xl:pr-[320px] 2xl:pr-[360px]"
           )}>
             <Footer />
@@ -720,6 +735,57 @@ function DashboardContent() {
           adData={selectedAdData}
           isMobile={isMobile}
         />
+
+        {/* Global Image Popup - Professional & Clean */}
+        {enlargedImage && (
+          <div
+            className="fixed inset-0 z-[600] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4"
+            onClick={() => setEnlargedImage(null)}
+          >
+            <div
+              className="relative w-[92%] sm:w-[85%] md:w-[80%] lg:w-[75%] max-w-6xl h-[75vh] sm:h-[80vh] md:h-[85vh] bg-zinc-900 rounded-xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-white/10 animate-in zoom-in-95 duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setEnlargedImage(null)}
+                className="absolute top-4 right-4 z-[610] h-8 w-8 flex items-center justify-center bg-black/50 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-colors border border-white/10"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              <div className="flex-1 w-full relative min-h-0 bg-zinc-950/30 flex items-center justify-center p-2 sm:p-6">
+                <img
+                  src={enlargedImage.url}
+                  alt={enlargedImage.title}
+                  className="w-full h-full object-contain drop-shadow-2xl"
+                  loading="eager"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/placeholder.svg"
+                  }}
+                />
+              </div>
+
+              <div className="h-16 flex-shrink-0 bg-zinc-900 border-t border-white/5 px-4 sm:px-6 flex items-center justify-between gap-4">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Creative Preview</span>
+                  <h4 className="text-sm font-semibold text-white truncate max-w-[200px] sm:max-w-md">{enlargedImage.title}</h4>
+                </div>
+                <button
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = enlargedImage.url;
+                    link.download = `creative-${Date.now()}.jpg`;
+                    link.click();
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-zinc-200 text-zinc-900 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                  <span>Download</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {session?.user?.email && (
           <ChangePasswordDialog

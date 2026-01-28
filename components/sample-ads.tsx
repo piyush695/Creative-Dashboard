@@ -1,27 +1,52 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AdData } from "@/lib/types"
-import { Maximize2, X } from "lucide-react"
+import { Maximize2 } from "lucide-react"
 
 interface SampleAdsProps {
   ads: AdData[]
+  hasAdsInAccount?: boolean
   searchQuery: string
   selectedAdId: string | null
   onSelect: (id: string) => void
+  onEnlargeImage?: (url: string, title: string) => void
 }
 
-export default function SampleAds({ ads = [], searchQuery, selectedAdId, onSelect }: SampleAdsProps) {
+export default function SampleAds({
+  ads = [],
+  hasAdsInAccount = true,
+  searchQuery,
+  selectedAdId,
+  onSelect,
+  onEnlargeImage
+}: SampleAdsProps) {
   const adList = Array.isArray(ads) ? ads : []
-  const [enlargedImage, setEnlargedImage] = useState<{ url: string; title: string } | null>(null)
 
   return (
-    <div>
-      <h3 className="text-lg font-semibold text-foreground dark:text-zinc-50 mb-4">Your Ads</h3>
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <h3 className="text-lg font-semibold text-foreground dark:text-zinc-50">Your Ads</h3>
+        {!searchQuery.trim() && hasAdsInAccount && (
+          <div className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#8B4513]/5 dark:bg-primary/5 border border-[#8B4513]/10 dark:border-primary/20 text-[#8B4513] dark:text-primary animate-in fade-in slide-in-from-right-4 duration-500">
+            <Maximize2 className="h-3.5 w-3.5" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Search an Ad ID first to see results or metrics</span>
+          </div>
+        )}
+      </div>
+
       {adList.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-lg bg-card/50 text-muted-foreground">
-          <p className="text-xs text-center opacity-80">No ads found matching your search.</p>
+        <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-border rounded-xl bg-card/50 text-muted-foreground animate-in fade-in duration-500">
+          <div className="max-w-xs text-center space-y-2">
+            <p className="text-sm font-bold text-foreground/80">
+              {!hasAdsInAccount ? "No Ad Data Available" : "No Results Found"}
+            </p>
+            <p className="text-xs opacity-70 leading-relaxed">
+              {!hasAdsInAccount
+                ? "This account doesn't have any ads indexed in the dashboard yet."
+                : `We couldn't find any ads matching your search "${searchQuery}". Please check the ID and try again.`}
+            </p>
+          </div>
         </div>
       ) : (
         <div className="flex overflow-x-auto sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-4 sm:pb-0 scrollbar-none snap-x snap-mandatory">
@@ -34,7 +59,8 @@ export default function SampleAds({ ads = [], searchQuery, selectedAdId, onSelec
                 : "border-transparent hover:border-[#8B4513]/30 dark:hover:border-primary/30 shadow-sm hover:shadow-md dark:hover:shadow-2xl"
                 }`}
             >
-              <CardHeader className="p-3.5 pb-2.5 space-y-2.5">
+              <CardHeader className="p-3.5 pb-2.5 space-y-2.5 relative">
+
                 {/* Row 1: Badge Only (Zero Overlap) */}
                 <div className="flex">
                   <span
@@ -59,12 +85,12 @@ export default function SampleAds({ ads = [], searchQuery, selectedAdId, onSelec
                   </CardDescription>
                 </div>
               </CardHeader>
-              <CardContent className="p-3 pt-0 flex-1 flex flex-col">
+              <CardContent className="p-3 pt-0 flex-1 flex flex-col relative">
                 <div
                   className="aspect-[3/2] w-full overflow-hidden rounded-md bg-zinc-900 shadow-xl relative group mb-3 cursor-zoom-in"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setEnlargedImage({ url: ad.thumbnailUrl, title: ad.adName });
+                    if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName);
                   }}
                 >
                   <img
@@ -83,8 +109,9 @@ export default function SampleAds({ ads = [], searchQuery, selectedAdId, onSelec
                       <Maximize2 className="h-4 w-4" />
                     </div>
                   </div>
-
                 </div>
+
+
                 <div className="flex justify-between items-end mt-auto gap-2 border-t border-border/50 pt-2.5">
                   <div className="min-w-0">
                     <p className="text-[9px] text-muted-foreground dark:text-zinc-500 uppercase font-bold tracking-tighter leading-none mb-1">Spend</p>
@@ -98,64 +125,6 @@ export default function SampleAds({ ads = [], searchQuery, selectedAdId, onSelec
               </CardContent>
             </Card>
           ))}
-        </div>
-      )}
-
-      {/* Standard HD Popup - Professional & Clean */}
-      {enlargedImage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4"
-          onClick={() => setEnlargedImage(null)}
-        >
-          {/* Main Popup Container - Standard Fixed Size */}
-          <div
-            className="relative w-full max-w-6xl h-[85vh] bg-zinc-900 rounded-xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-white/10 animate-in zoom-in-95 duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <button
-              onClick={() => setEnlargedImage(null)}
-              className="absolute top-4 right-4 z-[120] h-8 w-8 flex items-center justify-center bg-black/50 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-colors border border-white/10"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
-            {/* Image Area - Fills remaining space automatically */}
-            <div className="flex-1 w-full relative min-h-0 bg-zinc-950/30 flex items-center justify-center p-2 sm:p-6">
-              <img
-                src={enlargedImage.url}
-                alt={enlargedImage.title}
-                className="w-full h-full object-contain drop-shadow-2xl"
-                loading="eager"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/placeholder.svg"
-                }}
-              />
-
-
-            </div>
-
-            {/* Footer - Fixed Height */}
-            <div className="h-16 flex-shrink-0 bg-zinc-900 border-t border-white/5 px-4 sm:px-6 flex items-center justify-between gap-4">
-              <div className="flex flex-col min-w-0">
-                <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Creative Preview</span>
-                <h4 className="text-sm font-semibold text-white truncate max-w-[200px] sm:max-w-md">{enlargedImage.title}</h4>
-              </div>
-
-              <button
-                onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = enlargedImage.url;
-                  link.download = `creative-${Date.now()}.jpg`;
-                  link.click();
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-zinc-200 text-zinc-900 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors"
-              >
-                <Maximize2 className="h-3.5 w-3.5" />
-                <span>Download</span>
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

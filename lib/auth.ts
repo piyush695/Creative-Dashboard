@@ -1,6 +1,6 @@
 import NextAuth from "next-auth"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
-import clientPromise from "./lib/mongodb-client"
+import clientPromise from "@/lib/mongodb-client"
 import { authConfig } from "./auth.config"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
@@ -10,7 +10,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig,
     adapter: MongoDBAdapter(clientPromise, { databaseName: process.env.MONGODB_DB || "reddit_data" }),
     providers: [
-        ...authConfig.providers.filter(p => p.id !== "credentials"),
+        ...authConfig.providers.filter((p: any) => p.id !== "credentials"),
         Credentials({
             name: "Credentials",
             credentials: {
