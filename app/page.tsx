@@ -40,7 +40,7 @@ const ACCOUNT_LIST = [
 function DashboardContent() {
   const { toast } = useToast()
   const { data: session, status } = useSession()
-  const { setTheme, theme } = useTheme()
+  const { setTheme, theme, resolvedTheme } = useTheme()
   const searchParams = useSearchParams()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
@@ -141,6 +141,7 @@ function DashboardContent() {
       console.error("Fetch error:", error)
     } finally {
       if (isManual) setIsSyncing(false)
+      setIsLoading(false)
     }
   }
 
@@ -308,7 +309,7 @@ function DashboardContent() {
         <Link href="/" className="hover:opacity-80 transition-opacity relative z-10">
           <div className="flex flex-col items-start leading-none cursor-pointer">
             <div className="flex items-center gap-1.5">
-              <span className={`text-xl md:text-2xl font-black tracking-tightest ${theme === "dark" || !mounted ? "text-white" : "text-[#000]"}`}>
+              <span className="text-xl md:text-2xl font-black tracking-tightest text-zinc-900 dark:text-white">
                 hola<span className="text-[#007AFF]">prime</span>
               </span>
               <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-[#007AFF] animate-pulse" />

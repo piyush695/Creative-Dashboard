@@ -31,7 +31,7 @@ export default function DashboardHeader() {
         <Link href="/" className="hover:opacity-80 transition-opacity">
           <div className="flex flex-col items-start leading-none">
             <div className="flex items-center gap-1.5">
-              <span className="text-2xl md:text-3xl font-black tracking-tightest text-zinc-900">
+              <span className="text-2xl md:text-3xl font-black tracking-tightest text-zinc-900 dark:text-zinc-100">
                 hola<span className="text-[#007AFF]">prime</span>
               </span>
               <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-[#007AFF] animate-pulse" />

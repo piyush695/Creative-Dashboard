@@ -16,6 +16,7 @@ import {
 } from "@/actions/auth-actions"
 import { useToast } from "@/hooks/use-toast"
 import { useSearchParams, useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import Link from "next/link"
 
 export default function LoginPage() {
@@ -29,8 +30,7 @@ export default function LoginPage() {
     const [showResetPassword, setShowResetPassword] = useState(false)
     const [showConfirmResetPassword, setShowConfirmResetPassword] = useState(false)
 
-    // Theme state with persistence
-    const [theme, setTheme] = useState<"light" | "dark">("light")
+    const { theme, setTheme, resolvedTheme } = useTheme()
     const [mounted, setMounted] = useState(false)
 
     // Registration State
@@ -45,28 +45,9 @@ export default function LoginPage() {
     const [newResetPassword, setNewResetPassword] = useState("")
     const [confirmResetPassword, setConfirmResetPassword] = useState("")
 
-    // Load theme from localStorage on mount
     useEffect(() => {
-        const savedTheme = localStorage.getItem("holaprime-theme") as "light" | "dark" | null;
-        if (savedTheme) {
-            setTheme(savedTheme);
-        } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            setTheme("dark");
-        }
         setMounted(true);
     }, []);
-
-    // Save theme to localStorage when it changes
-    useEffect(() => {
-        if (mounted) {
-            localStorage.setItem("holaprime-theme", theme);
-            if (theme === "dark") {
-                document.documentElement.classList.add("dark");
-            } else {
-                document.documentElement.classList.remove("dark");
-            }
-        }
-    }, [theme, mounted]);
 
     useEffect(() => {
         const error = searchParams.get("error")
@@ -215,7 +196,7 @@ export default function LoginPage() {
     }
 
     const toggleTheme = () => {
-        setTheme(theme === "light" ? "dark" : "light");
+        setTheme(resolvedTheme === "dark" ? "light" : "dark");
     };
 
     if (!mounted) return <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#0A0C10]" />;
@@ -224,8 +205,8 @@ export default function LoginPage() {
         <div className={`min-h-[100svh] w-full flex flex-col items-center transition-all duration-700 relative font-sans ${theme === "dark" ? "bg-[#000000] text-white" : "bg-[#F8F9FB] text-[#081329]"}`}>
             {/* Ambient Background Glows */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <div className={`absolute top-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full opacity-20 blur-[120px] transition-colors duration-1000 ${theme === "dark" ? "bg-[#007AFF]" : "bg-blue-300"}`} />
-                <div className={`absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full opacity-10 blur-[100px] transition-colors duration-1000 ${theme === "dark" ? "bg-[#2DA6E3]" : "bg-indigo-300"}`} />
+                <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full opacity-20 blur-[120px] transition-colors duration-1000 bg-blue-300 dark:bg-[#007AFF]" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full opacity-10 blur-[100px] transition-colors duration-1000 bg-indigo-300 dark:bg-[#2DA6E3]" />
             </div>
 
             {/* Header: Exact Logo and Theme Toggle */}
@@ -234,7 +215,7 @@ export default function LoginPage() {
                     <Link href="/">
                         <div className="flex flex-col items-start leading-none cursor-pointer hover:opacity-80 transition-opacity">
                             <div className="flex items-center gap-1.5">
-                                <span className={`text-xl md:text-2xl font-black tracking-tightest ${theme === "dark" ? "text-white" : "text-[#000]"}`}>
+                                <span className="text-xl md:text-2xl font-black tracking-tightest text-zinc-900 dark:text-white">
                                     hola<span className="text-[#007AFF]">prime</span>
                                 </span>
                                 <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-[#007AFF] animate-pulse" />

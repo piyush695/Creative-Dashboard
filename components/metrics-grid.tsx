@@ -45,7 +45,6 @@ export function getMetricsList(adData: AdData): MetricItem[] {
     { label: "CPM", value: `$${formatValue(adData.cpm)}`, unit: "", icon: Target, color: "from-[#E8F5E9] to-[#C8E6C9] dark:from-[#1a3d1e] dark:to-[#122e16]", desc: "Cost Per Mille: The cost per 1,000 impressions of your ad." },
     { label: "Reach", value: adData.reach?.toLocaleString() || "0", unit: "", icon: Target, color: "from-[#E8F5E9] to-[#C8E6C9] dark:from-[#1a3d1e] dark:to-[#122e16]", desc: "Number of unique people who saw the ad." },
     { label: "Frequency", value: formatValue(adData.frequency), unit: "x", icon: Activity, color: "from-[#F5E6D3] to-[#E5D3BD] dark:from-[#3d3326] dark:to-[#2d2419]", desc: "Average number of times each person saw the ad." },
-    { label: "CVR", value: formatValue(adData.purchases && adData.clicks ? (adData.purchases / adData.clicks) * 100 : 0), unit: "%", icon: TrendingUp, color: "from-[#F3E5F5] to-[#E1BEE7] dark:from-[#2e1a3d] dark:to-[#22122e]", desc: "Conversion Rate: Percentage of clicks that resulted in a purchase." },
   ]
 }
 
