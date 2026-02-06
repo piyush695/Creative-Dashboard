@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertCircle, TrendingUp, Lightbulb } from "lucide-react"
+import { AlertCircle, TrendingUp, Lightbulb, CheckCircle2, XCircle, PlusCircle, Sparkles } from "lucide-react"
 import { AdData } from "@/lib/types"
 
 interface InsightsSectionProps {
@@ -10,10 +10,42 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
   if (!adData) return null
 
   const safeString = (val: any) => typeof val === 'string' ? val : "";
-  const safeArray = (val: any) => typeof val === 'string' ? val.split("|").map(s => s.trim()).filter(Boolean) : [];
+  const safeArray = (val: any) => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') return val.split("|").map(s => s.trim()).filter(Boolean);
+    return [];
+  };
 
-  const strengths = safeArray(adData.keyStrengths);
-  const weaknesses = safeArray(adData.keyWeaknesses);
+  const formatRecommendationText = (text: string) => {
+    if (!text) return null;
+
+    const hasNumbering = /\d+\.\s/.test(text);
+
+    if (!hasNumbering) {
+      return <p className="text-sm text-zinc-700 leading-relaxed font-bold">{text}</p>;
+    }
+
+    const parts = text.split(/(?=(?:^|\s)\d+\.\s)/).filter(p => p.trim());
+
+    if (parts.length <= 1) {
+      return <p className="text-sm text-zinc-700 leading-relaxed font-bold">{text}</p>;
+    }
+
+    return (
+      <div className="space-y-2 mt-2">
+        {parts.map((part, i) => (
+          <div key={i} className="text-sm text-zinc-700 leading-relaxed font-bold">
+            {part.trim()}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Prioritize new fields from DB
+  const insight = adData.keyInsight || adData.topInsight;
+  const strengths = adData.whatWorks ? [adData.whatWorks] : safeArray(adData.keyStrengths);
+  const weaknesses = adData.whatDoesntWork ? [adData.whatDoesntWork] : safeArray(adData.keyWeaknesses);
 
   const recommendations = [
     { text: safeString(adData.recommendation1), impact: safeString(adData.recommendation1Impact), effort: safeString(adData.recommendation1Effort) },
@@ -22,61 +54,75 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
   ].filter(r => r.text)
 
   return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-foreground">AI Analysis & Insights</h3>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex items-center gap-2 mb-2">
+        <Sparkles className="h-5 w-5 text-[#007AFF]" />
+        <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">AI Insights & Strategic Analysis</h3>
+      </div>
 
-      {/* Top Insight */}
-      <Card className="border-l-4 border-l-primary bg-gradient-to-r from-primary/5 to-transparent">
-        <CardHeader>
-          <div className="flex gap-3 items-start">
-            <Lightbulb className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-            <div>
-              <CardTitle className="text-base">Key Insight</CardTitle>
+      {/* Primary Key Insight */}
+      <Card className="relative overflow-hidden border-none shadow-xl bg-white dark:bg-zinc-900/60 transition-all hover:shadow-2xl group">
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-[#007AFF]" />
+        <CardHeader className="pb-2">
+          <div className="flex gap-3 items-center">
+            <div className="p-2 rounded-lg bg-[#007AFF]/10">
+              <Lightbulb className="h-5 w-5 text-[#007AFF]" />
             </div>
+            <CardTitle className="text-base font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-50">Strategic Key Insight</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-foreground leading-relaxed">
-            {typeof adData.topInsight === 'object' ? JSON.stringify(adData.topInsight) : adData.topInsight}
+          <p className="text-sm md:text-base text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
+            {typeof insight === 'object' ? JSON.stringify(insight) : insight}
           </p>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Strengths */}
-        <Card>
-          <CardHeader>
+        {/* Performance Highs - What Works */}
+        <Card className="border-none shadow-lg bg-emerald-50/30 dark:bg-emerald-500/5 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <TrendingUp className="h-16 w-16 text-emerald-600" />
+          </div>
+          <CardHeader className="pb-3 px-6 pt-6">
             <div className="flex gap-3 items-center">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              <CardTitle className="text-base">Key Strengths</CardTitle>
+              <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-500/20">
+                <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <CardTitle className="text-base font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-100">What's Working</CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-6 pb-6">
             <ul className="space-y-3">
-              {strengths.map((strength, idx) => (
-                <li key={idx} className="flex gap-3 text-sm">
-                  <span className="text-green-600 font-bold shrink-0">✓</span>
-                  <span className="text-foreground">{strength}</span>
+              {strengths.map((str, idx) => (
+                <li key={idx} className="flex gap-3 text-sm font-bold text-zinc-700 dark:text-zinc-300">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                  <span>{str}</span>
                 </li>
               ))}
             </ul>
           </CardContent>
         </Card>
 
-        {/* Weaknesses */}
-        <Card>
-          <CardHeader>
+        {/* Action Gap - What Doesn't Work */}
+        <Card className="border-none shadow-lg bg-amber-50/30 dark:bg-amber-500/5 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <AlertCircle className="h-16 w-16 text-amber-600" />
+          </div>
+          <CardHeader className="pb-3 px-6 pt-6">
             <div className="flex gap-3 items-center">
-              <AlertCircle className="h-5 w-5 text-amber-600" />
-              <CardTitle className="text-base">Areas to Improve</CardTitle>
+              <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/20">
+                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <CardTitle className="text-base font-black uppercase tracking-wider text-zinc-900 dark:text-zinc-100">Areas to Improve</CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-6 pb-6">
             <ul className="space-y-3">
-              {weaknesses.map((weakness, idx) => (
-                <li key={idx} className="flex gap-3 text-sm">
-                  <span className="text-amber-600 font-bold shrink-0">→</span>
-                  <span className="text-foreground">{weakness}</span>
+              {weaknesses.map((weak, idx) => (
+                <li key={idx} className="flex gap-3 text-sm font-bold text-zinc-700 dark:text-zinc-300">
+                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                  <span>{weak}</span>
                 </li>
               ))}
             </ul>
@@ -84,47 +130,79 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
         </Card>
       </div>
 
-      {/* Recommendations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-bold">Recommendations for Optimization</CardTitle>
-          <CardDescription className="text-xs">Actionable steps to improve your creative performance</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recommendations.map((rec, idx) => (
-              <div key={idx} className="flex flex-col gap-4 p-5 rounded-xl bg-zinc-50 border border-zinc-100 transition-all hover:bg-white hover:shadow-md">
-                <div className="flex gap-4">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-zinc-900 text-white text-[10px] font-black shrink-0">
+      {/* Strategic Elements Action Plan */}
+      {(adData.keepElements || adData.changeElements || adData.addElements) && (
+        <Card className="border-none shadow-xl bg-zinc-900 text-white relative overflow-hidden group">
+          <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[150%] bg-[#007AFF] opacity-[0.07] blur-[100px] pointer-events-none" />
+          <CardHeader className="px-6 pt-8 pb-4">
+            <CardTitle className="text-lg font-black uppercase tracking-[0.2em] text-[#007AFF]">Creative Strategy Blueprint</CardTitle>
+            <CardDescription className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Framework for the next iteration</CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 pb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-white/10 transition-all hover:bg-white/10">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Keep</span>
+                </div>
+                <p className="text-sm font-bold leading-relaxed text-zinc-300">{adData.keepElements}</p>
+              </div>
+              <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-white/10 transition-all hover:bg-white/10">
+                <div className="flex items-center gap-2 mb-2">
+                  <XCircle className="h-4 w-4 text-amber-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">Change</span>
+                </div>
+                <p className="text-sm font-bold leading-relaxed text-zinc-300">{adData.changeElements}</p>
+              </div>
+              <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-white/10 transition-all hover:bg-white/10">
+                <div className="flex items-center gap-2 mb-2">
+                  <PlusCircle className="h-4 w-4 text-[#007AFF]" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#007AFF]">Add</span>
+                </div>
+                <p className="text-sm font-bold leading-relaxed text-zinc-300">{adData.addElements}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Actionable Recommendations */}
+      <div className="space-y-4 pt-4">
+        <h4 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-400 inline-flex items-center gap-2">
+          Recommended Optimization Steps <TrendingUp className="h-3.5 w-3.5" />
+        </h4>
+        <div className="space-y-4">
+          {recommendations.map((rec, idx) => (
+            <div key={idx} className="flex flex-col gap-4 p-6 rounded-[2rem] bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 transition-all hover:shadow-2xl hover:border-[#007AFF]/20 group/rec">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex-shrink-0">
+                  <span className="flex items-center justify-center w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-zinc-800 text-[#007AFF] text-sm font-black shadow-lg group-hover/rec:bg-[#007AFF] group-hover/rec:text-white transition-all duration-300">
                     {idx + 1}
                   </span>
-                  <div className="flex-1 space-y-4">
-                    <p className="text-sm text-zinc-700 leading-relaxed font-medium">
-                      {rec.text}
-                    </p>
+                </div>
+                <div className="flex-1 space-y-6">
+                  {formatRecommendationText(rec.text)}
 
-                    <div className="flex flex-wrap gap-3 items-stretch">
-                      {rec.impact && (
-                        <div className="flex flex-col gap-1 min-w-[140px] flex-1 max-w-[400px] px-3 py-2 bg-[#F5E6D3]/50 rounded-lg border border-[#F5E6D3] transition-all hover:bg-[#F5E6D3]">
-                          <span className="text-[8px] font-black uppercase tracking-widest text-[#8B4513]/60">Expected Impact</span>
-                          <span className="text-[10px] md:text-xs font-bold text-[#8B4513] leading-tight">{rec.impact}</span>
-                        </div>
-                      )}
-                      {rec.effort && (
-                        <div className="flex flex-col gap-1 px-3 py-2 bg-zinc-100 rounded-lg border border-zinc-200 shrink-0">
-                          <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Effort level</span>
-                          <span className="text-[10px] md:text-xs font-black text-zinc-900">{rec.effort}</span>
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex flex-wrap gap-3 items-stretch">
+                    {rec.impact && (
+                      <div className="flex flex-col gap-1 min-w-[200px] flex-1 px-4 py-3 bg-[#007AFF]/5 dark:bg-[#007AFF]/10 rounded-2xl border border-[#007AFF]/10 transition-all hover:scale-[1.02] cursor-default">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-[#007AFF]/60">Expected Performance Impact</span>
+                        <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 leading-tight">{rec.impact}</span>
+                      </div>
+                    )}
+                    {rec.effort && (
+                      <div className="flex flex-col gap-1 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shrink-0 transition-all hover:scale-[1.02] cursor-default">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Implementation Effort</span>
+                        <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">{rec.effort}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
-

@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LogOut, User, Settings, Lock } from "lucide-react"
+import { LogOut, User, Settings, Lock, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
 import {
@@ -26,12 +26,19 @@ export default function DashboardHeader() {
   const userEmail = session?.user?.email
 
   return (
-    <div className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-10">
-      <div className="px-8 py-4 flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Creative Performance</h2>
-          <p className="text-sm text-zinc-500 mt-0.5">Analyze and optimize your ad creatives</p>
-        </div>
+    <div className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-10 transition-all duration-300">
+      <div className="px-8 py-6 flex justify-between items-center">
+        <Link href="/" className="hover:opacity-80 transition-opacity">
+          <div className="flex flex-col items-start leading-none">
+            <div className="flex items-center gap-1.5">
+              <span className="text-2xl md:text-3xl font-black tracking-tightest text-zinc-900">
+                hola<span className="text-[#007AFF]">prime</span>
+              </span>
+              <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-[#007AFF] animate-pulse" />
+            </div>
+            <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.3em] text-[#007AFF] opacity-80 mt-1.5">Creative Analyzer</span>
+          </div>
+        </Link>
 
         {session?.user && (
           <>

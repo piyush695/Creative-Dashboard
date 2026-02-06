@@ -10,6 +10,8 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#000000" },
@@ -52,7 +54,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans antialiased`} suppressHydrationWarning>
+      <body className={`font-sans antialiased touch-manipulation`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

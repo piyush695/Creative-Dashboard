@@ -15,7 +15,8 @@ import {
     ArrowRight,
     CheckCircle2,
     AlertCircle,
-    Download
+    ChevronLeft,
+    ChevronRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -26,11 +27,12 @@ import { getScoresList } from "./scores-section"
 interface AnalysisSidebarProps {
     activeDetail: { type: 'score' | 'metric', name: string } | null
     onClose: () => void
+    onNavigate?: (detail: { type: 'score' | 'metric', name: string }) => void
     adData: AdData | null
     isMobile: boolean
 }
 
-export default function AnalysisSidebar({ activeDetail, onClose, adData, isMobile }: AnalysisSidebarProps) {
+export default function AnalysisSidebar({ activeDetail, onClose, onNavigate, adData, isMobile }: AnalysisSidebarProps) {
     // Early escape for null data
     if (!adData || !activeDetail) return null
 
@@ -50,9 +52,32 @@ export default function AnalysisSidebar({ activeDetail, onClose, adData, isMobil
     const name = activeDetail.name
     const isDetailVisible = !!activeDetail
 
-    const handleDownload = () => {
-        console.log("Downloading report for", name)
+    // Navigation Logic
+    const metrics = adData ? getMetricsList(adData) : []
+    const scores = adData ? getScoresList(adData) : []
+
+    const allItems = [
+        ...metrics.map(m => ({ type: 'metric' as const, name: m.label })),
+        ...scores.map(s => ({ type: 'score' as const, name: s.name }))
+    ]
+
+    const currentIndex = allItems.findIndex(item => item.type === activeDetail.type && item.name === activeDetail.name)
+    const hasNext = currentIndex < allItems.length - 1
+    const hasPrev = currentIndex > 0
+
+    const handleNext = () => {
+        if (hasNext && onNavigate) {
+            onNavigate(allItems[currentIndex + 1])
+        }
     }
+
+    const handlePrev = () => {
+        if (hasPrev && onNavigate) {
+            onNavigate(allItems[currentIndex - 1])
+        }
+    }
+
+
 
     const DesktopPanel = (
         <div
@@ -61,7 +86,28 @@ export default function AnalysisSidebar({ activeDetail, onClose, adData, isMobil
                 isDetailVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 invisible"
             )}
         >
-            <div className="absolute top-4 right-4 z-[510]">
+            <div className="absolute top-4 right-4 z-[510] flex items-center gap-2">
+                <div className="flex items-center bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md rounded-full border border-border shadow-md">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handlePrev}
+                        disabled={!hasPrev}
+                        className="h-8 w-8 rounded-full disabled:opacity-30 hover:bg-transparent"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="w-[1px] h-3 bg-border" />
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleNext}
+                        disabled={!hasNext}
+                        className="h-8 w-8 rounded-full disabled:opacity-30 hover:bg-transparent"
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
                 <Button
                     variant="secondary"
                     size="icon"
@@ -72,7 +118,7 @@ export default function AnalysisSidebar({ activeDetail, onClose, adData, isMobil
                 </Button>
             </div>
             <div className="h-full overflow-hidden rounded-tl-[1.5rem] rounded-bl-[1.5rem]">
-                <DetailContent itemData={itemData} adData={adData} onDownload={handleDownload} />
+                <DetailContent itemData={itemData} adData={adData} />
             </div>
         </div>
     )
@@ -84,7 +130,28 @@ export default function AnalysisSidebar({ activeDetail, onClose, adData, isMobil
                     <SheetTitle>{name} Details</SheetTitle>
                     <SheetDescription>In-depth AI analysis of {name}</SheetDescription>
                 </SheetHeader>
-                <div className="absolute top-4 right-4 z-[110]">
+                <div className="absolute top-4 right-4 z-[110] flex items-center gap-3">
+                    <div className="flex items-center bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md rounded-full border border-border shadow-xl">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handlePrev}
+                            disabled={!hasPrev}
+                            className="h-10 w-10 rounded-full disabled:opacity-30 hover:bg-transparent"
+                        >
+                            <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                        <div className="w-[1px] h-4 bg-border" />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleNext}
+                            disabled={!hasNext}
+                            className="h-10 w-10 rounded-full disabled:opacity-30 hover:bg-transparent"
+                        >
+                            <ChevronRight className="h-5 w-5" />
+                        </Button>
+                    </div>
                     <Button
                         variant="secondary"
                         size="icon"
@@ -94,7 +161,7 @@ export default function AnalysisSidebar({ activeDetail, onClose, adData, isMobil
                         <X className="h-5 w-5" />
                     </Button>
                 </div>
-                <DetailContent itemData={itemData} adData={adData} isMobile onDownload={handleDownload} />
+                <DetailContent itemData={itemData} adData={adData} isMobile />
             </SheetContent>
         </Sheet>
     )
@@ -107,13 +174,26 @@ export default function AnalysisSidebar({ activeDetail, onClose, adData, isMobil
     )
 }
 
-function DetailContent({ itemData, adData, isMobile, onDownload }: { itemData: any, adData: AdData, isMobile?: boolean, onDownload: () => void }) {
+function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: AdData, isMobile?: boolean }) {
     const isScore = 'score' in itemData
     const value = isScore ? itemData.score : itemData.value
     const name = itemData.name || itemData.label
     const color = itemData.color || ""
     const icon = itemData.icon
     const Icon = icon
+
+    // Dynamic Insight Mapping
+    let dynamicInsight = ""
+    if (isScore) {
+        dynamicInsight = (adData as any)[itemData.key] || "High structural integrity detected."
+    } else {
+        const label = (itemData.label || "").toLowerCase()
+        if (label.includes('ctr')) dynamicInsight = adData.ctrAnalysis || "Click-through rate performance analysis."
+        else if (label.includes('cpc')) dynamicInsight = adData.cpcAnalysis || "Cost-per-click efficiency analysis."
+        else if (label.includes('frequency')) dynamicInsight = adData.frequencyAnalysis || "Ad frequency and saturation analysis."
+        else if (label.includes('cpm')) dynamicInsight = `Your CPM is ${adData.cpm}. ${adData.primaryBottleneck || ""}`
+        else dynamicInsight = `Performance is trending higher for ${name}.`
+    }
 
     return (
         <div className="flex flex-col h-full bg-background dark:bg-zinc-950 animate-in fade-in duration-300">
@@ -141,7 +221,7 @@ function DetailContent({ itemData, adData, isMobile, onDownload }: { itemData: a
                 {/* Description */}
                 <section className="space-y-3">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">Description</h3>
-                    <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium italic">
+                    <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-bold italic">
                         "{itemData.desc || itemData.description || ""}"
                     </p>
                 </section>
@@ -149,12 +229,12 @@ function DetailContent({ itemData, adData, isMobile, onDownload }: { itemData: a
                 {/* Insight */}
                 <section className="space-y-4">
                     <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-primary" />
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-100">Insight</h3>
+                        <TrendingUp className="h-4 w-4 text-[#007AFF]" />
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-100">AI Analysis Insight</h3>
                     </div>
-                    <div className="bg-primary/5 dark:bg-primary/10 border border-primary/10 rounded-2xl p-4 md:p-5">
-                        <p className="text-xs md:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                            {isScore ? (adData as any)[itemData.key] : "Performance is trending higher."}
+                    <div className="bg-[#007AFF]/5 dark:bg-[#007AFF]/10 border border-[#007AFF]/10 rounded-2xl p-4 md:p-5">
+                        <p className="text-xs md:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-bold">
+                            {dynamicInsight}
                         </p>
                     </div>
                 </section>
@@ -182,16 +262,7 @@ function DetailContent({ itemData, adData, isMobile, onDownload }: { itemData: a
                 </section>
             </div>
 
-            {/* Footer */}
-            <div className="p-4 md:p-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-border mt-auto shrink-0 flex items-center justify-center">
-                <Button
-                    className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-black text-xs uppercase tracking-widest h-12 rounded-xl group"
-                    onClick={onDownload}
-                >
-                    <span>Download Audit Report</span>
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Button>
-            </div>
+
         </div>
     )
 }

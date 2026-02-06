@@ -1,19 +1,53 @@
 export interface AdData {
+    // Basic Identifiers
     id: string
+    _id: string
     adId: string
     adAccountId: string
     accountName: string
     adName: string
+    creativeId?: string
     thumbnailUrl: string
-    spend: number
-    purchaseValue: number
-    purchases: number
-    roas: number
-    ctr: number
-    cpc: number
-    cpm: number
-    cpp: number
-    aov: number
+    isAdvantagePlus?: boolean
+    adType?: string
+    analysisMode?: string
+
+    // Performance Metrics
+    spend: string | number
+    impressions?: number
+    clicks?: number
+    ctr: string | number
+    cpc: string | number
+    cpm: string | number
+    reach?: number
+    frequency?: string | number
+
+    // Performance Analysis
+    ctrAnalysis?: string
+    cpcAnalysis?: string
+    frequencyAnalysis?: string
+    primaryBottleneck?: string
+
+    // Legacy Metrics (may be used in older components)
+    purchaseValue?: number
+    purchases?: number
+    roas?: number
+    cpp?: number
+    aov?: number
+
+    // Content Details
+    creativeType?: string
+    dominantColors?: string
+    primaryMessage?: string
+    secondaryMessage?: string
+    ctaText?: string
+    trustElements?: string
+    urgencyElements?: string
+    numbersShown?: string
+    brandingElements?: string
+    keyVisualElements?: string
+
+    // Scores
     scoreVisualDesign: number
     scoreTypography: number
     scoreColorUsage: number
@@ -23,18 +57,10 @@ export interface AdData {
     scoreTrustSignals: number
     scoreUrgency: number
     scoreOverall: number
-    performanceLabel: string
-    designQuality: string
-    psychologyStrength: string
-    keyStrengths: string
-    keyWeaknesses: string
-    topInsight: string
-    primaryRecommendation: string
-    hierarchyAnalysis: string
-    colorPsychology: string
-    typographyNotes: string
-    compositionNotes: string
-    mobileReadiness: string
+    performanceScore?: number
+    compositeRating?: number
+
+    // Score Justifications
     visualDesignJustification: string
     typographyJustification: string
     colorUsageJustification: string
@@ -43,6 +69,46 @@ export interface AdData {
     emotionalAppealJustification: string
     trustSignalsJustification: string
     urgencyJustification: string
+
+    // Psychological Principles
+    lossAversionPresent?: boolean
+    lossAversionStrength?: string
+    lossAversionEvidence?: string
+    scarcityPresent?: boolean
+    scarcityStrength?: string
+    scarcityEvidence?: string
+    socialProofPresent?: boolean
+    socialProofStrength?: string
+    socialProofEvidence?: string
+    anchoringPresent?: boolean
+    anchoringStrength?: string
+    anchoringEvidence?: string
+
+    // AIDA Model
+    aidaAttentionScore?: number
+    aidaAttentionAnalysis?: string
+    aidaInterestScore?: number
+    aidaInterestAnalysis?: string
+    aidaDesireScore?: number
+    aidaDesireAnalysis?: string
+    aidaActionScore?: number
+    aidaActionAnalysis?: string
+
+    // Qualitative Labels
+    performanceLabel: string
+    designQuality: string
+    psychologyStrength: string
+
+    // Insights & Strengths/Weaknesses
+    keyStrengths: string
+    keyWeaknesses: string
+    whatWorks?: string
+    whatDoesntWork?: string
+    topInsight: string
+    keyInsight?: string // New field from DB
+
+    // Recommendations
+    primaryRecommendation: string
     recommendation1: string
     recommendation1Impact: string
     recommendation1Effort: string
@@ -52,11 +118,38 @@ export interface AdData {
     recommendation3: string
     recommendation3Impact: string
     recommendation3Effort: string
-    actionScale: boolean | string
-    actionPause: boolean | string
-    actionOptimize: boolean | string
-    actionTest: boolean | string
+
+    // Strategic Elements
+    keepElements?: string
+    changeElements?: string
+    addElements?: string
+    hookOptions?: string
+    ctaOptions?: string
+
+    // Actions & Verdict
+    actionScale: boolean
+    actionPause: boolean
+    actionOptimize: boolean
+    actionTest: boolean
+    actionRationale?: string
+    verdictDecision?: string
+    verdictRating?: string
+    verdictConfidence?: string
+    verdictSummary?: string
+
+    // Technical/Metadata
     analysisDate: string
-    rawAnalysis: string
-    _id?: string
+    analysisVersion?: string
+    isPartialResponse?: boolean
+    rawAnalysis?: string
+    embeddingText?: string
+    tags?: string[]
+    searchableContent?: string
+
+    // Layout/Legacy
+    hierarchyAnalysis?: string
+    colorPsychology?: string
+    typographyNotes?: string
+    compositionNotes?: string
+    mobileReadiness?: string
 }

@@ -13,7 +13,8 @@ import {
   Zap,
   Award,
   Info,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
@@ -124,35 +125,69 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
       </div>
 
       {/* Overall Score Section */}
-      <Card className="relative overflow-hidden border-none shadow-2xl bg-[#1A1A1A] text-white p-1">
-        <div className="absolute top-0 right-0 p-8 opacity-5 transition-opacity group-hover:opacity-10">
-          <Award className="h-32 w-32" />
-        </div>
-        <CardContent className="p-8 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-10">
-            <div className="relative">
-              <div className="w-28 h-28 rounded-full border-4 border-zinc-800 flex items-center justify-center p-2 relative shadow-[0_0_20px_rgba(255,255,255,0.05)]">
-                <div className="w-full h-full rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-900 dark:from-primary/20 dark:to-primary/40 flex flex-col items-center justify-center">
-                  <span className="text-4xl font-black text-white">{overallScore}</span>
-                  <span className="text-[10px] font-bold text-zinc-500 dark:text-white/50 uppercase tracking-tighter">Overall</span>
+      <Card className="relative overflow-hidden border-none shadow-2xl bg-[#0F0F0F] text-white p-1">
+        <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[150%] bg-[#007AFF] opacity-[0.08] blur-[100px] pointer-events-none transition-all duration-1000 group-hover:opacity-[0.12]" />
+
+        <CardContent className="p-8 md:p-10 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-12">
+            <div className="flex flex-wrap justify-center gap-6">
+              {/* Creative Score */}
+              <div className="text-center group/score">
+                <div className="w-24 h-24 md:w-28 md:h-28 rounded-3xl bg-zinc-900 border border-zinc-800 flex flex-col items-center justify-center relative shadow-2xl transition-all duration-500 group-hover/score:border-[#007AFF]/50 group-hover/score:scale-105">
+                  <span className="text-3xl md:text-4xl font-black text-white">{overallScore}</span>
+                  <span className="text-[9px] font-black text-[#007AFF] uppercase tracking-tighter">Creative</span>
                 </div>
+                <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-zinc-500">Quality Score</p>
               </div>
+
+              {/* Performance Score */}
+              {adData.performanceScore && (
+                <div className="text-center group/score">
+                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-3xl bg-emerald-950/20 border border-emerald-900/30 flex flex-col items-center justify-center relative shadow-2xl transition-all duration-500 group-hover/score:border-emerald-500/50 group-hover/score:scale-105">
+                    <span className="text-3xl md:text-4xl font-black text-emerald-400">{adData.performanceScore}</span>
+                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">Performance</span>
+                  </div>
+                  <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-zinc-500">Predicted Yield</p>
+                </div>
+              )}
+
+              {/* Composite Rating */}
+              {adData.compositeRating && (
+                <div className="text-center group/score">
+                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-3xl bg-amber-950/20 border border-amber-900/30 flex flex-col items-center justify-center relative shadow-2xl transition-all duration-500 group-hover/score:border-amber-500/50 group-hover/score:scale-105">
+                    <span className="text-3xl md:text-4xl font-black text-amber-400">{adData.compositeRating}</span>
+                    <span className="text-[9px] font-black text-amber-500 uppercase tracking-tighter">Composite</span>
+                  </div>
+                  <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-zinc-500">Final Rating</p>
+                </div>
+              )}
             </div>
 
-            <div className="flex-1 space-y-6 text-center md:text-left">
-              <div>
-                <h4 className="text-2xl font-bold tracking-tight">Composite Quality Rating</h4>
-                <p className="text-zinc-400 text-sm mt-2 max-w-xl">
-                  {adData.topInsight || "Our AI engine has analyzed this creative across 50+ dimensions. The overall score reflects high structural integrity and strong psychological engagement."}
+            <div className="flex-1 space-y-6 text-center lg:text-left pt-6 lg:pt-0">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 mb-2">
+                  <Sparkles className="h-3 w-3 text-[#007AFF]" />
+                  <span className="text-[10px] font-black text-[#007AFF] uppercase tracking-[0.2em]">{adData.performanceLabel || "HIGH POTENTIAL"}</span>
+                </div>
+                <h4 className="text-2xl md:text-3xl font-black tracking-tight text-white uppercase italic">Intelligence Verdict</h4>
+                <p className="text-zinc-400 text-sm md:text-base leading-relaxed max-w-2xl font-medium">
+                  {adData.keyInsight || adData.topInsight || "Our AI engine has analyzed this creative across 50+ dimensions. The current metrics indicate a strong resonance with target audience psychological triggers."}
                 </p>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                  <span>Performance Potential</span>
-                  <span className="text-[#D9B48F] dark:text-primary font-bold">{adData.performanceLabel || "OPTIMIZED"}</span>
+              <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+                <div className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
+                  <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Analysis Mode</span>
+                  <span className="text-[10px] font-black text-zinc-200">{adData.analysisMode || "VISUAL & METRICS"}</span>
                 </div>
-                <Progress value={overallScore * 10} className="h-2 bg-zinc-800" />
+                <div className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
+                  <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Psychology Strength</span>
+                  <span className="text-[10px] font-black text-zinc-200">{adData.psychologyStrength || "STRONG"}</span>
+                </div>
+                <div className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
+                  <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Design Quality</span>
+                  <span className="text-[10px] font-black text-zinc-200">{adData.designQuality || "PROFESSIONAL"}</span>
+                </div>
               </div>
             </div>
           </div>
