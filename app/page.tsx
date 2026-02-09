@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Search, ChevronDown, BarChart3, Zap, TestTube, Loader2, ChevronsLeft, ChevronsRight, Settings, LogOut, User, LayoutDashboard, Lock, Menu, RefreshCcw, X, Activity, Maximize2, Sparkles, HelpCircle, GripHorizontal, Grip, ListFilter, Bot, Calendar, Trophy, BookOpen, Check, TrendingUp, Globe } from "lucide-react"
+import { Search, ChevronDown, BarChart3, Zap, TestTube, Loader2, ChevronsLeft, ChevronsRight, Settings, LogOut, User, LayoutDashboard, Lock, Menu, RefreshCcw, X, Activity, Maximize2, Sparkles, HelpCircle, GripHorizontal, Grip, ListFilter, Bot, Calendar, Trophy, BookOpen, Check, TrendingUp, Globe, LayoutGrid, List, Table as TableIcon, Grid2X2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -29,6 +29,22 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { fetchAdsFromMongo } from "@/actions/ads"
 import { AdData } from "@/lib/types"
 import ScoreRadarChart from "@/components/score-radar-chart"
+import { EnlargedImageModal } from "@/components/enlarged-image-modal"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
 
 const ACCOUNT_LIST = [
     { id: "25613137998288459", name: "HP FOREX - EU" },
@@ -67,6 +83,7 @@ function DashboardContent() {
     const [isGuideOpen, setIsGuideOpen] = useState(false)
     const [isViewAllAdsOpen, setIsViewAllAdsOpen] = useState(false)
     const [discoveryAccountFilter, setDiscoveryAccountFilter] = useState("all")
+    const [discoveryViewMode, setDiscoveryViewMode] = useState<"grid" | "list" | "table" | "compact">("grid")
 
     // Force cleanup of body lock on mount
     useEffect(() => {
@@ -902,7 +919,10 @@ function DashboardContent() {
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => setIsViewAllAdsOpen(false)}
+                                    onClick={() => {
+                                        setIsViewAllAdsOpen(false)
+                                        setEnlargedImage(null)
+                                    }}
                                     className="rounded-full hover:bg-red-50 hover:text-red-500 h-9 w-9 border border-zinc-200 dark:border-zinc-800"
                                 >
                                     <X className="h-4 w-4" />
@@ -1113,6 +1133,18 @@ function DashboardContent() {
                                                     </div>
                                                 </div>
                                             </section>
+
+                                            <section className="space-y-4 group/item">
+                                                <div className="flex items-start gap-3 md:gap-4">
+                                                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-rose-100 dark:border-rose-500/20">
+                                                        <LayoutGrid className="w-4 h-4 md:w-5 md:h-5 text-rose-500" />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <h3 className="text-[15px] md:text-lg font-bold">9. Layout View Switching</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Switch between <span className="font-bold text-foreground">Grid, List, Table,</span> and <span className="font-bold text-foreground">Compact</span> views to analyze your creatives in the density that suits your workflow.</p>
+                                                    </div>
+                                                </div>
+                                            </section>
                                         </div>
 
                                         <div className="mt-8 md:mt-12 p-4 md:p-6 bg-zinc-50 dark:bg-zinc-800/30 rounded-[12px] border border-dashed border-zinc-200 dark:border-zinc-700 text-center relative overflow-hidden">
@@ -1124,127 +1156,311 @@ function DashboardContent() {
                             </div>
                         ) : isViewAllAdsOpen ? (
                             <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
-                                <div className="max-w-7xl mx-auto mt-2 md:mt-4 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md rounded-[12px] border border-zinc-200/50 dark:border-white/10 p-4 md:p-10 shadow-2xl relative overflow-hidden group h-[calc(100vh-140px)] md:h-[calc(100vh-160px)] overflow-y-auto custom-scrollbar">
-                                    <div className="relative z-10">
-                                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                                            <div>
-                                                <h1 className="text-2xl md:text-3xl font-black tracking-tightest text-[#007AFF]">Discovery Hub</h1>
-                                                <p className="text-sm text-muted-foreground mt-1">Exploring all creatives across your ecosystem</p>
-                                            </div>
-                                            <div className="flex items-center gap-2 sm:gap-3 flex-wrap md:w-auto">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="sm" className="px-3 sm:px-4 py-2 bg-primary/5 rounded-full border border-primary/10 hover:bg-primary/10 h-auto max-w-[200px] sm:max-w-none">
-                                                            <span className="text-[11px] sm:text-xs font-bold text-primary flex items-center gap-1.5 sm:gap-2">
-                                                                <span className="truncate">
-                                                                    {discoveryAccountFilter === "all"
-                                                                        ? `Total: ${ads.length} Ads`
-                                                                        : `${accounts.find(a => a.id === discoveryAccountFilter)?.name}: ${ads.filter(ad => ad.adAccountId === discoveryAccountFilter).length} Ads`
-                                                                    }
+                                <div className="max-w-7xl mx-auto mt-2 md:mt-4 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md rounded-[12px] border border-zinc-200/50 dark:border-white/10 shadow-2xl relative overflow-hidden group h-[calc(100vh-140px)] md:h-[calc(100vh-160px)] flex flex-col">
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-10 relative">
+                                        <div className="relative z-10">
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                                                <div>
+                                                    <h1 className="text-2xl md:text-3xl font-black tracking-tightest text-[#007AFF]">Discovery Hub</h1>
+                                                    <p className="text-sm text-muted-foreground mt-1">Exploring all creatives across your ecosystem</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 sm:gap-3 flex-wrap md:w-auto">
+                                                    {/* Discovery View Switcher */}
+                                                    <Select value={discoveryViewMode} onValueChange={(v: any) => setDiscoveryViewMode(v)}>
+                                                        <SelectTrigger className="w-[130px] h-9 bg-white/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-full text-xs font-bold">
+                                                            <SelectValue placeholder="View" />
+                                                        </SelectTrigger>
+                                                        <SelectContent className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200/50 dark:border-white/10 rounded-xl shadow-2xl">
+                                                            <SelectItem value="grid" className="font-bold cursor-pointer rounded-lg">
+                                                                <div className="flex items-center gap-2">
+                                                                    <LayoutGrid className="h-3.5 w-3.5 text-[#007AFF]" />
+                                                                    <span>Grid</span>
+                                                                </div>
+                                                            </SelectItem>
+                                                            <SelectItem value="list" className="font-bold cursor-pointer rounded-lg">
+                                                                <div className="flex items-center gap-2">
+                                                                    <List className="h-3.5 w-3.5 text-emerald-500" />
+                                                                    <span>List</span>
+                                                                </div>
+                                                            </SelectItem>
+                                                            <SelectItem value="table" className="font-bold cursor-pointer rounded-lg">
+                                                                <div className="flex items-center gap-2">
+                                                                    <TableIcon className="h-3.5 w-3.5 text-amber-500" />
+                                                                    <span>Table</span>
+                                                                </div>
+                                                            </SelectItem>
+                                                            <SelectItem value="compact" className="font-bold cursor-pointer rounded-lg">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Grid2X2 className="h-3.5 w-3.5 text-purple-500" />
+                                                                    <span>Compact</span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="sm" className="px-3 sm:px-4 py-2 bg-primary/5 rounded-full border border-primary/10 hover:bg-primary/10 h-9 max-w-[200px] sm:max-w-none">
+                                                                <span className="text-[11px] sm:text-xs font-bold text-primary flex items-center gap-1.5 sm:gap-2">
+                                                                    <span className="truncate">
+                                                                        {discoveryAccountFilter === "all"
+                                                                            ? `Total: ${ads.length} Ads`
+                                                                            : `${accounts.find(a => a.id === discoveryAccountFilter)?.name}: ${ads.filter(ad => ad.adAccountId === discoveryAccountFilter).length} Ads`
+                                                                        }
+                                                                    </span>
+                                                                    <ChevronDown className="w-3 h-3 flex-shrink-0" />
                                                                 </span>
-                                                                <ChevronDown className="w-3 h-3 flex-shrink-0" />
-                                                            </span>
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="start" className="w-64 p-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200/50 dark:border-white/10 rounded-xl shadow-2xl">
-                                                        <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Filter by Account</DropdownMenuLabel>
-                                                        <div className="space-y-1">
-                                                            <DropdownMenuItem
-                                                                onClick={() => setDiscoveryAccountFilter("all")}
-                                                                className={cn(
-                                                                    "flex items-center justify-between p-2 rounded-lg transition-colors cursor-pointer",
-                                                                    discoveryAccountFilter === "all" ? "bg-primary/10 text-primary" : "hover:bg-zinc-100 dark:hover:bg-white/5"
-                                                                )}
-                                                            >
-                                                                <span className="text-xs font-medium">Total Ads</span>
-                                                                <span className="text-[10px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full">{ads.length}</span>
-                                                            </DropdownMenuItem>
-
-                                                            <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800" />
-
-                                                            {accountStats.map((stat) => (
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-64 p-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200/50 dark:border-white/10 rounded-xl shadow-2xl">
+                                                            <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Filter by Account</DropdownMenuLabel>
+                                                            <div className="space-y-1">
                                                                 <DropdownMenuItem
-                                                                    key={stat.id}
-                                                                    onClick={() => setDiscoveryAccountFilter(stat.id)}
+                                                                    onClick={() => setDiscoveryAccountFilter("all")}
                                                                     className={cn(
                                                                         "flex items-center justify-between p-2 rounded-lg transition-colors cursor-pointer",
-                                                                        discoveryAccountFilter === stat.id ? "bg-primary/10 text-primary" : "hover:bg-zinc-100 dark:hover:bg-white/5"
+                                                                        discoveryAccountFilter === "all" ? "bg-primary/10 text-primary" : "hover:bg-zinc-100 dark:hover:bg-white/5"
                                                                     )}
                                                                 >
-                                                                    <span className="text-xs font-medium truncate pr-4">{stat.name}</span>
-                                                                    <span className="text-[10px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full">{stat.count}</span>
+                                                                    <span className="text-xs font-medium">Total Ads</span>
+                                                                    <span className="text-[10px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full">{ads.length}</span>
                                                                 </DropdownMenuItem>
-                                                            ))}
-                                                        </div>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                                <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800" />
+                                                                {accountStats.map((stat) => (
+                                                                    <DropdownMenuItem
+                                                                        key={stat.id}
+                                                                        onClick={() => setDiscoveryAccountFilter(stat.id)}
+                                                                        className={cn(
+                                                                            "flex items-center justify-between p-2 rounded-lg transition-colors cursor-pointer",
+                                                                            discoveryAccountFilter === stat.id ? "bg-primary/10 text-primary" : "hover:bg-zinc-100 dark:hover:bg-white/5"
+                                                                        )}
+                                                                    >
+                                                                        <span className="text-xs font-medium truncate pr-4">{stat.name}</span>
+                                                                        <span className="text-[10px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full">{stat.count}</span>
+                                                                    </DropdownMenuItem>
+                                                                ))}
+                                                            </div>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
 
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setIsViewAllAdsOpen(false)
-                                                        setDiscoveryAccountFilter("all")
-                                                    }}
-                                                    className="rounded-full text-[11px] font-bold uppercase tracking-wider"
-                                                >
-                                                    Close View
-                                                </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setIsViewAllAdsOpen(false)
+                                                            setDiscoveryAccountFilter("all")
+                                                            setEnlargedImage(null)
+                                                        }}
+                                                        className="rounded-full text-[11px] font-bold uppercase tracking-wider h-9"
+                                                    >
+                                                        Close View
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                            {ads
-                                                .filter(ad => discoveryAccountFilter === "all" || ad.adAccountId === discoveryAccountFilter)
-                                                .map((ad) => {
-                                                    const account = accounts.find(a => a.id === ad.adAccountId)
-                                                    return (
-                                                        <div
-                                                            key={ad.id}
-                                                            onClick={() => {
-                                                                const adAccount = accounts.find(acc => acc.id === ad.adAccountId)
-                                                                setEnlargedImage({
-                                                                    url: ad.thumbnailUrl,
-                                                                    title: ad.adName,
-                                                                    accountName: adAccount?.name
-                                                                })
-                                                            }}
-                                                            className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/60 dark:border-white/5 rounded-xl overflow-hidden hover:border-[#007AFF]/50 transition-all group cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300"
-                                                        >
-                                                            <div className="aspect-[16/9] relative overflow-hidden bg-zinc-100 dark:bg-zinc-950">
-                                                                <img src={ad.thumbnailUrl} alt={ad.adName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                                                                <div className="absolute top-2 left-2">
-                                                                    <span className="px-2 py-1 rounded-md bg-black/60 backdrop-blur-md text-[9px] font-black text-white uppercase tracking-wider border border-white/10 shadow-lg">
-                                                                        {account?.name || "Unknown"}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                            </div>
-                                                            <div className="p-4 space-y-3">
-                                                                <div className="space-y-1">
-                                                                    <h4 className="text-[13px] font-black truncate text-foreground leading-tight">{ad.adName}</h4>
-                                                                    <p className="text-[10px] font-mono opacity-50 truncate tracking-tight">{ad.adId}</p>
-                                                                </div>
-                                                                <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">CTR</span>
-                                                                        <span className="text-[14px] font-black text-[#007AFF] tracking-tighter">{Number(ad.ctr || 0).toFixed(2)}%</span>
+                                            {discoveryViewMode === "grid" && (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                                    {ads
+                                                        .filter(ad => discoveryAccountFilter === "all" || ad.adAccountId === discoveryAccountFilter)
+                                                        .map((ad) => {
+                                                            const account = accounts.find(a => a.id === ad.adAccountId)
+                                                            return (
+                                                                <div
+                                                                    key={ad.id}
+                                                                    onClick={() => {
+                                                                        const adAccount = accounts.find(acc => acc.id === ad.adAccountId)
+                                                                        setEnlargedImage({
+                                                                            url: ad.thumbnailUrl,
+                                                                            title: ad.adName,
+                                                                            accountName: adAccount?.name
+                                                                        })
+                                                                    }}
+                                                                    className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/60 dark:border-white/5 rounded-xl overflow-hidden hover:border-[#007AFF]/50 transition-all group cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300"
+                                                                >
+                                                                    <div className="aspect-[16/9] relative overflow-hidden bg-zinc-100 dark:bg-zinc-950">
+                                                                        <img src={ad.thumbnailUrl} alt={ad.adName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }} />
+                                                                        <div className="absolute top-2 left-2">
+                                                                            <span className="px-2 py-1 rounded-md bg-black/60 backdrop-blur-md text-[9px] font-black text-white uppercase tracking-wider border border-white/10 shadow-lg">
+                                                                                {account?.name || "Unknown"}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                                                     </div>
-                                                                    <div className="flex flex-col items-end">
-                                                                        <span className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">Spend</span>
-                                                                        <span className="text-[14px] font-black text-foreground tracking-tighter">${Number(ad.spend || 0).toLocaleString()}</span>
+                                                                    <div className="p-4 space-y-3">
+                                                                        <div className="space-y-1">
+                                                                            <h4 className="text-[13px] font-black truncate text-foreground leading-tight">{ad.adName}</h4>
+                                                                            <p className="text-[10px] font-mono opacity-50 truncate tracking-tight">{ad.adId}</p>
+                                                                        </div>
+                                                                        <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">CTR</span>
+                                                                                <span className="text-[14px] font-black text-[#007AFF] tracking-tighter">{Number(ad.ctr || 0).toFixed(2)}%</span>
+                                                                            </div>
+                                                                            <div className="flex flex-col items-end">
+                                                                                <span className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">Spend</span>
+                                                                                <span className="text-[14px] font-black text-foreground tracking-tighter">${Number(ad.spend || 0).toLocaleString()}</span>
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                })}
+                                                            )
+                                                        })}
+                                                </div>
+                                            )}
+
+                                            {discoveryViewMode === "list" && (
+                                                <div className="space-y-4">
+                                                    {ads
+                                                        .filter(ad => discoveryAccountFilter === "all" || ad.adAccountId === discoveryAccountFilter)
+                                                        .map((ad) => {
+                                                            const account = accounts.find(a => a.id === ad.adAccountId)
+                                                            return (
+                                                                <div
+                                                                    key={ad.id}
+                                                                    onClick={() => {
+                                                                        setEnlargedImage({
+                                                                            url: ad.thumbnailUrl,
+                                                                            title: ad.adName,
+                                                                            accountName: account?.name
+                                                                        })
+                                                                    }}
+                                                                    className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/60 dark:border-white/5 rounded-xl overflow-hidden hover:border-[#007AFF]/50 transition-all group cursor-pointer shadow-sm hover:shadow-xl flex flex-row h-32 md:h-40 duration-300"
+                                                                >
+                                                                    <div className="h-full aspect-[16/9] relative overflow-hidden bg-zinc-100 dark:bg-zinc-950 flex-shrink-0">
+                                                                        <img src={ad.thumbnailUrl} alt={ad.adName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }} />
+                                                                        <div className="absolute top-2 left-2">
+                                                                            <span className="px-2 py-1 rounded-md bg-black/60 backdrop-blur-md text-[8px] font-black text-white uppercase tracking-wider border border-white/10">
+                                                                                {account?.name || "Unknown"}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                                                                        <div className="space-y-1">
+                                                                            <h4 className="text-sm md:text-base font-black truncate text-foreground leading-tight">{ad.adName}</h4>
+                                                                            <p className="text-[10px] font-mono opacity-50 truncate tracking-tight">{ad.adId}</p>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-8 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">CTR</span>
+                                                                                <span className="text-lg font-black text-[#007AFF] tracking-tighter">{Number(ad.ctr || 0).toFixed(2)}%</span>
+                                                                            </div>
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">Spend</span>
+                                                                                <span className="text-lg font-black text-foreground tracking-tighter">${Number(ad.spend || 0).toLocaleString()}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                </div>
+                                            )}
+
+                                            {discoveryViewMode === "table" && (
+                                                <div className="rounded-xl border border-border overflow-hidden bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm">
+                                                    <Table>
+                                                        <TableHeader className="bg-zinc-50/50 dark:bg-zinc-800/50">
+                                                            <TableRow>
+                                                                <TableHead className="w-[100px] font-bold text-[10px] uppercase">Preview</TableHead>
+                                                                <TableHead className="font-bold text-[10px] uppercase">Ad Info</TableHead>
+                                                                <TableHead className="font-bold text-[10px] uppercase">Account</TableHead>
+                                                                <TableHead className="text-right font-bold text-[10px] uppercase">Spend</TableHead>
+                                                                <TableHead className="text-right font-bold text-[10px] uppercase">CTR</TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {ads
+                                                                .filter(ad => discoveryAccountFilter === "all" || ad.adAccountId === discoveryAccountFilter)
+                                                                .map((ad) => {
+                                                                    const account = accounts.find(a => a.id === ad.adAccountId)
+                                                                    return (
+                                                                        <TableRow
+                                                                            key={ad.id}
+                                                                            className="cursor-pointer hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors"
+                                                                            onClick={() => {
+                                                                                setEnlargedImage({
+                                                                                    url: ad.thumbnailUrl,
+                                                                                    title: ad.adName,
+                                                                                    accountName: account?.name
+                                                                                })
+                                                                            }}
+                                                                        >
+                                                                            <TableCell>
+                                                                                <div className="w-16 h-9 rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-border">
+                                                                                    <img src={ad.thumbnailUrl} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }} />
+                                                                                </div>
+                                                                            </TableCell>
+                                                                            <TableCell className="max-w-[200px]">
+                                                                                <div className="space-y-0.5">
+                                                                                    <p className="font-bold text-xs truncate">{ad.adName}</p>
+                                                                                    <p className="text-[10px] font-mono opacity-50 truncate">{ad.adId}</p>
+                                                                                </div>
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                                <span className="text-[10px] font-bold text-muted-foreground">{account?.name || "Unknown"}</span>
+                                                                            </TableCell>
+                                                                            <TableCell className="text-right font-bold text-xs">${Number(ad.spend || 0).toLocaleString()}</TableCell>
+                                                                            <TableCell className="text-right font-black text-[#007AFF] text-sm">{Number(ad.ctr || 0).toFixed(2)}%</TableCell>
+                                                                        </TableRow>
+                                                                    )
+                                                                })}
+                                                        </TableBody>
+                                                    </Table>
+                                                </div>
+                                            )}
+
+                                            {discoveryViewMode === "compact" && (
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                                                    {ads
+                                                        .filter(ad => discoveryAccountFilter === "all" || ad.adAccountId === discoveryAccountFilter)
+                                                        .map((ad) => {
+                                                            const account = accounts.find(a => a.id === ad.adAccountId)
+                                                            return (
+                                                                <div
+                                                                    key={ad.id}
+                                                                    onClick={() => {
+                                                                        setEnlargedImage({
+                                                                            url: ad.thumbnailUrl,
+                                                                            title: ad.adName,
+                                                                            accountName: account?.name
+                                                                        })
+                                                                    }}
+                                                                    className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/60 dark:border-white/5 rounded-xl overflow-hidden hover:border-[#007AFF]/50 transition-all group cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300"
+                                                                >
+                                                                    <div className="aspect-square relative overflow-hidden bg-zinc-100 dark:bg-zinc-950">
+                                                                        <img src={ad.thumbnailUrl} alt={ad.adName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }} />
+                                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                                        <div className="absolute bottom-0 left-0 right-0 p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                                                            <p className="text-[9px] font-black text-white truncate leading-none">{ad.adName}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="p-2 border-t border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="text-[10px] font-black text-[#007AFF]">{Number(ad.ctr || 0).toFixed(2)}%</span>
+                                                                            <span className="text-[9px] font-bold text-muted-foreground">${Math.round(Number(ad.spend || 0) / 1000)}k</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {/* Abstract background elements */}
                                     <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#007AFF]/5 rounded-full blur-3xl pointer-events-none" />
                                     <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+
+                                    {/* Contained Popup for Discovery Hub */}
+                                    {isViewAllAdsOpen && enlargedImage && (
+                                        <EnlargedImageModal
+                                            url={enlargedImage.url}
+                                            title={enlargedImage.title}
+                                            accountName={enlargedImage.accountName}
+                                            onClose={() => setEnlargedImage(null)}
+                                            containerClassName="absolute"
+                                        />
+                                    )}
                                 </div>
                             </div>
                         ) : isLoading ? (
@@ -1389,6 +1605,7 @@ function DashboardContent() {
                                                 </section>
                                             </>
                                         )}
+
                                     </div>
                                 )}
                             </>
@@ -1411,45 +1628,14 @@ function DashboardContent() {
                     isMobile={isMobile}
                 />
 
-                {/* Global Image Popup - Professional & Clean */}
-                {
-                    enlargedImage && (
-                        <div
-                            className="fixed inset-0 z-[600] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4"
-                            onClick={() => setEnlargedImage(null)}
-                        >
-                            <div
-                                className="relative w-[92%] sm:w-[85%] md:w-[80%] lg:w-[75%] max-w-6xl h-[75vh] sm:h-[80vh] md:h-[85vh] bg-zinc-900 rounded-xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-white/10 animate-in zoom-in-95 duration-300"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <button
-                                    onClick={() => setEnlargedImage(null)}
-                                    className="absolute top-4 right-4 z-[610] h-8 w-8 flex items-center justify-center bg-black/50 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-colors border border-white/10"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                                <div className="flex-1 overflow-auto bg-zinc-950 flex items-center justify-center">
-                                    <img
-                                        src={enlargedImage.url}
-                                        alt={enlargedImage.title}
-                                        className="max-w-full max-h-full object-contain"
-                                    />
-                                </div>
-                                <div className="p-4 bg-zinc-900 border-t border-white/10 flex items-center justify-between gap-4">
-                                    <div className="flex flex-col min-w-0">
-                                        {enlargedImage.accountName && (
-                                            <span className="text-[10px] font-black text-[#007AFF] uppercase tracking-[0.2em] mb-0.5">
-                                                {enlargedImage.accountName}
-                                            </span>
-                                        )}
-                                        <h4 className="text-sm font-bold text-white break-all">{enlargedImage.title}</h4>
-                                    </div>
-                                    <Button variant="outline" size="sm" onClick={() => setEnlargedImage(null)} className="text-xs h-8 text-white border-white/20 hover:bg-white/10 shrink-0">Close</Button>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }
+                {/* Global Image Popup for Home Page */}
+                {!isViewAllAdsOpen && enlargedImage && (
+                    <EnlargedImageModal
+                        url={enlargedImage.url}
+                        title={enlargedImage.title}
+                        onClose={() => setEnlargedImage(null)}
+                    />
+                )}
 
                 {
                     session?.user?.email && (
