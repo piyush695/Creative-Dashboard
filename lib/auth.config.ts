@@ -7,6 +7,10 @@ export const authConfig = {
         signIn: "/login",
         error: "/login",
     },
+    session: {
+        strategy: "jwt",
+        maxAge: 12 * 60, // 12 minutes
+    },
     callbacks: {
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user

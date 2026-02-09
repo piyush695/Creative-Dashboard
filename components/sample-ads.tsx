@@ -1,8 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AdData } from "@/lib/types"
-import { Maximize2 } from "lucide-react"
+import { Maximize2, ChevronDown, ChevronUp } from "lucide-react"
 
 interface SampleAdsProps {
   ads: AdData[]
@@ -49,7 +50,7 @@ export default function SampleAds({
           </div>
         </div>
       ) : (
-        <div className="flex overflow-x-auto sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-4 sm:pb-0 scrollbar-none snap-x snap-mandatory">
+        <div className="flex overflow-x-auto sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-4 sm:pb-0 scrollbar-none snap-x snap-mandatory items-start">
           {adList.map((ad) => {
             const isMatch = searchQuery.trim() !== "" && (
               ad.adId.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -62,12 +63,12 @@ export default function SampleAds({
               <Card
                 key={ad.id}
                 onClick={() => onSelect(ad.id)}
-                className={`transition-all cursor-pointer border-2 overflow-hidden flex flex-col flex-shrink-0 w-[260px] sm:w-auto snap-center bg-white dark:bg-zinc-900 ${hasHighlight
+                className={`transition-all cursor-pointer border-2 overflow-hidden flex flex-col flex-shrink-0 w-[260px] sm:w-auto snap-center bg-white dark:bg-zinc-900 py-0 gap-0 px-0 ${hasHighlight
                   ? "border-[#8B4513] dark:border-primary shadow-md"
                   : "border-transparent hover:border-[#8B4513]/30 dark:hover:border-primary/30 shadow-sm hover:shadow-md dark:hover:shadow-2xl"
                   } ${isSelected ? "bg-[#8B4513]/[0.03] dark:bg-primary/[0.03] ring-1 ring-[#8B4513]/10 dark:ring-primary/10" : ""}`}
               >
-                <CardHeader className="p-3.5 pb-2.5 space-y-2.5 relative">
+                <CardHeader className="px-3 pt-2 pb-1 space-y-1.5">
 
                   {/* Row 1: Badge Only (Zero Overlap) */}
                   <div className="flex">
@@ -84,18 +85,31 @@ export default function SampleAds({
                   </div>
 
                   {/* Row 2: Title & ID */}
-                  <div className="space-y-1.5">
-                    <CardTitle className="text-[12px] font-extrabold leading-[1.3] text-foreground/90 dark:text-zinc-100 break-all">
-                      {ad.adName}
-                    </CardTitle>
-                    <CardDescription className="text-[9px] font-mono leading-none opacity-50 dark:opacity-70 break-all">
+                  <div className="space-y-1 w-full relative">
+                    <div className="group/title w-full">
+                      <CardTitle className="text-[12px] font-extrabold leading-[1.3] text-foreground/90 dark:text-zinc-100 line-clamp-2 break-all">
+                        {ad.adName}
+                      </CardTitle>
+                    </div>
+                    {ad.adName.length > 50 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName);
+                        }}
+                        className="mt-0.5 text-[10px] font-black text-[#8B4513] dark:text-primary hover:text-[#007AFF] flex items-center gap-0.5 transition-all"
+                      >
+                        Read More <ChevronDown className="h-3 w-3" />
+                      </button>
+                    )}
+                    <CardDescription className="text-[9px] font-mono leading-none opacity-50 dark:opacity-70 break-all pt-0.5">
                       ID: {ad.adId}
                     </CardDescription>
                   </div>
                 </CardHeader>
-                <CardContent className="p-3 pt-0 flex-1 flex flex-col relative">
+                <CardContent className="px-3 pb-2 pt-0 flex-1 flex flex-col relative">
                   <div
-                    className="aspect-[3/2] w-full overflow-hidden rounded-md bg-zinc-900 shadow-xl relative group mb-3 cursor-zoom-in"
+                    className="aspect-[3/2] w-full overflow-hidden rounded-md bg-zinc-900 shadow-xl relative group mb-2 cursor-zoom-in"
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName);

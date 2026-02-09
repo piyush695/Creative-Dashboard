@@ -42,7 +42,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }
         })
     ],
-    session: { strategy: "jwt" },
+    session: {
+        strategy: "jwt",
+        maxAge: 12 * 60, // 12 minutes
+        updateAge: 0, // Always update session to keep it alive during activity
+    },
     callbacks: {
         ...authConfig.callbacks,
         async session({ session, token }) {

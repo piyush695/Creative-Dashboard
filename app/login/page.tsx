@@ -212,7 +212,7 @@ export default function LoginPage() {
             {/* Header: Exact Logo and Theme Toggle */}
             <header className="w-full flex justify-between items-center z-20 p-4 md:p-8 flex-shrink-0 sticky top-0 backdrop-blur-sm">
                 <div className="flex items-center gap-3">
-                    <Link href="/">
+                    <a href="/">
                         <div className="flex flex-col items-start leading-none cursor-pointer hover:opacity-80 transition-opacity">
                             <div className="flex items-center gap-1.5">
                                 <span className="text-xl md:text-2xl font-black tracking-tightest text-zinc-900 dark:text-white">
@@ -222,7 +222,7 @@ export default function LoginPage() {
                             </div>
                             <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-[#007AFF] opacity-80 mt-1">Creative Analyzer</span>
                         </div>
-                    </Link>
+                    </a>
                 </div>
                 <button
                     onClick={toggleTheme}
