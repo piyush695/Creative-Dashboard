@@ -85,8 +85,15 @@ export default function DashboardHeader() {
                 <DropdownMenuSeparator className="bg-zinc-100 my-1" />
                 <Link href="/profile">
                   <DropdownMenuItem className="cursor-pointer hover:bg-zinc-100 focus:bg-zinc-100 text-zinc-700 focus:text-zinc-900 rounded-md py-2.5 px-3 transition-colors my-1">
+                    <User className="mr-3 h-4 w-4 text-zinc-500 group-hover:text-zinc-900" />
+                    <span>User Profile</span>
+                  </DropdownMenuItem>
+                </Link>
+
+                <Link href="/settings">
+                  <DropdownMenuItem className="cursor-pointer hover:bg-zinc-100 focus:bg-zinc-100 text-zinc-700 focus:text-zinc-900 rounded-md py-2.5 px-3 transition-colors my-1">
                     <Settings className="mr-3 h-4 w-4 text-zinc-500 group-hover:text-zinc-900" />
-                    <span>Profile Settings</span>
+                    <span>Dashboard Settings</span>
                   </DropdownMenuItem>
                 </Link>
 

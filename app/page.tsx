@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Search, ChevronDown, BarChart3, Zap, TestTube, Loader2, ChevronsLeft, ChevronsRight, Settings, LogOut, User, LayoutDashboard, Lock, Menu, RefreshCcw, X, Activity, Maximize2, Sparkles, HelpCircle, GripHorizontal, Grip, ListFilter, Bot, Calendar, Trophy, BookOpen, Check, TrendingUp, Globe, LayoutGrid, List, Table as TableIcon, Grid2X2 } from "lucide-react"
+import { Search, ChevronDown, BarChart3, Zap, TestTube, Loader2, ChevronsLeft, ChevronsRight, Settings, LogOut, User, LayoutDashboard, Lock, Menu, RefreshCcw, X, Activity, Maximize2, Sparkles, HelpCircle, GripHorizontal, Grip, ListFilter, Bot, Calendar, Trophy, BookOpen, Check, TrendingUp, Globe, LayoutGrid, List, Table as TableIcon, Grid2X2, Shield } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -37,6 +37,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import ProfileView from "@/components/profile-view"
+import SettingsView from "@/components/settings-view"
 import {
     Table,
     TableBody,
@@ -82,8 +84,31 @@ function DashboardContent() {
     const [viewFilter, setViewFilter] = useState("Top Perf.")
     const [isGuideOpen, setIsGuideOpen] = useState(false)
     const [isViewAllAdsOpen, setIsViewAllAdsOpen] = useState(false)
+    const [isProfileOpen, setIsProfileOpen] = useState(false)
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
     const [discoveryAccountFilter, setDiscoveryAccountFilter] = useState("all")
     const [discoveryViewMode, setDiscoveryViewMode] = useState<"grid" | "list" | "table" | "compact">("grid")
+    const [isGlassmorphismEnabled, setIsGlassmorphismEnabled] = useState(true)
+    const [isCompactModeEnabled, setIsCompactModeEnabled] = useState(false)
+    const [isReducedMotionEnabled, setIsReducedMotionEnabled] = useState(false)
+    const [isAlertSystemEnabled, setIsAlertSystemEnabled] = useState(false)
+
+    // Synchronize settings from localStorage
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("dashboard_settings")
+            if (saved) {
+                const settings = JSON.parse(saved)
+                setIsGlassmorphismEnabled(settings.glassmorphism ?? true)
+                setIsCompactModeEnabled(settings.compactMode ?? false)
+                setIsReducedMotionEnabled(settings.reducedMotion ?? false)
+                setIsAlertSystemEnabled(settings.alertSystem ?? false)
+                if (settings.compactMode) {
+                    setDiscoveryViewMode("compact")
+                }
+            }
+        }
+    }, [isSettingsOpen]) // Refresh when settings view is closed
 
     // Force cleanup of body lock on mount
     useEffect(() => {
@@ -168,7 +193,17 @@ function DashboardContent() {
         } catch (error) {
             console.error("Fetch error:", error)
         } finally {
-            if (isManual) setIsSyncing(false)
+            if (isManual) {
+                setIsSyncing(false)
+                if (isAlertSystemEnabled) {
+                    const { dismiss } = toast({
+                        title: "Sync Synchronized",
+                        description: "System has successfully finalized current database polling.",
+                        duration: 3000
+                    })
+                    setTimeout(() => dismiss(), 3000)
+                }
+            }
             setIsLoading(false)
         }
     }
@@ -328,7 +363,15 @@ function DashboardContent() {
         <div suppressHydrationWarning className="flex flex-col h-[100dvh] bg-background dark:bg-[#000000] overflow-hidden relative">
             {/* Global Sticky Banner - True Full Width */}
             <div className="flex items-center justify-between px-6 md:px-8 bg-zinc-50 dark:bg-zinc-900/50 border-b border-border shadow-sm h-14 md:h-16 z-[70] shrink-0 sticky top-0 backdrop-blur-sm transition-all duration-300 relative">
-                <a href="/" className="hover:opacity-80 transition-opacity relative z-10">
+                <button
+                    onClick={() => {
+                        setIsProfileOpen(false)
+                        setIsSettingsOpen(false)
+                        setIsGuideOpen(false)
+                        setIsViewAllAdsOpen(false)
+                    }}
+                    className="hover:opacity-80 transition-opacity relative z-10"
+                >
                     <div className="flex flex-col items-start leading-none cursor-pointer">
                         <div className="flex items-center gap-1.5">
                             <span className="text-xl md:text-2xl font-black tracking-tightest text-zinc-900 dark:text-white">
@@ -338,7 +381,7 @@ function DashboardContent() {
                         </div>
                         <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-[#007AFF] opacity-80 mt-1">Creative Analyzer</span>
                     </div>
-                </a>
+                </button>
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100/50 dark:bg-white/5 border border-zinc-200/50 dark:border-white/5 backdrop-blur-md shadow-sm group hover:scale-105 transition-all duration-500 cursor-default">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#007AFF] animate-pulse shadow-[0_0_8px_rgba(0,122,255,0.6)]"></span>
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] bg-clip-text text-transparent bg-gradient-to-r from-zinc-600 via-zinc-900 to-zinc-600 dark:from-zinc-400 dark:via-white dark:to-zinc-400 bg-[length:200%_auto] animate-gradient">
@@ -402,12 +445,22 @@ function DashboardContent() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-9 w-9 rounded-full text-zinc-400 hover:text-[#007AFF] hover:bg-[#007AFF]/10 transition-all relative z-10 group"
-                                onClick={() => setIsGuideOpen(true)}
+                                onClick={() => {
+                                    setIsGuideOpen(true)
+                                    setIsProfileOpen(false)
+                                    setIsSettingsOpen(false)
+                                    setIsViewAllAdsOpen(false)
+                                }}
                             >
                                 <HelpCircle className="w-4 h-4 animate-pulse group-hover:scale-110 transition-transform" />
                             </Button>
                             <div className="absolute right-[100%] top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover/help:opacity-100 group-hover/help:pointer-events-auto transition-all duration-300 translate-x-1 group-hover/help:translate-x-0 z-30 pr-3">
-                                <button className="flex" onClick={() => setIsGuideOpen(true)}>
+                                <button className="flex" onClick={() => {
+                                    setIsGuideOpen(true)
+                                    setIsProfileOpen(false)
+                                    setIsSettingsOpen(false)
+                                    setIsViewAllAdsOpen(false)
+                                }}>
                                     <div className="px-3 py-1.5 bg-zinc-900 dark:bg-white text-zinc-50 dark:text-zinc-900 text-[10px] font-black rounded-lg shadow-2xl whitespace-nowrap flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all border border-black/10 dark:border-white/10">
                                         <BookOpen className="w-3.5 h-3.5 text-[#007AFF]" />
                                         Help & Guide
@@ -460,7 +513,12 @@ function DashboardContent() {
 
                                     <DropdownMenuItem
                                         className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/5 group"
-                                        onClick={() => setIsGuideOpen(true)}
+                                        onClick={() => {
+                                            setIsGuideOpen(true)
+                                            setIsProfileOpen(false)
+                                            setIsSettingsOpen(false)
+                                            setIsViewAllAdsOpen(false)
+                                        }}
                                     >
                                         <BookOpen className="w-4 h-4 text-[#007AFF]" />
                                         <span className="text-xs font-black text-zinc-700 dark:text-zinc-300">Help & Guide</span>
@@ -507,15 +565,27 @@ function DashboardContent() {
                                 <div className="px-2 py-1.5 text-sm font-semibold border-b mb-1">
                                     My Account
                                 </div>
-                                <DropdownMenuItem asChild className="cursor-pointer">
-                                    <Link href="/profile">
-                                        <User className="mr-2 h-4 w-4" /> Profile
-                                    </Link>
+                                <DropdownMenuItem
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                        setIsProfileOpen(true)
+                                        setIsSettingsOpen(false)
+                                        setIsViewAllAdsOpen(false)
+                                        setIsGuideOpen(false)
+                                    }}
+                                >
+                                    <User className="mr-2 h-4 w-4" /> Profile
                                 </DropdownMenuItem>
-                                <DropdownMenuItem asChild className="cursor-pointer">
-                                    <Link href="/profile">
-                                        <Settings className="mr-2 h-4 w-4" /> Settings
-                                    </Link>
+                                <DropdownMenuItem
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                        setIsSettingsOpen(true)
+                                        setIsProfileOpen(false)
+                                        setIsViewAllAdsOpen(false)
+                                        setIsGuideOpen(false)
+                                    }}
+                                >
+                                    <Settings className="mr-2 h-4 w-4" /> Settings
                                 </DropdownMenuItem>
                                 {(session?.user as any)?.provider === "credentials" && (
                                     <DropdownMenuItem onClick={() => setIsPasswordDialogOpen(true)}>
@@ -674,6 +744,8 @@ function DashboardContent() {
                                 onClick={() => {
                                     setIsViewAllAdsOpen(true)
                                     setIsGuideOpen(false)
+                                    setIsProfileOpen(false)
+                                    setIsSettingsOpen(false)
                                     if (isMobile) setIsMobileMenuOpen(false)
                                 }}
                                 className={`w-full justify-start gap-3 h-10 px-2 rounded-lg transition-all ${isViewAllAdsOpen ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"} ${isSidebarCollapsed ? "w-10 h-10 p-0 justify-center" : ""}`}
@@ -765,17 +837,31 @@ function DashboardContent() {
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="start" className="w-60">
                                                         <SheetClose asChild>
-                                                            <DropdownMenuItem asChild className="cursor-pointer">
-                                                                <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
-                                                                    <User className="mr-2 h-4 w-4" /> Profile
-                                                                </Link>
+                                                            <DropdownMenuItem
+                                                                className="cursor-pointer"
+                                                                onClick={() => {
+                                                                    setIsProfileOpen(true)
+                                                                    setIsSettingsOpen(false)
+                                                                    setIsViewAllAdsOpen(false)
+                                                                    setIsGuideOpen(false)
+                                                                    setIsMobileMenuOpen(false)
+                                                                }}
+                                                            >
+                                                                <User className="mr-2 h-4 w-4" /> Profile
                                                             </DropdownMenuItem>
                                                         </SheetClose>
                                                         <SheetClose asChild>
-                                                            <DropdownMenuItem asChild className="cursor-pointer">
-                                                                <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
-                                                                    <Settings className="mr-2 h-4 w-4" /> Settings
-                                                                </Link>
+                                                            <DropdownMenuItem
+                                                                className="cursor-pointer"
+                                                                onClick={() => {
+                                                                    setIsSettingsOpen(true)
+                                                                    setIsProfileOpen(false)
+                                                                    setIsViewAllAdsOpen(false)
+                                                                    setIsGuideOpen(false)
+                                                                    setIsMobileMenuOpen(false)
+                                                                }}
+                                                            >
+                                                                <Settings className="mr-2 h-4 w-4" /> Settings
                                                             </DropdownMenuItem>
                                                         </SheetClose>
                                                         {(session?.user as any)?.provider === "credentials" && (
@@ -881,7 +967,7 @@ function DashboardContent() {
                                 <span className="text-sm text-muted-foreground/70 mr-1.5 flex-shrink-0">Dashboard</span>
                                 <span className="text-sm text-muted-foreground/50 mr-1.5 flex-shrink-0">/</span>
                                 <span className="font-semibold text-sm text-foreground truncate">
-                                    {isGuideOpen ? "Guide" : isViewAllAdsOpen ? "All Ads" : (selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "Dashboard")}
+                                    {isProfileOpen ? "Profile" : isSettingsOpen ? "Settings" : isGuideOpen ? "Guide" : isViewAllAdsOpen ? "All Ads" : (selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "Dashboard")}
                                 </span>
                             </div>
 
@@ -891,7 +977,7 @@ function DashboardContent() {
                                 <span>/</span>
                                 <span className="font-medium text-foreground">Dashboard</span>
                                 <span>/</span>
-                                <span className="truncate max-w-[150px] lg:max-w-none">{isGuideOpen ? "Guide" : isViewAllAdsOpen ? "All Ads" : (selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name)}</span>
+                                <span className="truncate max-w-[150px] lg:max-w-none">{isProfileOpen ? "Profile" : isSettingsOpen ? "Settings" : isGuideOpen ? "Guide" : isViewAllAdsOpen ? "All Ads" : (selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name)}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0 ml-1">
@@ -997,11 +1083,15 @@ function DashboardContent() {
 
                     <div className={cn(
                         "p-4 md:p-8 space-y-6 md:space-y-12 transition-all duration-300 flex-1 flex flex-col",
+                        !isReducedMotionEnabled && "animate-in fade-in slide-in-from-bottom-4 duration-700",
                         !isGuideOpen && activeAnalysis && !isMobile && searchQuery.trim() && "md:pr-[280px] xl:pr-[320px] 2xl:pr-[360px]"
                     )}>
                         {isGuideOpen ? (
                             <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
-                                <div className="max-w-7xl mx-auto mt-2 md:mt-4 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md rounded-[12px] border border-zinc-200/50 dark:border-white/10 p-4 md:p-10 shadow-2xl relative overflow-hidden group">
+                                <div className={cn(
+                                    "max-w-7xl mx-auto mt-2 md:mt-4 rounded-[12px] border border-zinc-200/50 dark:border-white/10 p-4 md:p-10 shadow-2xl relative overflow-hidden group",
+                                    isGlassmorphismEnabled ? "bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md" : "bg-white dark:bg-zinc-900"
+                                )}>
                                     {/* Decorative Elements */}
                                     <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] group-hover:bg-blue-500/20 transition-all duration-1000" />
                                     <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] group-hover:bg-indigo-500/20 transition-all duration-1000" />
@@ -1147,6 +1237,24 @@ function DashboardContent() {
                                             </section>
                                         </div>
 
+                                        <section className="mt-12 p-6 rounded-2xl bg-amber-500/5 border border-amber-500/10 relative overflow-hidden group/note">
+                                            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover/note:scale-110 transition-transform duration-700">
+                                                <Shield className="w-24 h-24 text-amber-500" />
+                                            </div>
+                                            <div className="flex items-start gap-4 relative z-10">
+                                                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 border border-amber-500/20 translate-y-1">
+                                                    <Shield className="w-6 h-6 text-amber-600" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <h3 className="text-lg font-black tracking-tight text-amber-600 dark:text-amber-500 uppercase text-[10px] tracking-widest">Important Security Note</h3>
+                                                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Profile Management & Authentication Providers</p>
+                                                    <p className="text-xs md:text-sm leading-relaxed text-muted-foreground">
+                                                        If you are logged in via <span className="font-bold text-foreground">Google OAuth</span>, your profile details (name and email) and security settings are managed directly by Google. For security reasons, you cannot update these identity details within this dashboard. Users on <span className="font-bold text-foreground">Credentials</span> accounts have full access to revise their identity and passwords through the Profile view.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </section>
+
                                         <div className="mt-8 md:mt-12 p-4 md:p-6 bg-zinc-50 dark:bg-zinc-800/30 rounded-[12px] border border-dashed border-zinc-200 dark:border-zinc-700 text-center relative overflow-hidden">
                                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-50" />
                                             <p className="text-[11px] md:text-sm font-medium italic text-muted-foreground leading-relaxed">"Empowering your creative strategy with data-driven intelligence.<br className="hidden md:block" /> Precision, performance, and excellence in every pixel."</p>
@@ -1154,9 +1262,31 @@ function DashboardContent() {
                                     </div>
                                 </div>
                             </div>
+                        ) : isProfileOpen ? (
+                            <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-4 md:px-8 max-w-7xl mx-auto w-full">
+                                <ProfileView
+                                    onOpenPasswordChange={() => setIsPasswordDialogOpen(true)}
+                                    onBack={() => {
+                                        setIsProfileOpen(false)
+                                        setIsSettingsOpen(false)
+                                    }}
+                                />
+                            </div>
+                        ) : isSettingsOpen ? (
+                            <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-4 md:px-8 max-w-7xl mx-auto w-full">
+                                <SettingsView
+                                    onBack={() => {
+                                        setIsProfileOpen(false)
+                                        setIsSettingsOpen(false)
+                                    }}
+                                />
+                            </div>
                         ) : isViewAllAdsOpen ? (
                             <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
-                                <div className="max-w-7xl mx-auto mt-2 md:mt-4 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md rounded-[12px] border border-zinc-200/50 dark:border-white/10 shadow-2xl relative overflow-hidden group h-[calc(100vh-140px)] md:h-[calc(100vh-160px)] flex flex-col">
+                                <div className={cn(
+                                    "max-w-7xl mx-auto mt-2 md:mt-4 rounded-[12px] border border-zinc-200/50 dark:border-white/10 shadow-2xl relative overflow-hidden group h-[calc(100vh-140px)] md:h-[calc(100vh-160px)] flex flex-col",
+                                    isGlassmorphismEnabled ? "bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md" : "bg-white dark:bg-zinc-900"
+                                )}>
                                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-10 relative">
                                         <div className="relative z-10">
                                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
