@@ -18,7 +18,22 @@ import {
     Eye,
     Globe,
     Zap,
-    Shield
+    Shield,
+    Check,
+    AlertCircle,
+    Activity as ActivityIcon,
+    Facebook,
+    Smartphone,
+    Play,
+    Twitter,
+    Linkedin,
+    ShoppingBag,
+    Instagram,
+    Youtube,
+    Disc as Pinterest,
+    Send,
+    Loader2,
+    LayoutGrid
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useTheme } from "next-themes"
@@ -31,19 +46,15 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import {
-    BarChart3,
-    LayoutGrid,
-    Check,
-    AlertCircle,
-    Activity as ActivityIcon
-} from "lucide-react"
+import { getEnabledPlatforms, updateEnabledPlatforms } from "@/actions/profile-actions"
+import { PlatformType } from "@/lib/types"
 
 interface SettingsViewProps {
     onBack?: () => void
+    onEnabledPlatformsChange?: (platforms: string[]) => void
 }
 
-export default function SettingsView({ onBack }: SettingsViewProps) {
+export default function SettingsView({ onBack, onEnabledPlatformsChange }: SettingsViewProps) {
     const { data: session } = useSession()
     const { toast } = useToast()
     const { setTheme, theme } = useTheme()
@@ -63,11 +74,6 @@ export default function SettingsView({ onBack }: SettingsViewProps) {
                 alertSystem: false
             }
         }
-        return null
-    })
-
-    const [dashboardSettings, setDashboardSettings] = useState(() => {
-        if (initialSettings) return initialSettings
         return {
             refreshInterval: "manual",
             defaultView: "top-performer",
@@ -81,26 +87,33 @@ export default function SettingsView({ onBack }: SettingsViewProps) {
         }
     })
 
+    const [dashboardSettings, setDashboardSettings] = useState(initialSettings)
+    const [enabledPlatforms, setEnabledPlatforms] = useState<string[]>(["meta", "youtube"])
+    const [isLoadingPlatforms, setIsLoadingPlatforms] = useState(true)
+
+    useEffect(() => {
+        getEnabledPlatforms().then(res => {
+            if (res.success && res.platforms) {
+                setEnabledPlatforms(res.platforms)
+            }
+            setIsLoadingPlatforms(false)
+        })
+    }, [])
+
     const hasChanges = JSON.stringify(dashboardSettings) !== JSON.stringify(initialSettings)
 
-    const handleSaveSettings = () => {
-        if (!hasChanges) {
-            const { dismiss } = toast({
-                title: "Configuration Synchronized",
-                description: "No modifications detected since last update. Please adjust your preferences before committing changes.",
-                variant: "destructive",
-                duration: 3000
-            })
-            setTimeout(() => dismiss(), 3000)
-            return
-        }
-
+    const handleSaveSettings = async () => {
         localStorage.setItem("dashboard_settings", JSON.stringify(dashboardSettings))
         setInitialSettings(dashboardSettings)
 
+        await updateEnabledPlatforms(enabledPlatforms)
+        if (onEnabledPlatformsChange) {
+            onEnabledPlatformsChange(enabledPlatforms)
+        }
+
         const { dismiss } = toast({
             title: "Settings Saved",
-            description: "Your dashboard preferences have been successfully updated.",
+            description: "Your dashboard and platform preferences have been updated.",
             duration: 5000
         })
         setTimeout(() => dismiss(), 5000)
@@ -120,17 +133,7 @@ export default function SettingsView({ onBack }: SettingsViewProps) {
         }
         setDashboardSettings(defaults)
         setTheme('system')
-
-        // If defaults are different from initial, allow saving
-        if (JSON.stringify(defaults) === JSON.stringify(initialSettings)) {
-            const { dismiss } = toast({
-                title: "Already at Default",
-                description: "System is already using the baseline configuration.",
-                duration: 3000
-            })
-            setTimeout(() => dismiss(), 3000)
-            return
-        }
+        setEnabledPlatforms(["meta", "tiktok"])
 
         const { dismiss } = toast({
             title: "Settings Reset",
@@ -385,6 +388,76 @@ export default function SettingsView({ onBack }: SettingsViewProps) {
                                     />
                                 </div>
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 backdrop-blur-2xl shadow-xl overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <CardHeader className="p-6 md:p-8 pb-4">
+                            <CardTitle className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-3">
+                                <Globe className="h-5 w-5 text-[#007AFF]" />
+                                Platform Visibility
+                            </CardTitle>
+                            <CardDescription className="text-xs text-zinc-500">
+                                Toggle which platforms are available for connection in your hub
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-6 md:p-8 pt-2">
+                            {isLoadingPlatforms ? (
+                                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                                    <Loader2 className="w-8 h-8 animate-spin text-[#007AFF] opacity-50" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Synchronizing Platforms...</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {[
+                                        { id: 'meta', label: 'Meta', icon: Facebook, color: 'text-blue-600' },
+                                        { id: 'tiktok', label: 'TikTok', icon: Smartphone, color: 'text-zinc-900 dark:text-white' },
+                                        { id: 'google', label: 'Google Ads', icon: Play, color: 'text-red-500' },
+                                        { id: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
+                                        { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
+                                        { id: 'shopify', label: 'Shopify', icon: ShoppingBag, color: 'text-emerald-600' },
+                                        { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-500' },
+                                        { id: 'pinterest', label: 'Pinterest', icon: Pinterest, color: 'text-red-700' },
+                                        { id: 'x', label: 'X (Twitter)', icon: Twitter, color: 'text-zinc-600 dark:text-zinc-400' },
+                                        { id: 'telegram', label: 'Telegram', icon: Send, color: 'text-sky-500' }
+                                    ].map((platform) => (
+                                        <div
+                                            key={platform.id}
+                                            className={cn(
+                                                "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
+                                                enabledPlatforms.includes(platform.id)
+                                                    ? "bg-blue-500/5 border-blue-500/20"
+                                                    : "bg-zinc-50 dark:bg-white/5 border-zinc-100 dark:border-white/5 opacity-60"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={cn(
+                                                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                                                    enabledPlatforms.includes(platform.id) ? "bg-white dark:bg-zinc-800 shadow-sm" : "bg-zinc-100 dark:bg-zinc-900"
+                                                )}>
+                                                    <platform.icon className={cn("w-5 h-5", platform.color)} />
+                                                </div>
+                                                <div className="space-y-0.5">
+                                                    <span className="text-xs font-black uppercase tracking-tight text-zinc-900 dark:text-zinc-100">{platform.label}</span>
+                                                    <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">{enabledPlatforms.includes(platform.id) ? 'Enabled' : 'Disabled'}</p>
+                                                </div>
+                                            </div>
+                                            <Switch
+                                                checked={enabledPlatforms.includes(platform.id)}
+                                                onCheckedChange={(val) => {
+                                                    if (val) {
+                                                        setEnabledPlatforms([...enabledPlatforms, platform.id])
+                                                    } else {
+                                                        setEnabledPlatforms(enabledPlatforms.filter(p => p !== platform.id))
+                                                    }
+                                                }}
+                                                className="data-[state=checked]:bg-[#007AFF]"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

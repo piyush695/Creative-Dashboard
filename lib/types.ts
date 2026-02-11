@@ -11,6 +11,7 @@ export interface AdData {
     isAdvantagePlus?: boolean
     adType?: string
     analysisMode?: string
+    platform?: PlatformType
 
     // Performance Metrics
     spend: string | number
@@ -153,3 +154,5 @@ export interface AdData {
     compositionNotes?: string
     mobileReadiness?: string
 }
+
+export type PlatformType = 'all' | 'meta' | 'tiktok' | 'google' | 'linkedin' | 'youtube' | 'pinterest' | 'x' | 'shopify' | 'instagram' | 'telegram'

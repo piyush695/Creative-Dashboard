@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Search, ChevronDown, BarChart3, Zap, TestTube, Loader2, ChevronsLeft, ChevronsRight, Settings, LogOut, User, LayoutDashboard, Lock, Menu, RefreshCcw, X, Activity, Maximize2, Sparkles, HelpCircle, GripHorizontal, Grip, ListFilter, Bot, Calendar, Trophy, BookOpen, Check, TrendingUp, Globe, LayoutGrid, List, Table as TableIcon, Grid2X2, Shield } from "lucide-react"
+import { Search, ChevronDown, BarChart3, Zap, TestTube, Loader2, ChevronsLeft, ChevronsRight, ChevronRight, Settings, LogOut, User, LayoutDashboard, Lock, Menu, RefreshCcw, X, Activity, Maximize2, Sparkles, HelpCircle, GripHorizontal, Grip, ListFilter, Bot, Calendar, Trophy, BookOpen, Check, TrendingUp, Globe, LayoutGrid, List, Table as TableIcon, Grid2X2, Shield, Plus, Facebook, Smartphone, Play, Linkedin, Twitter, ShoppingBag, Disc as Pinterest, Instagram, Send } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -25,9 +25,11 @@ import InsightsSection from "@/components/insights-section"
 import SampleAds from "@/components/sample-ads"
 import AnalysisSidebar from "@/components/analysis-sidebar"
 import Footer from "@/components/footer"
+import { AdData, PlatformType } from "@/lib/types"
+import { ConnectPlatformDialog } from "@/components/connect-platform-dialog"
+import { AddAdDialog } from "@/components/add-ad-dialog"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { fetchAdsFromMongo } from "@/actions/ads"
-import { AdData } from "@/lib/types"
 import ScoreRadarChart from "@/components/score-radar-chart"
 import { EnlargedImageModal } from "@/components/enlarged-image-modal"
 import {
@@ -48,6 +50,13 @@ import {
     TableRow,
 } from "@/components/ui/table"
 
+import {
+    updateProfile,
+    updateConnectedPlatforms,
+    getConnectedPlatforms,
+    getEnabledPlatforms
+} from "@/actions/profile-actions"
+
 const ACCOUNT_LIST = [
     { id: "25613137998288459", name: "HP FOREX - EU" },
     { id: "1333109771382157", name: "HP FOREX - LATAM" },
@@ -55,6 +64,20 @@ const ACCOUNT_LIST = [
     { id: "1507386856908357", name: "HP FOREX - USA + CA" },
     { id: "1024147486590417", name: "HP FUTURES - USA + CA" },
 ];
+
+const PLATFORM_META: Record<string, { label: string, icon: any }> = {
+    all: { label: 'All Platforms', icon: Globe },
+    meta: { label: 'Meta', icon: Facebook },
+    tiktok: { label: 'TikTok', icon: Smartphone },
+    google: { label: 'Google Ads', icon: Play },
+    youtube: { label: 'YouTube', icon: Play },
+    linkedin: { label: 'LinkedIn', icon: Linkedin },
+    shopify: { label: 'Shopify', icon: ShoppingBag },
+    instagram: { label: 'Instagram', icon: Instagram },
+    pinterest: { label: 'Pinterest', icon: Pinterest },
+    x: { label: 'X (Twitter)', icon: Twitter },
+    telegram: { label: 'Telegram', icon: Send }
+};
 
 function DashboardContent() {
     const { toast } = useToast()
@@ -80,6 +103,7 @@ function DashboardContent() {
     const [mounted, setMounted] = useState(false)
     const [enlargedImage, setEnlargedImage] = useState<{ url: string; title: string; accountName?: string } | null>(null)
     const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false)
+    const [enabledPlatforms, setEnabledPlatforms] = useState<string[]>(["meta", "youtube"])
     const isMobile = useIsMobile()
     const [viewFilter, setViewFilter] = useState("Top Perf.")
     const [isGuideOpen, setIsGuideOpen] = useState(false)
@@ -92,10 +116,39 @@ function DashboardContent() {
     const [isCompactModeEnabled, setIsCompactModeEnabled] = useState(false)
     const [isReducedMotionEnabled, setIsReducedMotionEnabled] = useState(false)
     const [isAlertSystemEnabled, setIsAlertSystemEnabled] = useState(false)
+    const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>("all")
+    const [isAddAdDialogOpen, setIsAddAdDialogOpen] = useState(false)
+    const [isConnectDialogOpen, setIsConnectDialogOpen] = useState(false)
+    const [showPlatformAlert, setShowPlatformAlert] = useState(false)
+    const [connectedPlatforms, setConnectedPlatforms] = useState<PlatformType[]>(["meta"])
 
-    // Synchronize settings from localStorage
+    // Synchronize settings and platform state from localStorage
     useEffect(() => {
+        setMounted(true)
         if (typeof window !== "undefined") {
+            const loadMetaPlatforms = async () => {
+                const res = await getEnabledPlatforms()
+                if (res.success && res.platforms) {
+                    setEnabledPlatforms(res.platforms)
+                }
+            }
+            loadMetaPlatforms()
+
+            const savedPlatforms = localStorage.getItem("connected_platforms")
+            if (savedPlatforms) {
+                try {
+                    const parsed = JSON.parse(savedPlatforms)
+                    if (Array.isArray(parsed)) {
+                        // Ensure uniqueness immediately to avoid 'length > 1' false positives
+                        const unique = [...new Set(parsed)]
+                        if (!unique.includes('meta')) unique.push('meta')
+                        setConnectedPlatforms(unique)
+                    }
+                } catch (e) {
+                    console.error("Error parsing saved platforms:", e)
+                }
+            }
+
             const saved = localStorage.getItem("dashboard_settings")
             if (saved) {
                 const settings = JSON.parse(saved)
@@ -130,8 +183,36 @@ function DashboardContent() {
     useEffect(() => {
         if (status === "unauthenticated") {
             router.replace("/login")
+        } else if (status === "authenticated") {
+            // Load connected platforms from DB
+            getConnectedPlatforms().then(res => {
+                if (res.success && res.platforms) {
+                    const dbPlatforms = res.platforms as PlatformType[]
+                    setConnectedPlatforms(prev => {
+                        const merged = [...new Set([...prev, ...dbPlatforms])]
+                        if (!merged.includes('meta')) merged.push('meta')
+                        localStorage.setItem("connected_platforms", JSON.stringify(merged))
+                        return merged
+                    })
+                }
+            })
+            // Load enabled platforms from DB
+            getEnabledPlatforms().then(res => {
+                if (res.success && res.platforms) {
+                    setEnabledPlatforms(res.platforms)
+                }
+            })
         }
     }, [status, router])
+
+    // Enforce default platform selection: if only Meta is connected, automatically switch from 'all' to 'meta'
+    // This ensures the "No ads for this account" message appears correctly instead of the generic view
+    useEffect(() => {
+        const uniqueCount = new Set(connectedPlatforms).size;
+        if (uniqueCount <= 1) {
+            setSelectedPlatform('meta')
+        }
+    }, [connectedPlatforms.length, JSON.stringify(connectedPlatforms)])
 
     // 1. Extract unique accounts from ad data (Dynamic from DB)
     const accounts = useMemo(() => {
@@ -249,6 +330,11 @@ function DashboardContent() {
             filteredAds = filteredAds.filter(ad => ad.adAccountId === selectedAccountId)
         }
 
+        // 1.5 Filter by platform
+        if (selectedPlatform !== "all") {
+            filteredAds = filteredAds.filter(ad => ad.platform === selectedPlatform)
+        }
+
         const accountHasAds = filteredAds.length > 0
         const query = searchQuery.trim().toLowerCase()
 
@@ -262,6 +348,10 @@ function DashboardContent() {
             const others = filteredAds.filter(ad => ad.performanceLabel !== "TOP_PERFORMER")
             filteredAds = [...top, ...others]
         }
+
+        // 3. Deduplicate Ads (Fix for multiple database records)
+        // usage of Map ensures we keep the first occurrence of each unique adId
+        filteredAds = Array.from(new Map(filteredAds.map(item => [item.adId, item])).values());
 
         // 3. Search and Final Result Logic
         let results = []
@@ -277,7 +367,7 @@ function DashboardContent() {
         }
 
         return { displayedAds: results, hasAdsInAccount: accountHasAds }
-    }, [ads, searchQuery, selectedAccountId, viewFilter])
+    }, [ads, searchQuery, selectedAccountId, viewFilter, selectedPlatform])
 
     // 4. Selection Sync
     useEffect(() => {
@@ -321,6 +411,10 @@ function DashboardContent() {
     const recentAds = recentHistory
         .map(id => ads.find(ad => ad.id === id))
         .filter((ad): ad is AdData => !!ad)
+        .filter(ad => {
+            const platform = ad.platform || 'meta';
+            return selectedPlatform === "all" || platform === selectedPlatform;
+        })
 
     const handleAction = (action: string) => {
         // Action handled here
@@ -524,6 +618,16 @@ function DashboardContent() {
                                         <span className="text-xs font-black text-zinc-700 dark:text-zinc-300">Help & Guide</span>
                                         <ChevronDown className="w-3.5 h-3.5 ml-auto opacity-20 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
                                     </DropdownMenuItem>
+
+                                    <DropdownMenuItem
+                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer bg-[#007AFF] text-white hover:bg-[#007AFF]/90 mt-2 active:scale-95"
+                                        onClick={() => {
+                                            setIsConnectDialogOpen(true)
+                                        }}
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        <span className="text-xs font-black uppercase tracking-widest">Connect Platform</span>
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenuPortal>
                         </DropdownMenu>
@@ -553,9 +657,9 @@ function DashboardContent() {
                                         {session?.user?.name?.[0] || "U"}
                                     </div>
                                     {!isSidebarCollapsed && (
-                                        <div className="ml-3 flex flex-col items-start overflow-hidden w-full">
-                                            <span className="text-sm font-semibold truncate w-full text-left text-zinc-900 dark:text-zinc-100">{session?.user?.name || "User"}</span>
-                                            <span className="text-[10px] text-muted-foreground truncate w-full text-left capitalize">{((session?.user as any)?.role || "Viewer")} Plan</span>
+                                        <div className="ml-3 flex flex-col items-start overflow-hidden w-full text-left">
+                                            <span className="text-sm font-semibold truncate w-full text-zinc-900 dark:text-zinc-100">{session?.user?.name || "User"}</span>
+                                            <span className="text-[10px] text-muted-foreground truncate w-full capitalize opacity-60 font-bold">{((session?.user as any)?.role || "Viewer")} Plan</span>
                                         </div>
                                     )}
                                     {!isSidebarCollapsed && <ChevronDown className="h-4 w-4 ml-auto text-zinc-400 transition-transform duration-200 group-data-[state=open]:rotate-180 group-hover:text-zinc-600 dark:group-hover:text-zinc-300" />}
@@ -592,88 +696,165 @@ function DashboardContent() {
                                         <Lock className="mr-2 h-4 w-4" /> Change Password
                                     </DropdownMenuItem>
                                 )}
-                                <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => signOut({ callbackUrl: "/login" })}>
-                                    <LogOut className="mr-2 h-4 w-4" /> Log out
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={() => signOut()}>
+                                    <LogOut className="mr-2 h-4 w-4" /> Log Out
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                    {/* Middle: Accounts & Navigation */}
+
+                    {/* Middle: Navigation & Selection Hubs */}
                     <div className="flex-1 overflow-auto py-4 space-y-4">
-                        {/* Account Switcher */}
-                        <div className={`px-3 ${isSidebarCollapsed ? "flex justify-center" : ""}`}>
-                            {!isSidebarCollapsed ? (
-                                <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-muted-foreground ml-1">AD ACCOUNT</label>
+                        {/* Desktop Selection Hubs */}
+                        <div className={cn("px-4 space-y-4", isSidebarCollapsed ? "hidden" : "")}>
+                            {/* Platform Section */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black tracking-widest text-[#007AFF] ml-1 uppercase opacity-40">Platform</label>
+                                {new Set(connectedPlatforms.filter(p => enabledPlatforms.includes(p))).size <= 1 ? (
+                                    <div
+                                        onClick={() => setShowPlatformAlert(true)}
+                                        className="w-full h-12 px-3 flex items-center gap-4 cursor-pointer hover:bg-white dark:hover:bg-zinc-800 rounded-2xl transition-all duration-300 group/hub text-left"
+                                    >
+                                        <div className="relative flex-shrink-0">
+                                            <div className="relative w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center transition-all group-hover/hub:bg-white dark:group-hover/hub:bg-zinc-700">
+                                                <Facebook className="w-4 h-4 text-[#007AFF]" />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col text-left min-w-0">
+                                            <span className="text-zinc-900 dark:text-zinc-100 font-bold text-xs uppercase tracking-tight leading-none">Meta</span>
+                                        </div>
+                                        <ChevronDown className="h-4 w-4 opacity-30 ml-auto flex-shrink-0 group-hover/hub:opacity-100 transition-opacity" />
+                                    </div>
+                                ) : (
+                                    <Select
+                                        value={selectedPlatform}
+                                        onValueChange={(v: any) => setSelectedPlatform(v)}
+                                    >
+                                        <SelectTrigger className="w-full h-12 px-3 border-none bg-transparent hover:bg-white dark:hover:bg-zinc-800 shadow-none focus:ring-0 rounded-2xl transition-all duration-300 group/hub text-left">
+                                            <div className="flex items-center gap-4 truncate py-1 w-full text-left">
+                                                {(() => {
+                                                    const currentPlatform = PLATFORM_META[selectedPlatform] || PLATFORM_META.all
+                                                    return (
+                                                        <>
+                                                            <div className="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center transition-all group-hover/hub:bg-white dark:group-hover/hub:bg-zinc-700">
+                                                                <currentPlatform.icon className="w-4 h-4 text-[#007AFF]" />
+                                                            </div>
+                                                            <span className="truncate text-zinc-500 group-hover/hub:text-zinc-900 dark:group-hover/hub:text-zinc-100 font-bold text-xs uppercase tracking-tight">
+                                                                {currentPlatform.label}
+                                                            </span>
+                                                        </>
+                                                    )
+                                                })()}
+                                            </div>
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-2xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-3xl animate-in fade-in zoom-in-95 duration-200">
+                                            <SelectItem value="all" className="font-bold text-xs py-3 rounded-xl mx-1 my-1 transition-colors cursor-pointer">
+                                                <div className="flex items-center gap-3">
+                                                    <Globe className="w-4 h-4 text-zinc-400" />
+                                                    <span>All Platforms</span>
+                                                </div>
+                                            </SelectItem>
+                                            {Object.entries(PLATFORM_META)
+                                                .filter(([id]) => id !== 'all' && enabledPlatforms.includes(id) && connectedPlatforms.includes(id as any))
+                                                .map(([id, meta]) => (
+                                                    <SelectItem key={id} value={id} className="font-bold text-xs py-3 rounded-xl mx-1 my-0.5 transition-colors cursor-pointer">
+                                                        <div className="flex items-center gap-3">
+                                                            <meta.icon className="w-4 h-4" />
+                                                            <span className="font-bold">{meta.label}</span>
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </div>
+
+                            {/* Account Section */}
+                            {selectedPlatform !== 'youtube' && (
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black tracking-widest text-indigo-500 ml-1 uppercase opacity-40">Account</label>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button
-                                                variant="outline"
-                                                className="w-full justify-between bg-primary/5 dark:bg-primary/10 text-foreground hover:bg-primary/10 dark:hover:bg-primary/20 border-primary/20 font-semibold h-9 text-xs"
+                                                variant="ghost"
+                                                className="w-full justify-between bg-transparent border-none shadow-none font-black h-12 text-xs rounded-2xl hover:bg-white dark:hover:bg-zinc-800 transition-all px-3 group/hub"
                                             >
-                                                <span className="truncate">
-                                                    {selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "Unknown Account"}
-                                                </span>
-                                                <ChevronDown className="h-3 w-3 opacity-50 ml-2 flex-shrink-0" />
+                                                <div className="flex items-center gap-4 truncate">
+                                                    <div className="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center group-hover/hub:bg-white dark:group-hover/hub:bg-zinc-700 transition-colors">
+                                                        <BarChart3 className="w-4 h-4 text-indigo-500" />
+                                                    </div>
+                                                    <span className="truncate text-zinc-500 group-hover/hub:text-zinc-900 dark:group-hover/hub:text-zinc-100 font-bold text-xs">
+                                                        {selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "Select Account"}
+                                                    </span>
+                                                </div>
+                                                <ChevronDown className="h-3 w-3 opacity-30 ml-2 flex-shrink-0 group-hover/hub:opacity-100 transition-opacity" />
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start" className="w-60 max-h-80 overflow-y-auto">
+                                        <DropdownMenuContent align="start" className="w-64 max-h-[400px] overflow-y-auto rounded-2xl shadow-3xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 border animate-in slide-in-from-top-2 duration-300">
                                             <DropdownMenuItem
                                                 onClick={() => setSelectedAccountId("all")}
-                                                className={selectedAccountId === "all" ? "bg-primary/10 font-bold" : ""}
+                                                className={cn("py-3 px-4 rounded-xl mx-1 my-1 transition-all", selectedAccountId === "all" ? "bg-primary/10 font-black text-primary" : "hover:bg-zinc-100 dark:hover:bg-zinc-800 font-bold")}
                                             >
-                                                <BarChart3 className="h-4 w-4 mr-2" />
-                                                <span>All Accounts</span>
+                                                <Globe className="h-4 w-4 mr-3 opacity-70" />
+                                                <span className="text-xs uppercase tracking-widest font-black">All Accounts</span>
                                             </DropdownMenuItem>
+                                            <div className="h-[1px] bg-zinc-100 dark:bg-white/5 mx-2 my-1" />
                                             {accounts.map((account) => (
                                                 <DropdownMenuItem
                                                     key={account.id}
                                                     onClick={() => {
                                                         setSelectedAccountId(account.id)
                                                         setIsViewAllAdsOpen(false)
-                                                        const firstAdInAccount = ads.find(ad => ad.adAccountId === account.id)
-                                                        if (firstAdInAccount) handleSelectAd(firstAdInAccount.id)
                                                     }}
-                                                    className={selectedAccountId === account.id ? "bg-primary/10 font-bold" : ""}
+                                                    className={cn("py-3 px-4 rounded-xl mx-1 my-0.5 transition-all group/item", selectedAccountId === account.id ? "bg-primary/10 font-black text-primary shadow-sm" : "hover:bg-zinc-100 dark:hover:bg-zinc-800 font-bold")}
                                                 >
-                                                    <BarChart3 className="h-4 w-4 mr-2" />
-                                                    <div className="flex flex-col items-start leading-tight">
-                                                        <span>{account.name}</span>
-                                                        <span className="text-[9px] text-muted-foreground font-mono leading-none mt-1">{account.id}</span>
+                                                    <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mr-3 group-hover/item:scale-110 transition-transform">
+                                                        <BarChart3 className="h-4 w-4 text-zinc-500" />
+                                                    </div>
+                                                    <div className="flex flex-col items-start leading-tight overflow-hidden">
+                                                        <span className="font-bold text-xs truncate w-full">{account.name}</span>
+                                                        <span className="text-[9px] text-muted-foreground font-mono leading-none mt-1 opacity-50 uppercase tracking-tighter">{account.id}</span>
                                                     </div>
                                                 </DropdownMenuItem>
                                             ))}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
-                            ) : (
-                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg bg-primary/10">
-                                    <BarChart3 className="h-4 w-4 text-primary" />
-                                </Button>
                             )}
                         </div>
 
-                        {/* Desktop Search (Collapsed: Hidden or Icon) */}
-                        <div className={`px-3 ${isSidebarCollapsed ? "hidden" : ""}`}>
-                            <div className="relative group z-50">
-                                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                        {/* Collapsed State Icons */}
+                        <div className={`px-3 ${isSidebarCollapsed ? "flex flex-col items-center gap-4" : "hidden"}`}>
+                            <div
+                                className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-sm"
+                                onClick={() => connectedPlatforms.length === 0 ? setShowPlatformAlert(true) : null}
+                            >
+                                <Globe className="w-5 h-5 text-blue-500" />
+                            </div>
+                            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-sm">
+                                <BarChart3 className="w-5 h-5 text-indigo-500" />
+                            </div>
+                        </div>
+
+                        {/* Desktop Search */}
+                        <div className={`px-4 mt-2 ${isSidebarCollapsed ? "hidden" : ""}`}>
+                            <div className="relative group/search z-50">
+                                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                    <Search className="h-3.5 w-3.5 text-zinc-400 transition-colors group-focus-within/search:text-[#007AFF]" />
+                                </div>
                                 <Input
                                     placeholder="Search ads by ID..."
                                     value={searchQuery}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                         const val = e.target.value
                                         setSearchQuery(val)
-                                        if (!val.trim()) {
-                                            setSelectedAccountId("all")
-                                        }
+                                        if (!val.trim()) setSelectedAccountId("all")
                                         setIsSearchDropdownOpen(true)
                                     }}
                                     onFocus={() => setIsSearchDropdownOpen(true)}
-                                    onBlur={() => {
-                                        // Slight delay to allow click event on dropdown items to fire
-                                        setTimeout(() => setIsSearchDropdownOpen(false), 200)
-                                    }}
-                                    className="pl-8 pr-8 h-8 text-xs bg-muted/40 dark:bg-zinc-800/40 border-muted dark:border-zinc-700/50 focus-visible:ring-primary/20 rounded-lg"
+                                    onBlur={() => setTimeout(() => setIsSearchDropdownOpen(false), 200)}
+                                    className="pl-9 pr-9 h-10 text-xs bg-white/40 dark:bg-zinc-800/40 border-zinc-200/50 dark:border-white/5 focus-visible:ring-[#007AFF]/20 rounded-xl shadow-none hover:bg-white dark:hover:bg-zinc-800 transition-all font-medium"
                                 />
                                 {searchQuery && (
                                     <button
@@ -682,53 +863,51 @@ function DashboardContent() {
                                             setSelectedAccountId("all")
                                             setIsSearchDropdownOpen(false)
                                         }}
-                                        className="absolute right-2 top-2 h-4 w-4 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full transition-all"
-                                        title="Clear search"
+                                        className="absolute right-3 top-3 h-4 w-4 flex items-center justify-center text-zinc-400 hover:text-red-500 transition-colors"
                                     >
-                                        <X className="h-3 w-3" />
+                                        <X className="h-3.5 w-3.5" />
                                     </button>
                                 )}
 
-                                {/* Search Results Dropdown */}
+                                {/* Search Results Animate-in */}
                                 {searchQuery.trim().length > 0 && isSearchDropdownOpen && (
-                                    <div className="absolute top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-lg z-50">
-                                        <div className="py-1">
+                                    <div className="absolute top-full left-0 right-0 mt-2 max-h-64 overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl shadow-3xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <div className="py-2 p-1">
                                             {ads.filter(ad =>
-                                                String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
-                                            ).length > 0 ? (
-                                                ads.filter(ad =>
+                                                (selectedPlatform === "all" || ad.platform === selectedPlatform) && (
                                                     String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
                                                     String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
+                                                )
+                                            ).length > 0 ? (
+                                                ads.filter(ad =>
+                                                    (selectedPlatform === "all" || ad.platform === selectedPlatform) && (
+                                                        String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                        String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
+                                                    )
                                                 ).slice(0, 10).map((ad) => (
                                                     <button
                                                         key={ad.id}
                                                         onClick={() => {
-                                                            // Only switch account if the ad's account exists in our known list
                                                             const accountExists = accounts.some(a => a.id === ad.adAccountId)
-                                                            if (accountExists) {
-                                                                setSelectedAccountId(ad.adAccountId)
-                                                            }
-                                                            // Otherwise, keep the current selection (e.g., "All Accounts")
-
+                                                            if (accountExists) setSelectedAccountId(ad.adAccountId)
                                                             setSelectedAdId(ad.id)
-                                                            setSearchQuery(ad.adId) // Auto-fill search with exact ID
-                                                            updateHistory(ad.id)
-                                                            setIsSearchDropdownOpen(false) // Close dropdown
-                                                            setIsViewAllAdsOpen(false) // Close view all ads if open
+                                                            setSearchQuery(ad.adId)
+                                                            setIsSearchDropdownOpen(false)
+                                                            setIsViewAllAdsOpen(false)
                                                         }}
-                                                        className="w-full text-left px-3 py-2 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 flex flex-col gap-0.5 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0"
+                                                        className="w-full text-left px-4 py-3 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-xl transition-colors border-none mb-0.5 last:mb-0"
                                                     >
-                                                        <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{ad.adName}</span>
-                                                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                                                            <span className="font-mono truncate max-w-[120px]">{ad.adId}</span>
-                                                            <span className="opacity-70">{accounts.find(a => a.id === ad.adAccountId)?.name}</span>
+                                                        <span className="font-bold text-zinc-900 dark:text-zinc-100 block truncate mb-0.5">{ad.adName}</span>
+                                                        <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono tracking-tighter">
+                                                            <span>{ad.adId}</span>
+                                                            <span className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded uppercase font-black">{PLATFORM_META[ad.platform as any]?.label || "AD"}</span>
                                                         </div>
                                                     </button>
                                                 ))
                                             ) : (
-                                                <div className="px-3 py-3 text-center text-xs text-muted-foreground">
-                                                    No ads found
+                                                <div className="px-4 py-6 text-center">
+                                                    <Search className="w-8 h-8 text-zinc-200 dark:text-zinc-800 mx-auto mb-2" />
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">No matches found</p>
                                                 </div>
                                             )}
                                         </div>
@@ -737,8 +916,9 @@ function DashboardContent() {
                             </div>
                         </div>
 
-                        {/* View All Ads Toggle */}
-                        <div className={`px-3 mb-4 ${isSidebarCollapsed ? "flex justify-center" : ""}`}>
+                        {/* Premium Toggle Section */}
+                        <div className={`px-4 mt-8 space-y-2 ${isSidebarCollapsed ? "flex flex-col items-center" : ""}`}>
+                            <label className={`text-[10px] font-black tracking-widest text-zinc-400 uppercase ml-1 ${isSidebarCollapsed ? "hidden" : "block"}`}>Navigation</label>
                             <Button
                                 variant="ghost"
                                 onClick={() => {
@@ -748,35 +928,57 @@ function DashboardContent() {
                                     setIsSettingsOpen(false)
                                     if (isMobile) setIsMobileMenuOpen(false)
                                 }}
-                                className={`w-full justify-start gap-3 h-10 px-2 rounded-lg transition-all ${isViewAllAdsOpen ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"} ${isSidebarCollapsed ? "w-10 h-10 p-0 justify-center" : ""}`}
+                                className={cn(
+                                    "w-full justify-start gap-4 h-12 px-3 rounded-2xl transition-all relative group/nav overflow-hidden",
+                                    isViewAllAdsOpen
+                                        ? "bg-[#007AFF] text-white shadow-lg shadow-blue-500/25 active:scale-95"
+                                        : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 shadow-none",
+                                    isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : ""
+                                )}
                             >
-                                <LayoutDashboard className="h-4 w-4" />
-                                {!isSidebarCollapsed && <span className="text-[13px] font-bold">View All Ads</span>}
+                                <div className={cn(
+                                    "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
+                                    isViewAllAdsOpen ? "bg-white/20" : "bg-zinc-100 dark:bg-zinc-800/50 group-hover/nav:bg-white dark:group-hover/nav:bg-zinc-700"
+                                )}>
+                                    <LayoutDashboard className="h-4 w-4" />
+                                </div>
+                                {!isSidebarCollapsed && <span className="text-[13px] font-black uppercase tracking-widest">Library</span>}
+                                {isViewAllAdsOpen && !isSidebarCollapsed && (
+                                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                )}
                             </Button>
                         </div>
 
-                        {/* Recent History */}
-                        <div className="px-3">
-                            {!isSidebarCollapsed && <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 px-1">Recent Audits</h3>}
-                            <div className="space-y-1">
+                        {/* Recent History - Repositioned */}
+                        <div className={`px-4 mt-8 ${isSidebarCollapsed ? "hidden" : "block"}`}>
+                            <div className="flex items-center justify-between px-1 mb-3">
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Recent Audits</h3>
+                                <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5 ml-4" />
+                            </div>
+                            <div className="space-y-1.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
                                 {recentAds.map((ad) => (
                                     <button
                                         key={ad.id}
                                         onClick={() => handleSelectAd(ad.id)}
-                                        className={`w-full text-left px-2 py-2 rounded-md transition-all border flex items-center gap-3 ${selectedAdId === ad.id
-                                            ? "bg-primary border-primary text-primary-foreground shadow-sm"
-                                            : "border-transparent hover:bg-muted text-foreground"
-                                            } ${isSidebarCollapsed ? "justify-center px-0" : ""}`}
-                                        title={ad.adName}
-                                    >
-                                        {isSidebarCollapsed ? (
-                                            <span className="font-mono text-xs font-bold">{ad.adId.substring(0, 2)}</span>
-                                        ) : (
-                                            <div className="overflow-hidden">
-                                                <span className="text-xs font-medium leading-tight line-clamp-1 block">{ad.adName}</span>
-                                                <span className="text-[9px] opacity-70 font-mono block truncate">{ad.adId}</span>
-                                            </div>
+                                        className={cn(
+                                            "w-full text-left px-3 py-3 rounded-xl transition-all border group/audit relative overflow-hidden",
+                                            selectedAdId === ad.id
+                                                ? "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-white/10 shadow-md translate-x-1"
+                                                : "border-transparent hover:bg-white/50 dark:hover:bg-zinc-800/40 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 font-bold"
                                         )}
+                                    >
+                                        <div className="flex items-center gap-3 relative z-10">
+                                            <div className={cn(
+                                                "w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black uppercase tracking-tighter transition-colors",
+                                                selectedAdId === ad.id ? "bg-[#007AFF] text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 group-hover/audit:bg-white dark:group-hover/audit:bg-zinc-700"
+                                            )}>
+                                                {ad.platform === 'meta' ? 'M' : ad.platform === 'tiktok' ? 'T' : 'A'}
+                                            </div>
+                                            <div className="flex-1 overflow-hidden">
+                                                <span className="text-[11px] font-black leading-tight truncate block group-hover/audit:tracking-tight transition-all uppercase tracking-widest">{ad.adName}</span>
+                                                <span className="text-[9px] opacity-40 font-mono block truncate mt-0.5">{ad.adId}</span>
+                                            </div>
+                                        </div>
                                     </button>
                                 ))}
                             </div>
@@ -804,7 +1006,7 @@ function DashboardContent() {
                 {/* Main Content Area */}
                 <main className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent scroll-smooth transition-all duration-300 relative z-10">
                     <div className="flex items-center justify-between px-4 md:px-8 h-16 md:h-20 py-2 border-b border-border bg-background/50 dark:bg-black/40 backdrop-blur-xl sticky top-0 z-10 transition-all duration-300">
-                        <div className="flex items-center gap-4 min-w-0 overflow-hidden">
+                        <div className="flex items-center gap-2 md:gap-4 min-w-0 overflow-hidden">
                             {/* Mobile Sidebar Trigger */}
                             <div className="md:hidden flex-shrink-0">
                                 <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -878,48 +1080,109 @@ function DashboardContent() {
 
                                             {/* Navigation / Accounts */}
                                             <div className="flex-1 overflow-auto py-4 px-3 space-y-4">
-                                                <div className="space-y-1">
-                                                    <label className="text-xs font-semibold text-muted-foreground ml-1">AD ACCOUNT</label>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="outline" className="w-full justify-between bg-primary/5 text-foreground hover:bg-primary/10 border-primary/20 font-semibold h-10">
-                                                                <span className="truncate">
-                                                                    {selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "Unknown Account"}
-                                                                </span>
-                                                                <ChevronDown className="h-4 w-4 opacity-50 ml-2 flex-shrink-0" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="start" className="w-64 max-h-80 overflow-y-auto">
-                                                            <SheetClose asChild>
-                                                                <DropdownMenuItem
-                                                                    onClick={() => setSelectedAccountId("all")}
-                                                                    className={selectedAccountId === "all" ? "bg-primary/10 font-bold" : ""}
-                                                                >
-                                                                    <BarChart3 className="h-4 w-4 mr-2" />
-                                                                    <span>All Accounts</span>
-                                                                </DropdownMenuItem>
-                                                            </SheetClose>
-                                                            {accounts.map((account) => (
-                                                                <SheetClose key={account.id} asChild>
+                                                {/* Mobile Platform Switcher */}
+                                                <div className="space-y-1.5 pt-2">
+                                                    <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1 uppercase">Select Platform</label>
+                                                    {new Set(connectedPlatforms.filter(p => enabledPlatforms.includes(p))).size <= 1 ? (
+                                                        <div
+                                                            onClick={() => setShowPlatformAlert(true)}
+                                                            className="w-full h-12 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-xl font-bold text-sm flex items-center gap-3 px-3 cursor-pointer"
+                                                        >
+                                                            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center shadow-sm">
+                                                                <Facebook className="w-4 h-4 text-[#007AFF]" />
+                                                            </div>
+                                                            <span className="text-zinc-900 dark:text-zinc-100">Meta</span>
+                                                            <ChevronDown className="h-4 w-4 opacity-50 ml-auto" />
+                                                        </div>
+                                                    ) : (
+                                                        <Select
+                                                            value={selectedPlatform}
+                                                            onValueChange={(v: any) => {
+                                                                setSelectedPlatform(v)
+                                                                setIsMobileMenuOpen(false)
+                                                            }}
+                                                        >
+                                                            <SelectTrigger className="w-full h-12 bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 rounded-xl font-bold text-sm">
+                                                                <div className="flex items-center gap-3">
+                                                                    <Globe className="w-4 h-4 text-[#007AFF]" />
+                                                                    <SelectValue placeholder="Platform" />
+                                                                </div>
+                                                            </SelectTrigger>
+                                                            <SelectContent className="rounded-xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-2xl z-[2000]">
+                                                                <SelectItem value="all" className="font-bold py-3 text-sm">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <Globe className="w-4 h-4" />
+                                                                        <span>All Platforms</span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                                {[
+                                                                    { id: 'meta', label: 'Meta', icon: Facebook },
+                                                                    { id: 'tiktok', label: 'TikTok', icon: Smartphone },
+                                                                    { id: 'google', label: 'Google Ads', icon: Play },
+                                                                    { id: 'youtube', label: 'YouTube', icon: Play },
+                                                                    { id: 'linkedin', label: 'LinkedIn', icon: Linkedin },
+                                                                    { id: 'shopify', label: 'Shopify', icon: ShoppingBag },
+                                                                    { id: 'instagram', label: 'Instagram', icon: Instagram },
+                                                                    { id: 'pinterest', label: 'Pinterest', icon: Pinterest },
+                                                                    { id: 'x', label: 'X (Twitter)', icon: Twitter },
+                                                                    { id: 'telegram', label: 'Telegram', icon: Send }
+                                                                ].filter(p => enabledPlatforms.includes(p.id) && connectedPlatforms.includes(p.id as any)).map((p) => (
+                                                                    <SelectItem key={p.id} value={p.id} className="font-bold py-3 text-sm">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <p.icon className="w-4 h-4" />
+                                                                            <span>{p.label}</span>
+                                                                        </div>
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    )}
+                                                </div>
+
+                                                {selectedPlatform !== 'youtube' && (
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-semibold text-muted-foreground ml-1">AD ACCOUNT</label>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="outline" className="w-full justify-between bg-primary/5 text-foreground hover:bg-primary/10 border-primary/20 font-semibold h-10">
+                                                                    <span className="truncate">
+                                                                        {selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "Unknown Account"}
+                                                                    </span>
+                                                                    <ChevronDown className="h-4 w-4 opacity-50 ml-2 flex-shrink-0" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="start" className="w-64 max-h-80 overflow-y-auto">
+                                                                <SheetClose asChild>
                                                                     <DropdownMenuItem
-                                                                        onClick={() => {
-                                                                            setSelectedAccountId(account.id)
-                                                                            const firstAdInAccount = ads.find(ad => ad.adAccountId === account.id)
-                                                                            if (firstAdInAccount) handleSelectAd(firstAdInAccount.id)
-                                                                        }}
-                                                                        className={selectedAccountId === account.id ? "bg-primary/10 font-bold" : ""}
+                                                                        onClick={() => setSelectedAccountId("all")}
+                                                                        className={selectedAccountId === "all" ? "bg-primary/10 font-bold" : ""}
                                                                     >
                                                                         <BarChart3 className="h-4 w-4 mr-2" />
-                                                                        <div className="flex flex-col items-start leading-tight">
-                                                                            <span>{account.name}</span>
-                                                                            <span className="text-[9px] text-muted-foreground font-mono leading-none mt-1">{account.id}</span>
-                                                                        </div>
+                                                                        <span>All Accounts</span>
                                                                     </DropdownMenuItem>
                                                                 </SheetClose>
-                                                            ))}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
+                                                                {accounts.map((account) => (
+                                                                    <SheetClose key={account.id} asChild>
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => {
+                                                                                setSelectedAccountId(account.id)
+                                                                                const firstAdInAccount = ads.find(ad => ad.adAccountId === account.id)
+                                                                                if (firstAdInAccount) handleSelectAd(firstAdInAccount.id)
+                                                                            }}
+                                                                            className={selectedAccountId === account.id ? "bg-primary/10 font-bold" : ""}
+                                                                        >
+                                                                            <BarChart3 className="h-4 w-4 mr-2" />
+                                                                            <div className="flex flex-col items-start leading-tight">
+                                                                                <span>{account.name}</span>
+                                                                                <span className="text-[9px] text-muted-foreground font-mono leading-none mt-1">{account.id}</span>
+                                                                            </div>
+                                                                        </DropdownMenuItem>
+                                                                    </SheetClose>
+                                                                ))}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                )}
 
                                                 <div className="space-y-1">
                                                     <label className="text-xs font-semibold text-muted-foreground ml-1">MENU</label>
@@ -963,21 +1226,56 @@ function DashboardContent() {
                             </div>
 
                             {/* Mobile Title - Breadcrumbs Style */}
-                            <div className="flex items-center md:hidden min-w-0 overflow-hidden ml-1 mr-auto">
-                                <span className="text-sm text-muted-foreground/70 mr-1.5 flex-shrink-0">Dashboard</span>
-                                <span className="text-sm text-muted-foreground/50 mr-1.5 flex-shrink-0">/</span>
-                                <span className="font-semibold text-sm text-foreground truncate">
-                                    {isProfileOpen ? "Profile" : isSettingsOpen ? "Settings" : isGuideOpen ? "Guide" : isViewAllAdsOpen ? "All Ads" : (selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "Dashboard")}
-                                </span>
+                            <div className="flex items-center md:hidden min-w-0 flex-1 gap-0.5 h-full">
+                                <span className="text-[11px] font-medium text-muted-foreground flex-shrink-0 leading-none">Dashboard</span>
+                                {(selectedPlatform !== 'all' || connectedPlatforms.length <= 1) && (
+                                    <>
+                                        <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
+                                        <span className="text-[11px] font-medium text-muted-foreground flex-shrink-0 leading-none whitespace-nowrap">
+                                            {selectedPlatform === 'all' ? 'Meta' : (PLATFORM_META[selectedPlatform]?.label || selectedPlatform)}
+                                        </span>
+                                    </>
+                                )}
+                                {selectedPlatform !== 'youtube' && (
+                                    <>
+                                        <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
+                                        <span className="text-[12px] font-semibold text-foreground whitespace-nowrap leading-none truncate min-w-0">
+                                            {isProfileOpen ? "Profile" : isSettingsOpen ? "Settings" : isGuideOpen ? "Guide" : isViewAllAdsOpen ? "All Ads" : (
+                                                selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "All Accounts"
+                                            )}
+                                        </span>
+                                    </>
+                                )}
                             </div>
 
-                            {/* Desktop Breadcrumbs */}
                             <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
                                 <LayoutDashboard className="h-4 w-4 text-muted-foreground/50" />
                                 <span>/</span>
                                 <span className="font-medium text-foreground">Dashboard</span>
-                                <span>/</span>
-                                <span className="truncate max-w-[150px] lg:max-w-none">{isProfileOpen ? "Profile" : isSettingsOpen ? "Settings" : isGuideOpen ? "Guide" : isViewAllAdsOpen ? "All Ads" : (selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name)}</span>
+
+
+
+                                {(selectedPlatform !== 'all' || connectedPlatforms.length <= 1) && (
+                                    <>
+                                        <span>/</span>
+                                        <span className="font-medium text-muted-foreground uppercase tracking-widest text-[11px] opacity-70">
+                                            {selectedPlatform === 'all' ? 'Meta' : (PLATFORM_META[selectedPlatform]?.label || selectedPlatform)}
+                                        </span>
+                                    </>
+                                )}
+
+                                {(isProfileOpen || isSettingsOpen || isGuideOpen || isViewAllAdsOpen || selectedPlatform !== 'youtube') && (
+                                    <>
+                                        <span>/</span>
+                                        <span className="truncate max-w-[150px] lg:max-w-none font-semibold text-foreground">
+                                            {isProfileOpen ? "Profile" :
+                                                isSettingsOpen ? "Settings" :
+                                                    isGuideOpen ? "Guide" :
+                                                        isViewAllAdsOpen ? "All Ads" :
+                                                            (selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "All Accounts")}
+                                        </span>
+                                    </>
+                                )}
                             </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0 ml-1">
@@ -1015,6 +1313,15 @@ function DashboardContent() {
                                 </Button>
                             ) : (
                                 <>
+                                    <button
+                                        onClick={() => setIsConnectDialogOpen(true)}
+                                        className="hidden md:flex h-10 px-4 bg-[#007AFF] hover:bg-[#007AFF]/90 shadow-lg shadow-blue-500/25 text-white rounded-xl items-center justify-center gap-2 transition-all active:scale-[0.96] border border-blue-400/20 group overflow-hidden relative"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                                        <Plus className="h-4 w-4" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Connect Platform</span>
+                                    </button>
+
                                     <button
                                         onClick={() => loadData(true)}
                                         disabled={isSyncing}
@@ -1235,6 +1542,18 @@ function DashboardContent() {
                                                     </div>
                                                 </div>
                                             </section>
+
+                                            <section className="space-y-4 group/item">
+                                                <div className="flex items-start gap-3 md:gap-4">
+                                                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-slate-50 dark:bg-slate-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-slate-100 dark:border-slate-500/20">
+                                                        <Smartphone className="w-4 h-4 md:w-5 md:h-5 text-slate-500" />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <h3 className="text-[15px] md:text-lg font-bold">10. Multi-Platform Experience</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Seamlessly manage accounts across mobile and desktop. Use the <span className="font-bold text-foreground">Platform Switcher</span> to isolate your Meta, YouTube, or TikTok ads, with smart filtering that keeps your workspace focused.</p>
+                                                    </div>
+                                                </div>
+                                            </section>
                                         </div>
 
                                         <section className="mt-12 p-6 rounded-2xl bg-amber-500/5 border border-amber-500/10 relative overflow-hidden group/note">
@@ -1279,6 +1598,7 @@ function DashboardContent() {
                                         setIsProfileOpen(false)
                                         setIsSettingsOpen(false)
                                     }}
+                                    onEnabledPlatformsChange={(platforms) => setEnabledPlatforms(platforms)}
                                 />
                             </div>
                         ) : isViewAllAdsOpen ? (
@@ -1642,12 +1962,16 @@ function DashboardContent() {
                                             <div className="absolute top-full left-0 right-0 mt-2 max-h-[60vh] overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl z-[70] animate-in fade-in slide-in-from-top-2 duration-200">
                                                 <div className="py-2">
                                                     {ads.filter(ad =>
-                                                        String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                        String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
-                                                    ).length > 0 ? (
-                                                        ads.filter(ad =>
+                                                        (selectedPlatform === "all" || ad.platform === selectedPlatform) && (
                                                             String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
                                                             String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
+                                                        )
+                                                    ).length > 0 ? (
+                                                        ads.filter(ad =>
+                                                            (selectedPlatform === "all" || ad.platform === selectedPlatform) && (
+                                                                String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                                String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
+                                                            )
                                                         ).slice(0, 10).map((ad) => (
                                                             <button
                                                                 key={ad.id}
@@ -1682,15 +2006,45 @@ function DashboardContent() {
                                     </div>
                                 </div>
 
-                                <section className="space-y-4">
-                                    <SampleAds
-                                        ads={displayedAds}
-                                        hasAdsInAccount={hasAdsInAccount}
-                                        searchQuery={searchQuery}
-                                        selectedAdId={selectedAdId}
-                                        onSelect={handleSelectAd}
-                                        onEnlargeImage={(url, title) => setEnlargedImage({ url, title })}
-                                    />
+                                <section className="space-y-6">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between whitespace-nowrap overflow-x-auto no-scrollbar">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#007AFF] animate-pulse flex-shrink-0" />
+                                                <h3 className="text-[10px] md:text-[11px] font-black uppercase tracking-tight md:tracking-[0.2em] text-[#007AFF]">HolaPrime Source Library</h3>
+                                            </div>
+                                            <span className="text-[10px] font-black text-muted-foreground uppercase opacity-60 tracking-wider ml-2">{displayedAds.length} Creatives</span>
+                                        </div>
+                                    </div>
+                                    {displayedAds.length === 0 && selectedPlatform !== "all" ? (
+                                        <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-[32px] border-2 border-dashed border-zinc-200 dark:border-white/5 animate-in fade-in zoom-in-95 duration-500">
+                                            <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-2">
+                                                <Globe className="w-8 h-8 text-zinc-300" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <h4 className="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">No ads for this account</h4>
+                                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Connect more accounts or try a different filter</p>
+                                            </div>
+                                            {selectedPlatform !== 'youtube' && (
+                                                <Button
+                                                    onClick={() => setSelectedAccountId("all")}
+                                                    variant="outline"
+                                                    className="mt-4 rounded-xl border-zinc-200 dark:border-zinc-800 font-black text-[10px] uppercase tracking-widest h-9 px-6 hover:bg-zinc-100"
+                                                >
+                                                    Switch Account
+                                                </Button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <SampleAds
+                                            ads={displayedAds}
+                                            hasAdsInAccount={hasAdsInAccount}
+                                            searchQuery={searchQuery}
+                                            selectedAdId={selectedAdId}
+                                            onSelect={handleSelectAd}
+                                            onEnlargeImage={(url, title) => setEnlargedImage({ url, title })}
+                                        />
+                                    )}
                                 </section>
 
                                 {displayedAds.length > 0 && (
@@ -1750,7 +2104,7 @@ function DashboardContent() {
                 </main>
 
                 {/* Universal Analysis Sidebar - Positioned at root level to ensure fixed positioning works */}
-                <AnalysisSidebar
+                < AnalysisSidebar
                     activeDetail={activeAnalysis}
                     onClose={() => setActiveAnalysis(null)}
                     onNavigate={setActiveAnalysis}
@@ -1759,13 +2113,15 @@ function DashboardContent() {
                 />
 
                 {/* Global Image Popup for Home Page */}
-                {!isViewAllAdsOpen && enlargedImage && (
-                    <EnlargedImageModal
-                        url={enlargedImage.url}
-                        title={enlargedImage.title}
-                        onClose={() => setEnlargedImage(null)}
-                    />
-                )}
+                {
+                    !isViewAllAdsOpen && enlargedImage && (
+                        <EnlargedImageModal
+                            url={enlargedImage.url}
+                            title={enlargedImage.title}
+                            onClose={() => setEnlargedImage(null)}
+                        />
+                    )
+                }
 
                 {
                     session?.user?.email && (
@@ -1776,6 +2132,61 @@ function DashboardContent() {
                         />
                     )
                 }
+
+                <AddAdDialog
+                    open={isAddAdDialogOpen}
+                    onOpenChange={setIsAddAdDialogOpen}
+                    defaultPlatform={selectedPlatform}
+                    onSuccess={() => loadData(true)}
+                />
+
+                <ConnectPlatformDialog
+                    open={isConnectDialogOpen}
+                    onOpenChange={setIsConnectDialogOpen}
+                    connectedPlatforms={connectedPlatforms}
+                    enabledPlatforms={enabledPlatforms}
+                    onConnect={(platform) => {
+                        const next = [...new Set([...connectedPlatforms, platform])]
+                        setConnectedPlatforms(next)
+                        localStorage.setItem("connected_platforms", JSON.stringify(next))
+                        setSelectedPlatform(platform)
+                        updateConnectedPlatforms(next) // Async save to DB
+                    }}
+                    onDisconnect={(platform) => {
+                        if (platform === 'meta') return // Prevent disconnecting core platform
+                        const next = connectedPlatforms.filter(p => p !== platform)
+                        setConnectedPlatforms(next)
+                        localStorage.setItem("connected_platforms", JSON.stringify(next))
+                        if (selectedPlatform === platform || next.length <= 1) setSelectedPlatform("meta")
+                        updateConnectedPlatforms(next) // Async save to DB
+                    }}
+                />
+
+                <Dialog open={showPlatformAlert} onOpenChange={setShowPlatformAlert}>
+                    <DialogContent className="sm:max-w-[400px] rounded-[32px] p-8 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 shadow-3xl z-[2000]">
+                        <DialogHeader className="p-0">
+                            <div className="flex flex-col items-center text-center space-y-6">
+                                <div className="w-20 h-20 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
+                                    <Plus className="w-10 h-10 text-[#007AFF]" />
+                                </div>
+                                <div className="space-y-2 px-4">
+                                    <DialogTitle className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 text-center">HolaPrime multi-account sync</DialogTitle>
+                                    <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed text-center px-2">
+                                        Meta Core is your primary hub. Connect 1+ more accounts to unlock HolaPrime Intelligent Filtering.
+                                    </DialogDescription>
+                                </div>
+                            </div>
+                        </DialogHeader>
+                        <div className="mt-6 px-2">
+                            <Button
+                                onClick={() => setShowPlatformAlert(false)}
+                                className="w-full h-11 bg-[#007AFF] hover:bg-[#007AFF]/90 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
+                            >
+                                Okay
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div >
         </div >
     )

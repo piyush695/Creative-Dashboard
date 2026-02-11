@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AdData } from "@/lib/types"
-import { Maximize2, ChevronDown, ChevronUp, LayoutGrid, List, Table as TableIcon, Grid2X2 } from "lucide-react"
+import { Maximize2, ChevronDown, ChevronUp, LayoutGrid, List, Table as TableIcon, Grid2X2, Facebook, Play, Linkedin, Twitter, Smartphone, Disc as Pinterest, Globe, ShoppingBag } from "lucide-react"
+import { cn } from "@/lib/utils"
 import {
   Select,
   SelectContent,
@@ -28,6 +29,20 @@ interface SampleAdsProps {
   onSelect: (id: string) => void
   onEnlargeImage?: (url: string, title: string) => void
 }
+
+const PlatformIcon = ({ platform, className }: { platform?: AdData['platform'], className?: string }) => {
+  switch (platform) {
+    case 'meta': return <Facebook className={cn("text-blue-600", className)} />;
+    case 'tiktok': return <Smartphone className={cn("text-zinc-900 dark:text-white", className)} />;
+    case 'google': return <Play className={cn("text-red-500", className)} />;
+    case 'youtube': return <Play className={cn("text-red-600", className)} />;
+    case 'linkedin': return <Linkedin className={cn("text-blue-700", className)} />;
+    case 'x': return <Twitter className={cn("text-zinc-900 dark:text-white", className)} />;
+    case 'pinterest': return <Pinterest className={cn("text-red-600", className)} />;
+    case 'shopify': return <ShoppingBag className={cn("text-[#95BF47]", className)} />;
+    default: return <Globe className={cn("text-zinc-400", className)} />;
+  }
+};
 
 export default function SampleAds({
   ads = [],
@@ -131,6 +146,9 @@ export default function SampleAds({
                         >
                           {ad.performanceLabel || "Active"}
                         </span>
+                        <div className="ml-auto">
+                          <PlatformIcon platform={ad.platform} className="w-4 h-4" />
+                        </div>
                       </div>
                       <div className="space-y-1 w-full relative">
                         <div className="group/title w-full">
@@ -244,6 +262,9 @@ export default function SampleAds({
                           <span className="text-[9px] font-mono opacity-50 dark:opacity-70 break-all pt-0.5 mt-0.5">
                             ID: {ad.adId}
                           </span>
+                          <div className="ml-auto">
+                            <PlatformIcon platform={ad.platform} className="w-5 h-5 shadow-sm" />
+                          </div>
                         </div>
                         <h4 className="text-sm sm:text-base font-black text-foreground/90 dark:text-zinc-100 line-clamp-2">
                           {ad.adName}

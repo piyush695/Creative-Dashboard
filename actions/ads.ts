@@ -55,6 +55,7 @@ export async function fetchAdsFromMongo(): Promise<AdData[]> {
                 adName: adName,
                 adAccountId: adAccountId,
                 accountName: accountName,
+                platform: (data.platform || 'meta') as any, // Default to meta for current inventory
                 thumbnailUrl: thumbnailUrl,
                 spend: Number(data.spend) || 0,
                 purchaseValue: Number(data.purchaseValue) || 0,
@@ -91,5 +92,34 @@ export async function fetchAdsFromMongo(): Promise<AdData[]> {
     } catch (e) {
         console.error("Failed to fetch ads from MongoDB:", e);
         return [];
+    }
+}
+
+export async function saveAdToMongo(adData: Partial<AdData>) {
+    try {
+        const client = await clientPromise;
+        const db = client.db(process.env.MONGODB_DB || "reddit_data");
+
+        // Normalize data with smart defaults
+        const { _id, ...rest } = adData;
+        const newAd = {
+            ...rest,
+            adId: adData.adId || `AD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+            adAccountId: adData.adAccountId || "manual_upload",
+            accountName: adData.accountName || "Manual Upload",
+            analysisDate: new Date().toISOString(),
+            spend: Number(adData.spend || 0),
+            ctr: Number(adData.ctr || 0),
+            roas: Number(adData.roas || 0),
+            scoreOverall: Number(adData.scoreOverall || 5),
+            performanceLabel: adData.performanceLabel || "NEW",
+            thumbnailUrl: adData.thumbnailUrl || "/api/placeholder/400/320"
+        };
+
+        const result = await db.collection("creative_data").insertOne(newAd);
+        return { success: true, id: result.insertedId.toString() };
+    } catch (e) {
+        console.error("Failed to save ad:", e);
+        return { success: false, error: "Database error" };
     }
 }
