@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Search, ChevronDown, BarChart3, Zap, TestTube, Loader2, ChevronsLeft, ChevronsRight, ChevronRight, Settings, LogOut, User, LayoutDashboard, Lock, Menu, RefreshCcw, X, Activity, Maximize2, Sparkles, HelpCircle, GripHorizontal, Grip, ListFilter, Bot, Calendar, Trophy, BookOpen, Check, TrendingUp, Globe, LayoutGrid, List, Table as TableIcon, Grid2X2, Shield, Plus, Facebook, Smartphone, Play, Linkedin, Twitter, ShoppingBag, Disc as Pinterest, Instagram, Send } from "lucide-react"
+import { Search, ChevronDown, BarChart3, Zap, TestTube, Loader2, ChevronsLeft, ChevronsRight, ChevronRight, Settings, LogOut, User, LayoutDashboard, Lock, Menu, RefreshCcw, X, Activity, Maximize2, Sparkles, HelpCircle, GripHorizontal, Grip, ListFilter, Bot, Calendar, Trophy, BookOpen, Check, TrendingUp, Globe, LayoutGrid, List, Table as TableIcon, Grid2X2, Shield, Plus, Facebook, Smartphone, Play, Linkedin, Twitter, ShoppingBag, Disc as Pinterest, Instagram, Send, Brain, Info, Target, Newspaper } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -29,9 +29,11 @@ import { AdData, PlatformType } from "@/lib/types"
 import { ConnectPlatformDialog } from "@/components/connect-platform-dialog"
 import { AddAdDialog } from "@/components/add-ad-dialog"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { fetchAdsFromMongo } from "@/actions/ads"
+import { fetchAdsFromMongo, fetchGoogleAdsFromMongo } from "@/actions/ads"
 import ScoreRadarChart from "@/components/score-radar-chart"
 import { EnlargedImageModal } from "@/components/enlarged-image-modal"
+import GoogleAdsView from "@/components/google-ads-view"
+import AdDetailTabs from "@/components/ad-detail-tabs"
 import {
     Select,
     SelectContent,
@@ -52,17 +54,20 @@ import {
 
 import {
     updateProfile,
-    updateConnectedPlatforms,
+    updateEnabledPlatforms,
     getConnectedPlatforms,
     getEnabledPlatforms
 } from "@/actions/profile-actions"
 
 const ACCOUNT_LIST = [
-    { id: "25613137998288459", name: "HP FOREX - EU" },
-    { id: "1333109771382157", name: "HP FOREX - LATAM" },
-    { id: "1002675181794911", name: "HP FOREX - UK" },
-    { id: "1507386856908357", name: "HP FOREX - USA + CA" },
-    { id: "1024147486590417", name: "HP FUTURES - USA + CA" },
+    // Meta accounts
+    { id: "25613137998288459", name: "HP FOREX - EU", platform: "meta" },
+    { id: "1333109771382157", name: "HP FOREX - LATAM", platform: "meta" },
+    { id: "1002675181794911", name: "HP FOREX - UK", platform: "meta" },
+    { id: "1507386856908357", name: "HP FOREX - USA + CA", platform: "meta" },
+    { id: "1024147486590417", name: "HP FUTURES - USA + CA", platform: "meta" },
+    // Google Ads accounts
+    { id: "7791434558", name: "HP Google - Main", platform: "google" },
 ];
 
 const PLATFORM_META: Record<string, { label: string, icon: any }> = {
@@ -76,7 +81,10 @@ const PLATFORM_META: Record<string, { label: string, icon: any }> = {
     instagram: { label: 'Instagram', icon: Instagram },
     pinterest: { label: 'Pinterest', icon: Pinterest },
     x: { label: 'X (Twitter)', icon: Twitter },
-    telegram: { label: 'Telegram', icon: Send }
+    telegram: { label: 'Telegram', icon: Send },
+    tboola: { label: 'Tboola', icon: Newspaper },
+    bing: { label: 'Bing', icon: Search },
+    adroll: { label: 'AdRoll', icon: Target }
 };
 
 function DashboardContent() {
@@ -89,12 +97,13 @@ function DashboardContent() {
     const [selectedAdId, setSelectedAdId] = useState<string | null>(null)
     const [selectedAccountId, setSelectedAccountId] = useState<string>("all")
     const [ads, setAds] = useState<AdData[]>([])
+    const [googleAds, setGoogleAds] = useState<AdData[]>([])
     const [recentHistory, setRecentHistory] = useState<string[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
     const [activeAnalysis, setActiveAnalysis] = useState<{ type: 'score' | 'metric', name: string } | null>(null)
-    const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date())
+    const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null)
     const [relativeTime, setRelativeTime] = useState("just now")
     const [newEntriesCount, setNewEntriesCount] = useState(0)
     const [isSyncing, setIsSyncing] = useState(false)
@@ -103,7 +112,7 @@ function DashboardContent() {
     const [mounted, setMounted] = useState(false)
     const [enlargedImage, setEnlargedImage] = useState<{ url: string; title: string; accountName?: string } | null>(null)
     const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false)
-    const [enabledPlatforms, setEnabledPlatforms] = useState<string[]>(["meta", "youtube"])
+    const [enabledPlatforms, setEnabledPlatforms] = useState<string[]>(["google", "youtube"])
     const isMobile = useIsMobile()
     const [viewFilter, setViewFilter] = useState("Top Perf.")
     const [isGuideOpen, setIsGuideOpen] = useState(false)
@@ -111,67 +120,120 @@ function DashboardContent() {
     const [isProfileOpen, setIsProfileOpen] = useState(false)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
     const [discoveryAccountFilter, setDiscoveryAccountFilter] = useState("all")
-    const [discoveryViewMode, setDiscoveryViewMode] = useState<"grid" | "list" | "table" | "compact">("grid")
+    const [discoverySearchQuery, setDiscoverySearchQuery] = useState("")
+    const [discoveryViewMode, setDiscoveryViewMode] = useState<"grid" | "list" | "table">("grid")
     const [isGlassmorphismEnabled, setIsGlassmorphismEnabled] = useState(true)
     const [isCompactModeEnabled, setIsCompactModeEnabled] = useState(false)
     const [isReducedMotionEnabled, setIsReducedMotionEnabled] = useState(false)
     const [isAlertSystemEnabled, setIsAlertSystemEnabled] = useState(false)
     const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>("all")
     const [isAddAdDialogOpen, setIsAddAdDialogOpen] = useState(false)
-    const [isConnectDialogOpen, setIsConnectDialogOpen] = useState(false)
-    const [showPlatformAlert, setShowPlatformAlert] = useState(false)
-    const [connectedPlatforms, setConnectedPlatforms] = useState<PlatformType[]>(["meta"])
+    const [isAddingPlatform, setIsAddingPlatform] = useState(false)
+    const [platformSearchQuery, setPlatformSearchQuery] = useState("")
+    const [isPlatformModalReady, setIsPlatformModalReady] = useState(false)
 
-    // Synchronize settings and platform state from localStorage
     useEffect(() => {
-        setMounted(true)
-        if (typeof window !== "undefined") {
-            const loadMetaPlatforms = async () => {
-                const res = await getEnabledPlatforms()
-                if (res.success && res.platforms) {
-                    setEnabledPlatforms(res.platforms)
-                }
-            }
-            loadMetaPlatforms()
-
-            const savedPlatforms = localStorage.getItem("connected_platforms")
-            if (savedPlatforms) {
-                try {
-                    const parsed = JSON.parse(savedPlatforms)
-                    if (Array.isArray(parsed)) {
-                        // Ensure uniqueness immediately to avoid 'length > 1' false positives
-                        const unique = [...new Set(parsed)]
-                        if (!unique.includes('meta')) unique.push('meta')
-                        setConnectedPlatforms(unique)
-                    }
-                } catch (e) {
-                    console.error("Error parsing saved platforms:", e)
-                }
-            }
-
-            const saved = localStorage.getItem("dashboard_settings")
-            if (saved) {
-                const settings = JSON.parse(saved)
-                setIsGlassmorphismEnabled(settings.glassmorphism ?? true)
-                setIsCompactModeEnabled(settings.compactMode ?? false)
-                setIsReducedMotionEnabled(settings.reducedMotion ?? false)
-                setIsAlertSystemEnabled(settings.alertSystem ?? false)
-                if (settings.compactMode) {
-                    setDiscoveryViewMode("compact")
-                }
-            }
+        if (isAddingPlatform) {
+            const timer = setTimeout(() => setIsPlatformModalReady(true), 400)
+            return () => clearTimeout(timer)
+        } else {
+            setIsPlatformModalReady(false)
         }
-    }, [isSettingsOpen]) // Refresh when settings view is closed
+    }, [isAddingPlatform])
 
-    // Force cleanup of body lock on mount
+    const handleAddPlatform = async (platformId: string) => {
+        if (enabledPlatforms.length >= 10) {
+            toast({
+                title: "Limit Reached",
+                description: "You can add up to 10 platforms only.",
+                variant: "destructive"
+            })
+            return
+        }
+
+        if (!enabledPlatforms.includes(platformId)) {
+            const nextEnabled = [...enabledPlatforms, platformId]
+            const nextConnected = [...new Set([...connectedPlatforms, platformId as PlatformType])]
+
+            setEnabledPlatforms(nextEnabled)
+            setConnectedPlatforms(nextConnected)
+            localStorage.setItem("connected_platforms", JSON.stringify(nextConnected))
+
+            const res = await updateEnabledPlatforms(nextEnabled)
+            if (res.success) {
+                toast({
+                    title: "Platform Added",
+                    description: `${PLATFORM_META[platformId]?.label || platformId} has been added successfully.`,
+                })
+                // Switch to new platform and close ALL overlay views immediately
+                setSelectedPlatform(platformId as PlatformType)
+                setIsViewAllAdsOpen(false)
+                setIsSettingsOpen(false)
+                setIsProfileOpen(false)
+                setIsGuideOpen(false)
+            }
+
+            setIsAddingPlatform(false)
+            setPlatformSearchQuery("")
+        }
+    }
+
+    const [connectedPlatforms, setConnectedPlatforms] = useState<PlatformType[]>(["google"])
+
+    // On mount, initialize client-only states and clean up body styles
     useEffect(() => {
         setMounted(true)
+        setLastRefreshTime(new Date())
         document.body.style.pointerEvents = 'auto'
         document.body.style.overflow = ''
     }, [])
 
+    // Synchronize settings and platform state from localStorage (only once on mount/settings close)
+    useEffect(() => {
+        if (!mounted) return
+
+        const loadMetaPlatforms = async () => {
+            const res = await getEnabledPlatforms()
+            if (res.success && res.platforms) {
+                setEnabledPlatforms(res.platforms)
+            }
+        }
+        loadMetaPlatforms()
+
+        const savedPlatforms = localStorage.getItem("connected_platforms")
+        if (savedPlatforms) {
+            try {
+                const parsed = JSON.parse(savedPlatforms)
+                if (Array.isArray(parsed)) {
+                    // Ensure uniqueness immediately to avoid 'length > 1' false positives
+                    const unique = [...new Set(parsed)]
+                    if (!unique.includes('google')) unique.push('google')
+                    setConnectedPlatforms(unique)
+                }
+            } catch (e) {
+                console.error("Error parsing saved platforms:", e)
+            }
+        }
+
+        const saved = localStorage.getItem("dashboard_settings")
+        if (saved) {
+            const settings = JSON.parse(saved)
+            setIsGlassmorphismEnabled(settings.glassmorphism ?? true)
+            setIsCompactModeEnabled(settings.compactMode ?? false)
+            setIsReducedMotionEnabled(settings.reducedMotion ?? false)
+            setIsAlertSystemEnabled(settings.alertSystem ?? false)
+        }
+
+        // Restore selected platform
+        const savedPlatform = localStorage.getItem("selected_platform")
+        if (savedPlatform) {
+            setSelectedPlatform(savedPlatform as PlatformType)
+        }
+    }, [mounted, isSettingsOpen]) // Refresh when settings view is closed
+
     // Update relative time text every minute
     useEffect(() => {
+        if (!lastRefreshTime) return
         const timer = setInterval(() => {
             setRelativeTime(formatDistanceToNow(lastRefreshTime, { addSuffix: true }))
         }, 60000) // update every 1m
@@ -179,6 +241,8 @@ function DashboardContent() {
 
         return () => clearInterval(timer)
     }, [lastRefreshTime])
+
+
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -190,7 +254,7 @@ function DashboardContent() {
                     const dbPlatforms = res.platforms as PlatformType[]
                     setConnectedPlatforms(prev => {
                         const merged = [...new Set([...prev, ...dbPlatforms])]
-                        if (!merged.includes('meta')) merged.push('meta')
+                        if (!merged.includes('google')) merged.push('google')
                         localStorage.setItem("connected_platforms", JSON.stringify(merged))
                         return merged
                     })
@@ -205,27 +269,51 @@ function DashboardContent() {
         }
     }, [status, router])
 
-    // Enforce default platform selection: if only Meta is connected, automatically switch from 'all' to 'meta'
-    // This ensures the "No ads for this account" message appears correctly instead of the generic view
+    // Enforce default platform selection: if only Meta is connected AND no saved preference, default to 'meta'
     useEffect(() => {
         const uniqueCount = new Set(connectedPlatforms).size;
-        if (uniqueCount <= 1) {
-            setSelectedPlatform('meta')
+        const savedPlatform = typeof window !== 'undefined' ? localStorage.getItem("selected_platform") : null;
+        if (uniqueCount <= 1 && !savedPlatform) {
+            setSelectedPlatform('google')
         }
     }, [connectedPlatforms.length, JSON.stringify(connectedPlatforms)])
 
-    // 1. Extract unique accounts from ad data (Dynamic from DB)
-    const accounts = useMemo(() => {
-        return ACCOUNT_LIST.sort((a, b) => a.name.localeCompare(b.name))
-    }, [])
+    // Persist selectedPlatform to localStorage whenever it changes
+    useEffect(() => {
+        if (typeof window !== 'undefined' && selectedPlatform) {
+            localStorage.setItem("selected_platform", selectedPlatform)
+        }
+    }, [selectedPlatform])
 
-    // Calculate ad counts per account
+    // Reset ALL view state on every platform switch
+    // This ensures no stale search, selection, or account bleeds across platforms
+    useEffect(() => {
+        setSearchQuery("")
+        setSelectedAdId(null)
+        setActiveAnalysis(null)
+        setSelectedAccountId("all")
+        setIsViewAllAdsOpen(false)
+        setIsSearchDropdownOpen(false)
+    }, [selectedPlatform])
+
+    // 1. Extract unique accounts from ad data — filtered by selected platform
+    const accounts = useMemo(() => {
+        const filtered = selectedPlatform === 'all'
+            ? ACCOUNT_LIST
+            : ACCOUNT_LIST.filter(a => a.platform === selectedPlatform)
+        return filtered.sort((a, b) => a.name.localeCompare(b.name))
+    }, [selectedPlatform])
+
+    // Calculate ad counts per account (platform-aware)
     const accountStats = useMemo(() => {
+        const platformAds = selectedPlatform === 'all'
+            ? ads
+            : ads.filter(ad => ad.platform === selectedPlatform || (!ad.platform && selectedPlatform === 'meta'))
         return accounts.map(account => ({
             ...account,
-            count: ads.filter(ad => ad.adAccountId === account.id).length
+            count: platformAds.filter(ad => ad.adAccountId === account.id).length
         })).filter(acc => acc.count > 0);
-    }, [ads, accounts]);
+    }, [ads, accounts, selectedPlatform]);
 
     // 2. Load data from MongoDB with real-time polling
     const loadData = async (isManual = false) => {
@@ -233,7 +321,12 @@ function DashboardContent() {
         if (isManual) setIsSyncing(true)
 
         try {
-            const data = await fetchAdsFromMongo()
+            const [metaData, gData] = await Promise.all([
+                fetchAdsFromMongo(),
+                fetchGoogleAdsFromMongo(),
+            ])
+
+            const data = [...metaData, ...gData]
 
             const oldCount = ads.length
             const newCount = data.length
@@ -256,6 +349,7 @@ function DashboardContent() {
             }
 
             setAds(data)
+            setGoogleAds(gData)
             setLastRefreshTime(new Date())
 
             // Show refresh text for 5 seconds only on manual refresh
@@ -264,13 +358,7 @@ function DashboardContent() {
                 setTimeout(() => setShowRefreshText(false), 5000)
             }
 
-            if (isLoading && data.length > 0) {
-                const topPerformer = data.find(ad => ad.performanceLabel === "TOP_PERFORMER") || data[0]
-                const firstId = topPerformer.id
-                setSelectedAdId(firstId)
-                setRecentHistory([firstId])
-                setIsLoading(false)
-            }
+            setIsLoading(false)
         } catch (error) {
             console.error("Fetch error:", error)
         } finally {
@@ -325,20 +413,25 @@ function DashboardContent() {
     const { displayedAds, hasAdsInAccount } = useMemo(() => {
         let filteredAds = [...ads]
 
-        // 1. Filter by account
-        if (selectedAccountId !== "all") {
-            filteredAds = filteredAds.filter(ad => ad.adAccountId === selectedAccountId)
+        // 1. Filter by platform first
+        if (selectedPlatform === "meta") {
+            filteredAds = filteredAds.filter(ad => !ad.platform || ad.platform === "meta")
+        } else if (selectedPlatform === "google") {
+            filteredAds = filteredAds.filter(ad => ad.platform === "google")
+        } else if (selectedPlatform !== "all") {
+            // Other platforms not yet integrated — return empty
+            return { displayedAds: [], hasAdsInAccount: false }
         }
 
-        // 1.5 Filter by platform
-        if (selectedPlatform !== "all") {
-            filteredAds = filteredAds.filter(ad => ad.platform === selectedPlatform)
+        // 2. Filter by account
+        if (selectedAccountId !== "all") {
+            filteredAds = filteredAds.filter(ad => ad.adAccountId === selectedAccountId)
         }
 
         const accountHasAds = filteredAds.length > 0
         const query = searchQuery.trim().toLowerCase()
 
-        // 2. Sort/Filter based on Analysis Mode (viewFilter)
+        // 3. Sort/Filter based on Analysis Mode (viewFilter)
         if (viewFilter === "AI Rec.") {
             filteredAds.sort((a, b) => (b.scoreOverall || 0) - (a.scoreOverall || 0))
         } else if (viewFilter === "Updated") {
@@ -349,14 +442,12 @@ function DashboardContent() {
             filteredAds = [...top, ...others]
         }
 
-        // 3. Deduplicate Ads (Fix for multiple database records)
-        // usage of Map ensures we keep the first occurrence of each unique adId
-        filteredAds = Array.from(new Map(filteredAds.map(item => [item.adId, item])).values());
+        // 4. Deduplicate Ads
+        filteredAds = Array.from(new Map(filteredAds.map(item => [item.adId || item.id, item])).values());
 
-        // 3. Search and Final Result Logic
+        // 5. Search and Final Result Logic
         let results = []
         if (!query) {
-            // Strictly show only 10 ads to keep the dashboard clean
             results = filteredAds.slice(0, 10)
         } else {
             results = filteredAds.filter(ad => {
@@ -375,7 +466,8 @@ function DashboardContent() {
 
         if (query && displayedAds.length > 0) {
             const firstResultId = displayedAds[0].id
-            if (selectedAdId !== firstResultId) {
+            // Disable auto-select for Google platform to prevent jumping to Analysis while typing
+            if (selectedAdId !== firstResultId && selectedPlatform !== 'google') {
                 setSelectedAdId(firstResultId)
                 updateHistory(firstResultId)
                 setActiveAnalysis(null) // Reset on change
@@ -383,13 +475,11 @@ function DashboardContent() {
         } else if (query && displayedAds.length === 0) {
             setSelectedAdId(null)
             setActiveAnalysis(null)
-        } else if (!query && displayedAds.length > 0) {
-            if (!selectedAdId || !displayedAds.some(ad => ad.id === selectedAdId)) {
-                const firstId = displayedAds[0].id
-                setSelectedAdId(firstId)
-                updateHistory(firstId)
-            }
-            setActiveAnalysis(null) // Instant hide when search is cleared
+        } else if (!query) {
+            // When search is cleared or empty, we generally want to hide the analysis
+            // unless the user implicitly selected something (which we can't easily distinguish here without more state)
+            // For now, we just ensure the sidebar is closed.
+            setActiveAnalysis(null)
         }
     }, [searchQuery, displayedAds, selectedAdId])
 
@@ -397,7 +487,7 @@ function DashboardContent() {
         if (!id) return
         setRecentHistory(prev => {
             const filtered = prev.filter(item => item !== id)
-            return [id, ...filtered].slice(0, 3)
+            return [id, ...filtered].slice(0, 10)
         })
     }
 
@@ -455,30 +545,37 @@ function DashboardContent() {
 
     return (
         <div suppressHydrationWarning className="flex flex-col h-[100dvh] bg-background dark:bg-[#000000] overflow-hidden relative">
-            {/* Global Sticky Banner - True Full Width */}
-            <div className="flex items-center justify-between px-6 md:px-8 bg-zinc-50 dark:bg-zinc-900/50 border-b border-border shadow-sm h-14 md:h-16 z-[70] shrink-0 sticky top-0 backdrop-blur-sm transition-all duration-300 relative">
+            {/* Global Sticky Banner - High-End Premium Header */}
+            <div className="flex items-center justify-between px-6 md:px-8 border-b border-border shadow-[0_2px_4px_rgba(0,0,0,0.02)] h-12 md:h-14 z-[70] shrink-0 sticky top-0 bg-white dark:bg-zinc-950 transition-all duration-300 relative">
                 <button
                     onClick={() => {
+                        // Close all overlay views
                         setIsProfileOpen(false)
                         setIsSettingsOpen(false)
                         setIsGuideOpen(false)
                         setIsViewAllAdsOpen(false)
+                        // Reset search & selection — stay on current platform
+                        setSearchQuery("")
+                        setSelectedAdId(null)
+                        setActiveAnalysis(null)
+                        setSelectedAccountId("all")
+                        setIsSearchDropdownOpen(false)
                     }}
                     className="hover:opacity-80 transition-opacity relative z-10"
                 >
                     <div className="flex flex-col items-start leading-none cursor-pointer">
                         <div className="flex items-center gap-1.5">
-                            <span className="text-xl md:text-2xl font-black tracking-tightest text-zinc-900 dark:text-white">
-                                hola<span className="text-[#007AFF]">prime</span>
+                            <span className="text-xl md:text-2xl font-black tracking-tightest text-foreground dark:text-white">
+                                hola<span className="text-[#007AFF] dark:text-primary">prime</span>
                             </span>
-                            <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-[#007AFF] animate-pulse" />
+                            <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-[#007AFF] dark:text-primary animate-pulse" />
                         </div>
-                        <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-[#007AFF] opacity-80 mt-1">Creative Analyzer</span>
+                        <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-[#007AFF] dark:text-primary opacity-80 mt-1">Creative Analyzer</span>
                     </div>
                 </button>
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100/50 dark:bg-white/5 border border-zinc-200/50 dark:border-white/5 backdrop-blur-md shadow-sm group hover:scale-105 transition-all duration-500 cursor-default">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#007AFF] animate-pulse shadow-[0_0_8px_rgba(0,122,255,0.6)]"></span>
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] bg-clip-text text-transparent bg-gradient-to-r from-zinc-600 via-zinc-900 to-zinc-600 dark:from-zinc-400 dark:via-white dark:to-zinc-400 bg-[length:200%_auto] animate-gradient">
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden lg:flex items-center gap-2.5 px-5 py-2 rounded-full bg-white/80 dark:bg-white/10 border border-zinc-200 dark:border-white/10 shadow-[0_2px_10px_rgba(0,0,0,0.05)] group hover:scale-105 transition-all duration-500 cursor-default">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_12px_rgba(var(--primary-rgb),0.5)]"></span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] bg-clip-text text-transparent bg-gradient-to-r from-zinc-900 via-primary to-zinc-900 dark:from-zinc-400 dark:via-white dark:to-zinc-400 bg-[length:200%_auto] animate-gradient">
                         Hola Prime Creative AI Analyzer
                     </span>
                 </div>
@@ -487,58 +584,59 @@ function DashboardContent() {
                 <div className="flex items-center gap-3 md:gap-4 relative z-20">
                     {/* Desktop Controls */}
                     <div className="hidden md:flex items-center gap-3">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-9 px-4 text-[10px] font-black uppercase tracking-[0.15em] bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border-zinc-200 dark:border-white/10 hover:border-[#007AFF]/50 transition-all duration-300 rounded-full gap-2.5 group relative">
-                                    <div className="relative flex items-center gap-2">
-                                        <ListFilter className="w-3.5 h-3.5 text-[#007AFF] transition-transform group-hover:rotate-12" />
-                                        <span className="text-zinc-700 dark:text-zinc-300">
-                                            {viewFilter === "Top Perf." ? "Top Performer" :
-                                                viewFilter === "AI Rec." ? "AI Recommendation" :
-                                                    viewFilter === "Updated" ? "Last Updated" :
-                                                        viewFilter}
-                                        </span>
-                                        <ChevronDown className="w-3 h-3 opacity-30 group-hover:translate-y-0.5 transition-transform" />
-                                    </div>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuPortal>
-                                <DropdownMenuContent align="end" className="w-52 z-[1000] p-1.5 rounded-[1.5rem] border-zinc-200 dark:border-white/10 bg-white/98 dark:bg-zinc-900/98 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] animate-in fade-in zoom-in-95 duration-300">
-                                    <div className="px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#007AFF]/60 border-b border-zinc-100 dark:border-white/5 mb-1.5">Analysis Lens</div>
+                        {(selectedPlatform === 'all' || selectedPlatform === 'meta') && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="h-10 px-5 text-[10px] font-black uppercase tracking-[0.15em] bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border-border hover:border-primary/40 hover:bg-secondary/80 transition-all duration-300 rounded-2xl gap-2.5 group relative shadow-sm hover:shadow-md">
+                                        <div className="relative flex items-center gap-2">
+                                            <ListFilter className="w-4 h-4 text-primary transition-transform group-hover:rotate-12" />
+                                            <span className="text-foreground/80 dark:text-zinc-300">
+                                                {viewFilter === "Top Perf." ? "Top Performer" :
+                                                    viewFilter === "AI Rec." ? "AI Recommendation" :
+                                                        viewFilter === "Updated" ? "Last Updated" :
+                                                            viewFilter}
+                                            </span>
+                                            <ChevronDown className="w-3 h-3 opacity-30 group-hover:translate-y-0.5 transition-transform text-primary" />
+                                        </div>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuContent align="end" className="w-52 z-[1000] p-1.5 rounded-[1.5rem] border-border dark:border-white/10 bg-card/98 dark:bg-zinc-900/98 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.08)] animate-in fade-in zoom-in-95 duration-300">
+                                        <div className="px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-border/50 dark:border-white/5 mb-1.5">Analysis Lens</div>
 
-                                    {[
-                                        { id: "AI Rec.", label: "AI Recommendation", icon: Bot, color: "text-indigo-500", bg: "bg-indigo-50/50 dark:bg-indigo-500/10" },
-                                        { id: "Updated", label: "Last Updated Date", icon: Calendar, color: "text-blue-500", bg: "bg-blue-50/50 dark:bg-blue-500/10" },
-                                        { id: "Top Perf.", label: "Top Performer", icon: Trophy, color: "text-amber-500", bg: "bg-amber-50/50 dark:bg-amber-500/10" }
-                                    ].map((item) => (
-                                        <DropdownMenuItem
-                                            key={item.id}
-                                            className={cn(
-                                                "flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 mb-0.5",
-                                                viewFilter === item.id
-                                                    ? `${item.bg} border border-[#007AFF]/10 text-[#007AFF]`
-                                                    : "hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-600 dark:text-zinc-400 border border-transparent"
-                                            )}
-                                            onClick={() => setViewFilter(item.id)}
-                                        >
-                                            <div className="flex items-center gap-2.5">
-                                                <item.icon className={cn("w-4 h-4", viewFilter === item.id ? "text-[#007AFF]" : item.color)} />
-                                                <span className="text-xs font-bold">{item.label}</span>
-                                            </div>
-                                            {viewFilter === item.id && <Check className="w-3.5 h-3.5 text-[#007AFF] animate-in zoom-in-50" />}
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenuPortal>
-                        </DropdownMenu>
+                                        {[
+                                            { id: "AI Rec.", label: "AI Recommendation", icon: Bot, color: "text-indigo-500", bg: "bg-indigo-50/50 dark:bg-indigo-500/10" },
+                                            { id: "Updated", label: "Last Updated Date", icon: Calendar, color: "text-blue-500", bg: "bg-blue-50/50 dark:bg-blue-500/10" },
+                                            { id: "Top Perf.", label: "Top Performer", icon: Trophy, color: "text-amber-500", bg: "bg-amber-50/50 dark:bg-amber-500/10" }
+                                        ].map((item) => (
+                                            <DropdownMenuItem
+                                                key={item.id}
+                                                className={cn(
+                                                    "flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 mb-0.5",
+                                                    viewFilter === item.id
+                                                        ? `${item.bg} border border-primary/10 text-primary`
+                                                        : "hover:bg-secondary dark:hover:bg-white/5 text-muted-foreground dark:text-zinc-400 border border-transparent"
+                                                )}
+                                                onClick={() => setViewFilter(item.id)}
+                                            >
+                                                <div className="flex items-center gap-2.5">
+                                                    <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", viewFilter === item.id ? "text-primary" : item.color)} />
+                                                    <span className="text-xs font-bold">{item.label}</span>
+                                                </div>
+                                                {viewFilter === item.id && <Check className="w-3.5 h-3.5 text-primary animate-in zoom-in-50" />}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenu>
+                        )}
+                        {(selectedPlatform === 'all' || selectedPlatform === 'meta') && <div className="h-4 w-px bg-border dark:bg-zinc-700 mx-1"></div>}
 
-                        <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700 mx-1"></div>
-
-                        <div className="relative group/help flex items-center pr-2 -mr-2">
+                        <div className="relative group/help flex items-center">
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="icon"
-                                className="h-9 w-9 rounded-full text-zinc-400 hover:text-[#007AFF] hover:bg-[#007AFF]/10 transition-all relative z-10 group"
+                                className="rounded-full h-8 w-8 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800/80 active:scale-95 flex-shrink-0 group"
                                 onClick={() => {
                                     setIsGuideOpen(true)
                                     setIsProfileOpen(false)
@@ -546,7 +644,7 @@ function DashboardContent() {
                                     setIsViewAllAdsOpen(false)
                                 }}
                             >
-                                <HelpCircle className="w-4 h-4 animate-pulse group-hover:scale-110 transition-transform" />
+                                <HelpCircle className="h-[1rem] w-[1rem] text-muted-foreground group-hover:text-primary transition-transform" />
                             </Button>
                             <div className="absolute right-[100%] top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover/help:opacity-100 group-hover/help:pointer-events-auto transition-all duration-300 translate-x-1 group-hover/help:translate-x-0 z-30 pr-3">
                                 <button className="flex" onClick={() => {
@@ -555,8 +653,8 @@ function DashboardContent() {
                                     setIsSettingsOpen(false)
                                     setIsViewAllAdsOpen(false)
                                 }}>
-                                    <div className="px-3 py-1.5 bg-zinc-900 dark:bg-white text-zinc-50 dark:text-zinc-900 text-[10px] font-black rounded-lg shadow-2xl whitespace-nowrap flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all border border-black/10 dark:border-white/10">
-                                        <BookOpen className="w-3.5 h-3.5 text-[#007AFF]" />
+                                    <div className="px-3 py-1.5 bg-zinc-950 dark:bg-white text-zinc-50 dark:text-zinc-900 text-[10px] font-black rounded-lg shadow-2xl whitespace-nowrap flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all border border-black/10 dark:border-white/10">
+                                        <BookOpen className="w-3.5 h-3.5 text-primary" />
                                         Help & Guide
                                     </div>
                                 </button>
@@ -564,46 +662,55 @@ function DashboardContent() {
                             {/* Invisible Bridge to maintain hover state */}
                             <div className="absolute right-full top-0 bottom-0 w-12 hidden group-hover/help:block" />
                         </div>
+
+                        <div className="h-4 w-px bg-border dark:bg-zinc-700 mx-1"></div>
+                        <ModeToggle />
                     </div>
 
                     {/* Mobile Controls (9-dots Menu) */}
                     <div className="md:hidden">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-9 w-9 text-[#007AFF] hover:bg-[#007AFF]/10 rounded-xl transition-all active:scale-95 group">
+                                <Button variant="ghost" size="icon" className="h-9 w-9 text-primary hover:bg-primary/10 rounded-xl transition-all active:scale-95 group">
                                     <Grip className="w-5 h-5 transition-transform group-active:rotate-45 animate-pulse" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuPortal>
-                                <DropdownMenuContent align="end" className="w-56 z-[1000] p-1.5 rounded-[1.8rem] border-zinc-200/60 dark:border-white/10 bg-white/98 dark:bg-zinc-900/98 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] animate-in fade-in slide-in-from-top-4 duration-300">
-                                    <div className="px-3 py-2 flex items-center justify-between border-b border-zinc-100 dark:border-white/5 mb-1.5">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#007AFF]/70">Insights</span>
-                                    </div>
+                                <DropdownMenuContent align="end" className="w-56 z-[1000] p-1.5 rounded-[1.8rem] border-border/60 dark:border-white/10 bg-card/98 dark:bg-zinc-900/98 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] animate-in fade-in slide-in-from-top-4 duration-300">
+                                    {(selectedPlatform === 'all' || selectedPlatform === 'meta') && (
+                                        <div className="px-3 py-2 flex items-center justify-between border-b border-border/50 dark:border-white/5 mb-1.5">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70">Insights</span>
+                                        </div>
+                                    )}
 
-                                    {[
-                                        { id: "AI Rec.", label: "AI Recommendation", icon: Bot, color: "text-indigo-500", bg: "bg-indigo-500/10" },
-                                        { id: "Updated", label: "Last Updated Date", icon: Calendar, color: "text-blue-500", bg: "bg-blue-500/10" },
-                                        { id: "Top Perf.", label: "Top Performer", icon: Trophy, color: "text-amber-500", bg: "bg-amber-500/10" }
-                                    ].map((item) => (
-                                        <DropdownMenuItem
-                                            key={item.id}
-                                            className={cn(
-                                                "flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-all mb-0.5 active:scale-[0.98]",
-                                                viewFilter === item.id
-                                                    ? "bg-[#007AFF]/10 text-[#007AFF] border border-[#007AFF]/20 shadow-sm"
-                                                    : "hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-600 dark:text-zinc-400 border border-transparent"
-                                            )}
-                                            onClick={() => setViewFilter(item.id)}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <item.icon className={cn("w-4 h-4", viewFilter === item.id ? "text-[#007AFF]" : item.color)} />
-                                                <span className="text-xs font-black tracking-tight">{item.label}</span>
-                                            </div>
-                                            {viewFilter === item.id && <Check className="w-3.5 h-3.5 text-[#007AFF] animate-in zoom-in-50" />}
-                                        </DropdownMenuItem>
-                                    ))}
+                                    {(selectedPlatform === 'all' || selectedPlatform === 'meta') && (
+                                        <>
+                                            {[
+                                                { id: "AI Rec.", label: "AI Recommendation", icon: Bot, color: "text-indigo-500", bg: "bg-indigo-500/10" },
+                                                { id: "Updated", label: "Last Updated Date", icon: Calendar, color: "text-blue-500", bg: "bg-blue-500/10" },
+                                                { id: "Top Perf.", label: "Top Performer", icon: Trophy, color: "text-amber-500", bg: "bg-amber-500/10" }
+                                            ].map((item) => (
+                                                <DropdownMenuItem
+                                                    key={item.id}
+                                                    className={cn(
+                                                        "flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-all mb-0.5 active:scale-[0.98]",
+                                                        viewFilter === item.id
+                                                            ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+                                                            : "hover:bg-secondary dark:hover:bg-white/5 text-muted-foreground dark:text-zinc-400 border border-transparent"
+                                                    )}
+                                                    onClick={() => setViewFilter(item.id)}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <item.icon className={cn("w-4 h-4 transition-transform", viewFilter === item.id ? "text-primary scale-110" : item.color)} />
+                                                        <span className="text-xs font-black tracking-tight">{item.label}</span>
+                                                    </div>
+                                                    {viewFilter === item.id && <Check className="w-3.5 h-3.5 text-primary animate-in zoom-in-50" />}
+                                                </DropdownMenuItem>
+                                            ))}
 
-                                    <DropdownMenuSeparator className="bg-zinc-100 dark:bg-white/5 mx-2 my-1" />
+                                            <DropdownMenuSeparator className="bg-border/50 dark:bg-white/5 mx-2 my-1" />
+                                        </>
+                                    )}
 
                                     <DropdownMenuItem
                                         className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/5 group"
@@ -619,15 +726,9 @@ function DashboardContent() {
                                         <ChevronDown className="w-3.5 h-3.5 ml-auto opacity-20 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
                                     </DropdownMenuItem>
 
-                                    <DropdownMenuItem
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer bg-[#007AFF] text-white hover:bg-[#007AFF]/90 mt-2 active:scale-95"
-                                        onClick={() => {
-                                            setIsConnectDialogOpen(true)
-                                        }}
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        <span className="text-xs font-black uppercase tracking-widest">Connect Platform</span>
-                                    </DropdownMenuItem>
+
+
+
                                 </DropdownMenuContent>
                             </DropdownMenuPortal>
                         </DropdownMenu>
@@ -646,19 +747,19 @@ function DashboardContent() {
 
                 {/* Sidebar - Desktop */}
                 <aside
-                    className={`${isSidebarCollapsed ? "w-[70px]" : "w-72"} transition-all duration-300 border-r border-border bg-card/80 dark:bg-zinc-900/80 backdrop-blur-xl hidden md:flex flex-col flex-shrink-0 relative z-20`}
+                    className={`${isSidebarCollapsed ? "w-[70px]" : "w-72"} transition-all duration-300 border-r border-border bg-white dark:bg-zinc-950 hidden md:flex flex-col flex-shrink-0 relative z-20`}
                 >
                     {/* Top: User Profile / Workspace Switcher */}
                     <div className="px-2 flex items-center border-b border-border h-16 py-[5px]">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className={`group w-full justify-start p-1.5 h-10 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200 ${isSidebarCollapsed ? "px-0 justify-center" : ""}`}>
-                                    <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-sm">
+                                <Button variant="ghost" className={`group w-full justify-start p-1.5 h-12 hover:bg-secondary dark:hover:bg-zinc-800 transition-all duration-300 rounded-2xl ${isSidebarCollapsed ? "px-0 justify-center" : ""}`}>
+                                    <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center text-white font-black text-xs flex-shrink-0 shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
                                         {session?.user?.name?.[0] || "U"}
                                     </div>
                                     {!isSidebarCollapsed && (
                                         <div className="ml-3 flex flex-col items-start overflow-hidden w-full text-left">
-                                            <span className="text-sm font-semibold truncate w-full text-zinc-900 dark:text-zinc-100">{session?.user?.name || "User"}</span>
+                                            <span className="text-sm font-semibold truncate w-full text-foreground/90 dark:text-zinc-100">{session?.user?.name || "User"}</span>
                                             <span className="text-[10px] text-muted-foreground truncate w-full capitalize opacity-60 font-bold">{((session?.user as any)?.role || "Viewer")} Plan</span>
                                         </div>
                                     )}
@@ -710,81 +811,83 @@ function DashboardContent() {
                         <div className={cn("px-4 space-y-4", isSidebarCollapsed ? "hidden" : "")}>
                             {/* Platform Section */}
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black tracking-widest text-[#007AFF] ml-1 uppercase opacity-40">Platform</label>
-                                {new Set(connectedPlatforms.filter(p => enabledPlatforms.includes(p))).size <= 1 ? (
-                                    <div
-                                        onClick={() => setShowPlatformAlert(true)}
-                                        className="w-full h-12 px-3 flex items-center gap-4 cursor-pointer hover:bg-white dark:hover:bg-zinc-800 rounded-2xl transition-all duration-300 group/hub text-left"
-                                    >
-                                        <div className="relative flex-shrink-0">
-                                            <div className="relative w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center transition-all group-hover/hub:bg-white dark:group-hover/hub:bg-zinc-700">
-                                                <Facebook className="w-4 h-4 text-[#007AFF]" />
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col text-left min-w-0">
-                                            <span className="text-zinc-900 dark:text-zinc-100 font-bold text-xs uppercase tracking-tight leading-none">Meta</span>
-                                        </div>
-                                        <ChevronDown className="h-4 w-4 opacity-30 ml-auto flex-shrink-0 group-hover/hub:opacity-100 transition-opacity" />
-                                    </div>
-                                ) : (
-                                    <Select
-                                        value={selectedPlatform}
-                                        onValueChange={(v: any) => setSelectedPlatform(v)}
-                                    >
-                                        <SelectTrigger className="w-full h-12 px-3 border-none bg-transparent hover:bg-white dark:hover:bg-zinc-800 shadow-none focus:ring-0 rounded-2xl transition-all duration-300 group/hub text-left">
-                                            <div className="flex items-center gap-4 truncate py-1 w-full text-left">
-                                                {(() => {
-                                                    const currentPlatform = PLATFORM_META[selectedPlatform] || PLATFORM_META.all
-                                                    return (
-                                                        <>
-                                                            <div className="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center transition-all group-hover/hub:bg-white dark:group-hover/hub:bg-zinc-700">
-                                                                <currentPlatform.icon className="w-4 h-4 text-[#007AFF]" />
-                                                            </div>
-                                                            <span className="truncate text-zinc-500 group-hover/hub:text-zinc-900 dark:group-hover/hub:text-zinc-100 font-bold text-xs uppercase tracking-tight">
-                                                                {currentPlatform.label}
-                                                            </span>
-                                                        </>
-                                                    )
-                                                })()}
-                                            </div>
-                                        </SelectTrigger>
-                                        <SelectContent className="rounded-2xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-3xl animate-in fade-in zoom-in-95 duration-200">
-                                            <SelectItem value="all" className="font-bold text-xs py-3 rounded-xl mx-1 my-1 transition-colors cursor-pointer">
-                                                <div className="flex items-center gap-3">
-                                                    <Globe className="w-4 h-4 text-zinc-400" />
-                                                    <span>All Platforms</span>
-                                                </div>
-                                            </SelectItem>
-                                            {Object.entries(PLATFORM_META)
-                                                .filter(([id]) => id !== 'all' && enabledPlatforms.includes(id) && connectedPlatforms.includes(id as any))
-                                                .map(([id, meta]) => (
-                                                    <SelectItem key={id} value={id} className="font-bold text-xs py-3 rounded-xl mx-1 my-0.5 transition-colors cursor-pointer">
-                                                        <div className="flex items-center gap-3">
-                                                            <meta.icon className="w-4 h-4" />
-                                                            <span className="font-bold">{meta.label}</span>
+                                <label className="text-[10px] font-black tracking-widest text-primary/60 ml-1 uppercase">Platform</label>
+                                <Select
+                                    value={selectedPlatform}
+                                    onValueChange={(v: any) => setSelectedPlatform(v)}
+                                    onOpenChange={(open) => {
+                                        if (!open) {
+                                            setIsAddingPlatform(false)
+                                            setPlatformSearchQuery("")
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger className="w-full h-12 px-3 border border-border/40 bg-white/40 dark:bg-zinc-800/40 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md focus:ring-0 rounded-2xl transition-all duration-300 group/hub text-left">
+                                        <div className="flex items-center gap-4 truncate py-1 w-full text-left">
+                                            {(() => {
+                                                const currentPlatform = PLATFORM_META[selectedPlatform] || PLATFORM_META.all
+                                                return (
+                                                    <>
+                                                        <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center transition-all group-hover/hub:scale-110 shadow-sm border border-border">
+                                                            <currentPlatform.icon className="w-4 h-4 text-primary" />
                                                         </div>
-                                                    </SelectItem>
-                                                ))}
-                                        </SelectContent>
-                                    </Select>
-                                )}
+                                                        <span className="truncate text-muted-foreground group-hover/hub:text-foreground dark:group-hover/hub:text-zinc-100 font-bold text-xs uppercase tracking-tight">
+                                                            {currentPlatform.label}
+                                                        </span>
+                                                    </>
+                                                )
+                                            })()}
+                                        </div>
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-2xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-3xl animate-in fade-in zoom-in-95 duration-200">
+                                        <SelectItem value="all" className="font-bold text-xs py-3 rounded-xl mx-1 my-1 transition-colors cursor-pointer">
+                                            <div className="flex items-center gap-3">
+                                                <Globe className="w-4 h-4 text-zinc-400" />
+                                                <span>All Platforms</span>
+                                            </div>
+                                        </SelectItem>
+                                        {Object.entries(PLATFORM_META)
+                                            .filter(([id]) => id !== 'all' && enabledPlatforms.includes(id))
+                                            .map(([id, meta]) => (
+                                                <SelectItem key={id} value={id} className="font-bold text-xs py-3 rounded-xl mx-1 my-0.5 transition-colors cursor-pointer">
+                                                    <div className="flex items-center gap-3">
+                                                        <meta.icon className="w-4 h-4" />
+                                                        <span className="font-bold">{meta.label}</span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+
+                                        <div className="p-2 mt-1 border-t border-zinc-100 dark:border-white/5">
+                                            <Button
+                                                variant="ghost"
+                                                className="w-full justify-start gap-2 h-9 px-2 text-[10px] font-black uppercase tracking-widest text-[#007AFF] hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl"
+                                                onClick={() => {
+                                                    setIsAddingPlatform(true)
+                                                }}
+                                            >
+                                                <Plus className="w-3.5 h-3.5" />
+                                                Add Platform
+                                            </Button>
+                                        </div>
+                                    </SelectContent>
+                                </Select>
                             </div>
 
-                            {/* Account Section */}
-                            {selectedPlatform !== 'youtube' && (
+                            {/* Account Section — shown for all platforms that have accounts */}
+                            {accounts.length > 0 && (
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black tracking-widest text-indigo-500 ml-1 uppercase opacity-40">Account</label>
+                                    <label className="text-[10px] font-black tracking-widest text-primary/60 ml-1 uppercase">Account</label>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button
                                                 variant="ghost"
-                                                className="w-full justify-between bg-transparent border-none shadow-none font-black h-12 text-xs rounded-2xl hover:bg-white dark:hover:bg-zinc-800 transition-all px-3 group/hub"
+                                                className="w-full justify-between bg-white/40 dark:bg-zinc-800/40 border border-border/40 shadow-sm hover:shadow-md font-black h-12 text-xs rounded-2xl hover:bg-white dark:hover:bg-zinc-800 transition-all px-3 group/hub"
                                             >
                                                 <div className="flex items-center gap-4 truncate">
-                                                    <div className="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center group-hover/hub:bg-white dark:group-hover/hub:bg-zinc-700 transition-colors">
-                                                        <BarChart3 className="w-4 h-4 text-indigo-500" />
+                                                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center group-hover/hub:scale-110 transition-transform">
+                                                        <BarChart3 className="w-4 h-4 text-primary" />
                                                     </div>
-                                                    <span className="truncate text-zinc-500 group-hover/hub:text-zinc-900 dark:group-hover/hub:text-zinc-100 font-bold text-xs">
+                                                    <span className="truncate text-muted-foreground group-hover/hub:text-foreground dark:group-hover/hub:text-zinc-100 font-bold text-xs">
                                                         {selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "Select Account"}
                                                     </span>
                                                 </div>
@@ -804,7 +907,7 @@ function DashboardContent() {
                                                 <DropdownMenuItem
                                                     key={account.id}
                                                     onClick={() => {
-                                                        setSelectedAccountId(account.id)
+                                                        setSelectedAccountId(account.id || "")
                                                         setIsViewAllAdsOpen(false)
                                                     }}
                                                     className={cn("py-3 px-4 rounded-xl mx-1 my-0.5 transition-all group/item", selectedAccountId === account.id ? "bg-primary/10 font-black text-primary shadow-sm" : "hover:bg-zinc-100 dark:hover:bg-zinc-800 font-bold")}
@@ -824,165 +927,202 @@ function DashboardContent() {
                             )}
                         </div>
 
-                        {/* Collapsed State Icons */}
                         <div className={`px-3 ${isSidebarCollapsed ? "flex flex-col items-center gap-4" : "hidden"}`}>
                             <div
-                                className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-sm"
-                                onClick={() => connectedPlatforms.length === 0 ? setShowPlatformAlert(true) : null}
+                                className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-sm"
                             >
-                                <Globe className="w-5 h-5 text-blue-500" />
+                                <Globe className="w-5 h-5 text-primary" />
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-sm">
-                                <BarChart3 className="w-5 h-5 text-indigo-500" />
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-sm">
+                                <BarChart3 className="w-5 h-5 text-primary" />
                             </div>
                         </div>
 
-                        {/* Desktop Search */}
-                        <div className={`px-4 mt-2 ${isSidebarCollapsed ? "hidden" : ""}`}>
-                            <div className="relative group/search z-50">
-                                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                    <Search className="h-3.5 w-3.5 text-zinc-400 transition-colors group-focus-within/search:text-[#007AFF]" />
-                                </div>
-                                <Input
-                                    placeholder="Search ads by ID..."
-                                    value={searchQuery}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                        const val = e.target.value
-                                        setSearchQuery(val)
-                                        if (!val.trim()) setSelectedAccountId("all")
-                                        setIsSearchDropdownOpen(true)
-                                    }}
-                                    onFocus={() => setIsSearchDropdownOpen(true)}
-                                    onBlur={() => setTimeout(() => setIsSearchDropdownOpen(false), 200)}
-                                    className="pl-9 pr-9 h-10 text-xs bg-white/40 dark:bg-zinc-800/40 border-zinc-200/50 dark:border-white/5 focus-visible:ring-[#007AFF]/20 rounded-xl shadow-none hover:bg-white dark:hover:bg-zinc-800 transition-all font-medium"
-                                />
-                                {searchQuery && (
-                                    <button
-                                        onClick={() => {
-                                            setSearchQuery("")
-                                            setSelectedAccountId("all")
-                                            setIsSearchDropdownOpen(false)
+                        <div className={`px-4 mt-2 ${isSidebarCollapsed || selectedPlatform === 'google' ? "hidden" : ""}`}>
+                            {/* Search bar — shown for all platforms */}
+                            {true && (
+                                <div className="relative group/search z-50">
+                                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                        <Search className="h-3.5 w-3.5 text-muted-foreground transition-colors group-focus-within/search:text-primary" />
+                                    </div>
+                                    <Input
+                                        placeholder="Search ads by ID..."
+                                        className="bg-white/40 dark:bg-zinc-800/40 border-border/40 focus:border-primary/50 focus:bg-white transition-all rounded-2xl h-11 pl-10 text-xs font-bold"
+                                        value={searchQuery}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            const val = e.target.value
+                                            setSearchQuery(val)
+                                            if (!val.trim()) setSelectedAccountId("all")
+                                            setIsSearchDropdownOpen(true)
                                         }}
-                                        className="absolute right-3 top-3 h-4 w-4 flex items-center justify-center text-zinc-400 hover:text-red-500 transition-colors"
-                                    >
-                                        <X className="h-3.5 w-3.5" />
-                                    </button>
-                                )}
+                                        onFocus={() => setIsSearchDropdownOpen(true)}
+                                        onBlur={() => setTimeout(() => setIsSearchDropdownOpen(false), 200)}
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => {
+                                                setSearchQuery("")
+                                                setSelectedAccountId("all")
+                                                setIsSearchDropdownOpen(false)
+                                            }}
+                                            className="absolute right-3 top-3 h-4 w-4 flex items-center justify-center text-zinc-400 hover:text-red-500 transition-colors"
+                                        >
+                                            <X className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
 
-                                {/* Search Results Animate-in */}
-                                {searchQuery.trim().length > 0 && isSearchDropdownOpen && (
-                                    <div className="absolute top-full left-0 right-0 mt-2 max-h-64 overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl shadow-3xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <div className="py-2 p-1">
-                                            {ads.filter(ad =>
-                                                (selectedPlatform === "all" || ad.platform === selectedPlatform) && (
-                                                    String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                    String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
-                                                )
-                                            ).length > 0 ? (
-                                                ads.filter(ad =>
+                                    {/* Search Results Animate-in */}
+                                    {searchQuery.trim().length > 0 && isSearchDropdownOpen && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 max-h-64 overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl shadow-3xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="py-2 p-1">
+                                                {ads.filter(ad =>
                                                     (selectedPlatform === "all" || ad.platform === selectedPlatform) && (
                                                         String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
                                                         String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
                                                     )
-                                                ).slice(0, 10).map((ad) => (
-                                                    <button
-                                                        key={ad.id}
-                                                        onClick={() => {
-                                                            const accountExists = accounts.some(a => a.id === ad.adAccountId)
-                                                            if (accountExists) setSelectedAccountId(ad.adAccountId)
-                                                            setSelectedAdId(ad.id)
-                                                            setSearchQuery(ad.adId)
-                                                            setIsSearchDropdownOpen(false)
-                                                            setIsViewAllAdsOpen(false)
-                                                        }}
-                                                        className="w-full text-left px-4 py-3 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-xl transition-colors border-none mb-0.5 last:mb-0"
-                                                    >
-                                                        <span className="font-bold text-zinc-900 dark:text-zinc-100 block truncate mb-0.5">{ad.adName}</span>
-                                                        <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono tracking-tighter">
-                                                            <span>{ad.adId}</span>
-                                                            <span className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded uppercase font-black">{PLATFORM_META[ad.platform as any]?.label || "AD"}</span>
-                                                        </div>
-                                                    </button>
-                                                ))
-                                            ) : (
-                                                <div className="px-4 py-6 text-center">
-                                                    <Search className="w-8 h-8 text-zinc-200 dark:text-zinc-800 mx-auto mb-2" />
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">No matches found</p>
-                                                </div>
-                                            )}
+                                                ).length > 0 ? (
+                                                    ads.filter(ad =>
+                                                        (selectedPlatform === "all" || ad.platform === selectedPlatform) && (
+                                                            String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                            String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
+                                                        )
+                                                    ).slice(0, 10).map((ad) => (
+                                                        <button
+                                                            key={ad.id}
+                                                            onClick={() => {
+                                                                const accountExists = accounts.some(a => a.id === ad.adAccountId)
+                                                                if (accountExists) setSelectedAccountId(ad.adAccountId)
+                                                                setSelectedAdId(ad.id)
+                                                                setSearchQuery(ad.adId)
+                                                                updateHistory(ad.id)
+                                                                setIsSearchDropdownOpen(false)
+                                                                setIsViewAllAdsOpen(false)
+                                                            }}
+                                                            className="w-full text-left px-4 py-3 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-xl transition-colors border-none mb-0.5 last:mb-0"
+                                                        >
+                                                            <span className="font-bold text-zinc-900 dark:text-zinc-100 block truncate mb-0.5">{ad.adName}</span>
+                                                            <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono tracking-tighter">
+                                                                <span>{ad.adId}</span>
+                                                                <span className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded uppercase font-black">{PLATFORM_META[ad.platform as any]?.label || "AD"}</span>
+                                                            </div>
+                                                        </button>
+                                                    ))
+                                                ) : (
+                                                    <div className="px-4 py-6 text-center">
+                                                        <Search className="w-8 h-8 text-zinc-200 dark:text-zinc-800 mx-auto mb-2" />
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">No matches found</p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Premium Toggle Section */}
-                        <div className={`px-4 mt-8 space-y-2 ${isSidebarCollapsed ? "flex flex-col items-center" : ""}`}>
-                            <label className={`text-[10px] font-black tracking-widest text-zinc-400 uppercase ml-1 ${isSidebarCollapsed ? "hidden" : "block"}`}>Navigation</label>
-                            <Button
-                                variant="ghost"
-                                onClick={() => {
-                                    setIsViewAllAdsOpen(true)
-                                    setIsGuideOpen(false)
-                                    setIsProfileOpen(false)
-                                    setIsSettingsOpen(false)
-                                    if (isMobile) setIsMobileMenuOpen(false)
-                                }}
-                                className={cn(
-                                    "w-full justify-start gap-4 h-12 px-3 rounded-2xl transition-all relative group/nav overflow-hidden",
-                                    isViewAllAdsOpen
-                                        ? "bg-[#007AFF] text-white shadow-lg shadow-blue-500/25 active:scale-95"
-                                        : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 shadow-none",
-                                    isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : ""
-                                )}
-                            >
-                                <div className={cn(
-                                    "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
-                                    isViewAllAdsOpen ? "bg-white/20" : "bg-zinc-100 dark:bg-zinc-800/50 group-hover/nav:bg-white dark:group-hover/nav:bg-zinc-700"
-                                )}>
-                                    <LayoutDashboard className="h-4 w-4" />
+                                    )}
                                 </div>
-                                {!isSidebarCollapsed && <span className="text-[13px] font-black uppercase tracking-widest">Library</span>}
-                                {isViewAllAdsOpen && !isSidebarCollapsed && (
-                                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                                )}
-                            </Button>
+                            )}
                         </div>
 
-                        {/* Recent History - Repositioned */}
-                        <div className={`px-4 mt-8 ${isSidebarCollapsed ? "hidden" : "block"}`}>
-                            <div className="flex items-center justify-between px-1 mb-3">
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Recent Audits</h3>
-                                <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5 ml-4" />
+                        {/* Navigation — shown for all platforms */}
+                        {true && (
+                            <div className={`px-4 mt-8 space-y-2 ${isSidebarCollapsed ? "flex flex-col items-center" : ""}`}>
+                                <label className={`text-[10px] font-black tracking-widest text-zinc-400 uppercase ml-1 ${isSidebarCollapsed ? "hidden" : "block"}`}>Navigation</label>
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => {
+                                        setIsViewAllAdsOpen(true)
+                                        setIsGuideOpen(false)
+                                        setIsProfileOpen(false)
+                                        setIsSettingsOpen(false)
+                                        if (isMobile) setIsMobileMenuOpen(false)
+                                    }}
+                                    className={cn(
+                                        "w-full justify-start gap-4 h-12 px-3 rounded-2xl transition-all relative group/nav overflow-hidden",
+                                        isViewAllAdsOpen
+                                            ? "bg-[#020617] text-white border border-[#007AFF] active:scale-95"
+                                            : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-secondary dark:hover:bg-zinc-800 shadow-none",
+                                        isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : ""
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
+                                        isViewAllAdsOpen ? "bg-white/20" : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10"
+                                    )}>
+                                        <LayoutDashboard className="h-4 w-4" />
+                                    </div>
+                                    {!isSidebarCollapsed && <span className="text-[13px] font-black uppercase tracking-widest">Library</span>}
+                                    {isViewAllAdsOpen && !isSidebarCollapsed && (
+                                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                    )}
+                                </Button>
                             </div>
-                            <div className="space-y-1.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
-                                {recentAds.map((ad) => (
+                        )}
+
+                        {/* Recent History — shown for all platforms */}
+                        {recentAds.length > 0 && (
+                            <div className={`px-4 mt-8 ${isSidebarCollapsed ? "hidden" : "block"}`}>
+                                <div className="flex items-center justify-between px-1 mb-3">
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Recent Audits</h3>
+                                    <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5 ml-4" />
+                                </div>
+                                <div className="space-y-1.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+                                    {recentAds.map((ad) => (
+                                        <button
+                                            key={ad.id}
+                                            onClick={() => {
+                                                const accountExists = accounts.some(a => a.id === ad.adAccountId)
+                                                if (accountExists) setSelectedAccountId(ad.adAccountId)
+                                                setSelectedAdId(ad.id)
+                                                if (ad.platform === 'google') {
+                                                    setSearchQuery(ad.adId)
+                                                }
+                                                setIsViewAllAdsOpen(false)
+                                            }}
+                                            className="w-full text-left px-3 py-3 rounded-xl transition-all border group/audit relative overflow-hidden border-transparent hover:bg-secondary/50 dark:hover:bg-zinc-800/40 text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 font-bold"
+                                        >
+                                            <div className="flex items-center gap-3 relative z-10">
+                                                <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black uppercase tracking-tighter transition-colors bg-secondary dark:bg-zinc-800 text-muted-foreground group-hover/audit:bg-card dark:group-hover/audit:bg-zinc-700 shadow-sm">
+                                                    {ad.platform === 'meta' ? 'M' : ad.platform === 'google' ? 'G' : ad.platform === 'tiktok' ? 'T' : ad.platform === 'youtube' ? 'Y' : ad.platform === 'linkedin' ? 'L' : ad.platform === 'tboola' ? 'TB' : ad.platform === 'bing' ? 'B' : ad.platform === 'adroll' ? 'AR' : 'A'}
+                                                </div>
+                                                <div className="flex-1 overflow-hidden text-left">
+                                                    <span className="text-[11px] font-black leading-tight truncate block group-hover/audit:tracking-tight transition-all uppercase tracking-widest">{ad.adName}</span>
+                                                    <span className="text-[9px] opacity-40 font-mono block truncate mt-0.5">{ad.adId}</span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Account Audit Section — to match user screenshot */}
+                        {!isSidebarCollapsed && (
+                            <div className="px-4 mt-8">
+                                <div className="flex items-center justify-between px-1 mb-3">
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Account Audit</h3>
+                                    <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5 ml-4" />
+                                </div>
+                                <div className="space-y-1">
                                     <button
-                                        key={ad.id}
-                                        onClick={() => handleSelectAd(ad.id)}
+                                        onClick={() => setSelectedPlatform('meta')}
                                         className={cn(
-                                            "w-full text-left px-3 py-3 rounded-xl transition-all border group/audit relative overflow-hidden",
-                                            selectedAdId === ad.id
-                                                ? "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-white/10 shadow-md translate-x-1"
-                                                : "border-transparent hover:bg-white/50 dark:hover:bg-zinc-800/40 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 font-bold"
+                                            "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all font-bold text-[11px] uppercase tracking-widest",
+                                            selectedPlatform === 'meta' ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
                                         )}
                                     >
-                                        <div className="flex items-center gap-3 relative z-10">
-                                            <div className={cn(
-                                                "w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black uppercase tracking-tighter transition-colors",
-                                                selectedAdId === ad.id ? "bg-[#007AFF] text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 group-hover/audit:bg-white dark:group-hover/audit:bg-zinc-700"
-                                            )}>
-                                                {ad.platform === 'meta' ? 'M' : ad.platform === 'tiktok' ? 'T' : 'A'}
-                                            </div>
-                                            <div className="flex-1 overflow-hidden">
-                                                <span className="text-[11px] font-black leading-tight truncate block group-hover/audit:tracking-tight transition-all uppercase tracking-widest">{ad.adName}</span>
-                                                <span className="text-[9px] opacity-40 font-mono block truncate mt-0.5">{ad.adId}</span>
-                                            </div>
-                                        </div>
+                                        <Facebook className="w-4 h-4" />
+                                        <span>Meta Ads</span>
                                     </button>
-                                ))}
+                                    <button
+                                        onClick={() => setSelectedPlatform('google')}
+                                        className={cn(
+                                            "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all font-bold text-[11px] uppercase tracking-widest",
+                                            selectedPlatform === 'google' ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
+                                        )}
+                                    >
+                                        <Play className="w-4 h-4" />
+                                        <span>Google Ads</span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* Bottom: Sidebar Toggle */}
@@ -1005,7 +1145,7 @@ function DashboardContent() {
 
                 {/* Main Content Area */}
                 <main className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent scroll-smooth transition-all duration-300 relative z-10">
-                    <div className="flex items-center justify-between px-4 md:px-8 h-16 md:h-20 py-2 border-b border-border bg-background/50 dark:bg-black/40 backdrop-blur-xl sticky top-0 z-10 transition-all duration-300">
+                    <div className="flex items-center justify-between px-4 md:px-8 h-10 md:h-11 py-1 border-b border-border bg-background/50 dark:bg-black/40 backdrop-blur-xl z-10 transition-all duration-300">
                         <div className="flex items-center gap-2 md:gap-4 min-w-0 overflow-hidden">
                             {/* Mobile Sidebar Trigger */}
                             <div className="md:hidden flex-shrink-0">
@@ -1083,141 +1223,126 @@ function DashboardContent() {
                                                 {/* Mobile Platform Switcher */}
                                                 <div className="space-y-1.5 pt-2">
                                                     <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1 uppercase">Select Platform</label>
-                                                    {new Set(connectedPlatforms.filter(p => enabledPlatforms.includes(p))).size <= 1 ? (
-                                                        <div
-                                                            onClick={() => setShowPlatformAlert(true)}
-                                                            className="w-full h-12 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-xl font-bold text-sm flex items-center gap-3 px-3 cursor-pointer"
-                                                        >
-                                                            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center shadow-sm">
-                                                                <Facebook className="w-4 h-4 text-[#007AFF]" />
+                                                    <Select
+                                                        value={selectedPlatform}
+                                                        onValueChange={(v: any) => {
+                                                            setSelectedPlatform(v)
+                                                            setIsMobileMenuOpen(false)
+                                                        }}
+                                                        onOpenChange={(open) => {
+                                                            if (!open) {
+                                                                setIsAddingPlatform(false)
+                                                                setPlatformSearchQuery("")
+                                                            }
+                                                        }}
+                                                    >
+                                                        <SelectTrigger className="w-full h-12 bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 rounded-xl font-bold text-sm">
+                                                            <div className="flex items-center gap-3">
+                                                                <Globe className="w-4 h-4 text-[#007AFF]" />
+                                                                <SelectValue placeholder="Platform" />
                                                             </div>
-                                                            <span className="text-zinc-900 dark:text-zinc-100">Meta</span>
-                                                            <ChevronDown className="h-4 w-4 opacity-50 ml-auto" />
-                                                        </div>
-                                                    ) : (
-                                                        <Select
-                                                            value={selectedPlatform}
-                                                            onValueChange={(v: any) => {
-                                                                setSelectedPlatform(v)
-                                                                setIsMobileMenuOpen(false)
-                                                            }}
-                                                        >
-                                                            <SelectTrigger className="w-full h-12 bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 rounded-xl font-bold text-sm">
+                                                        </SelectTrigger>
+                                                        <SelectContent className="rounded-xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-2xl z-[2000]">
+                                                            <SelectItem value="all" className="font-bold py-3 text-sm">
                                                                 <div className="flex items-center gap-3">
-                                                                    <Globe className="w-4 h-4 text-[#007AFF]" />
-                                                                    <SelectValue placeholder="Platform" />
+                                                                    <Globe className="w-4 h-4" />
+                                                                    <span>All Platforms</span>
                                                                 </div>
-                                                            </SelectTrigger>
-                                                            <SelectContent className="rounded-xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-2xl z-[2000]">
-                                                                <SelectItem value="all" className="font-bold py-3 text-sm">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <Globe className="w-4 h-4" />
-                                                                        <span>All Platforms</span>
-                                                                    </div>
-                                                                </SelectItem>
-                                                                {[
-                                                                    { id: 'meta', label: 'Meta', icon: Facebook },
-                                                                    { id: 'tiktok', label: 'TikTok', icon: Smartphone },
-                                                                    { id: 'google', label: 'Google Ads', icon: Play },
-                                                                    { id: 'youtube', label: 'YouTube', icon: Play },
-                                                                    { id: 'linkedin', label: 'LinkedIn', icon: Linkedin },
-                                                                    { id: 'shopify', label: 'Shopify', icon: ShoppingBag },
-                                                                    { id: 'instagram', label: 'Instagram', icon: Instagram },
-                                                                    { id: 'pinterest', label: 'Pinterest', icon: Pinterest },
-                                                                    { id: 'x', label: 'X (Twitter)', icon: Twitter },
-                                                                    { id: 'telegram', label: 'Telegram', icon: Send }
-                                                                ].filter(p => enabledPlatforms.includes(p.id) && connectedPlatforms.includes(p.id as any)).map((p) => (
-                                                                    <SelectItem key={p.id} value={p.id} className="font-bold py-3 text-sm">
+                                                            </SelectItem>
+                                                            {Object.entries(PLATFORM_META)
+                                                                .filter(([id]) => id !== 'all' && enabledPlatforms.includes(id))
+                                                                .map(([id, meta]) => (
+                                                                    <SelectItem key={id} value={id} className="font-bold py-3 text-sm">
                                                                         <div className="flex items-center gap-3">
-                                                                            <p.icon className="w-4 h-4" />
-                                                                            <span>{p.label}</span>
+                                                                            <meta.icon className="w-4 h-4" />
+                                                                            <span>{meta.label}</span>
                                                                         </div>
                                                                     </SelectItem>
                                                                 ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    )}
-                                                </div>
 
-                                                {selectedPlatform !== 'youtube' && (
-                                                    <div className="space-y-1">
-                                                        <label className="text-xs font-semibold text-muted-foreground ml-1">AD ACCOUNT</label>
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="outline" className="w-full justify-between bg-primary/5 text-foreground hover:bg-primary/10 border-primary/20 font-semibold h-10">
-                                                                    <span className="truncate">
-                                                                        {selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "Unknown Account"}
-                                                                    </span>
-                                                                    <ChevronDown className="h-4 w-4 opacity-50 ml-2 flex-shrink-0" />
+                                                            <div className="p-2 mt-1 border-t border-zinc-100 dark:border-white/5">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    className="w-full justify-start gap-2 h-10 px-2 text-xs font-bold text-[#007AFF] hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl"
+                                                                    onClick={() => {
+                                                                        setIsAddingPlatform(true)
+                                                                        setIsMobileMenuOpen(false)
+                                                                    }}
+                                                                >
+                                                                    <Plus className="w-4 h-4" />
+                                                                    Add Platform
                                                                 </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="start" className="w-64 max-h-80 overflow-y-auto">
-                                                                <SheetClose asChild>
-                                                                    <DropdownMenuItem
-                                                                        onClick={() => setSelectedAccountId("all")}
-                                                                        className={selectedAccountId === "all" ? "bg-primary/10 font-bold" : ""}
-                                                                    >
-                                                                        <BarChart3 className="h-4 w-4 mr-2" />
-                                                                        <span>All Accounts</span>
-                                                                    </DropdownMenuItem>
-                                                                </SheetClose>
-                                                                {accounts.map((account) => (
-                                                                    <SheetClose key={account.id} asChild>
-                                                                        <DropdownMenuItem
-                                                                            onClick={() => {
-                                                                                setSelectedAccountId(account.id)
-                                                                                const firstAdInAccount = ads.find(ad => ad.adAccountId === account.id)
-                                                                                if (firstAdInAccount) handleSelectAd(firstAdInAccount.id)
-                                                                            }}
-                                                                            className={selectedAccountId === account.id ? "bg-primary/10 font-bold" : ""}
-                                                                        >
-                                                                            <BarChart3 className="h-4 w-4 mr-2" />
-                                                                            <div className="flex flex-col items-start leading-tight">
-                                                                                <span>{account.name}</span>
-                                                                                <span className="text-[9px] text-muted-foreground font-mono leading-none mt-1">{account.id}</span>
-                                                                            </div>
-                                                                        </DropdownMenuItem>
-                                                                    </SheetClose>
-                                                                ))}
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </div>
-                                                )}
-
-                                                <div className="space-y-1">
-                                                    <label className="text-xs font-semibold text-muted-foreground ml-1">MENU</label>
-                                                    <Button
-                                                        variant="ghost"
-                                                        onClick={() => {
-                                                            setIsViewAllAdsOpen(true)
-                                                            setIsGuideOpen(false)
-                                                            setIsMobileMenuOpen(false)
-                                                        }}
-                                                        className={`w-full justify-start gap-3 h-12 px-3 rounded-lg transition-all ${isViewAllAdsOpen ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-                                                    >
-                                                        <LayoutDashboard className="h-5 w-5" />
-                                                        <span className="text-sm font-bold">View All Ads</span>
-                                                    </Button>
+                                                            </div>
+                                                        </SelectContent>
+                                                    </Select>
                                                 </div>
 
-                                                <div className="space-y-1">
-                                                    <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2 px-1">Recent Audits</h3>
-                                                    {recentAds.map((ad) => (
-                                                        <SheetClose key={ad.id} asChild>
-                                                            <button
-                                                                onClick={() => handleSelectAd(ad.id)}
-                                                                className={`w-full text-left px-3 py-3 rounded-md transition-all border flex items-center gap-3 ${selectedAdId === ad.id
-                                                                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
-                                                                    : "border-transparent hover:bg-muted text-foreground"
-                                                                    }`}
-                                                            >
-                                                                <div className="overflow-hidden">
-                                                                    <span className="text-sm font-medium leading-tight line-clamp-1 block">{ad.adName}</span>
-                                                                    <span className="text-xs opacity-70 font-mono block truncate">{ad.adId}</span>
-                                                                </div>
-                                                            </button>
-                                                        </SheetClose>
-                                                    ))}
+                                                {/* Navigation — visible for all platforms */}
+                                                <div className="space-y-4">
+                                                    <div className="space-y-1">
+                                                        <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1 uppercase">Navigation</label>
+                                                        <Button
+                                                            variant="ghost"
+                                                            onClick={() => {
+                                                                setIsViewAllAdsOpen(true)
+                                                                setIsGuideOpen(false)
+                                                                setIsProfileOpen(false)
+                                                                setIsSettingsOpen(false)
+                                                                setIsMobileMenuOpen(false)
+                                                            }}
+                                                            className={cn(
+                                                                "w-full justify-start gap-3 h-12 px-3 rounded-2xl transition-all relative group/nav overflow-hidden",
+                                                                isViewAllAdsOpen
+                                                                    ? "bg-[#020617] text-white border border-[#007AFF]"
+                                                                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                                                            )}
+                                                        >
+                                                            <div className={cn(
+                                                                "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300",
+                                                                isViewAllAdsOpen ? "bg-white/20" : "bg-zinc-100 dark:bg-zinc-800"
+                                                            )}>
+                                                                <LayoutDashboard className="h-4 w-4" />
+                                                            </div>
+                                                            <span className="text-sm font-black uppercase tracking-widest">Library</span>
+                                                        </Button>
+                                                    </div>
+
+                                                    {recentAds.length > 0 && (
+                                                        <div className="space-y-3">
+                                                            <div className="flex items-center justify-between px-1">
+                                                                <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Recent History</h3>
+                                                                <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5 ml-4" />
+                                                            </div>
+                                                            <div className="space-y-1.5 max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
+                                                                {recentAds.map((ad) => (
+                                                                    <button
+                                                                        key={ad.id}
+                                                                        onClick={() => {
+                                                                            const accountExists = accounts.some(a => a.id === ad.adAccountId)
+                                                                            if (accountExists) setSelectedAccountId(ad.adAccountId)
+                                                                            setSelectedAdId(ad.id)
+                                                                            if (ad.platform === 'google') {
+                                                                                setSearchQuery(ad.adId)
+                                                                            }
+                                                                            setIsViewAllAdsOpen(false)
+                                                                            setIsMobileMenuOpen(false)
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-3 rounded-xl transition-all border group/audit border-transparent hover:bg-secondary/50 dark:hover:bg-zinc-800/40 text-muted-foreground hover:text-foreground font-bold"
+                                                                    >
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black uppercase bg-secondary dark:bg-zinc-800 shrink-0">
+                                                                                {ad.platform === 'meta' ? 'M' : ad.platform === 'google' ? 'G' : 'A'}
+                                                                            </div>
+                                                                            <div className="flex-1 min-w-0 text-left">
+                                                                                <span className="text-[11px] font-black leading-tight truncate block uppercase tracking-widest">{ad.adName}</span>
+                                                                                <span className="text-[9px] opacity-40 font-mono block truncate mt-0.5">{ad.adId}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -1236,12 +1361,14 @@ function DashboardContent() {
                                         </span>
                                     </>
                                 )}
-                                {selectedPlatform !== 'youtube' && (
+                                {(isProfileOpen || isSettingsOpen || isGuideOpen || isViewAllAdsOpen || selectedPlatform === 'meta' || selectedPlatform === 'all') && (
                                     <>
                                         <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
                                         <span className="text-[12px] font-semibold text-foreground whitespace-nowrap leading-none truncate min-w-0">
                                             {isProfileOpen ? "Profile" : isSettingsOpen ? "Settings" : isGuideOpen ? "Guide" : isViewAllAdsOpen ? "All Ads" : (
-                                                selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "All Accounts"
+                                                (selectedPlatform === 'meta' || selectedPlatform === 'all')
+                                                    ? (selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "All Accounts")
+                                                    : ""
                                             )}
                                         </span>
                                     </>
@@ -1264,7 +1391,7 @@ function DashboardContent() {
                                     </>
                                 )}
 
-                                {(isProfileOpen || isSettingsOpen || isGuideOpen || isViewAllAdsOpen || selectedPlatform !== 'youtube') && (
+                                {(isProfileOpen || isSettingsOpen || isGuideOpen || isViewAllAdsOpen || selectedPlatform === 'meta' || selectedPlatform === 'all') && (
                                     <>
                                         <span>/</span>
                                         <span className="truncate max-w-[150px] lg:max-w-none font-semibold text-foreground">
@@ -1272,7 +1399,9 @@ function DashboardContent() {
                                                 isSettingsOpen ? "Settings" :
                                                     isGuideOpen ? "Guide" :
                                                         isViewAllAdsOpen ? "All Ads" :
-                                                            (selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "All Accounts")}
+                                                            (selectedPlatform === 'meta' || selectedPlatform === 'all')
+                                                                ? (selectedAccountId === "all" ? "All Accounts" : accounts.find(a => a.id === selectedAccountId)?.name || "All Accounts")
+                                                                : ""}
                                         </span>
                                     </>
                                 )}
@@ -1290,7 +1419,6 @@ function DashboardContent() {
                                             description: "We hope this documentation helped you.",
                                             duration: 5000
                                         });
-                                        // Force dismissal after 5 seconds for both desktop and mobile
                                         setTimeout(() => {
                                             dismiss();
                                         }, 5000);
@@ -1313,22 +1441,14 @@ function DashboardContent() {
                                 </Button>
                             ) : (
                                 <>
-                                    <button
-                                        onClick={() => setIsConnectDialogOpen(true)}
-                                        className="hidden md:flex h-10 px-4 bg-[#007AFF] hover:bg-[#007AFF]/90 shadow-lg shadow-blue-500/25 text-white rounded-xl items-center justify-center gap-2 transition-all active:scale-[0.96] border border-blue-400/20 group overflow-hidden relative"
-                                    >
-                                        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                                        <Plus className="h-4 w-4" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Connect Platform</span>
-                                    </button>
+
 
                                     <button
                                         onClick={() => loadData(true)}
                                         disabled={isSyncing}
                                         className={cn(
-                                            "hidden md:flex group items-center transition-all duration-300 flex-shrink-0 relative h-10 border shadow-sm active:scale-[0.96]",
-                                            "rounded-xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800",
-                                            "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+                                            "hidden md:flex group items-center transition-all duration-300 flex-shrink-0 relative h-10 active:scale-[0.96]",
+                                            "rounded-2xl bg-white dark:bg-zinc-900 border border-border hover:bg-zinc-50 dark:hover:bg-zinc-800 shadow-sm",
                                             showRefreshText || isSyncing ? "px-4" : "w-10 justify-center",
                                             isSyncing && "opacity-70 pointer-events-none"
                                         )}
@@ -1338,14 +1458,11 @@ function DashboardContent() {
                                             "overflow-hidden transition-all duration-500 flex items-center",
                                             showRefreshText || isSyncing ? "max-w-[180px] opacity-100 ml-2.5" : "max-w-0 opacity-0 ml-0"
                                         )}>
-                                            <span className="text-[12px] font-bold text-zinc-600 dark:text-zinc-400 whitespace-nowrap uppercase tracking-wider">
+                                            <span className="text-[12px] font-bold text-zinc-500 whitespace-nowrap uppercase tracking-wider">
                                                 {isSyncing ? "Syncing..." : "Updated"}
                                             </span>
                                         </div>
                                     </button>
-                                    <div className="hidden md:block">
-                                        <ModeToggle />
-                                    </div>
 
                                     <div className="md:hidden">
                                         <DropdownMenu>
@@ -1369,11 +1486,11 @@ function DashboardContent() {
 
                                                 <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Appearance</DropdownMenuLabel>
                                                 <DropdownMenuItem onClick={() => setTheme("light")} className={cn("rounded-lg cursor-pointer", mounted && theme === "light" && "bg-accent")}>
-                                                    <Sun className="mr-2 h-4 w-4 text-amber-500" />
+                                                    <Sun className="mr-2 h-4 w-4 text-muted-foreground" />
                                                     <span>Light Mode</span>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => setTheme("dark")} className={cn("rounded-lg cursor-pointer", mounted && theme === "dark" && "bg-accent")}>
-                                                    <Moon className="mr-2 h-4 w-4 text-indigo-400" />
+                                                    <Moon className="mr-2 h-4 w-4 text-muted-foreground" />
                                                     <span>Dark Mode</span>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => setTheme("system")} className={cn("rounded-lg cursor-pointer", mounted && theme === "system" && "bg-accent")}>
@@ -1389,9 +1506,11 @@ function DashboardContent() {
                     </div>
 
                     <div className={cn(
-                        "p-4 md:p-8 space-y-6 md:space-y-12 transition-all duration-300 flex-1 flex flex-col",
+                        "px-4 md:px-8 pb-8 space-y-6 md:space-y-8 transition-all duration-300 flex-1 flex flex-col",
+                        (selectedPlatform === 'google' && !isProfileOpen && !isSettingsOpen && !isGuideOpen && !isViewAllAdsOpen) ? "pt-0" : "pt-6",
                         !isReducedMotionEnabled && "animate-in fade-in slide-in-from-bottom-4 duration-700",
-                        !isGuideOpen && activeAnalysis && !isMobile && searchQuery.trim() && "md:pr-[280px] xl:pr-[320px] 2xl:pr-[360px]"
+                        // Only add right padding for the analysis sidebar if we're actually looking at an ad analysis/details view
+                        !isGuideOpen && activeAnalysis && !isMobile && selectedAdId && "md:pr-[280px] xl:pr-[320px] 2xl:pr-[360px]"
                     )}>
                         {isGuideOpen ? (
                             <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
@@ -1441,8 +1560,8 @@ function DashboardContent() {
                                                         <LayoutDashboard className="w-4 h-4 md:w-5 md:h-5 text-[#007AFF]" />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <h3 className="text-[15px] md:text-lg font-bold">1. Creative Overview</h3>
-                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">The main dashboard presents your ads in a searchable and filterable grid. Each ad card provides immediate high-level metrics and labeling.</p>
+                                                        <h3 className="text-[15px] md:text-lg font-bold">1. Unified Asset Command</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Your central hub for Google Ads. Navigate seamlessly between <span className="font-bold text-foreground">Overview, Campaigns, Ads & Assets,</span> and <span className="font-bold text-foreground">Keywords</span> tabs to master your account structure.</p>
                                                     </div>
                                                 </div>
                                             </section>
@@ -1450,11 +1569,11 @@ function DashboardContent() {
                                             <section className="space-y-4 group/item">
                                                 <div className="flex items-start gap-3 md:gap-4">
                                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-indigo-100 dark:border-indigo-500/20">
-                                                        <Bot className="w-4 h-4 md:w-5 md:h-5 text-indigo-500" />
+                                                        <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-indigo-500" />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <h3 className="text-[15px] md:text-lg font-bold">2. Analysis Modes (Lenses)</h3>
-                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Use the <span className="font-bold text-foreground">Analysis Mode</span> dropdown in the header to switch between different perspective: <span className="text-foreground">AI Recommendation</span>, <span className="text-foreground">Last Updated</span>, or <span className="text-foreground">Top Performer</span>.</p>
+                                                        <h3 className="text-[15px] md:text-lg font-bold">2. Performance Trends</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Real-time visualization of your spend distribution and efficiency. The <span className="font-bold text-foreground">Performance Snapshot</span> chart provides an immediate pulse on active scaling assets.</p>
                                                     </div>
                                                 </div>
                                             </section>
@@ -1462,11 +1581,11 @@ function DashboardContent() {
                                             <section className="space-y-4 group/item">
                                                 <div className="flex items-start gap-3 md:gap-4">
                                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-amber-100 dark:border-amber-500/20">
-                                                        <Activity className="w-4 h-4 md:w-5 md:h-5 text-amber-500" />
+                                                        <LayoutGrid className="w-4 h-4 md:w-5 md:h-5 text-amber-500" />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <h3 className="text-[15px] md:text-lg font-bold">3. Metric Deep Dives</h3>
-                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Click on any metric in the <span className="font-bold text-foreground">Metrics Grid</span> (Spend, ROAS, Purchases) to open the side panel. There, you'll find detailed AI commentary on why a specific metric is moving.</p>
+                                                        <h3 className="text-[15px] md:text-lg font-bold">3. Format Intelligence</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Understand how your creative mix performs. The <span className="font-bold text-foreground">Format Performance</span> breakdown isolates efficiency across Search, Display, Video, and Shopping placements.</p>
                                                     </div>
                                                 </div>
                                             </section>
@@ -1474,11 +1593,11 @@ function DashboardContent() {
                                             <section className="space-y-4 group/item">
                                                 <div className="flex items-start gap-3 md:gap-4">
                                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-emerald-100 dark:border-emerald-500/20">
-                                                        <Zap className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" />
+                                                        <Search className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <h3 className="text-[15px] md:text-lg font-bold">4. AI Scoring System</h3>
-                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">The <span className="font-bold text-foreground">Radar Chart</span> compares your active creative against account benchmarks across Typography, Color Psychology, and CTA Quality to provide a Score from 1-10.</p>
+                                                        <h3 className="text-[15px] md:text-lg font-bold">4. Keyword Signals</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Deep dive into intent. The <span className="font-bold text-foreground">Search Keywords</span> analysis reveals not just what users search, but which terms drive actual conversion value.</p>
                                                     </div>
                                                 </div>
                                             </section>
@@ -1486,11 +1605,11 @@ function DashboardContent() {
                                             <section className="space-y-4 group/item">
                                                 <div className="flex items-start gap-3 md:gap-4">
                                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-pink-50 dark:bg-pink-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-pink-100 dark:border-pink-500/20">
-                                                        <Trophy className="w-4 h-4 md:w-5 md:h-5 text-pink-500" />
+                                                        <Brain className="w-4 h-4 md:w-5 md:h-5 text-pink-500" />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <h3 className="text-[15px] md:text-lg font-bold">5. Performance Benchmarking</h3>
-                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">See how your ads stack up against the best in your account. Identify top-tier creatives instantly even before Meta flags them as winners.</p>
+                                                        <h3 className="text-[15px] md:text-lg font-bold">5. Optimization Engine</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">AI-driven strategy. The <span className="font-bold text-foreground">Optimization Hub</span> detects neutral engines and suggests strategic shifts to unlock growth potential.</p>
                                                     </div>
                                                 </div>
                                             </section>
@@ -1498,11 +1617,11 @@ function DashboardContent() {
                                             <section className="space-y-4 group/item">
                                                 <div className="flex items-start gap-3 md:gap-4">
                                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-cyan-50 dark:bg-cyan-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-cyan-100 dark:border-cyan-500/20">
-                                                        <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-cyan-500" />
+                                                        <Trophy className="w-4 h-4 md:w-5 md:h-5 text-cyan-500" />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <h3 className="text-[15px] md:text-lg font-bold">6. Creative Evolution</h3>
-                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Monitor how design changes affect your AI scores over time. Perfect your creative strategy with iterative, data-driven refinement.</p>
+                                                        <h3 className="text-[15px] md:text-lg font-bold">6. Creative Benchmarking</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Compare asset efficiency instantly. Identify top-tier creatives with <span className="font-bold text-foreground">Power Creatives</span> benchmarking before Google's learning phase completes.</p>
                                                     </div>
                                                 </div>
                                             </section>
@@ -1510,11 +1629,11 @@ function DashboardContent() {
                                             <section className="space-y-4 group/item">
                                                 <div className="flex items-start gap-3 md:gap-4">
                                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-purple-100 dark:border-purple-500/20">
-                                                        <Globe className="w-4 h-4 md:w-5 md:h-5 text-purple-500" />
+                                                        <Info className="w-4 h-4 md:w-5 md:h-5 text-purple-500" />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <h3 className="text-[15px] md:text-lg font-bold">7. Global Trends</h3>
-                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Gain insights into what’s performing in your industry globally. Stay ahead of the curve with our AI-powered creative trend analyzer.</p>
+                                                        <h3 className="text-[15px] md:text-lg font-bold">7. Audience Resonance</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Know your viewer. <span className="font-bold text-foreground">Audience Insights</span> track affinity scores and potential reach to ensure your message lands with the right segments.</p>
                                                     </div>
                                                 </div>
                                             </section>
@@ -1522,11 +1641,11 @@ function DashboardContent() {
                                             <section className="space-y-4 group/item">
                                                 <div className="flex items-start gap-3 md:gap-4">
                                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-orange-100 dark:border-orange-500/20">
-                                                        <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
+                                                        <BarChart3 className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <h3 className="text-[15px] md:text-lg font-bold">8. Automated Insights</h3>
-                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Receive real-time, actionable tips to boost performance. Our AI doesn't just score; it tells you exactly how to improve every pixel.</p>
+                                                        <h3 className="text-[15px] md:text-lg font-bold">8. Metric Deep Dives</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Granular control. Hover over account-level metrics like <span className="font-bold text-foreground">ROAS, Conversions,</span> and <span className="font-bold text-foreground">Avg. CPC</span> for detailed definitions and performance context.</p>
                                                     </div>
                                                 </div>
                                             </section>
@@ -1534,11 +1653,11 @@ function DashboardContent() {
                                             <section className="space-y-4 group/item">
                                                 <div className="flex items-start gap-3 md:gap-4">
                                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-rose-100 dark:border-rose-500/20">
-                                                        <LayoutGrid className="w-4 h-4 md:w-5 md:h-5 text-rose-500" />
+                                                        <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-rose-500" />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <h3 className="text-[15px] md:text-lg font-bold">9. Layout View Switching</h3>
-                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Switch between <span className="font-bold text-foreground">Grid, List, Table,</span> and <span className="font-bold text-foreground">Compact</span> views to analyze your creatives in the density that suits your workflow.</p>
+                                                        <h3 className="text-[15px] md:text-lg font-bold">9. Creative Analysis</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Go deeper. Click <span className="font-bold text-foreground">Analyze</span> on any asset to open the <span className="font-bold text-foreground">Ad Detail View</span>, revealing AI scores for Attention, Interest, Desire, and Action (AIDA).</p>
                                                     </div>
                                                 </div>
                                             </section>
@@ -1546,11 +1665,11 @@ function DashboardContent() {
                                             <section className="space-y-4 group/item">
                                                 <div className="flex items-start gap-3 md:gap-4">
                                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-slate-50 dark:bg-slate-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-slate-100 dark:border-slate-500/20">
-                                                        <Smartphone className="w-4 h-4 md:w-5 md:h-5 text-slate-500" />
+                                                        <Globe className="w-4 h-4 md:w-5 md:h-5 text-slate-500" />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <h3 className="text-[15px] md:text-lg font-bold">10. Multi-Platform Experience</h3>
-                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Seamlessly manage accounts across mobile and desktop. Use the <span className="font-bold text-foreground">Platform Switcher</span> to isolate your Meta, YouTube, or TikTok ads, with smart filtering that keeps your workspace focused.</p>
+                                                        <h3 className="text-[15px] md:text-lg font-bold">10. Multi-Platform Context</h3>
+                                                        <p className="text-[13px] md:text-sm leading-relaxed text-muted-foreground">Holistic view. While focused on Google, easily switch contexts to compare performance against other channels using the <span className="font-bold text-foreground">Global Platform Switcher</span>.</p>
                                                     </div>
                                                 </div>
                                             </section>
@@ -1598,303 +1717,354 @@ function DashboardContent() {
                                         setIsProfileOpen(false)
                                         setIsSettingsOpen(false)
                                     }}
-                                    onEnabledPlatformsChange={(platforms) => setEnabledPlatforms(platforms)}
+                                    onEnabledPlatformsChange={(platforms) => {
+                                        // Detect newly added platform (one that wasn't in enabledPlatforms before)
+                                        const newlyAdded = platforms.find(p => !enabledPlatforms.includes(p))
+                                        setEnabledPlatforms(platforms)
+                                        if (newlyAdded) {
+                                            // Switch to the new platform and close all overlay views
+                                            setSelectedPlatform(newlyAdded as PlatformType)
+                                            setIsSettingsOpen(false)
+                                            setIsProfileOpen(false)
+                                            setIsGuideOpen(false)
+                                            setIsViewAllAdsOpen(false)
+                                        } else if (selectedPlatform !== 'all' && selectedPlatform !== 'meta' && !platforms.includes(selectedPlatform)) {
+                                            // If currently selected platform was removed, switch to Meta
+                                            setSelectedPlatform('google')
+                                        }
+                                    }}
+                                    currentEnabledPlatforms={enabledPlatforms}
                                 />
                             </div>
                         ) : isViewAllAdsOpen ? (
                             <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
                                 <div className={cn(
                                     "max-w-7xl mx-auto mt-2 md:mt-4 rounded-[12px] border border-zinc-200/50 dark:border-white/10 shadow-2xl relative overflow-hidden group h-[calc(100vh-140px)] md:h-[calc(100vh-160px)] flex flex-col",
-                                    isGlassmorphismEnabled ? "bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md" : "bg-white dark:bg-zinc-900"
+                                    "bg-white dark:bg-[#020617]"
                                 )}>
                                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-10 relative">
-                                        <div className="relative z-10">
-                                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                                                <div>
-                                                    <h1 className="text-2xl md:text-3xl font-black tracking-tightest text-[#007AFF]">Discovery Hub</h1>
-                                                    <p className="text-sm text-muted-foreground mt-1">Exploring all creatives across your ecosystem</p>
-                                                </div>
-                                                <div className="flex items-center gap-2 sm:gap-3 flex-wrap md:w-auto">
-                                                    {/* Discovery View Switcher */}
-                                                    <Select value={discoveryViewMode} onValueChange={(v: any) => setDiscoveryViewMode(v)}>
-                                                        <SelectTrigger className="w-[130px] h-9 bg-white/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-full text-xs font-bold">
-                                                            <SelectValue placeholder="View" />
-                                                        </SelectTrigger>
-                                                        <SelectContent className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200/50 dark:border-white/10 rounded-xl shadow-2xl">
-                                                            <SelectItem value="grid" className="font-bold cursor-pointer rounded-lg">
-                                                                <div className="flex items-center gap-2">
-                                                                    <LayoutGrid className="h-3.5 w-3.5 text-[#007AFF]" />
-                                                                    <span>Grid</span>
-                                                                </div>
-                                                            </SelectItem>
-                                                            <SelectItem value="list" className="font-bold cursor-pointer rounded-lg">
-                                                                <div className="flex items-center gap-2">
-                                                                    <List className="h-3.5 w-3.5 text-emerald-500" />
-                                                                    <span>List</span>
-                                                                </div>
-                                                            </SelectItem>
-                                                            <SelectItem value="table" className="font-bold cursor-pointer rounded-lg">
-                                                                <div className="flex items-center gap-2">
-                                                                    <TableIcon className="h-3.5 w-3.5 text-amber-500" />
-                                                                    <span>Table</span>
-                                                                </div>
-                                                            </SelectItem>
-                                                            <SelectItem value="compact" className="font-bold cursor-pointer rounded-lg">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Grid2X2 className="h-3.5 w-3.5 text-purple-500" />
-                                                                    <span>Compact</span>
-                                                                </div>
-                                                            </SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
+                                        {/* Corner Close Button */}
+                                        <button
+                                            onClick={() => {
+                                                setIsViewAllAdsOpen(false)
+                                                setDiscoveryAccountFilter("all")
+                                                setEnlargedImage(null)
+                                            }}
+                                            className="absolute top-3 right-3 p-2 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-all z-50 shadow-sm border border-zinc-200 dark:border-zinc-700 active:scale-95 group focus:outline-none"
+                                        >
+                                            <X className="w-5 h-5 text-zinc-600 dark:text-zinc-400 group-hover:text-red-500 transition-colors" />
+                                        </button>
 
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="px-3 sm:px-4 py-2 bg-primary/5 rounded-full border border-primary/10 hover:bg-primary/10 h-9 max-w-[200px] sm:max-w-none">
-                                                                <span className="text-[11px] sm:text-xs font-bold text-primary flex items-center gap-1.5 sm:gap-2">
-                                                                    <span className="truncate">
-                                                                        {discoveryAccountFilter === "all"
-                                                                            ? `Total: ${ads.length} Ads`
-                                                                            : `${accounts.find(a => a.id === discoveryAccountFilter)?.name}: ${ads.filter(ad => ad.adAccountId === discoveryAccountFilter).length} Ads`
-                                                                        }
+                                        <div className="relative z-10 pt-2">
+                                            {/* Header Section - STRICTLY STACKED to prevent ANY overlap */}
+                                            <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
+                                                <div className="flex-shrink-0 md:w-auto">
+                                                    <h1 className="text-2xl md:text-3xl font-black tracking-tightest text-[#007AFF]">Discovery Hub</h1>
+                                                    <p className="text-[11px] md:text-xs text-muted-foreground mt-1">Exploring all creatives across your ecosystem</p>
+                                                </div>
+
+                                                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto md:flex-1">
+                                                    {/* Search Box */}
+                                                    <div className="relative flex-1 w-full">
+                                                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                                        <Input
+                                                            placeholder="Search ads by name or ID..."
+                                                            value={discoverySearchQuery}
+                                                            onChange={(e) => setDiscoverySearchQuery(e.target.value)}
+                                                            className="pl-10 pr-10 h-11 w-full bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 rounded-xl text-xs md:text-sm focus-visible:ring-[#007AFF]/20 shadow-sm transition-all"
+                                                        />
+                                                        {discoverySearchQuery && (
+                                                            <button
+                                                                onClick={() => setDiscoverySearchQuery("")}
+                                                                className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+                                                            >
+                                                                <X className="h-4 w-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 flex-shrink-0 w-full md:w-auto">
+                                                        {/* Discovery View Switcher */}
+                                                        <Select value={discoveryViewMode} onValueChange={(v: any) => setDiscoveryViewMode(v)}>
+                                                            <SelectTrigger className="flex-1 md:w-[120px] md:flex-none h-11 bg-white/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-xl text-[10px] md:text-xs font-bold shadow-sm min-w-0">
+                                                                <SelectValue placeholder="View" />
+                                                            </SelectTrigger>
+                                                            <SelectContent className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200/50 dark:border-white/10 rounded-xl shadow-2xl">
+                                                                <SelectItem value="grid" className="font-bold cursor-pointer rounded-lg">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <LayoutGrid className="h-4 w-4 text-zinc-900 dark:text-white" />
+                                                                        <span className="text-xs">Grid</span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                                <SelectItem value="list" className="font-bold cursor-pointer rounded-lg">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <List className="h-4 w-4 text-emerald-500" />
+                                                                        <span className="text-xs">List</span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                                <SelectItem value="table" className="font-bold cursor-pointer rounded-lg">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <TableIcon className="h-4 w-4 text-amber-500" />
+                                                                        <span className="text-xs">Table</span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" className="flex-1 md:flex-none px-4 py-2 bg-[#007AFF]/10 rounded-xl border border-[#007AFF]/20 hover:bg-[#007AFF]/20 h-11 whitespace-nowrap shadow-sm min-w-0">
+                                                                    <span className="text-[10px] md:text-xs font-bold text-[#007AFF] flex items-center gap-2 w-full justify-between">
+                                                                        <span className="truncate">
+                                                                            {(() => {
+                                                                                const platformAds = selectedPlatform === 'all' ? ads : ads.filter(ad => ad.platform === selectedPlatform || (!ad.platform && selectedPlatform === 'meta'))
+                                                                                if (discoveryAccountFilter === "all") return `Total: ${platformAds.length} Ads`
+                                                                                const name = accounts.find(a => a.id === discoveryAccountFilter)?.name
+                                                                                const count = platformAds.filter(ad => ad.adAccountId === discoveryAccountFilter).length
+                                                                                return `${name}: ${count} Ads`
+                                                                            })()}
+                                                                        </span>
+                                                                        <ChevronDown className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 opacity-50" />
                                                                     </span>
-                                                                    <ChevronDown className="w-3 h-3 flex-shrink-0" />
-                                                                </span>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="w-64 p-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200/50 dark:border-white/10 rounded-xl shadow-2xl">
-                                                            <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Filter by Account</DropdownMenuLabel>
-                                                            <div className="space-y-1">
-                                                                <DropdownMenuItem
-                                                                    onClick={() => setDiscoveryAccountFilter("all")}
-                                                                    className={cn(
-                                                                        "flex items-center justify-between p-2 rounded-lg transition-colors cursor-pointer",
-                                                                        discoveryAccountFilter === "all" ? "bg-primary/10 text-primary" : "hover:bg-zinc-100 dark:hover:bg-white/5"
-                                                                    )}
-                                                                >
-                                                                    <span className="text-xs font-medium">Total Ads</span>
-                                                                    <span className="text-[10px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full">{ads.length}</span>
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800" />
-                                                                {accountStats.map((stat) => (
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className="w-[220px] md:w-72 p-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200/50 dark:border-white/10 rounded-xl shadow-2xl">
+                                                                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Filter by Account</DropdownMenuLabel>
+                                                                <div className="space-y-1">
                                                                     <DropdownMenuItem
-                                                                        key={stat.id}
-                                                                        onClick={() => setDiscoveryAccountFilter(stat.id)}
+                                                                        onClick={() => setDiscoveryAccountFilter("all")}
                                                                         className={cn(
-                                                                            "flex items-center justify-between p-2 rounded-lg transition-colors cursor-pointer",
-                                                                            discoveryAccountFilter === stat.id ? "bg-primary/10 text-primary" : "hover:bg-zinc-100 dark:hover:bg-white/5"
+                                                                            "flex items-center justify-between p-2.5 rounded-lg transition-colors cursor-pointer",
+                                                                            discoveryAccountFilter === "all" ? "bg-primary/10 text-primary" : "hover:bg-zinc-100 dark:hover:bg-white/5"
                                                                         )}
                                                                     >
-                                                                        <span className="text-xs font-medium truncate pr-4">{stat.name}</span>
-                                                                        <span className="text-[10px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full">{stat.count}</span>
+                                                                        <span className="text-sm font-semibold">Total Ads</span>
+                                                                        <span className="text-xs font-black bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+                                                                            {selectedPlatform === 'all' ? ads.length : ads.filter(ad => ad.platform === selectedPlatform || (!ad.platform && selectedPlatform === 'meta')).length}
+                                                                        </span>
                                                                     </DropdownMenuItem>
-                                                                ))}
-                                                            </div>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            setIsViewAllAdsOpen(false)
-                                                            setDiscoveryAccountFilter("all")
-                                                            setEnlargedImage(null)
-                                                        }}
-                                                        className="rounded-full text-[11px] font-bold uppercase tracking-wider h-9"
-                                                    >
-                                                        Close View
-                                                    </Button>
+                                                                    <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800" />
+                                                                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar space-y-1">
+                                                                        {accountStats.map((stat) => (
+                                                                            <DropdownMenuItem
+                                                                                key={stat.id}
+                                                                                onClick={() => setDiscoveryAccountFilter(stat.id || "")}
+                                                                                className={cn(
+                                                                                    "flex items-center justify-between p-2.5 rounded-lg transition-colors cursor-pointer",
+                                                                                    discoveryAccountFilter === stat.id ? "bg-primary/10 text-primary" : "hover:bg-zinc-100 dark:hover:bg-white/5"
+                                                                                )}
+                                                                            >
+                                                                                <span className="text-sm font-medium truncate pr-4">{stat.name}</span>
+                                                                                <span className="text-xs font-black bg-primary/10 text-primary px-2.5 py-1 rounded-full">{stat.count}</span>
+                                                                            </DropdownMenuItem>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            {discoveryViewMode === "grid" && (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                                    {ads
-                                                        .filter(ad => discoveryAccountFilter === "all" || ad.adAccountId === discoveryAccountFilter)
-                                                        .map((ad) => {
-                                                            const account = accounts.find(a => a.id === ad.adAccountId)
-                                                            return (
-                                                                <div
-                                                                    key={ad.id}
-                                                                    onClick={() => {
-                                                                        const adAccount = accounts.find(acc => acc.id === ad.adAccountId)
-                                                                        setEnlargedImage({
-                                                                            url: ad.thumbnailUrl,
-                                                                            title: ad.adName,
-                                                                            accountName: adAccount?.name
-                                                                        })
-                                                                    }}
-                                                                    className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/60 dark:border-white/5 rounded-xl overflow-hidden hover:border-[#007AFF]/50 transition-all group cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300"
-                                                                >
-                                                                    <div className="aspect-[16/9] relative overflow-hidden bg-zinc-100 dark:bg-zinc-950">
-                                                                        <img src={ad.thumbnailUrl} alt={ad.adName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }} />
-                                                                        <div className="absolute top-2 left-2">
-                                                                            <span className="px-2 py-1 rounded-md bg-black/60 backdrop-blur-md text-[9px] font-black text-white uppercase tracking-wider border border-white/10 shadow-lg">
-                                                                                {account?.name || "Unknown"}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                                    </div>
-                                                                    <div className="p-4 space-y-3">
-                                                                        <div className="space-y-1">
-                                                                            <h4 className="text-[13px] font-black truncate text-foreground leading-tight">{ad.adName}</h4>
-                                                                            <p className="text-[10px] font-mono opacity-50 truncate tracking-tight">{ad.adId}</p>
-                                                                        </div>
-                                                                        <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                                                                            <div className="flex flex-col">
-                                                                                <span className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">CTR</span>
-                                                                                <span className="text-[14px] font-black text-[#007AFF] tracking-tighter">{Number(ad.ctr || 0).toFixed(2)}%</span>
-                                                                            </div>
-                                                                            <div className="flex flex-col items-end">
-                                                                                <span className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">Spend</span>
-                                                                                <span className="text-[14px] font-black text-foreground tracking-tighter">${Number(ad.spend || 0).toLocaleString()}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            )
-                                                        })}
-                                                </div>
-                                            )}
+                                            {(() => {
+                                                const filteredDiscoveryAds = ads.filter(ad => {
+                                                    // Platform filter
+                                                    if (selectedPlatform === 'meta' && ad.platform && ad.platform !== 'meta') return false
+                                                    if (selectedPlatform === 'google' && ad.platform !== 'google') return false
+                                                    if (selectedPlatform !== 'all' && selectedPlatform !== 'meta' && selectedPlatform !== 'google' && ad.platform !== selectedPlatform) return false
 
-                                            {discoveryViewMode === "list" && (
-                                                <div className="space-y-4">
-                                                    {ads
-                                                        .filter(ad => discoveryAccountFilter === "all" || ad.adAccountId === discoveryAccountFilter)
-                                                        .map((ad) => {
-                                                            const account = accounts.find(a => a.id === ad.adAccountId)
-                                                            return (
-                                                                <div
-                                                                    key={ad.id}
-                                                                    onClick={() => {
-                                                                        setEnlargedImage({
-                                                                            url: ad.thumbnailUrl,
-                                                                            title: ad.adName,
-                                                                            accountName: account?.name
-                                                                        })
-                                                                    }}
-                                                                    className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/60 dark:border-white/5 rounded-xl overflow-hidden hover:border-[#007AFF]/50 transition-all group cursor-pointer shadow-sm hover:shadow-xl flex flex-row h-32 md:h-40 duration-300"
-                                                                >
-                                                                    <div className="h-full aspect-[16/9] relative overflow-hidden bg-zinc-100 dark:bg-zinc-950 flex-shrink-0">
-                                                                        <img src={ad.thumbnailUrl} alt={ad.adName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }} />
-                                                                        <div className="absolute top-2 left-2">
-                                                                            <span className="px-2 py-1 rounded-md bg-black/60 backdrop-blur-md text-[8px] font-black text-white uppercase tracking-wider border border-white/10">
-                                                                                {account?.name || "Unknown"}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
-                                                                        <div className="space-y-1">
-                                                                            <h4 className="text-sm md:text-base font-black truncate text-foreground leading-tight">{ad.adName}</h4>
-                                                                            <p className="text-[10px] font-mono opacity-50 truncate tracking-tight">{ad.adId}</p>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-8 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                                                                            <div className="flex flex-col">
-                                                                                <span className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">CTR</span>
-                                                                                <span className="text-lg font-black text-[#007AFF] tracking-tighter">{Number(ad.ctr || 0).toFixed(2)}%</span>
-                                                                            </div>
-                                                                            <div className="flex flex-col">
-                                                                                <span className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">Spend</span>
-                                                                                <span className="text-lg font-black text-foreground tracking-tighter">${Number(ad.spend || 0).toLocaleString()}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            )
-                                                        })}
-                                                </div>
-                                            )}
+                                                    if (discoverySearchQuery.trim()) {
+                                                        const q = discoverySearchQuery.toLowerCase()
+                                                        return ad.adName?.toLowerCase().includes(q) || ad.adId?.toLowerCase().includes(q)
+                                                    }
+                                                    return discoveryAccountFilter === "all" || ad.adAccountId === discoveryAccountFilter
+                                                })
 
-                                            {discoveryViewMode === "table" && (
-                                                <div className="rounded-xl border border-border overflow-hidden bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm">
-                                                    <Table>
-                                                        <TableHeader className="bg-zinc-50/50 dark:bg-zinc-800/50">
-                                                            <TableRow>
-                                                                <TableHead className="w-[100px] font-bold text-[10px] uppercase">Preview</TableHead>
-                                                                <TableHead className="font-bold text-[10px] uppercase">Ad Info</TableHead>
-                                                                <TableHead className="font-bold text-[10px] uppercase">Account</TableHead>
-                                                                <TableHead className="text-right font-bold text-[10px] uppercase">Spend</TableHead>
-                                                                <TableHead className="text-right font-bold text-[10px] uppercase">CTR</TableHead>
-                                                            </TableRow>
-                                                        </TableHeader>
-                                                        <TableBody>
-                                                            {ads
-                                                                .filter(ad => discoveryAccountFilter === "all" || ad.adAccountId === discoveryAccountFilter)
-                                                                .map((ad) => {
+                                                if (filteredDiscoveryAds.length === 0) {
+                                                    return (
+                                                        <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in-95 duration-300">
+                                                            <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
+                                                                <Search className="h-8 w-8 text-zinc-400" />
+                                                            </div>
+                                                            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-1">No results found</h3>
+                                                            <p className="text-sm text-zinc-500 max-w-xs mx-auto mb-6">
+                                                                We couldn't find any ads matching "{discoverySearchQuery}". Try a different search term.
+                                                            </p>
+                                                            <Button
+                                                                variant="outline"
+                                                                onClick={() => setDiscoverySearchQuery("")}
+                                                                className="rounded-full"
+                                                            >
+                                                                Clear Search
+                                                            </Button>
+                                                        </div>
+                                                    )
+                                                }
+
+                                                return (
+                                                    <>
+                                                        {discoveryViewMode === "grid" && (
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                                                {filteredDiscoveryAds.map((ad) => {
                                                                     const account = accounts.find(a => a.id === ad.adAccountId)
                                                                     return (
-                                                                        <TableRow
+                                                                        <div
                                                                             key={ad.id}
-                                                                            className="cursor-pointer hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors"
                                                                             onClick={() => {
+                                                                                const adAccount = accounts.find(acc => acc.id === ad.adAccountId)
+                                                                                if (ad.adAccountId && discoveryAccountFilter !== ad.adAccountId) {
+                                                                                    setDiscoveryAccountFilter(ad.adAccountId)
+                                                                                }
+                                                                                setDiscoverySearchQuery("")
                                                                                 setEnlargedImage({
                                                                                     url: ad.thumbnailUrl,
                                                                                     title: ad.adName,
-                                                                                    accountName: account?.name
+                                                                                    accountName: adAccount?.name
                                                                                 })
                                                                             }}
+                                                                            className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/60 dark:border-white/5 rounded-2xl overflow-hidden hover:border-[#007AFF]/50 transition-all group cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300"
                                                                         >
-                                                                            <TableCell>
-                                                                                <div className="w-16 h-9 rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-border">
-                                                                                    <img src={ad.thumbnailUrl} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }} />
+                                                                            <div className="aspect-[16/9] w-full relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                                                                                <img
+                                                                                    src={ad.thumbnailUrl}
+                                                                                    alt={ad.adName}
+                                                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                                                    onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }}
+                                                                                />
+                                                                                <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[9px] font-black text-white uppercase tracking-wider border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                                    {account?.name}
                                                                                 </div>
-                                                                            </TableCell>
-                                                                            <TableCell className="max-w-[200px]">
-                                                                                <div className="space-y-0.5">
-                                                                                    <p className="font-bold text-xs truncate">{ad.adName}</p>
-                                                                                    <p className="text-[10px] font-mono opacity-50 truncate">{ad.adId}</p>
+                                                                            </div>
+                                                                            <div className="p-4 space-y-3">
+                                                                                <div className="flex justify-between items-start gap-2">
+                                                                                    <h3 className="font-bold text-sm line-clamp-1 group-hover:text-[#007AFF] transition-colors">{ad.adName}</h3>
+                                                                                    <span className="text-[10px] font-mono text-zinc-400 shrink-0">{ad.adId}</span>
                                                                                 </div>
-                                                                            </TableCell>
-                                                                            <TableCell>
-                                                                                <span className="text-[10px] font-bold text-muted-foreground">{account?.name || "Unknown"}</span>
-                                                                            </TableCell>
-                                                                            <TableCell className="text-right font-bold text-xs">${Number(ad.spend || 0).toLocaleString()}</TableCell>
-                                                                            <TableCell className="text-right font-black text-[#007AFF] text-sm">{Number(ad.ctr || 0).toFixed(2)}%</TableCell>
-                                                                        </TableRow>
+                                                                                <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-white/5">
+                                                                                    <div className="flex flex-col">
+                                                                                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Spend</span>
+                                                                                        <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">${Number(ad.spend || 0).toLocaleString()}</span>
+                                                                                    </div>
+                                                                                    <div className="flex flex-col items-end">
+                                                                                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">CTR</span>
+                                                                                        <span className="text-xs font-black text-[#007AFF]">{Number(ad.ctr || 0).toFixed(2)}%</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
                                                                     )
                                                                 })}
-                                                        </TableBody>
-                                                    </Table>
-                                                </div>
-                                            )}
+                                                            </div>
+                                                        )}
 
-                                            {discoveryViewMode === "compact" && (
-                                                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-                                                    {ads
-                                                        .filter(ad => discoveryAccountFilter === "all" || ad.adAccountId === discoveryAccountFilter)
-                                                        .map((ad) => {
-                                                            const account = accounts.find(a => a.id === ad.adAccountId)
-                                                            return (
-                                                                <div
-                                                                    key={ad.id}
-                                                                    onClick={() => {
-                                                                        setEnlargedImage({
-                                                                            url: ad.thumbnailUrl,
-                                                                            title: ad.adName,
-                                                                            accountName: account?.name
-                                                                        })
-                                                                    }}
-                                                                    className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/60 dark:border-white/5 rounded-xl overflow-hidden hover:border-[#007AFF]/50 transition-all group cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300"
-                                                                >
-                                                                    <div className="aspect-square relative overflow-hidden bg-zinc-100 dark:bg-zinc-950">
-                                                                        <img src={ad.thumbnailUrl} alt={ad.adName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }} />
-                                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                                        <div className="absolute bottom-0 left-0 right-0 p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                                                                            <p className="text-[9px] font-black text-white truncate leading-none">{ad.adName}</p>
+                                                        {discoveryViewMode === "list" && (
+                                                            <div className="space-y-4">
+                                                                {filteredDiscoveryAds.map((ad) => {
+                                                                    const account = accounts.find(a => a.id === ad.adAccountId)
+                                                                    return (
+                                                                        <div
+                                                                            key={ad.id}
+                                                                            onClick={() => {
+                                                                                const adAccount = accounts.find(acc => acc.id === ad.adAccountId)
+                                                                                if (ad.adAccountId && discoveryAccountFilter !== ad.adAccountId) {
+                                                                                    setDiscoveryAccountFilter(ad.adAccountId)
+                                                                                }
+                                                                                setDiscoverySearchQuery("")
+                                                                                setEnlargedImage({
+                                                                                    url: ad.thumbnailUrl,
+                                                                                    title: ad.adName,
+                                                                                    accountName: adAccount?.name
+                                                                                })
+                                                                            }}
+                                                                            className="flex items-start md:items-center gap-3 md:gap-6 p-3 md:p-4 bg-white/60 dark:bg-zinc-900/60 border border-zinc-100 dark:border-white/5 rounded-2xl hover:border-[#007AFF]/40 hover:bg-white dark:hover:bg-zinc-900 transition-all group cursor-pointer shadow-sm hover:shadow-md"
+                                                                        >
+                                                                            <div className="w-20 h-20 md:w-32 md:h-20 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border border-border/50">
+                                                                                <img src={ad.thumbnailUrl} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }} />
+                                                                            </div>
+                                                                            <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between gap-y-2">
+                                                                                <div className="space-y-1 flex-1 min-w-0 mr-0 md:mr-4">
+                                                                                    <h3 className="font-bold text-sm md:text-base truncate group-hover:text-[#007AFF] transition-colors">{ad.adName}</h3>
+                                                                                    <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                                                                                        <span className="text-[10px] font-mono text-zinc-400 truncate max-w-[200px]">{ad.adId}</span>
+                                                                                        <span className="hidden md:block w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+                                                                                        <span className="text-[10px] font-black uppercase tracking-widest text-[#007AFF]/70 truncate max-w-[120px]">{account?.name}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="flex items-center justify-start md:justify-end gap-6 md:gap-8 text-left md:text-right pr-0 md:pr-4 shrink-0 w-full md:w-auto border-t md:border-t-0 border-zinc-100 dark:border-white/5 pt-2 md:pt-0">
+                                                                                    <div className="flex flex-col items-start md:items-end gap-0.5 md:gap-0">
+                                                                                        <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none">Spend</p>
+                                                                                        <p className="text-sm font-bold leading-tight">${Number(ad.spend || 0).toLocaleString()}</p>
+                                                                                    </div>
+                                                                                    <div className="flex flex-col items-start md:items-end gap-0.5 md:gap-0">
+                                                                                        <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none">CTR</p>
+                                                                                        <p className="text-sm font-black text-[#007AFF] leading-tight">{Number(ad.ctr || 0).toFixed(2)}%</p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                    <div className="p-2 border-t border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50">
-                                                                        <div className="flex items-center justify-between">
-                                                                            <span className="text-[10px] font-black text-[#007AFF]">{Number(ad.ctr || 0).toFixed(2)}%</span>
-                                                                            <span className="text-[9px] font-bold text-muted-foreground">${Math.round(Number(ad.spend || 0) / 1000)}k</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            )
-                                                        })}
-                                                </div>
-                                            )}
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                        )}
+
+                                                        {discoveryViewMode === "table" && (
+                                                            <div className="bg-white/40 dark:bg-zinc-900/40 border border-zinc-100 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+                                                                <Table>
+                                                                    <TableHeader className="bg-zinc-50/50 dark:bg-white/5">
+                                                                        <TableRow>
+                                                                            <TableHead className="w-[100px] font-bold text-[10px] uppercase">Preview</TableHead>
+                                                                            <TableHead className="font-bold text-[10px] uppercase">Ad Info</TableHead>
+                                                                            <TableHead className="font-bold text-[10px] uppercase">Account</TableHead>
+                                                                            <TableHead className="text-right font-bold text-[10px] uppercase">Spend</TableHead>
+                                                                            <TableHead className="text-right font-bold text-[10px] uppercase">CTR</TableHead>
+                                                                        </TableRow>
+                                                                    </TableHeader>
+                                                                    <TableBody>
+                                                                        {filteredDiscoveryAds.map((ad) => {
+                                                                            const account = accounts.find(a => a.id === ad.adAccountId)
+                                                                            return (
+                                                                                <TableRow
+                                                                                    key={ad.id}
+                                                                                    className="cursor-pointer hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors"
+                                                                                    onClick={() => {
+                                                                                        const adAccount = accounts.find(acc => acc.id === ad.adAccountId)
+                                                                                        if (ad.adAccountId && discoveryAccountFilter !== ad.adAccountId) {
+                                                                                            setDiscoveryAccountFilter(ad.adAccountId)
+                                                                                        }
+                                                                                        setDiscoverySearchQuery("")
+                                                                                        setEnlargedImage({
+                                                                                            url: ad.thumbnailUrl,
+                                                                                            title: ad.adName,
+                                                                                            accountName: adAccount?.name
+                                                                                        })
+                                                                                    }}
+                                                                                >
+                                                                                    <TableCell>
+                                                                                        <div className="w-16 h-9 rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-border">
+                                                                                            <img src={ad.thumbnailUrl} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }} />
+                                                                                        </div>
+                                                                                    </TableCell>
+                                                                                    <TableCell className="max-w-[200px]">
+                                                                                        <div className="space-y-0.5">
+                                                                                            <p className="font-bold text-xs truncate">{ad.adName}</p>
+                                                                                            <p className="text-[10px] font-mono opacity-50 truncate">{ad.adId}</p>
+                                                                                        </div>
+                                                                                    </TableCell>
+                                                                                    <TableCell>
+                                                                                        <span className="text-[10px] font-bold text-muted-foreground">{account?.name || "Unknown"}</span>
+                                                                                    </TableCell>
+                                                                                    <TableCell className="text-right font-bold text-xs">${Number(ad.spend || 0).toLocaleString()}</TableCell>
+                                                                                    <TableCell className="text-right font-black text-[#007AFF] text-sm">{Number(ad.ctr || 0).toFixed(2)}%</TableCell>
+                                                                                </TableRow>
+                                                                            )
+                                                                        })}
+                                                                    </TableBody>
+                                                                </Table>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )
+                                            })()}
                                         </div>
                                     </div>
 
@@ -1902,10 +2072,10 @@ function DashboardContent() {
                                     <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
 
                                     {/* Contained Popup for Discovery Hub */}
-                                    {isViewAllAdsOpen && enlargedImage && (
+                                    {enlargedImage && (
                                         <EnlargedImageModal
                                             url={enlargedImage.url}
-                                            title={enlargedImage.title}
+                                            title={enlargedImage.title || "Ad Preview"}
                                             accountName={enlargedImage.accountName}
                                             onClose={() => setEnlargedImage(null)}
                                             containerClassName="absolute"
@@ -1922,110 +2092,112 @@ function DashboardContent() {
                             </div>
                         ) : (
                             <>
-                                <div className="md:hidden space-y-4">
-                                    <div className="relative group z-[60]">
-                                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                                        <Input
-                                            placeholder="Search ads by ID or Name..."
-                                            value={searchQuery}
-                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                const val = e.target.value
-                                                setSearchQuery(val)
-                                                if (!val.trim()) {
-                                                    setSelectedAccountId("all")
-                                                }
-                                                setIsSearchDropdownOpen(true)
-                                            }}
-                                            onFocus={() => setIsSearchDropdownOpen(true)}
-                                            onBlur={() => {
-                                                // Slight delay to allow click event on dropdown items to fire
-                                                setTimeout(() => setIsSearchDropdownOpen(false), 200)
-                                            }}
-                                            className="pl-10 pr-10 h-12 bg-white dark:bg-zinc-900 shadow-sm border-gray-200 dark:border-zinc-800 focus-visible:ring-primary/20 rounded-xl md:text-sm text-base"
-                                        />
-                                        {searchQuery && (
-                                            <button
-                                                onClick={() => {
-                                                    setSearchQuery("")
-                                                    setSelectedAccountId("all")
-                                                    setIsSearchDropdownOpen(false)
+                                {(selectedPlatform === 'all' || selectedPlatform === 'meta') && (
+                                    <div className="md:hidden space-y-4">
+                                        <div className="relative group z-[60]">
+                                            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                                            <Input
+                                                placeholder="Search ads by ID or Name..."
+                                                value={searchQuery}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                    const val = e.target.value
+                                                    setSearchQuery(val)
+                                                    if (!val.trim()) {
+                                                        setSelectedAccountId("all")
+                                                    }
+                                                    setIsSearchDropdownOpen(true)
                                                 }}
-                                                className="absolute right-3 top-3 h-6 w-6 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-all"
-                                                title="Clear search"
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </button>
-                                        )}
+                                                onFocus={() => setIsSearchDropdownOpen(true)}
+                                                onBlur={() => {
+                                                    // Slight delay to allow click event on dropdown items to fire
+                                                    setTimeout(() => setIsSearchDropdownOpen(false), 200)
+                                                }}
+                                                className="pl-10 pr-10 h-12 bg-white dark:bg-zinc-900 shadow-sm border-gray-200 dark:border-zinc-800 focus-visible:ring-primary/20 rounded-xl md:text-sm text-base"
+                                            />
+                                            {searchQuery && (
+                                                <button
+                                                    onClick={() => {
+                                                        setSearchQuery("")
+                                                        setSelectedAccountId("all")
+                                                        setSelectedAdId(null)
+                                                        setIsSearchDropdownOpen(false)
+                                                    }}
+                                                    className="absolute right-3 top-3 h-6 w-6 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-all"
+                                                    title="Clear search"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            )}
 
-                                        {/* Mobile Search Results Dropdown */}
-                                        {searchQuery.trim().length > 0 && isSearchDropdownOpen && (
-                                            <div className="absolute top-full left-0 right-0 mt-2 max-h-[60vh] overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl z-[70] animate-in fade-in slide-in-from-top-2 duration-200">
-                                                <div className="py-2">
-                                                    {ads.filter(ad =>
-                                                        (selectedPlatform === "all" || ad.platform === selectedPlatform) && (
-                                                            String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                            String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
-                                                        )
-                                                    ).length > 0 ? (
-                                                        ads.filter(ad =>
+                                            {/* Mobile Search Results Dropdown */}
+                                            {searchQuery.trim().length > 0 && isSearchDropdownOpen && (
+                                                <div className="absolute top-full left-0 right-0 mt-2 max-h-[60vh] overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl z-[70] animate-in fade-in slide-in-from-top-2 duration-200">
+                                                    <div className="py-2">
+                                                        {ads.filter(ad =>
                                                             (selectedPlatform === "all" || ad.platform === selectedPlatform) && (
                                                                 String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
                                                                 String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
                                                             )
-                                                        ).slice(0, 10).map((ad) => (
-                                                            <button
-                                                                key={ad.id}
-                                                                onClick={() => {
-                                                                    // Only switch account if the ad's account exists in our known list
-                                                                    const accountExists = accounts.some(a => a.id === ad.adAccountId)
-                                                                    if (accountExists) {
-                                                                        setSelectedAccountId(ad.adAccountId)
-                                                                    }
-                                                                    setSelectedAdId(ad.id)
-                                                                    setSearchQuery(ad.adId) // Auto-fill search with exact ID
-                                                                    updateHistory(ad.id)
-                                                                    setIsSearchDropdownOpen(false) // Close dropdown
-                                                                }}
-                                                                className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex flex-col gap-1 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0"
-                                                            >
-                                                                <span className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{ad.adName}</span>
-                                                                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                                                    <span className="font-mono truncate max-w-[150px]">{ad.adId}</span>
-                                                                    <span className="opacity-70 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-[10px]">{accounts.find(a => a.id === ad.adAccountId)?.name}</span>
-                                                                </div>
-                                                            </button>
-                                                        ))
-                                                    ) : (
-                                                        <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-                                                            No matching ads found
-                                                        </div>
-                                                    )}
+                                                        ).length > 0 ? (
+                                                            ads.filter(ad =>
+                                                                (selectedPlatform === "all" || ad.platform === selectedPlatform) && (
+                                                                    String(ad.adId).toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                                    String(ad.adName).toLowerCase().includes(searchQuery.toLowerCase())
+                                                                )
+                                                            ).slice(0, 10).map((ad) => (
+                                                                <button
+                                                                    key={ad.id}
+                                                                    onClick={() => {
+                                                                        const accountExists = accounts.some(a => a.id === ad.adAccountId)
+                                                                        if (accountExists) {
+                                                                            setSelectedAccountId(ad.adAccountId)
+                                                                        }
+                                                                        setSelectedAdId(ad.id)
+                                                                        setSearchQuery(ad.adId)
+                                                                        updateHistory(ad.id)
+                                                                        setIsSearchDropdownOpen(false)
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex flex-col gap-1 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0"
+                                                                >
+                                                                    <span className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{ad.adName}</span>
+                                                                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                                                        <span className="font-mono truncate max-w-[150px]">{ad.adId}</span>
+                                                                        <span className="opacity-70 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-[10px]">{accounts.find(a => a.id === ad.adAccountId)?.name}</span>
+                                                                    </div>
+                                                                </button>
+                                                            ))
+                                                        ) : (
+                                                            <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                                                                No matching ads found
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <section className="space-y-6">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between whitespace-nowrap overflow-x-auto no-scrollbar">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-[#007AFF] animate-pulse flex-shrink-0" />
-                                                <h3 className="text-[10px] md:text-[11px] font-black uppercase tracking-tight md:tracking-[0.2em] text-[#007AFF]">HolaPrime Source Library</h3>
-                                            </div>
-                                            <span className="text-[10px] font-black text-muted-foreground uppercase opacity-60 tracking-wider ml-2">{displayedAds.length} Creatives</span>
+                                            )}
                                         </div>
                                     </div>
-                                    {displayedAds.length === 0 && selectedPlatform !== "all" ? (
-                                        <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-[32px] border-2 border-dashed border-zinc-200 dark:border-white/5 animate-in fade-in zoom-in-95 duration-500">
-                                            <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-2">
-                                                <Globe className="w-8 h-8 text-zinc-300" />
+                                )}
+
+                                {(selectedPlatform === 'all' || selectedPlatform === 'meta') && (
+                                    <section className="space-y-6">
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between whitespace-nowrap overflow-x-auto no-scrollbar">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-[#007AFF] animate-pulse flex-shrink-0" />
+                                                    <h3 className="text-[10px] md:text-[11px] font-black uppercase tracking-tight md:tracking-[0.2em] text-[#007AFF]">HolaPrime Source Library</h3>
+                                                </div>
+                                                <span className="text-[10px] font-black text-muted-foreground uppercase opacity-60 tracking-wider ml-2">{displayedAds.length} Creatives</span>
                                             </div>
-                                            <div className="space-y-1">
-                                                <h4 className="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">No ads for this account</h4>
-                                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Connect more accounts or try a different filter</p>
-                                            </div>
-                                            {selectedPlatform !== 'youtube' && (
+                                        </div>
+                                        {displayedAds.length === 0 ? (
+                                            <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-[32px] border-2 border-dashed border-zinc-200 dark:border-white/5 animate-in fade-in zoom-in-95 duration-500">
+                                                <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-2">
+                                                    <Globe className="w-8 h-8 text-zinc-300" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <h4 className="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">No ads for this account</h4>
+                                                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Connect more accounts or try a different filter</p>
+                                                </div>
                                                 <Button
                                                     onClick={() => setSelectedAccountId("all")}
                                                     variant="outline"
@@ -2033,48 +2205,131 @@ function DashboardContent() {
                                                 >
                                                     Switch Account
                                                 </Button>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <SampleAds
-                                            ads={displayedAds}
-                                            hasAdsInAccount={hasAdsInAccount}
-                                            searchQuery={searchQuery}
-                                            selectedAdId={selectedAdId}
-                                            onSelect={handleSelectAd}
-                                            onEnlargeImage={(url, title) => setEnlargedImage({ url, title })}
-                                        />
-                                    )}
-                                </section>
+                                            </div>
+                                        ) : (
+                                            <SampleAds
+                                                ads={displayedAds}
+                                                hasAdsInAccount={hasAdsInAccount}
+                                                searchQuery={searchQuery}
+                                                selectedAdId={selectedAdId}
+                                                onSelect={handleSelectAd}
+                                                onEnlargeImage={(url, title) => setEnlargedImage({ url, title })}
+                                            />
+                                        )}
+                                    </section>
+                                )}
 
-                                {displayedAds.length > 0 && (
+                                {selectedPlatform === 'google' ? (
+                                    <div className="flex-1 w-full min-h-0">
+                                        {selectedAdData ? (
+                                            <AdDetailTabs
+                                                adData={selectedAdData}
+                                                benchmark={benchmarkScores}
+                                                onClose={() => {
+                                                    setSelectedAdId(null)
+                                                    setSearchQuery("")
+                                                }}
+                                            />
+                                        ) : (
+                                            <GoogleAdsView
+                                                googleAds={googleAds}
+                                                selectedAccountId={selectedAccountId}
+                                                searchQuery={searchQuery}
+                                                onSearchChange={setSearchQuery}
+                                                onViewLibrary={() => setIsViewAllAdsOpen(true)}
+                                                onSelectAd={(ad) => {
+                                                    setSelectedAdId(ad.id)
+                                                    setSearchQuery(ad.adId)
+                                                    updateHistory(ad.id)
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+                                ) : selectedPlatform !== 'all' && selectedPlatform !== 'meta' && (
+                                    <div className="flex-1 w-full flex flex-col items-center justify-center min-h-[400px] relative overflow-hidden rounded-[20px] md:rounded-[48px] border border-slate-200/80 dark:border-white/5 bg-gradient-to-br from-white via-white to-slate-50/80 dark:from-zinc-950/50 dark:via-zinc-950/50 dark:to-zinc-950/50 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.08)] dark:shadow-2xl transition-all duration-1000 group p-4 md:p-8">
+                                        {/* Dynamic Background Glows */}
+                                        <div className="absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-primary/15 dark:bg-primary/20 rounded-full blur-[90px] animate-pulse" />
+                                        <div className="absolute -bottom-[10%] -left-[5%] w-[40%] h-[40%] bg-indigo-500/10 dark:bg-indigo-500/10 rounded-full blur-[90px] animate-pulse delay-700" />
+
+                                        {/* Animated Content Grid */}
+                                        <div className="relative z-10 flex flex-col items-center text-center px-4 md:px-6 w-full max-w-xl">
+                                            {/* Floating Icon Container */}
+                                            <div className="relative mb-6 md:mb-8">
+                                                <div className="absolute inset-0 bg-primary/10 dark:bg-primary/20 blur-2xl rounded-full animate-pulse scale-150" />
+                                                <div className="w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-[32px] bg-white dark:bg-zinc-900 flex items-center justify-center shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-2xl border border-slate-200/50 dark:border-white/10 group-hover:scale-105 group-hover:rotate-2 transition-all duration-700 relative overflow-hidden">
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 dark:from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                    {(() => {
+                                                        const PlatformIcon = PLATFORM_META[selectedPlatform]?.icon || Globe;
+                                                        return <PlatformIcon className="w-8 h-8 md:w-12 md:h-12 text-primary drop-shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]" />
+                                                    })()}
+                                                </div>
+
+                                                {/* Orbiting Elements */}
+                                                <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center animate-bounce">
+                                                    <Sparkles className="w-4 h-4 text-blue-500" />
+                                                </div>
+                                            </div>
+
+                                            {/* Typography Stack */}
+                                            <div className="space-y-4 md:space-y-6">
+                                                <div className="space-y-2 md:space-y-3">
+                                                    <div className="flex items-center justify-center gap-3 mb-1">
+                                                        <div className="h-px w-6 md:w-8 bg-primary/30" />
+                                                        <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-primary animate-in slide-in-from-bottom duration-500 leading-none">Scheduled Release</span>
+                                                        <div className="h-px w-6 md:w-8 bg-primary/30" />
+                                                    </div>
+                                                    <h2 className="text-2xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tightest leading-tight">
+                                                        Integration <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-indigo-600 to-primary dark:from-primary dark:via-indigo-500 dark:to-primary animate-gradient bg-[length:200%_auto]">Pending.</span>
+                                                    </h2>
+                                                </div>
+
+                                                <p className="text-[11px] md:text-base font-medium text-slate-700 dark:text-zinc-400 leading-relaxed max-w-[280px] md:max-w-md mx-auto opacity-90">
+                                                    We are currently synchronizing our AI models with the <span className="text-slate-900 dark:text-white font-black">{PLATFORM_META[selectedPlatform]?.label || selectedPlatform}</span> ecosystem.
+                                                    Your advertising accounts will automatically bridge as soon as the deployment stabilizes.
+                                                </p>
+                                            </div>
+
+                                            {/* Progress Status */}
+                                            <div className="mt-8 md:mt-12 flex flex-col items-center gap-3 w-full">
+                                                <div className="flex items-center justify-center gap-3 md:gap-6 px-4 md:px-8 py-2 md:py-3 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 backdrop-blur-sm group/progress shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] w-fit">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-primary animate-pulse" />
+                                                        <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-500 transition-colors group-hover/progress:text-primary">Core Syncing</span>
+                                                    </div>
+                                                    <div className="h-3 md:h-4 w-px bg-slate-200 dark:bg-zinc-800" />
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-slate-300 dark:bg-zinc-700" />
+                                                        <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">Analysis Live</span>
+                                                    </div>
+                                                </div>
+
+                                                <p className="text-[8px] md:text-[9px] font-bold text-muted-foreground/60 uppercase tracking-[0.3em]">Estimated deployment: Q1 2026</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Corner Accents */}
+                                        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-primary/5 to-transparent border-t border-l border-primary/20 rounded-tl-[48px] pointer-events-none" />
+                                    </div>
+                                )}
+
+                                {displayedAds.length > 0 && (selectedPlatform === 'all' || selectedPlatform === 'meta') && (
                                     <div className="space-y-6 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                        {!searchQuery.trim() && hasAdsInAccount && (
-                                            <div className="md:hidden flex flex-col items-center -mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                                <div className="px-4 py-2 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-xl">
-                                                    <p className="text-[10px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-widest text-center">
-                                                        Search an Ad ID first to see results or metrics
-                                                    </p>
+                                        {selectedAdData && !!searchQuery.trim() && (
+                                            <div className="pt-6 border-t border-border animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                                <MetricsGrid
+                                                    adData={selectedAdData}
+                                                    selectedMetricLabel={activeAnalysis?.type === 'metric' ? activeAnalysis.name : null}
+                                                    onSelectMetric={(label) => setActiveAnalysis({ type: 'metric', name: label })}
+                                                    isClickable={true}
+                                                />
+
+                                                <div className="mt-8">
+                                                    <ScoreRadarChart adData={selectedAdData} benchmark={benchmarkScores} />
                                                 </div>
                                             </div>
                                         )}
 
-                                        <div className="pt-6 border-t border-border">
-                                            <MetricsGrid
-                                                adData={selectedAdData}
-                                                selectedMetricLabel={activeAnalysis?.type === 'metric' ? activeAnalysis.name : null}
-                                                onSelectMetric={(label) => setActiveAnalysis({ type: 'metric', name: label })}
-                                                isClickable={!!searchQuery.trim()}
-                                            />
-
-                                            {!!searchQuery.trim() && (
-                                                <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                                    <ScoreRadarChart adData={selectedAdData} benchmark={benchmarkScores} />
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {searchQuery.trim() && (
+                                        {selectedAdData && !!searchQuery.trim() && (
                                             <>
                                                 <section className="pt-4 border-t border-border">
                                                     <ScoresSection
@@ -2089,7 +2344,6 @@ function DashboardContent() {
                                                 </section>
                                             </>
                                         )}
-
                                     </div>
                                 )}
                             </>
@@ -2097,19 +2351,18 @@ function DashboardContent() {
                     </div>
                     <div className={cn(
                         "mt-auto",
-                        activeAnalysis && !isMobile && "md:pr-[280px] xl:pr-[320px] 2xl:pr-[360px]"
+                        activeAnalysis && (mounted && !isMobile) && searchQuery.trim() && "md:pr-[280px] xl:pr-[320px] 2xl:pr-[360px]"
                     )}>
                         <Footer />
                     </div>
                 </main>
 
-                {/* Universal Analysis Sidebar - Positioned at root level to ensure fixed positioning works */}
-                < AnalysisSidebar
+                <AnalysisSidebar
                     activeDetail={activeAnalysis}
                     onClose={() => setActiveAnalysis(null)}
                     onNavigate={setActiveAnalysis}
                     adData={selectedAdData}
-                    isMobile={isMobile}
+                    isMobile={mounted ? isMobile : false}
                 />
 
                 {/* Global Image Popup for Home Page */}
@@ -2117,7 +2370,7 @@ function DashboardContent() {
                     !isViewAllAdsOpen && enlargedImage && (
                         <EnlargedImageModal
                             url={enlargedImage.url}
-                            title={enlargedImage.title}
+                            title={enlargedImage.title || "Ad Preview"}
                             onClose={() => setEnlargedImage(null)}
                         />
                     )
@@ -2133,6 +2386,83 @@ function DashboardContent() {
                     )
                 }
 
+                <Dialog open={isAddingPlatform} onOpenChange={setIsAddingPlatform}>
+                    <DialogContent className="w-[calc(100%-2rem)] sm:max-w-[460px] p-0 overflow-hidden rounded-[28px] border-border bg-white dark:bg-zinc-950 flex flex-col outline-none z-[130] shadow-3xl fixed top-[calc(50%+20px)] sm:top-[calc(50%+40px)] -translate-y-1/2 left-1/2 -translate-x-1/2 max-h-[75vh] sm:max-h-[85vh] border-opacity-50">
+                        <div className="p-5 md:p-7 pb-4 shrink-0 border-b border-border/50 bg-zinc-50/50 dark:bg-white/[0.02] relative">
+                            <div className="flex flex-col">
+                                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center mb-3 shadow-sm border border-primary/10">
+                                    <Plus className="w-5 h-5 text-primary" />
+                                </div>
+                                <DialogTitle className="text-lg md:text-2xl font-black tracking-tightest text-foreground">
+                                    Add Platform
+                                </DialogTitle>
+                                <DialogDescription className="text-muted-foreground font-medium text-[11px] md:text-sm mt-1 leading-relaxed max-w-[300px]">
+                                    Connect a network to sync your creative assets and unlock AI insights.
+                                </DialogDescription>
+                            </div>
+                        </div>
+
+                        <div className="px-3 md:px-6 py-4 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="grid gap-2">
+                                {Object.entries(PLATFORM_META)
+                                    .filter(([id]) => id !== 'all')
+                                    .map(([id, meta]) => {
+                                        const isEnabled = enabledPlatforms.includes(id)
+                                        const isMeta = id === 'meta'
+                                        return (
+                                            <div
+                                                key={id}
+                                                className={cn(
+                                                    "flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 group",
+                                                    isMeta ? "bg-zinc-50 dark:bg-white/[0.02] border-zinc-200 dark:border-white/10 opacity-80 cursor-default" :
+                                                        isEnabled
+                                                            ? "bg-primary/[0.03] border-primary/20 dark:border-primary/30 shadow-sm cursor-pointer"
+                                                            : "bg-white dark:bg-zinc-900/30 border-border/50 hover:border-primary/40 hover:bg-zinc-50 dark:hover:bg-zinc-900 cursor-pointer"
+                                                )}
+                                                onClick={() => {
+                                                    if (!isPlatformModalReady || isMeta) return
+                                                    if (!isEnabled) {
+                                                        handleAddPlatform(id)
+                                                    } else {
+                                                        setSelectedPlatform(id as PlatformType)
+                                                        setIsAddingPlatform(false)
+                                                    }
+                                                }}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={cn(
+                                                        "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm",
+                                                        isEnabled ? "bg-white dark:bg-zinc-800 border border-primary/10" : "bg-zinc-100 dark:bg-zinc-800/50 border border-border group-hover:scale-105"
+                                                    )}>
+                                                        <meta.icon className={cn("w-5 h-5 transition-colors", isEnabled ? "text-primary" : "text-muted-foreground group-hover:text-primary")} />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center gap-2">
+                                                            <h4 className="text-sm font-bold text-foreground leading-tight">{meta.label}</h4>
+                                                            {isMeta && <span className="text-[8px] font-black uppercase tracking-widest bg-primary/10 text-primary px-1.5 py-0.5 rounded-md">Core</span>}
+                                                        </div>
+                                                        <p className="text-[10px] text-muted-foreground font-semibold mt-0.5 opacity-70">{isMeta ? "Always Active" : isEnabled ? "Connected" : "Not connected"}</p>
+                                                    </div>
+                                                </div>
+
+                                                {!isMeta && (
+                                                    <div className={cn(
+                                                        "text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-xl shadow-sm transition-all",
+                                                        isEnabled
+                                                            ? "bg-secondary text-muted-foreground group-hover:text-primary"
+                                                            : "bg-primary text-white shadow-primary/20 md:opacity-0 md:group-hover:opacity-100 active:scale-95 translate-x-1 group-hover:translate-x-0"
+                                                    )}>
+                                                        {isEnabled ? "Select" : "Add"}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
                 <AddAdDialog
                     open={isAddAdDialogOpen}
                     onOpenChange={setIsAddAdDialogOpen}
@@ -2140,55 +2470,9 @@ function DashboardContent() {
                     onSuccess={() => loadData(true)}
                 />
 
-                <ConnectPlatformDialog
-                    open={isConnectDialogOpen}
-                    onOpenChange={setIsConnectDialogOpen}
-                    connectedPlatforms={connectedPlatforms}
-                    enabledPlatforms={enabledPlatforms}
-                    onConnect={(platform) => {
-                        const next = [...new Set([...connectedPlatforms, platform])]
-                        setConnectedPlatforms(next)
-                        localStorage.setItem("connected_platforms", JSON.stringify(next))
-                        setSelectedPlatform(platform)
-                        updateConnectedPlatforms(next) // Async save to DB
-                    }}
-                    onDisconnect={(platform) => {
-                        if (platform === 'meta') return // Prevent disconnecting core platform
-                        const next = connectedPlatforms.filter(p => p !== platform)
-                        setConnectedPlatforms(next)
-                        localStorage.setItem("connected_platforms", JSON.stringify(next))
-                        if (selectedPlatform === platform || next.length <= 1) setSelectedPlatform("meta")
-                        updateConnectedPlatforms(next) // Async save to DB
-                    }}
-                />
 
-                <Dialog open={showPlatformAlert} onOpenChange={setShowPlatformAlert}>
-                    <DialogContent className="sm:max-w-[400px] rounded-[32px] p-8 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/10 shadow-3xl z-[2000]">
-                        <DialogHeader className="p-0">
-                            <div className="flex flex-col items-center text-center space-y-6">
-                                <div className="w-20 h-20 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
-                                    <Plus className="w-10 h-10 text-[#007AFF]" />
-                                </div>
-                                <div className="space-y-2 px-4">
-                                    <DialogTitle className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 text-center">HolaPrime multi-account sync</DialogTitle>
-                                    <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed text-center px-2">
-                                        Meta Core is your primary hub. Connect 1+ more accounts to unlock HolaPrime Intelligent Filtering.
-                                    </DialogDescription>
-                                </div>
-                            </div>
-                        </DialogHeader>
-                        <div className="mt-6 px-2">
-                            <Button
-                                onClick={() => setShowPlatformAlert(false)}
-                                className="w-full h-11 bg-[#007AFF] hover:bg-[#007AFF]/90 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
-                            >
-                                Okay
-                            </Button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            </div >
-        </div >
+            </div>
+        </div>
     )
 }
 

@@ -11,6 +11,8 @@ export interface AdData {
     isAdvantagePlus?: boolean
     adType?: string
     analysisMode?: string
+    campaignId?: string
+    campaignName?: string
     platform?: PlatformType
 
     // Performance Metrics
@@ -155,4 +157,4 @@ export interface AdData {
     mobileReadiness?: string
 }
 
-export type PlatformType = 'all' | 'meta' | 'tiktok' | 'google' | 'linkedin' | 'youtube' | 'pinterest' | 'x' | 'shopify' | 'instagram' | 'telegram'
+export type PlatformType = 'all' | 'meta' | 'tiktok' | 'google' | 'linkedin' | 'youtube' | 'pinterest' | 'x' | 'shopify' | 'instagram' | 'telegram' | 'tboola' | 'bing' | 'adroll'

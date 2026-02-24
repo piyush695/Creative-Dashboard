@@ -82,14 +82,14 @@ export function AddAdDialog({ open, onOpenChange, defaultPlatform, onSuccess }: 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden rounded-[24px] border-zinc-200 dark:border-white/10 shadow-2xl bg-white dark:bg-zinc-900">
-                <div className="bg-gradient-to-br from-[#007AFF] to-blue-600 p-6 text-white relative overflow-hidden">
+                <div className="bg-gradient-to-br from-primary via-indigo-600 to-primary/80 p-8 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-8 opacity-10">
                         <Sparkles className="w-24 h-24" />
                     </div>
                     <DialogHeader className="relative z-10">
-                        <DialogTitle className="text-2xl font-black uppercase tracking-tightest">Add New Creative</DialogTitle>
-                        <DialogDescription className="text-blue-100 font-medium">
-                            Synthesize new ad data into your omni-channel repository.
+                        <DialogTitle className="text-2xl font-black uppercase tracking-tightest">Synthesize Creative</DialogTitle>
+                        <DialogDescription className="text-white/70 font-black uppercase tracking-widest text-[10px] mt-1">
+                            Omni-Channel Intelligent Repository Entry
                         </DialogDescription>
                     </DialogHeader>
                 </div>
@@ -99,9 +99,9 @@ export function AddAdDialog({ open, onOpenChange, defaultPlatform, onSuccess }: 
                         <div className="space-y-2 col-span-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Creative Name</Label>
                             <div className="relative group">
-                                <Sparkles className="absolute left-3 top-3 w-4 h-4 text-zinc-400 group-hover:text-[#007AFF] transition-colors" />
+                                <Sparkles className="absolute left-3 top-3 w-4 h-4 text-zinc-400 group-hover:text-primary transition-colors" />
                                 <Input
-                                    className="pl-10 h-12 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 focus:ring-2 focus:ring-[#007AFF]/20 transition-all font-bold text-sm"
+                                    className="pl-10 h-12 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 focus:ring-2 focus:ring-primary/20 transition-all font-bold text-sm"
                                     placeholder="e.g. Summer Sale Video - V2"
                                     value={formData.adName}
                                     onChange={(e) => setFormData({ ...formData, adName: e.target.value })}
@@ -139,6 +139,9 @@ export function AddAdDialog({ open, onOpenChange, defaultPlatform, onSuccess }: 
                                     <SelectItem value="shopify" className="font-bold">Shopify</SelectItem>
                                     <SelectItem value="x" className="font-bold">X (Twitter)</SelectItem>
                                     <SelectItem value="telegram" className="font-bold">Telegram</SelectItem>
+                                    <SelectItem value="tboola" className="font-bold">Tboola</SelectItem>
+                                    <SelectItem value="bing" className="font-bold">Bing</SelectItem>
+                                    <SelectItem value="adroll" className="font-bold">AdRoll</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -193,9 +196,9 @@ export function AddAdDialog({ open, onOpenChange, defaultPlatform, onSuccess }: 
                         <Button
                             type="submit"
                             disabled={isSubmitting}
-                            className="flex-1 bg-[#007AFF] hover:bg-[#007AFF]/90 text-white font-black text-xs uppercase tracking-widest rounded-xl h-12 shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                            className="flex-1 bg-primary hover:bg-primary/90 text-white font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl h-12 shadow-xl shadow-primary/30 active:scale-95 transition-all border-t border-white/20"
                         >
-                            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish to Library"}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Deploy to Index"}
                         </Button>
                     </DialogFooter>
                 </form>

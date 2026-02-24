@@ -82,12 +82,12 @@ export default function AnalysisSidebar({ activeDetail, onClose, onNavigate, adD
     const DesktopPanel = (
         <div
             className={cn(
-                "fixed top-[104px] -mt-[1px] bottom-0 right-0 bg-background/95 dark:bg-zinc-950/95 backdrop-blur-md border-l border-border shadow-[-20px_0_80px_rgba(0,0,0,0.06)] z-[500] transition-all duration-500 ease-out flex flex-col w-[280px] xl:w-[320px] 2xl:w-[360px] rounded-tl-[1.5rem] rounded-bl-[1.5rem]",
+                "fixed top-[104px] -mt-[1px] bottom-0 right-0 bg-white dark:bg-zinc-950/95 backdrop-blur-md border-l border-border shadow-[-20px_0_80px_rgba(0,0,0,0.05)] z-[500] transition-all duration-700 ease-out flex flex-col w-[300px] xl:w-[340px] 2xl:w-[380px] rounded-tl-[2.5rem] rounded-bl-[2.5rem]",
                 isDetailVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 invisible"
             )}
         >
             <div className="absolute top-4 right-4 z-[510] flex items-center gap-2">
-                <div className="flex items-center bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md rounded-full border border-border shadow-md">
+                <div className="flex items-center bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-full border border-border shadow-md">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -112,9 +112,9 @@ export default function AnalysisSidebar({ activeDetail, onClose, onNavigate, adD
                     variant="secondary"
                     size="icon"
                     onClick={onClose}
-                    className="h-8 w-8 rounded-full shadow-md bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-foreground border border-border transition-all active:scale-95"
+                    className="h-9 w-9 rounded-full shadow-lg bg-white dark:bg-zinc-800 hover:bg-secondary text-foreground border border-border transition-all active:scale-95"
                 >
-                    <X className="h-4 w-4" />
+                    <X className="h-5 w-5" />
                 </Button>
             </div>
             <div className="h-full overflow-hidden rounded-tl-[1.5rem] rounded-bl-[1.5rem]">
@@ -131,7 +131,7 @@ export default function AnalysisSidebar({ activeDetail, onClose, onNavigate, adD
                     <SheetDescription>In-depth AI analysis of {name}</SheetDescription>
                 </SheetHeader>
                 <div className="absolute top-4 right-4 z-[110] flex items-center gap-3">
-                    <div className="flex items-center bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md rounded-full border border-border shadow-xl">
+                    <div className="flex items-center bg-card/90 dark:bg-zinc-800/90 backdrop-blur-md rounded-full border border-border shadow-xl">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -156,9 +156,9 @@ export default function AnalysisSidebar({ activeDetail, onClose, onNavigate, adD
                         variant="secondary"
                         size="icon"
                         onClick={onClose}
-                        className="h-10 w-10 rounded-full shadow-xl bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md text-foreground border border-border"
+                        className="h-12 w-12 rounded-full shadow-2xl bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md text-foreground border border-border"
                     >
-                        <X className="h-5 w-5" />
+                        <X className="h-6 w-6" />
                     </Button>
                 </div>
                 <DetailContent itemData={itemData} adData={adData} isMobile />
@@ -201,15 +201,15 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
             <div className={cn("p-4 md:p-5 pb-5 md:pb-6 relative overflow-hidden shrink-0 rounded-tl-[1.5rem]", color)}>
                 <div className="relative z-10 space-y-2">
                     {Icon && (
-                        <div className="p-1.5 w-fit rounded-lg bg-white/90 dark:bg-white/10 shadow-md backdrop-blur-sm border border-white/50 dark:border-white/10">
-                            <Icon className="h-4 w-4 md:h-5 md:w-5 text-zinc-900 dark:text-zinc-100" />
+                        <div className="p-1.5 w-fit rounded-lg bg-background/80 dark:bg-white/10 shadow-md backdrop-blur-sm border border-white/50 dark:border-white/10">
+                            <Icon className="h-4 w-4 md:h-5 md:w-5 text-foreground dark:text-zinc-100" />
                         </div>
                     )}
                     <div>
-                        <h2 className="text-xl md:text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{name} Analysis</h2>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="px-2 py-0.5 rounded-full bg-black text-white text-[10px] font-black tracking-tighter uppercase whitespace-nowrap">
-                                {value}{isScore ? ' / 10' : ''}
+                        <h2 className="text-xl md:text-2xl font-black text-foreground tracking-tighter uppercase italic">{name} Intelligence</h2>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className="px-3 py-1 rounded-full bg-primary text-white text-[11px] font-black tracking-widest uppercase whitespace-nowrap shadow-lg shadow-primary/20">
+                                Rating: {value}{isScore ? ' / 10' : ''}
                             </span>
                         </div>
                     </div>
@@ -220,8 +220,8 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800">
                 {/* Description */}
                 <section className="space-y-3">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">Description</h3>
-                    <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-bold italic">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Description</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed font-bold italic">
                         "{itemData.desc || itemData.description || ""}"
                     </p>
                 </section>
@@ -229,11 +229,11 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
                 {/* Insight */}
                 <section className="space-y-4">
                     <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-[#007AFF]" />
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-100">AI Analysis Insight</h3>
+                        <TrendingUp className="h-4 w-4 text-primary" />
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground">AI Analysis Insight</h3>
                     </div>
-                    <div className="bg-[#007AFF]/5 dark:bg-[#007AFF]/10 border border-[#007AFF]/10 rounded-2xl p-4 md:p-5">
-                        <p className="text-xs md:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-bold">
+                    <div className="bg-primary/5 dark:bg-primary/10 border border-primary/10 rounded-2xl p-4 md:p-5">
+                        <p className="text-xs md:text-sm text-foreground/80 dark:text-zinc-300 leading-relaxed font-bold">
                             {dynamicInsight}
                         </p>
                     </div>
@@ -243,7 +243,7 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
                 <section className="space-y-4 pb-4">
                     <div className="flex items-center gap-2">
                         <Zap className="h-4 w-4 text-amber-500" />
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-100">Optimization</h3>
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground">Optimization</h3>
                     </div>
                     <div className="bg-zinc-900 dark:bg-zinc-900/50 rounded-2xl p-4 md:p-5 border border-white/5">
                         <div className="space-y-4">

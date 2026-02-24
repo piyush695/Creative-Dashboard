@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Facebook, Play, Linkedin, Twitter, Smartphone, Disc as Pinterest, ShoppingBag, Loader2, Sparkles, Plus, Instagram, Send } from "lucide-react"
+import { Facebook, Play, Linkedin, Twitter, Smartphone, Disc as Pinterest, ShoppingBag, Loader2, Sparkles, Plus, Instagram, Send, Target, Search, Newspaper } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
@@ -26,7 +26,10 @@ const platforms = [
     { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-500', activeBg: 'bg-pink-50 dark:bg-pink-900/20', description: 'Instagram Business Ads' },
     { id: 'pinterest', label: 'Pinterest', icon: Pinterest, color: 'text-[#E60023]', activeBg: 'bg-red-50 dark:bg-red-900/20', description: 'Pinterest Business' },
     { id: 'x', label: 'X (Twitter)', icon: Twitter, color: 'text-[#000000] dark:text-zinc-100', activeBg: 'bg-zinc-100 dark:bg-zinc-800', description: 'X Ads Center' },
-    { id: 'telegram', label: 'Telegram', icon: Send, color: 'text-sky-500', activeBg: 'bg-sky-50 dark:bg-sky-900/20', description: 'Telegram Channel Ads' }
+    { id: 'telegram', label: 'Telegram', icon: Send, color: 'text-sky-500', activeBg: 'bg-sky-50 dark:bg-sky-900/20', description: 'Telegram Channel Ads' },
+    { id: 'tboola', label: 'Tboola', icon: Newspaper, color: 'text-[#285d9a]', activeBg: 'bg-blue-50 dark:bg-blue-900/20', description: 'Tboola Native Ads' },
+    { id: 'bing', label: 'Bing', icon: Search, color: 'text-[#00A4EF]', activeBg: 'bg-teal-50 dark:bg-teal-900/20', description: 'Bing Search Ads' },
+    { id: 'adroll', label: 'AdRoll', icon: Target, color: 'text-[#E0267D]', activeBg: 'bg-pink-50 dark:bg-pink-900/20', description: 'AdRoll Retargeting' }
 ] as const
 
 export function ConnectPlatformDialog({ open, onOpenChange, connectedPlatforms, enabledPlatforms, onConnect, onDisconnect }: ConnectPlatformDialogProps) {

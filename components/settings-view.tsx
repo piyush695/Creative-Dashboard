@@ -33,7 +33,9 @@ import {
     Disc as Pinterest,
     Send,
     Loader2,
-    LayoutGrid
+    LayoutGrid,
+    Target,
+    Newspaper
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useTheme } from "next-themes"
@@ -52,9 +54,10 @@ import { PlatformType } from "@/lib/types"
 interface SettingsViewProps {
     onBack?: () => void
     onEnabledPlatformsChange?: (platforms: string[]) => void
+    currentEnabledPlatforms?: string[]
 }
 
-export default function SettingsView({ onBack, onEnabledPlatformsChange }: SettingsViewProps) {
+export default function SettingsView({ onBack, onEnabledPlatformsChange, currentEnabledPlatforms }: SettingsViewProps) {
     const { data: session } = useSession()
     const { toast } = useToast()
     const { setTheme, theme } = useTheme()
@@ -88,35 +91,58 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange }: Setti
     })
 
     const [dashboardSettings, setDashboardSettings] = useState(initialSettings)
-    const [enabledPlatforms, setEnabledPlatforms] = useState<string[]>(["meta", "youtube"])
+    const [enabledPlatforms, setEnabledPlatforms] = useState<string[]>(currentEnabledPlatforms || ["google", "youtube"])
+    const [initialPlatforms, setInitialPlatforms] = useState<string[]>(currentEnabledPlatforms || ["google", "youtube"])
     const [isLoadingPlatforms, setIsLoadingPlatforms] = useState(true)
 
     useEffect(() => {
-        getEnabledPlatforms().then(res => {
-            if (res.success && res.platforms) {
-                setEnabledPlatforms(res.platforms)
-            }
+        if (currentEnabledPlatforms) {
+            setEnabledPlatforms(currentEnabledPlatforms)
+            setInitialPlatforms(currentEnabledPlatforms)
             setIsLoadingPlatforms(false)
-        })
-    }, [])
+        } else {
+            getEnabledPlatforms().then(res => {
+                if (res.success && res.platforms) {
+                    setEnabledPlatforms(res.platforms)
+                    setInitialPlatforms(res.platforms)
+                }
+                setIsLoadingPlatforms(false)
+            })
+        }
+    }, [currentEnabledPlatforms])
 
-    const hasChanges = JSON.stringify(dashboardSettings) !== JSON.stringify(initialSettings)
+    const settingsChanged = JSON.stringify(dashboardSettings) !== JSON.stringify(initialSettings)
+    const platformsChanged = JSON.stringify(enabledPlatforms) !== JSON.stringify(initialPlatforms)
+    const hasChanges = settingsChanged || platformsChanged
 
     const handleSaveSettings = async () => {
-        localStorage.setItem("dashboard_settings", JSON.stringify(dashboardSettings))
-        setInitialSettings(dashboardSettings)
+        setIsLoadingPlatforms(true)
+        try {
+            localStorage.setItem("dashboard_settings", JSON.stringify(dashboardSettings))
+            setInitialSettings(dashboardSettings)
 
-        await updateEnabledPlatforms(enabledPlatforms)
-        if (onEnabledPlatformsChange) {
-            onEnabledPlatformsChange(enabledPlatforms)
+            await updateEnabledPlatforms(enabledPlatforms)
+            setInitialPlatforms(enabledPlatforms)
+
+            if (onEnabledPlatformsChange) {
+                onEnabledPlatformsChange(enabledPlatforms)
+            }
+
+            const { dismiss } = toast({
+                title: "Settings Saved",
+                description: "Your dashboard and platform preferences have been updated.",
+                duration: 5000
+            })
+            setTimeout(() => dismiss(), 5000)
+        } catch (error) {
+            toast({
+                title: "Error Saving Settings",
+                description: "There was an issue updating your preferences. Please try again.",
+                variant: "destructive"
+            })
+        } finally {
+            setIsLoadingPlatforms(false)
         }
-
-        const { dismiss } = toast({
-            title: "Settings Saved",
-            description: "Your dashboard and platform preferences have been updated.",
-            duration: 5000
-        })
-        setTimeout(() => dismiss(), 5000)
     }
 
     const resetToDefault = () => {
@@ -133,7 +159,7 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange }: Setti
         }
         setDashboardSettings(defaults)
         setTheme('system')
-        setEnabledPlatforms(["meta", "tiktok"])
+        setEnabledPlatforms(["google", "youtube"])
 
         const { dismiss } = toast({
             title: "Settings Reset",
@@ -192,7 +218,7 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange }: Setti
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className={`h-8 px-2 sm:px-4 gap-1 sm:gap-2 rounded-lg transition-all ${theme === 'light' ? 'bg-[#007AFF] text-white shadow-md hover:bg-[#007AFF]' : 'text-zinc-500 hover:text-[#007AFF] hover:bg-zinc-100 dark:hover:bg-zinc-900'}`}
+                                        className={`h-8 px-2 sm:px-4 gap-1 sm:gap-2 rounded-lg transition-all ${theme === 'light' ? 'bg-primary text-white shadow-md hover:bg-primary' : 'text-zinc-500 hover:text-primary hover:bg-zinc-100 dark:hover:bg-zinc-900'}`}
                                         onClick={() => setTheme('light')}
                                     >
                                         <Sun className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${theme === 'light' ? 'text-white' : ''}`} />
@@ -250,7 +276,7 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange }: Setti
                                     <Switch
                                         checked={dashboardSettings.reducedMotion}
                                         onCheckedChange={(val) => setDashboardSettings({ ...dashboardSettings, reducedMotion: val })}
-                                        className="data-[state=checked]:bg-[#007AFF]"
+                                        className="data-[state=checked]:bg-primary"
                                     />
                                 </div>
                             </div>
@@ -300,6 +326,88 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange }: Setti
                             </div>
                         </CardContent>
                     </Card>
+
+                    <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 backdrop-blur-2xl shadow-xl overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <CardHeader className="p-6 md:p-8 pb-4">
+                            <CardTitle className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-3">
+                                <Globe className="h-5 w-5 text-primary" />
+                                Platform Management
+                            </CardTitle>
+                            <CardDescription className="text-xs text-zinc-500">
+                                View and manage active platform connections in your dashboard
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-6 md:p-8 pt-2">
+                            {isLoadingPlatforms ? (
+                                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                                    <Loader2 className="w-8 h-8 animate-spin text-[#007AFF] opacity-50" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Loading Platforms...</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {[
+                                        { id: 'google', label: 'Google Ads', icon: Play, color: 'text-red-500' },
+                                        { id: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
+                                        { id: 'meta', label: 'Meta', icon: Facebook, color: 'text-blue-600', isCore: true },
+                                        { id: 'tiktok', label: 'TikTok', icon: Smartphone, color: 'text-zinc-900 dark:text-white' },
+                                        { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
+                                        { id: 'shopify', label: 'Shopify', icon: ShoppingBag, color: 'text-emerald-600' },
+                                        { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-500' },
+                                        { id: 'pinterest', label: 'Pinterest', icon: Pinterest, color: 'text-red-700' },
+                                        { id: 'x', label: 'X (Twitter)', icon: Twitter, color: 'text-zinc-600 dark:text-zinc-400' },
+                                        { id: 'telegram', label: 'Telegram', icon: Send, color: 'text-sky-500' },
+                                        { id: 'tboola', label: 'Tboola', icon: Newspaper, color: 'text-[#285d9a]' },
+                                        { id: 'bing', label: 'Bing', icon: Search, color: 'text-[#00A4EF]' },
+                                        { id: 'adroll', label: 'AdRoll', icon: Target, color: 'text-[#E0267D]' }
+                                    ].map((platform) => (
+                                        <div
+                                            key={platform.id}
+                                            className={cn(
+                                                "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
+                                                enabledPlatforms.includes(platform.id)
+                                                    ? "bg-blue-500/5 border-blue-500/20"
+                                                    : "bg-zinc-50 dark:bg-white/5 border-zinc-100 dark:border-white/5 opacity-60"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={cn(
+                                                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                                                    enabledPlatforms.includes(platform.id) ? "bg-white dark:bg-zinc-800 shadow-sm" : "bg-zinc-100 dark:bg-zinc-900"
+                                                )}>
+                                                    <platform.icon className={cn("w-5 h-5", platform.color)} />
+                                                </div>
+                                                <div className="space-y-0.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-black uppercase tracking-tight text-zinc-900 dark:text-zinc-100">{platform.label}</span>
+                                                        {'isCore' in platform && <span className="text-[8px] font-black uppercase tracking-widest bg-primary/10 text-primary px-1.5 py-0.5 rounded-md">Core</span>}
+                                                    </div>
+                                                    <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">
+                                                        {'isCore' in platform ? 'Core Platform' : enabledPlatforms.includes(platform.id) ? 'Active' : 'Inactive'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Switch
+                                                checked={enabledPlatforms.includes(platform.id)}
+                                                disabled={'isCore' in platform}
+                                                onCheckedChange={(val) => {
+                                                    let nextPlatforms: string[]
+                                                    if (val) {
+                                                        nextPlatforms = [...enabledPlatforms, platform.id]
+                                                    } else {
+                                                        nextPlatforms = enabledPlatforms.filter(p => p !== platform.id)
+                                                    }
+                                                    setEnabledPlatforms(nextPlatforms)
+                                                }}
+                                                className="data-[state=checked]:bg-[#007AFF]"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
 
                     <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 backdrop-blur-2xl shadow-xl overflow-hidden group">
                         <div className="absolute top-0 left-0 w-1 h-full bg-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -390,76 +498,6 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange }: Setti
                             </div>
                         </CardContent>
                     </Card>
-
-                    <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 backdrop-blur-2xl shadow-xl overflow-hidden group">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <CardHeader className="p-6 md:p-8 pb-4">
-                            <CardTitle className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-3">
-                                <Globe className="h-5 w-5 text-[#007AFF]" />
-                                Platform Visibility
-                            </CardTitle>
-                            <CardDescription className="text-xs text-zinc-500">
-                                Toggle which platforms are available for connection in your hub
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-6 md:p-8 pt-2">
-                            {isLoadingPlatforms ? (
-                                <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                                    <Loader2 className="w-8 h-8 animate-spin text-[#007AFF] opacity-50" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Synchronizing Platforms...</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {[
-                                        { id: 'meta', label: 'Meta', icon: Facebook, color: 'text-blue-600' },
-                                        { id: 'tiktok', label: 'TikTok', icon: Smartphone, color: 'text-zinc-900 dark:text-white' },
-                                        { id: 'google', label: 'Google Ads', icon: Play, color: 'text-red-500' },
-                                        { id: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
-                                        { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
-                                        { id: 'shopify', label: 'Shopify', icon: ShoppingBag, color: 'text-emerald-600' },
-                                        { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-500' },
-                                        { id: 'pinterest', label: 'Pinterest', icon: Pinterest, color: 'text-red-700' },
-                                        { id: 'x', label: 'X (Twitter)', icon: Twitter, color: 'text-zinc-600 dark:text-zinc-400' },
-                                        { id: 'telegram', label: 'Telegram', icon: Send, color: 'text-sky-500' }
-                                    ].map((platform) => (
-                                        <div
-                                            key={platform.id}
-                                            className={cn(
-                                                "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
-                                                enabledPlatforms.includes(platform.id)
-                                                    ? "bg-blue-500/5 border-blue-500/20"
-                                                    : "bg-zinc-50 dark:bg-white/5 border-zinc-100 dark:border-white/5 opacity-60"
-                                            )}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={cn(
-                                                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                                                    enabledPlatforms.includes(platform.id) ? "bg-white dark:bg-zinc-800 shadow-sm" : "bg-zinc-100 dark:bg-zinc-900"
-                                                )}>
-                                                    <platform.icon className={cn("w-5 h-5", platform.color)} />
-                                                </div>
-                                                <div className="space-y-0.5">
-                                                    <span className="text-xs font-black uppercase tracking-tight text-zinc-900 dark:text-zinc-100">{platform.label}</span>
-                                                    <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">{enabledPlatforms.includes(platform.id) ? 'Enabled' : 'Disabled'}</p>
-                                                </div>
-                                            </div>
-                                            <Switch
-                                                checked={enabledPlatforms.includes(platform.id)}
-                                                onCheckedChange={(val) => {
-                                                    if (val) {
-                                                        setEnabledPlatforms([...enabledPlatforms, platform.id])
-                                                    } else {
-                                                        setEnabledPlatforms(enabledPlatforms.filter(p => p !== platform.id))
-                                                    }
-                                                }}
-                                                className="data-[state=checked]:bg-[#007AFF]"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
                 </div>
 
                 {/* Right: Actions & Metadata */}
@@ -477,7 +515,7 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange }: Setti
 
                     <div className="space-y-3">
                         <Button
-                            className="w-full bg-[#007AFF] hover:bg-[#007AFF]/90 text-white font-black text-[11px] uppercase tracking-widest h-12 transition-all rounded-2xl shadow-xl shadow-blue-500/20 border-t border-white/20"
+                            className="w-full bg-primary hover:bg-primary/90 text-white font-black text-[11px] uppercase tracking-widest h-12 transition-all rounded-2xl shadow-xl shadow-primary/20 border-t border-white/20"
                             onClick={handleSaveSettings}
                         >
                             Commit Preferences

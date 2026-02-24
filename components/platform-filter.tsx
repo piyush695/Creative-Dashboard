@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { Facebook, Play, Linkedin, Twitter, Smartphone, Disc as Pinterest, Globe, Plus, ShoppingBag } from "lucide-react"
+import { Facebook, Play, Linkedin, Twitter, Smartphone, Disc as Pinterest, Globe, Plus, ShoppingBag, Target, Search, Newspaper } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import { PlatformType } from "@/lib/types"
@@ -22,6 +22,9 @@ const platforms = [
     { id: 'x', label: 'X (Twitter)', icon: Twitter, color: 'text-[#000000] dark:text-zinc-100', activeBg: 'bg-zinc-100 dark:bg-zinc-800' },
     { id: 'pinterest', label: 'Pinterest', icon: Pinterest, color: 'text-[#E60023]', activeBg: 'bg-red-50 dark:bg-red-900/20' },
     { id: 'shopify', label: 'Shopify', icon: ShoppingBag, color: 'text-[#95BF47]', activeBg: 'bg-lime-50 dark:bg-lime-900/20' },
+    { id: 'tboola', label: 'Tboola', icon: Newspaper, color: 'text-[#285d9a]', activeBg: 'bg-blue-50 dark:bg-blue-900/20' },
+    { id: 'bing', label: 'Bing', icon: Search, color: 'text-[#00A4EF]', activeBg: 'bg-teal-50 dark:bg-teal-900/20' },
+    { id: 'adroll', label: 'AdRoll', icon: Target, color: 'text-[#E0267D]', activeBg: 'bg-pink-50 dark:bg-pink-900/20' },
 ] as const
 
 export default function PlatformFilter({ selected, onSelect, onAddAd }: PlatformFilterProps) {

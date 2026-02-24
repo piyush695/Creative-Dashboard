@@ -216,7 +216,7 @@ export default function ProfileView({ onOpenPasswordChange, onBack }: ProfileVie
                                     <CardTitle className="text-lg md:text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Identity Details</CardTitle>
                                     <CardDescription className="text-xs text-zinc-500">Essential information for your analyst profile</CardDescription>
                                 </div>
-                                <User className="h-8 w-8 text-[#007AFF] opacity-20" />
+                                <User className="h-8 w-8 text-primary opacity-20" />
                             </div>
                         </CardHeader>
                         <CardContent className="p-6 md:p-8">
@@ -252,7 +252,7 @@ export default function ProfileView({ onOpenPasswordChange, onBack }: ProfileVie
                                 <div className="pt-2">
                                     <Button
                                         type="submit"
-                                        className="bg-[#007AFF] hover:bg-[#007AFF]/90 text-white font-black text-[10px] uppercase tracking-[0.2em] h-12 rounded-xl px-8 transition-all shadow-lg shadow-[#007AFF]/20 border-t border-white/20"
+                                        className="bg-primary hover:bg-primary/90 text-white font-black text-[10px] uppercase tracking-[0.2em] h-12 rounded-xl px-8 transition-all shadow-lg shadow-primary/20 border-t border-white/20"
                                         disabled={isLoading}
                                     >
                                         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Synchronize Profile"}
