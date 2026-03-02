@@ -149,6 +149,22 @@ export interface AdData {
     tags?: string[]
     searchableContent?: string
 
+    // Intelligence Analysis (New Fields)
+    psychology_analysis?: string
+    behavioral_economics_analysis?: string
+    neuromarketing_analysis?: string
+    google_algorithm_analysis?: string
+    competitive_differentiation?: string
+    predicted_performance_impact?: string
+    recommended_scaling_strategy?: string
+    creative_evolution_path?: string
+    cognitive_bias_utilization?: string
+    neuromarketing_triggers?: string
+    google_algorithm_optimization?: string
+    competitive_moat?: string
+    strategic_roadmap?: string
+    predicted_impact?: string
+
     // Layout/Legacy
     hierarchyAnalysis?: string
     colorPsychology?: string
@@ -157,4 +173,4 @@ export interface AdData {
     mobileReadiness?: string
 }
 
-export type PlatformType = 'all' | 'meta' | 'tiktok' | 'google' | 'linkedin' | 'youtube' | 'pinterest' | 'x' | 'shopify' | 'instagram' | 'telegram' | 'tboola' | 'bing' | 'adroll'
+export type PlatformType = 'all' | 'meta' | 'tiktok' | 'google' | 'linkedin' | 'youtube' | 'pinterest' | 'x' | 'shopify' | 'taboola' | 'bing' | 'adroll'

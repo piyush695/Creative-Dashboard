@@ -134,12 +134,10 @@ export function AddAdDialog({ open, onOpenChange, defaultPlatform, onSuccess }: 
                                     <SelectItem value="google" className="font-bold">Google Ads</SelectItem>
                                     <SelectItem value="youtube" className="font-bold">YouTube</SelectItem>
                                     <SelectItem value="linkedin" className="font-bold">LinkedIn</SelectItem>
-                                    <SelectItem value="instagram" className="font-bold">Instagram</SelectItem>
                                     <SelectItem value="pinterest" className="font-bold">Pinterest</SelectItem>
                                     <SelectItem value="shopify" className="font-bold">Shopify</SelectItem>
                                     <SelectItem value="x" className="font-bold">X (Twitter)</SelectItem>
-                                    <SelectItem value="telegram" className="font-bold">Telegram</SelectItem>
-                                    <SelectItem value="tboola" className="font-bold">Tboola</SelectItem>
+                                    <SelectItem value="taboola" className="font-bold">Taboola</SelectItem>
                                     <SelectItem value="bing" className="font-bold">Bing</SelectItem>
                                     <SelectItem value="adroll" className="font-bold">AdRoll</SelectItem>
                                 </SelectContent>

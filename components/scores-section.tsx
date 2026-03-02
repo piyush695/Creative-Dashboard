@@ -111,82 +111,82 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 w-full">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h3 className="text-2xl font-black text-foreground tracking-tightest uppercase italic opacity-80">Creative Intelligence Summary</h3>
-          <p className="text-muted-foreground/60 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Dimensional Performance Metric Hub</p>
+          <h3 className="text-lg md:text-xl font-black text-foreground tracking-tightest italic opacity-80">Creative intelligence summary</h3>
+          <p className="text-muted-foreground/60 text-[10px] font-black mt-0.5">Dimensional performance metric hub</p>
         </div>
         {!selectedScoreName && (
-          <div className="hidden md:flex items-center gap-2.5 text-[10px] font-black uppercase tracking-widest text-primary/60 bg-white dark:bg-zinc-900 px-5 py-2.5 rounded-2xl border border-border shadow-sm transition-all hover:bg-secondary hover:-translate-y-1">
-            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+          <div className="hidden md:flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-primary/60 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-xl border border-border shadow-sm transition-all hover:bg-secondary hover:-translate-y-1">
+            <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
             Select a Dimension for deep analysis
           </div>
         )}
       </div>
 
       {/* Overall Score Section - Studio Neutral Hub */}
-      <Card className="relative overflow-hidden border border-border shadow-xl bg-white dark:bg-[#0A0A0A] p-1 rounded-[2.5rem]">
-        <div className="absolute top-0 right-0 w-[40%] h-full bg-primary opacity-[0.03] dark:opacity-[0.08] blur-[80px] pointer-events-none transition-all duration-1000" />
+      <Card className="relative overflow-hidden border border-border shadow-md bg-white dark:bg-[#0A0A0A] p-0.5 rounded-2xl md:rounded-3xl">
+        <div className="absolute top-0 right-0 w-[40%] h-full bg-primary opacity-[0.03] dark:opacity-[0.08] blur-[60px] pointer-events-none transition-all duration-1000" />
 
-        <CardContent className="p-8 md:p-12 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-12">
-            <div className="flex flex-wrap justify-center gap-8">
+        <CardContent className="p-4 md:p-5 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-4 md:gap-6">
+            <div className="flex flex-wrap justify-center gap-3 md:gap-5">
               {/* Creative Score */}
               <div className="text-center group/score">
-                <div className="w-28 h-28 md:w-36 md:h-36 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-border dark:border-white/10 flex flex-col items-center justify-center relative shadow-sm transition-all duration-300 group-hover/score:border-primary/50 group-hover/score:scale-105">
-                  <span className="text-5xl md:text-6xl font-black text-foreground dark:text-white tracking-tightest leading-none mb-1">{overallScore}</span>
-                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Score</span>
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-white dark:bg-zinc-900 border border-border dark:border-white/10 flex flex-col items-center justify-center relative shadow-sm transition-all duration-300 group-hover/score:border-primary/50 group-hover/score:scale-105">
+                  <span className="text-2xl md:text-3xl font-black text-foreground dark:text-white tracking-tightest leading-none mb-0.5">{overallScore}</span>
+                  <span className="text-[10px] font-black text-primary">Score</span>
                 </div>
-                <p className="mt-5 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60">Intelligence Hub</p>
+                <p className="mt-2 text-[9px] font-black text-muted-foreground/60">Intelligence hub</p>
               </div>
 
               {/* Performance Score */}
               {adData.performanceScore && (
                 <div className="text-center group/score">
-                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-3xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 flex flex-col items-center justify-center relative shadow-sm transition-all duration-300 group-hover/score:border-emerald-500/50 group-hover/score:scale-105">
-                    <span className="text-3xl md:text-4xl font-black text-emerald-600 dark:text-emerald-400">{adData.performanceScore}</span>
-                    <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-tighter">Performance</span>
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 flex flex-col items-center justify-center relative shadow-sm transition-all duration-300 group-hover/score:border-emerald-500/50 group-hover/score:scale-105">
+                    <span className="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400">{adData.performanceScore}</span>
+                    <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-500 tracking-tighter">Performance</span>
                   </div>
-                  <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Predicted Yield</p>
+                  <p className="mt-2 text-[9px] font-black text-muted-foreground/60">Predicted yield</p>
                 </div>
               )}
 
               {/* Composite Rating */}
               {adData.compositeRating && (
                 <div className="text-center group/score">
-                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-3xl bg-amber-950/20 border border-amber-900/30 flex flex-col items-center justify-center relative shadow-2xl transition-all duration-500 group-hover/score:border-amber-500/50 group-hover/score:scale-105">
-                    <span className="text-3xl md:text-4xl font-black text-amber-400">{adData.compositeRating}</span>
-                    <span className="text-[9px] font-black text-amber-500 uppercase tracking-tighter">Composite</span>
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-amber-950/20 border border-amber-900/30 flex flex-col items-center justify-center relative shadow-md transition-all duration-500 group-hover/score:border-amber-500/50 group-hover/score:scale-105">
+                    <span className="text-xl md:text-2xl font-black text-amber-400">{adData.compositeRating}</span>
+                    <span className="text-[7px] font-black text-amber-500 uppercase tracking-tighter">Composite</span>
                   </div>
-                  <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-zinc-500">Final Rating</p>
+                  <p className="mt-2 text-[8px] font-black uppercase tracking-widest text-zinc-500">Final Rating</p>
                 </div>
               )}
             </div>
 
-            <div className="flex-1 space-y-6 text-center lg:text-left pt-6 lg:pt-0">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-2">
+            <div className="flex-1 space-y-4 text-center lg:text-left pt-6 lg:pt-0">
+              <div className="space-y-1.5">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 mb-1">
                   <Sparkles className="h-3 w-3 text-primary" />
-                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{adData.performanceLabel || "HIGH POTENTIAL"}</span>
+                  <span className="text-xs font-black text-primary">{adData.performanceLabel || "High potential"}</span>
                 </div>
-                <h4 className="text-2xl md:text-3xl font-black tracking-tight text-white uppercase italic">Intelligence Verdict</h4>
-                <p className="text-zinc-400 text-sm md:text-base leading-relaxed max-w-2xl font-medium">
+                <h4 className="text-base md:text-xl font-black tracking-tight text-zinc-900 dark:text-white italic">Intelligence verdict</h4>
+                <p className="text-zinc-400 text-xs md:text-sm leading-relaxed max-w-2xl font-medium">
                   {adData.keyInsight || adData.topInsight || "Our AI engine has analyzed this creative across 50+ dimensions. The current metrics indicate a strong resonance with target audience psychological triggers."}
                 </p>
               </div>
 
-              <div className="flex flex-wrap justify-center lg:justify-start gap-4">
-                <div className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
-                  <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Analysis Mode</span>
-                  <span className="text-[10px] font-black text-zinc-200">{adData.analysisMode || "VISUAL & METRICS"}</span>
+              <div className="flex flex-wrap justify-center lg:justify-start gap-3">
+                <div className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
+                  <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest">Analysis Mode</span>
+                  <span className="text-[9px] font-black text-zinc-200">{adData.analysisMode || "VISUAL & METRICS"}</span>
                 </div>
-                <div className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
-                  <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Psychology Strength</span>
-                  <span className="text-[10px] font-black text-zinc-200">{adData.psychologyStrength || "STRONG"}</span>
+                <div className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
+                  <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest">Psychology Strength</span>
+                  <span className="text-[9px] font-black text-zinc-200">{adData.psychologyStrength || "STRONG"}</span>
                 </div>
-                <div className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
-                  <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Design Quality</span>
-                  <span className="text-[10px] font-black text-zinc-200">{adData.designQuality || "PROFESSIONAL"}</span>
+                <div className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
+                  <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest">Design Quality</span>
+                  <span className="text-[9px] font-black text-zinc-200">{adData.designQuality || "PROFESSIONAL"}</span>
                 </div>
               </div>
             </div>
@@ -195,37 +195,37 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
       </Card>
 
       {/* Individual Scores Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
         {scores.map((score) => {
           const isSelected = selectedScoreName === score.name
           return (
             <Card
               key={score.name}
               className={cn(
-                "group cursor-pointer transition-all duration-700 relative overflow-hidden border border-border/40 premium-shadow premium-shadow-hover glass shine-effect rounded-[2rem]",
-                isSelected && "ring-2 ring-primary/50 shadow-3xl -translate-y-3 bg-primary/[0.02]"
+                "group cursor-pointer transition-all duration-700 relative overflow-hidden border border-border/40 premium-shadow premium-shadow-hover glass shine-effect rounded-xl md:rounded-2xl",
+                isSelected && "ring-2 ring-primary/50 shadow-md -translate-y-1 bg-primary/[0.02]"
               )}
               onClick={() => onSelectScore(score.name)}
             >
               <div className={cn("absolute inset-0 bg-gradient-to-br opacity-60 dark:opacity-10 transition-all duration-700 group-hover:opacity-100", score.color)} />
-              <CardContent className="p-6 md:p-8 relative z-10 flex flex-col h-full min-h-[160px]">
-                <h4 className="font-black text-[11px] uppercase tracking-[0.2em] text-primary mb-2 transition-all group-hover:translate-x-1">{score.name}</h4>
+              <CardContent className="p-3 md:p-4 relative z-10 flex flex-col h-full min-h-[100px] md:min-h-[120px]">
+                <h4 className="font-black text-[10px] text-primary mb-1 transition-all group-hover:translate-x-1">{score.name}</h4>
 
-                <div className="flex items-baseline gap-1.5 mb-6">
-                  <span className="text-3xl md:text-4xl font-black text-foreground tracking-tightest transition-all group-hover:scale-110 origin-left">{score.score}</span>
-                  <span className="text-[11px] font-black text-primary/40 uppercase">Rating</span>
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-lg md:text-xl font-black text-foreground tracking-tightest transition-all group-hover:scale-110 origin-left">{score.score}</span>
+                  <span className="text-[9px] font-black text-primary/40">Rating</span>
                 </div>
 
-                <div className="mt-auto space-y-5">
-                  <div className="w-full bg-secondary/80 dark:bg-white/10 rounded-full h-2 overflow-hidden shadow-inner p-[1px]">
+                <div className="mt-auto space-y-3 md:space-y-4">
+                  <div className="w-full bg-secondary/80 dark:bg-white/10 rounded-full h-1.5 overflow-hidden shadow-inner p-[1px]">
                     <div
                       className="bg-gradient-to-r from-primary to-indigo-400 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]"
                       style={{ width: `${score.score * 10}%` }}
                     />
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-primary/60 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Details</span>
-                    <ChevronRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                  <div className="flex justify-between items-center h-4">
+                    <span className="text-[9px] font-bold text-primary/60 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Details</span>
+                    <ChevronRight className="h-3 w-3 md:h-4 md:w-4 text-primary opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
                   </div>
                 </div>
               </CardContent>

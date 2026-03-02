@@ -40,7 +40,7 @@ const PlatformIcon = ({ platform, className }: { platform?: AdData['platform'], 
     case 'x': return <Twitter className={cn("text-foreground dark:text-white", className)} />;
     case 'pinterest': return <Pinterest className={cn("text-[#BD081C]", className)} />;
     case 'shopify': return <ShoppingBag className={cn("text-[#95BF47]", className)} />;
-    case 'tboola': return <Newspaper className={cn("text-[#285d9a]", className)} />;
+    case 'taboola': return <Newspaper className={cn("text-[#285d9a]", className)} />;
     case 'bing': return <Search className={cn("text-[#00A4EF]", className)} />;
     case 'adroll': return <Target className={cn("text-[#E0267D]", className)} />;
     default: return <Globe className={cn("text-muted-foreground", className)} />;
@@ -190,13 +190,17 @@ const AdGridCard = ({
 
         {/* ID Footer */}
         <div
-          className="group/id flex items-center justify-between gap-2 pt-2.5 pb-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 w-[calc(100%+1.5rem)] -mx-3 px-3 cursor-pointer hover:bg-primary/5 dark:hover:bg-primary/10 active:bg-primary/10 transition-all duration-200 mt-2"
-          onClick={handleCopyId}
+          onClick={(e) => ad.platform === 'meta' && e.stopPropagation()}
+          className="group/id flex items-center justify-between gap-2 pt-2.5 pb-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 w-[calc(100%+1.5rem)] -mx-3 px-3 cursor-default mt-2"
         >
-          <span className="text-[10px] font-mono text-muted-foreground/70 truncate transition-colors group-hover/id:text-primary font-medium">
+          <span className="text-[10px] font-mono text-muted-foreground/70 truncate transition-colors group-hover/id:text-primary font-medium select-text">
             ID: {ad.adId}
           </span>
-          <div className="shrink-0 text-muted-foreground/50 group-hover/id:text-primary transition-all duration-200 group-hover/id:scale-110">
+          <div
+            className="shrink-0 text-muted-foreground/50 hover:text-primary transition-all duration-200 hover:scale-110 cursor-pointer p-1 rounded-md hover:bg-primary/5"
+            onClick={handleCopyId}
+            title="Copy ID"
+          >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
           </div>
         </div>
@@ -310,12 +314,16 @@ const AdListCard = ({
               </span>
 
               <div
-                className="group/id flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all duration-200 cursor-pointer hover:bg-primary/5 dark:hover:bg-primary/10 hover:shadow-sm border border-transparent hover:border-primary/10 active:scale-95"
-                onClick={handleCopyId}
-                title="Click to copy ID"
+                onClick={(e) => ad.platform === 'meta' && e.stopPropagation()}
+                className="group/id flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all duration-200 border border-transparent"
+                title="ID"
               >
-                <span className="text-[10px] font-mono text-muted-foreground/70 font-medium group-hover/id:text-primary transition-colors">{ad.adId}</span>
-                <div className="text-muted-foreground/50 group-hover/id:text-primary transition-all duration-200 group-hover/id:scale-110">
+                <span className="text-[10px] font-mono text-muted-foreground/70 font-medium group-hover/id:text-primary transition-colors select-text">{ad.adId}</span>
+                <div
+                  className="text-muted-foreground/50 hover:text-primary transition-all duration-200 hover:scale-110 cursor-pointer p-1 rounded-md hover:bg-primary/5"
+                  onClick={handleCopyId}
+                  title="Click to copy ID"
+                >
                   {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
                 </div>
               </div>
@@ -406,13 +414,17 @@ const AdTableRow = ({
           <p className="font-bold text-xs truncate dark:text-white cursor-text">{ad.adName}....</p>
 
           <div
-            className="group/id flex items-center gap-1.5 w-fit hover:bg-zinc-100 dark:hover:bg-white/5 pr-2 rounded-md transition-colors cursor-copy -ml-1 pl-1 py-0.5"
-            onClick={handleCopyId}
-            title="Click to copy ID"
+            onClick={(e) => ad.platform === 'meta' && e.stopPropagation()}
+            className="group/id flex items-center gap-1.5 w-fit pr-2 rounded-md transition-colors -ml-1 pl-1 py-0.5"
+            title="ID"
           >
-            <span className="text-[10px] font-mono opacity-50">{ad.adId}</span>
-            <div className="opacity-0 group-hover/id:opacity-100 transition-opacity">
-              {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-zinc-400" />}
+            <span className="text-[10px] font-mono opacity-50 select-text">{ad.adId}</span>
+            <div
+              className="opacity-0 group-hover/id:opacity-100 font-mono text-zinc-400 hover:text-primary transition-all duration-200 hover:scale-110 cursor-pointer p-0.5 rounded shadow-sm"
+              onClick={handleCopyId}
+              title="Click to copy ID"
+            >
+              {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
             </div>
           </div>
         </div>

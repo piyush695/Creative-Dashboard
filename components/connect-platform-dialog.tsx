@@ -23,11 +23,9 @@ const platforms = [
     { id: 'youtube', label: 'YouTube', icon: Play, color: 'text-[#FF0000]', activeBg: 'bg-red-50 dark:bg-red-900/20', description: 'YouTube Video Ads' },
     { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-[#0A66C2]', activeBg: 'bg-blue-50 dark:bg-blue-900/20', description: 'LinkedIn Campaign Manager' },
     { id: 'shopify', label: 'Shopify', icon: ShoppingBag, color: 'text-[#95BF47]', activeBg: 'bg-lime-50 dark:bg-lime-900/20', description: 'Shopify Store Products' },
-    { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-500', activeBg: 'bg-pink-50 dark:bg-pink-900/20', description: 'Instagram Business Ads' },
     { id: 'pinterest', label: 'Pinterest', icon: Pinterest, color: 'text-[#E60023]', activeBg: 'bg-red-50 dark:bg-red-900/20', description: 'Pinterest Business' },
     { id: 'x', label: 'X (Twitter)', icon: Twitter, color: 'text-[#000000] dark:text-zinc-100', activeBg: 'bg-zinc-100 dark:bg-zinc-800', description: 'X Ads Center' },
-    { id: 'telegram', label: 'Telegram', icon: Send, color: 'text-sky-500', activeBg: 'bg-sky-50 dark:bg-sky-900/20', description: 'Telegram Channel Ads' },
-    { id: 'tboola', label: 'Tboola', icon: Newspaper, color: 'text-[#285d9a]', activeBg: 'bg-blue-50 dark:bg-blue-900/20', description: 'Tboola Native Ads' },
+    { id: 'taboola', label: 'Taboola', icon: Newspaper, color: 'text-[#285d9a]', activeBg: 'bg-blue-50 dark:bg-blue-900/20', description: 'Taboola Native Ads' },
     { id: 'bing', label: 'Bing', icon: Search, color: 'text-[#00A4EF]', activeBg: 'bg-teal-50 dark:bg-teal-900/20', description: 'Bing Search Ads' },
     { id: 'adroll', label: 'AdRoll', icon: Target, color: 'text-[#E0267D]', activeBg: 'bg-pink-50 dark:bg-pink-900/20', description: 'AdRoll Retargeting' }
 ] as const

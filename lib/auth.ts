@@ -50,12 +50,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     callbacks: {
         ...authConfig.callbacks,
         async session({ session, token }) {
-            if (session.user) {
+            if (session.user && token) {
                 // Critical: Validate user exists in DB every time session is checked
                 const userId = (token.id as string) || (token.sub as string)
 
                 if (!userId) {
-                    return null as any
+                    return session
                 }
 
                 try {

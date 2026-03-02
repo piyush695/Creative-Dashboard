@@ -353,11 +353,9 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                                         { id: 'tiktok', label: 'TikTok', icon: Smartphone, color: 'text-zinc-900 dark:text-white' },
                                         { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
                                         { id: 'shopify', label: 'Shopify', icon: ShoppingBag, color: 'text-emerald-600' },
-                                        { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-500' },
                                         { id: 'pinterest', label: 'Pinterest', icon: Pinterest, color: 'text-red-700' },
                                         { id: 'x', label: 'X (Twitter)', icon: Twitter, color: 'text-zinc-600 dark:text-zinc-400' },
-                                        { id: 'telegram', label: 'Telegram', icon: Send, color: 'text-sky-500' },
-                                        { id: 'tboola', label: 'Tboola', icon: Newspaper, color: 'text-[#285d9a]' },
+                                        { id: 'taboola', label: 'Taboola', icon: Newspaper, color: 'text-[#285d9a]' },
                                         { id: 'bing', label: 'Bing', icon: Search, color: 'text-[#00A4EF]' },
                                         { id: 'adroll', label: 'AdRoll', icon: Target, color: 'text-[#E0267D]' }
                                     ].map((platform) => (

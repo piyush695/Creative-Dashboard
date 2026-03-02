@@ -1,0 +1,965 @@
+[2026-02-26T09:00:04.684Z] GET request: health | platform: google
+[2026-02-26T09:02:51.877Z] GET request: campaigns | platform: adroll
+[2026-02-26T09:02:53.602Z] GET request: campaigns | platform: adroll
+[2026-02-26T09:51:42.978Z] GET campaigns | platform=adroll
+[2026-02-26T09:51:43.087Z] GET campaigns | platform=adroll
+[2026-02-26T09:51:45.048Z] GET ads | platform=adroll
+[2026-02-26T09:51:53.511Z] GET campaigns | platform=adroll
+[2026-02-26T09:51:53.619Z] GET campaigns | platform=adroll
+[2026-02-26T09:53:18.099Z] GET health | platform=google
+[2026-02-26T09:53:28.968Z] GET campaigns | platform=adroll
+[2026-02-26T09:53:29.083Z] GET campaigns | platform=adroll
+[2026-02-26T09:54:02.535Z] GET campaigns | platform=adroll
+[2026-02-26T09:54:48.164Z] GET ads | platform=adroll
+[2026-02-26T09:55:50.898Z] GET campaigns | platform=adroll
+[2026-02-26T09:55:50.997Z] GET campaigns | platform=adroll
+[2026-02-26T09:57:29.197Z] GET campaigns | platform=adroll
+[2026-02-26T09:57:29.309Z] GET campaigns | platform=adroll
+[2026-02-26T10:01:38.590Z] GET ads | platform=adroll
+[2026-02-26T10:01:57.148Z] GET ads | platform=adroll
+[2026-02-26T10:03:02.838Z] GET ads | platform=adroll
+[2026-02-26T10:03:16.456Z] GET campaigns | platform=adroll
+[2026-02-26T10:03:16.556Z] GET campaigns | platform=adroll
+[2026-02-26T10:03:17.918Z] GET ads | platform=adroll
+[2026-02-26T10:03:21.406Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:03:21.408Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:03:21.423Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:03:21.425Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:03:22.089Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWVN1BwyMCRxWb2MMp7p"}
+[2026-02-26T10:03:22.132Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWVN1N7XkHrCdjpdhsMT"}
+[2026-02-26T10:03:25.588Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:03:25.590Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:03:26.025Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWVNJAuVHYQUbfuoPHmD"}
+[2026-02-26T10:07:13.222Z] GET campaigns | platform=adroll
+[2026-02-26T10:07:13.327Z] GET campaigns | platform=adroll
+[2026-02-26T10:07:16.272Z] GET ads | platform=adroll
+[2026-02-26T10:07:20.089Z] GET ads | platform=adroll
+[2026-02-26T10:07:26.240Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:07:26.242Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:07:26.259Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:07:26.261Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:07:26.864Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWVg3uARLMZ8gXV15MTH"}
+[2026-02-26T10:07:27.094Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWVg43r6epM3vX3BTGtd"}
+[2026-02-26T10:07:41.150Z] GET campaigns | platform=adroll
+[2026-02-26T10:07:41.304Z] GET ads | platform=adroll
+[2026-02-26T10:07:41.409Z] GET ads | platform=adroll
+[2026-02-26T10:07:41.479Z] GET health | platform=google
+[2026-02-26T10:11:35.514Z] GET ads | platform=adroll
+[2026-02-26T10:13:21.065Z] GET campaigns | platform=adroll
+[2026-02-26T10:13:21.173Z] GET campaigns | platform=adroll
+[2026-02-26T10:15:33.840Z] GET campaigns | platform=adroll
+[2026-02-26T10:15:33.944Z] GET campaigns | platform=adroll
+[2026-02-26T10:15:35.476Z] GET ads | platform=adroll
+[2026-02-26T10:15:50.280Z] GET campaigns | platform=adroll
+[2026-02-26T10:15:57.230Z] GET campaigns | platform=adroll
+[2026-02-26T10:15:57.337Z] GET campaigns | platform=adroll
+[2026-02-26T10:17:20.753Z] GET ads | platform=adroll
+[2026-02-26T10:17:35.605Z] GET campaigns | platform=adroll
+[2026-02-26T10:17:35.703Z] GET campaigns | platform=adroll
+[2026-02-26T10:18:22.929Z] GET campaigns | platform=adroll
+[2026-02-26T10:18:23.055Z] GET campaigns | platform=adroll
+[2026-02-26T10:18:28.284Z] GET ads | platform=adroll
+[2026-02-26T10:18:44.909Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:18:44.911Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:18:44.929Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:18:44.930Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:18:45.463Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWWY5Rb4EtRZP6dYKBXZ"}
+[2026-02-26T10:18:45.552Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWWY5hx6bQQE3awtzCRH"}
+[2026-02-26T10:18:49.785Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:18:49.788Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:18:49.804Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:18:49.805Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:18:50.299Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWWYRxMvsmuRN6qQB4yC"}
+[2026-02-26T10:18:50.313Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWWYRseXPqG6GQsG68Uq"}
+[2026-02-26T10:18:53.563Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:18:53.565Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:18:53.579Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:18:53.581Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:18:53.900Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWWYhV1UDvdVSnoPEVL8"}
+[2026-02-26T10:18:53.938Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWWYhVFrTmVw5RxGVBS7"}
+[2026-02-26T10:19:15.922Z] GET campaigns | platform=adroll
+[2026-02-26T10:19:23.749Z] GET ads | platform=adroll
+[2026-02-26T10:24:14.745Z] GET campaigns | platform=adroll
+[2026-02-26T10:24:14.840Z] GET campaigns | platform=adroll
+[2026-02-26T10:24:20.349Z] GET campaigns | platform=adroll
+[2026-02-26T10:24:23.462Z] GET campaigns | platform=adroll
+[2026-02-26T10:24:31.861Z] GET campaigns | platform=adroll
+[2026-02-26T10:24:32.006Z] GET campaigns | platform=adroll
+[2026-02-26T10:24:34.679Z] GET ads | platform=adroll
+[2026-02-26T10:24:50.556Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:24:50.559Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:24:50.588Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T10:24:50.592Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T10:24:51.171Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWX12mqtqxKyCex15fo7"}
+[2026-02-26T10:24:51.441Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWX13t545RFJEcVjpXAE"}
+[2026-02-26T10:25:12.085Z] GET campaigns | platform=adroll
+[2026-02-26T10:25:12.190Z] GET campaigns | platform=adroll
+[2026-02-26T10:25:14.840Z] GET campaigns | platform=adroll
+[2026-02-26T10:25:16.400Z] GET campaigns | platform=adroll
+[2026-02-26T10:25:21.322Z] GET ads | platform=adroll
+[2026-02-26T10:25:32.395Z] POST ads/TFZIZOPRR5AJLM37QIACDW/analyze
+[2026-02-26T10:25:32.397Z] Analyzing AdRoll ad: TFZIZOPRR5AJLM37QIACDW | image: https://s.adroll.com/a/TFZ/IZO/TFZIZOPRR5AJLM37QIACDW.png?v=2025-04-25 10:45:08.439861
+[2026-02-26T10:25:32.928Z] ERROR in POST ads/TFZIZOPRR5AJLM37QIACDW/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWX47Jn5cxNLsN2iwfnV"}
+[2026-02-26T10:26:33.043Z] GET campaigns | platform=adroll
+[2026-02-26T10:29:18.013Z] GET campaigns | platform=adroll
+[2026-02-26T10:29:18.108Z] GET campaigns | platform=adroll
+[2026-02-26T10:29:48.339Z] GET campaigns | platform=adroll
+[2026-02-26T10:29:48.435Z] GET campaigns | platform=adroll
+[2026-02-26T10:29:49.649Z] GET ads | platform=adroll
+[2026-02-26T10:35:32.872Z] GET campaigns | platform=adroll
+[2026-02-26T10:35:32.969Z] GET campaigns | platform=adroll
+[2026-02-26T11:23:15.771Z] GET campaigns | platform=adroll
+[2026-02-26T11:23:15.887Z] GET campaigns | platform=adroll
+[2026-02-26T11:23:24.623Z] GET ads | platform=adroll
+[2026-02-26T11:23:31.935Z] GET campaigns | platform=adroll
+[2026-02-26T11:25:18.798Z] GET campaigns | platform=adroll
+[2026-02-26T11:25:18.896Z] GET campaigns | platform=adroll
+[2026-02-26T11:25:20.379Z] GET ads | platform=adroll
+[2026-02-26T11:25:31.125Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T11:25:31.126Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T11:25:31.144Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T11:25:31.146Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T11:25:31.736Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWbdPo7BJaXhiyMBjPX9"}
+[2026-02-26T11:25:32.097Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWbdRQqVtQiHAqHr3F5Y"}
+[2026-02-26T11:25:36.009Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T11:25:36.011Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T11:25:36.022Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T11:25:36.024Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T11:25:36.471Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWbdkKt4xU1eHYCJzdZK"}
+[2026-02-26T11:25:36.482Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWbdk6z4di78n8HyvUv3"}
+[2026-02-26T11:25:49.575Z] GET campaigns | platform=adroll
+[2026-02-26T11:26:30.941Z] GET campaigns | platform=adroll
+[2026-02-26T11:26:31.034Z] GET campaigns | platform=adroll
+[2026-02-26T11:26:33.800Z] GET campaigns | platform=adroll
+[2026-02-26T11:26:33.895Z] GET campaigns | platform=adroll
+[2026-02-26T11:26:34.760Z] GET campaigns | platform=adroll
+[2026-02-26T11:26:34.870Z] GET campaigns | platform=adroll
+[2026-02-26T11:26:36.307Z] GET campaigns | platform=adroll
+[2026-02-26T11:26:36.410Z] GET campaigns | platform=adroll
+[2026-02-26T11:26:40.837Z] GET ads | platform=adroll
+[2026-02-26T11:27:15.322Z] GET campaigns | platform=google
+[2026-02-26T11:27:16.529Z] GET campaigns | platform=google
+[2026-02-26T11:27:20.219Z] GET ads | platform=google
+[2026-02-26T11:27:31.936Z] POST ads/pmax_6673975076/analyze
+[2026-02-26T11:27:31.939Z] Analyzing AdRoll ad: pmax_6673975076 | image: null
+[2026-02-26T11:27:31.953Z] POST ads/pmax_6673975076/analyze
+[2026-02-26T11:27:32.029Z] Analyzing AdRoll ad: pmax_6673975076 | image: null
+[2026-02-26T11:27:32.383Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWbnHhVekiHiYo3L7oP7"}
+[2026-02-26T11:27:32.407Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWbnHsuUnWgSnHZpBaZE"}
+[2026-02-26T11:28:33.375Z] GET campaigns | platform=adroll
+[2026-02-26T11:28:33.469Z] GET campaigns | platform=adroll
+[2026-02-26T11:28:34.932Z] GET ads | platform=adroll
+[2026-02-26T11:28:56.565Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T11:28:56.566Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T11:28:56.578Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T11:28:56.580Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T11:28:56.963Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWbtXY74Kt7h4j2jKhxJ"}
+[2026-02-26T11:28:57.047Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWbtXg3M8PkhUZwGf88B"}
+[2026-02-26T11:29:07.130Z] GET campaigns | platform=adroll
+[2026-02-26T11:32:23.020Z] GET campaigns | platform=adroll
+[2026-02-26T11:32:23.134Z] GET campaigns | platform=adroll
+[2026-02-26T11:32:24.191Z] GET ads | platform=adroll
+[2026-02-26T11:32:41.722Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T11:32:41.724Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T11:32:41.735Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T11:32:41.736Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T11:32:42.317Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWcB94j4QgjENtpqfu1u"}
+[2026-02-26T11:32:42.384Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWcB97wr8R12kAWeutzL"}
+[2026-02-26T11:58:02.115Z] GET campaigns | platform=adroll
+[2026-02-26T11:58:02.221Z] GET campaigns | platform=adroll
+[2026-02-26T11:58:05.577Z] GET ads | platform=adroll
+[2026-02-26T12:45:19.026Z] GET campaigns | platform=adroll
+[2026-02-26T12:45:19.191Z] GET campaigns | platform=adroll
+[2026-02-26T12:45:20.712Z] GET ads | platform=adroll
+[2026-02-26T12:45:35.707Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T12:45:35.708Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T12:45:35.719Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-26T12:45:35.721Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-26T12:45:36.229Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWhjZYbs1jnoYTZQCYoS"}
+[2026-02-26T12:45:36.288Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYWhjZi2QDhHSapTkYN1U"}
+[2026-02-26T13:12:39.437Z] GET campaigns | platform=adroll
+[2026-02-26T13:12:39.539Z] GET campaigns | platform=adroll
+[2026-02-27T06:26:46.901Z] GET campaigns | platform=google
+[2026-02-27T06:26:48.252Z] GET campaigns | platform=google
+[2026-02-27T06:26:52.870Z] GET ads | platform=google
+[2026-02-27T06:27:12.287Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-02-27T06:27:42.664Z] POST ads/pmax_6673975076/analyze-assets
+[2026-02-27T06:29:16.479Z] GET campaigns | platform=adroll
+[2026-02-27T06:29:16.566Z] GET campaigns | platform=adroll
+[2026-02-27T06:29:21.065Z] GET ads | platform=adroll
+[2026-02-27T06:29:33.703Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-27T06:29:33.705Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-27T06:29:33.723Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-27T06:29:33.725Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-27T06:29:34.314Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYY6sHapEbMrJofN7ZuVv"}
+[2026-02-27T06:29:34.552Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYY6sJbbEinuV8ZyTGscC"}
+[2026-02-27T07:42:07.839Z] GET campaigns | platform=adroll
+[2026-02-27T07:42:07.931Z] GET campaigns | platform=adroll
+[2026-02-27T07:50:27.940Z] GET campaigns | platform=google
+[2026-02-27T07:50:29.605Z] GET campaigns | platform=google
+[2026-02-27T07:52:30.341Z] GET campaigns | platform=google
+[2026-02-27T07:52:31.325Z] GET campaigns | platform=google
+[2026-02-27T08:38:20.859Z] GET campaigns | platform=google
+[2026-02-27T08:38:33.994Z] GET campaigns | platform=google
+[2026-02-27T11:11:26.416Z] GET campaigns | platform=google
+[2026-02-27T11:11:27.780Z] GET campaigns | platform=google
+[2026-02-27T11:11:46.326Z] GET ads | platform=google
+[2026-02-27T11:12:46.255Z] GET campaigns | platform=adroll
+[2026-02-27T11:12:46.376Z] GET campaigns | platform=adroll
+[2026-02-27T11:12:49.657Z] GET ads | platform=adroll
+[2026-02-27T11:12:51.651Z] GET campaigns | platform=adroll
+[2026-02-27T11:13:06.310Z] GET ads | platform=adroll
+[2026-02-27T11:14:32.650Z] GET campaigns | platform=google
+[2026-02-27T11:14:33.842Z] GET campaigns | platform=google
+[2026-02-27T11:15:29.739Z] GET ads | platform=google
+[2026-02-27T11:15:47.428Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-02-27T11:17:28.309Z] GET campaigns | platform=google
+[2026-02-27T11:17:29.110Z] GET campaigns | platform=google
+[2026-02-27T11:17:31.587Z] GET ads | platform=google
+[2026-02-27T11:17:42.217Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-02-27T11:20:16.575Z] POST ads/pmax_6673975076/analyze-assets
+[2026-02-27T11:23:35.173Z] GET campaigns | platform=adroll
+[2026-02-27T11:23:35.278Z] GET campaigns | platform=adroll
+[2026-02-27T11:23:38.284Z] GET ads | platform=adroll
+[2026-02-27T11:24:01.108Z] GET campaigns | platform=google
+[2026-02-27T11:24:02.112Z] GET campaigns | platform=google
+[2026-02-27T11:24:50.551Z] GET campaigns | platform=adroll
+[2026-02-27T11:24:50.654Z] GET campaigns | platform=adroll
+[2026-02-27T11:24:52.205Z] GET ads | platform=adroll
+[2026-02-27T11:24:53.472Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-27T11:24:53.475Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-27T11:24:53.505Z] POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze
+[2026-02-27T11:24:53.510Z] Analyzing AdRoll ad: NCVLH32TBJEL3GL5ZOGNOF | image: https://s.adroll.com/a/NCV/LH3/NCVLH32TBJEL3GL5ZOGNOF.png?v=2025-04-25 10:45:07.700251
+[2026-02-27T11:24:54.047Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYYVPVYYths2AaGv3opVB"}
+[2026-02-27T11:24:54.318Z] ERROR in POST ads/NCVLH32TBJEL3GL5ZOGNOF/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYYVPWmxvWaux7VHw9YJj"}
+[2026-02-27T11:34:26.787Z] GET campaigns | platform=google
+[2026-02-27T11:34:28.032Z] GET campaigns | platform=google
+[2026-02-27T11:34:51.899Z] GET campaigns | platform=google
+[2026-02-27T11:34:51.941Z] GET campaigns | platform=google
+[2026-02-27T13:04:07.521Z] GET campaigns | platform=google
+[2026-02-27T13:04:08.848Z] GET campaigns | platform=google
+[2026-02-27T13:05:23.708Z] GET ads | platform=google
+[2026-02-27T13:05:29.328Z] ERROR in GET ads: Cannot read properties of undefined (reading 'ad_group_ad')
+[2026-02-27T13:05:30.608Z] GET ads | platform=google
+[2026-02-27T13:05:35.973Z] ERROR in GET ads: Cannot read properties of undefined (reading 'ad_group_ad')
+[2026-02-27T13:05:37.605Z] GET campaigns | platform=google
+[2026-02-27T13:05:39.975Z] GET ads | platform=google
+[2026-02-27T13:05:44.740Z] ERROR in GET ads: Cannot read properties of undefined (reading 'ad_group_ad')
+[2026-02-27T13:05:46.056Z] GET ads | platform=google
+[2026-02-27T13:05:51.632Z] ERROR in GET ads: Cannot read properties of undefined (reading 'ad_group_ad')
+[2026-02-27T13:06:16.103Z] POST ads/pmax_6673975076/analyze-deep
+[2026-02-27T13:06:16.104Z] Deep analyzing ad assets: pmax_6673975076
+[2026-02-27T13:06:21.237Z] ERROR in POST ads/pmax_6673975076/analyze-deep: Cannot read properties of undefined (reading 'ad_group_ad')
+[2026-02-27T13:06:57.038Z] GET campaigns | platform=google
+[2026-02-27T13:06:58.082Z] GET campaigns | platform=google
+[2026-02-27T13:07:50.719Z] GET campaigns | platform=google
+[2026-02-27T13:07:51.811Z] GET campaigns | platform=google
+[2026-02-27T13:10:37.346Z] GET campaigns | platform=google
+[2026-02-27T13:10:38.577Z] GET campaigns | platform=google
+[2026-02-27T13:12:17.089Z] GET campaigns | platform=google
+[2026-02-27T13:12:18.412Z] GET campaigns | platform=google
+[2026-02-27T13:12:52.866Z] GET campaigns | platform=google
+[2026-02-27T13:12:54.099Z] GET campaigns | platform=google
+[2026-02-27T13:16:34.045Z] GET campaigns | platform=google
+[2026-02-27T13:16:35.308Z] GET campaigns | platform=google
+[2026-02-27T13:16:38.099Z] GET campaigns | platform=google
+[2026-02-27T13:16:38.113Z] GET campaigns | platform=google
+[2026-02-27T13:19:29.705Z] GET campaigns | platform=google
+[2026-02-27T13:19:30.525Z] GET campaigns | platform=google
+[2026-02-27T13:22:38.454Z] GET ads | platform=google
+[2026-02-27T13:22:56.409Z] GET ads | platform=google
+[2026-02-27T13:22:57.383Z] GET ads | platform=google
+[2026-02-27T13:22:58.324Z] GET ads | platform=google
+[2026-02-27T13:22:59.484Z] GET ads | platform=google
+[2026-02-27T13:23:00.458Z] GET ads | platform=google
+[2026-02-27T13:23:23.948Z] GET ads | platform=google
+[2026-02-27T13:23:40.613Z] GET ads | platform=google
+[2026-02-27T13:23:51.748Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-02-27T13:24:01.345Z] GET campaigns | platform=google
+[2026-02-27T13:24:13.205Z] GET ads | platform=google
+[2026-02-27T13:24:27.258Z] GET ads/pmax_6667734824/assets | platform=google
+[2026-02-27T13:24:50.405Z] GET campaigns | platform=google
+[2026-02-27T13:26:58.672Z] GET campaigns | platform=google
+[2026-02-27T13:28:42.988Z] GET campaigns | platform=google
+[2026-02-27T13:32:31.743Z] GET ads | platform=google
+[2026-02-27T13:32:51.683Z] GET ads | platform=google
+[2026-02-27T13:32:53.339Z] GET ads | platform=google
+[2026-02-27T13:32:54.238Z] GET ads | platform=google
+[2026-02-27T13:34:46.003Z] GET ads | platform=google
+[2026-02-27T13:35:02.347Z] GET ads | platform=google
+[2026-02-27T13:35:17.553Z] GET ads | platform=google
+[2026-02-27T13:35:22.774Z] GET ads | platform=google
+[2026-02-27T13:36:16.767Z] GET campaigns | platform=google
+[2026-02-27T13:37:06.048Z] GET ads | platform=google
+[2026-02-27T13:37:23.107Z] GET ads | platform=google
+[2026-02-27T13:37:33.128Z] GET campaigns | platform=google
+[2026-02-27T13:38:36.680Z] GET ads | platform=google
+[2026-02-27T13:38:53.818Z] GET ads | platform=google
+[2026-02-27T13:39:42.789Z] GET ads | platform=google
+[2026-02-27T13:39:52.963Z] GET campaigns | platform=google
+[2026-02-27T13:39:56.420Z] GET campaigns | platform=google
+[2026-02-27T13:40:00.407Z] GET ads | platform=google
+[2026-02-27T13:50:05.944Z] GET ads | platform=google
+[2026-02-27T13:50:53.501Z] GET campaigns | platform=google
+[2026-02-27T13:50:54.526Z] GET campaigns | platform=google
+[2026-02-27T13:51:10.672Z] GET campaigns | platform=google
+[2026-02-27T13:51:10.688Z] GET campaigns | platform=google
+[2026-02-27T13:51:15.948Z] GET ads | platform=google
+[2026-02-27T13:51:31.001Z] GET ads/pmax_6667734821/assets | platform=google
+[2026-02-27T13:53:07.743Z] GET campaigns | platform=google
+[2026-02-27T13:53:08.836Z] GET campaigns | platform=google
+[2026-03-02T05:21:48.602Z] GET campaigns | platform=google
+[2026-03-02T05:21:49.933Z] GET campaigns | platform=google
+[2026-03-02T06:03:49.998Z] GET campaigns | platform=google
+[2026-03-02T06:03:51.281Z] GET campaigns | platform=google
+[2026-03-02T06:12:52.078Z] GET campaigns | platform=google
+[2026-03-02T06:12:53.302Z] GET campaigns | platform=google
+[2026-03-02T06:15:56.564Z] GET campaigns | platform=google
+[2026-03-02T06:15:57.769Z] GET campaigns | platform=google
+[2026-03-02T06:16:20.026Z] GET campaigns | platform=google
+[2026-03-02T06:17:56.667Z] GET campaigns | platform=google
+[2026-03-02T06:22:15.392Z] GET campaigns | platform=google
+[2026-03-02T06:22:16.537Z] GET campaigns | platform=google
+[2026-03-02T06:23:31.764Z] GET campaigns | platform=google
+[2026-03-02T06:23:33.371Z] GET campaigns | platform=google
+[2026-03-02T06:26:16.686Z] GET campaigns | platform=google
+[2026-03-02T06:26:17.997Z] GET campaigns | platform=google
+[2026-03-02T06:26:27.033Z] GET campaigns | platform=google
+[2026-03-02T06:28:26.119Z] GET campaigns | platform=google
+[2026-03-02T06:28:27.307Z] GET campaigns | platform=google
+[2026-03-02T06:28:43.904Z] GET campaigns | platform=google
+[2026-03-02T06:28:43.924Z] GET campaigns | platform=google
+[2026-03-02T06:28:47.373Z] GET ads | platform=google
+[2026-03-02T06:29:01.277Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T06:29:18.312Z] POST ads/pmax_6673975076/analyze-assets
+[2026-03-02T06:29:22.215Z] GET campaigns | platform=google
+[2026-03-02T06:31:16.699Z] GET campaigns | platform=google
+[2026-03-02T06:31:17.793Z] GET campaigns | platform=google
+[2026-03-02T06:31:21.916Z] GET ads | platform=google
+[2026-03-02T06:31:34.039Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T06:31:34.042Z] Analyzing AdRoll ad: pmax_6673975076 | image: null
+[2026-03-02T06:31:34.060Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T06:31:34.062Z] Analyzing AdRoll ad: pmax_6673975076 | image: null
+[2026-03-02T06:31:34.426Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdnSdfnY67CjRGwaZUua"}
+[2026-03-02T06:31:34.797Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdnSfEJ9czWZR4bSDwCq"}
+[2026-03-02T06:31:37.995Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T06:31:56.551Z] GET campaigns | platform=google
+[2026-03-02T06:42:12.921Z] GET campaigns | platform=google
+[2026-03-02T06:42:14.172Z] GET campaigns | platform=google
+[2026-03-02T06:45:05.367Z] GET campaigns | platform=google
+[2026-03-02T06:45:06.711Z] GET campaigns | platform=google
+[2026-03-02T06:51:43.787Z] [DEBUG_SVC] DemandGen Multi-Asset failed: Google Ads API error (400): Unrecognized field in the query: 'ad_group_ad.ad.demand_gen_multi_asset_ad.long_headlines'.
+[2026-03-02T06:51:44.175Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T06:51:44.284Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T06:51:44.753Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T06:51:45.039Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T06:51:46.062Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T06:51:52.066Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T06:51:52.983Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T06:51:53.552Z] [DEBUG_SVC] PMAX Assets failed: Google Ads API error (400): Unrecognized field in the query: 'asset_group_asset.performance_label'.
+[2026-03-02T06:51:57.371Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T06:51:57.371Z] [DEBUG_SVC] First PMAX ad images: 0
+[2026-03-02T07:02:43.192Z] GET campaigns | platform=google
+[2026-03-02T07:02:44.392Z] GET campaigns | platform=google
+[2026-03-02T07:03:38.871Z] GET campaigns | platform=google
+[2026-03-02T07:03:41.154Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:03:41.218Z] GET campaigns | platform=google
+[2026-03-02T07:03:41.220Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:03:43.724Z] GET ads | platform=google
+[2026-03-02T07:03:45.167Z] [DEBUG_SVC] DemandGen Multi-Asset failed: Google Ads API error (400): Unrecognized field in the query: 'ad_group_ad.ad.demand_gen_multi_asset_ad.long_headlines'.
+[2026-03-02T07:03:45.364Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:03:45.460Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T07:03:45.539Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T07:03:45.927Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T07:03:46.639Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T07:03:48.092Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T07:03:48.974Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T07:03:49.903Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T07:03:54.948Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T07:03:54.951Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:03:59.613Z] GET campaigns | platform=google
+[2026-03-02T07:04:01.673Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:04:06.024Z] GET ads | platform=google
+[2026-03-02T07:04:07.636Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:04:07.652Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T07:04:07.787Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T07:04:07.792Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T07:04:08.452Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T07:04:09.225Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T07:04:10.445Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T07:04:11.297Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T07:04:12.501Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T07:04:16.907Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T07:04:16.911Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:04:19.013Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T07:04:20.931Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:04:21.138Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T07:04:21.249Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T07:04:21.454Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T07:04:22.089Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T07:04:22.933Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T07:04:29.007Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T07:04:30.002Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T07:04:35.208Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T07:04:35.698Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T07:04:35.699Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:04:53.602Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:04:53.605Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:04:53.636Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:04:53.639Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:04:54.406Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdpz4XMrDRbj8AA6DVJd"}
+[2026-03-02T07:04:54.471Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdpz4eo7nmBNyt38qdXt"}
+[2026-03-02T07:05:35.676Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:05:35.679Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:05:35.694Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:05:35.698Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:05:36.238Z] ERROR in POST ads/pmax_6673975076/analyze: 401 terminated
+[2026-03-02T07:05:36.303Z] ERROR in POST ads/pmax_6673975076/analyze: 401 terminated
+[2026-03-02T07:05:49.304Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:05:49.308Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:05:49.324Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:05:49.327Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:05:49.855Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdq49U8YX6nEtdSDrKY5"}
+[2026-03-02T07:05:50.613Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdq4Cnoan6nfBZGbWrEZ"}
+[2026-03-02T07:06:24.567Z] GET campaigns | platform=google
+[2026-03-02T07:06:26.744Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:06:44.805Z] GET ads | platform=google
+[2026-03-02T07:06:46.275Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:06:46.523Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T07:06:46.555Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T07:06:46.586Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T07:06:47.208Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T07:06:48.126Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T07:06:49.251Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T07:06:50.143Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T07:06:51.011Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T07:06:58.608Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T07:06:58.610Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:07:25.030Z] GET campaigns | platform=google
+[2026-03-02T07:07:26.738Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:07:31.341Z] GET ads | platform=google
+[2026-03-02T07:07:32.718Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T07:07:32.912Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T07:07:32.926Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T07:07:32.961Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:07:33.636Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T07:07:34.404Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T07:07:35.395Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T07:07:36.497Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T07:07:37.500Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T07:07:41.598Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T07:07:41.599Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:07:44.664Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T07:07:46.262Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:07:46.411Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T07:07:46.493Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T07:07:47.039Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T07:07:47.377Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T07:07:48.384Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T07:07:57.265Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T07:07:58.599Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T07:08:01.874Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T07:08:02.302Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T07:08:02.302Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:19:12.285Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:19:12.289Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:19:12.309Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:19:12.313Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:19:12.819Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdr5LV4NLYDuTuVhEv2p"}
+[2026-03-02T07:19:13.645Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdr5Q47gouL5B9GQF3fU"}
+[2026-03-02T07:19:18.962Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:19:18.965Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:19:18.991Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:19:18.995Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:19:19.456Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdr5q237uPENcLRJaLDE"}
+[2026-03-02T07:19:20.174Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdr5t37Wz5H6UY46s9E4"}
+[2026-03-02T07:20:04.588Z] GET campaigns | platform=google
+[2026-03-02T07:20:06.495Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:20:58.364Z] GET campaigns | platform=google
+[2026-03-02T07:21:00.105Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:21:00.270Z] GET campaigns | platform=google
+[2026-03-02T07:21:00.276Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:21:04.443Z] GET ads | platform=google
+[2026-03-02T07:21:06.176Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:21:06.255Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T07:21:06.422Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T07:21:06.792Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T07:21:06.861Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T07:21:07.477Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T07:21:09.418Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T07:21:10.317Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T07:21:11.178Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T07:21:16.113Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T07:21:16.115Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:21:23.579Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T07:21:25.703Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:21:25.845Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T07:21:25.940Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T07:21:26.681Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T07:21:27.224Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T07:21:28.106Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T07:21:33.640Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T07:21:34.689Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T07:21:40.683Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T07:21:41.276Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T07:21:41.277Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:24:15.835Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:24:15.850Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:24:15.898Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T07:24:15.901Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:24:16.580Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdrTjN5kNYz8ThAF2oP2"}
+[2026-03-02T07:24:16.612Z] ERROR in POST ads/pmax_6673975076/analyze: 401 terminated
+[2026-03-02T07:27:14.205Z] GET ads/pmax_6667734821/assets | platform=google
+[2026-03-02T07:27:16.185Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:27:16.288Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T07:27:16.465Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T07:27:16.818Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T07:27:17.368Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T07:27:18.035Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T07:27:25.486Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T07:27:26.719Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T07:27:30.991Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T07:27:37.262Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T07:27:37.263Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:27:49.756Z] POST ads/pmax_6667734821/analyze
+[2026-03-02T07:27:49.760Z] Analyzing AdRoll ad: pmax_6667734821 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:27:49.788Z] POST ads/pmax_6667734821/analyze
+[2026-03-02T07:27:49.792Z] Analyzing AdRoll ad: pmax_6667734821 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T07:27:50.268Z] ERROR in POST ads/pmax_6667734821/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdrjUt8oWoQDmmF1qB3f"}
+[2026-03-02T07:27:52.221Z] ERROR in POST ads/pmax_6667734821/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdrjcpskjNYcBr4dNSdS"}
+[2026-03-02T07:28:52.213Z] GET campaigns | platform=google
+[2026-03-02T07:28:53.785Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:28:53.839Z] GET campaigns | platform=google
+[2026-03-02T07:28:53.841Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:28:58.063Z] GET ads | platform=google
+[2026-03-02T07:28:59.786Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T07:28:59.859Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T07:28:59.962Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:28:59.970Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T07:29:00.423Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T07:29:01.211Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T07:29:02.236Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T07:29:03.017Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T07:29:03.840Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T07:29:07.574Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T07:29:07.576Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:29:17.655Z] GET campaigns | platform=google
+[2026-03-02T07:29:17.656Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:29:17.675Z] GET campaigns | platform=google
+[2026-03-02T07:29:17.676Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:29:30.675Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T07:29:32.342Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T07:29:32.499Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:29:32.541Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T07:29:32.807Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T07:29:33.316Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T07:29:33.959Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T07:29:39.269Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T07:29:40.610Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T07:29:43.894Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T07:29:47.839Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T07:29:47.840Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:49:28.230Z] GET campaigns | platform=google
+[2026-03-02T07:49:30.322Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:49:30.408Z] GET campaigns | platform=google
+[2026-03-02T07:49:30.411Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:49:37.435Z] GET ads | platform=google
+[2026-03-02T07:49:39.407Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:49:39.438Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T07:49:39.455Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T07:49:39.588Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T07:49:40.065Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T07:49:40.731Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T07:49:41.822Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T07:49:42.595Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T07:49:43.575Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T07:49:47.086Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T07:49:47.087Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:49:52.110Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T07:49:53.957Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T07:49:54.039Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T07:49:54.096Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:49:54.981Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T07:49:56.653Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T07:49:58.083Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T07:50:03.965Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T07:50:05.199Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T07:50:09.177Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T07:50:09.691Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T07:50:09.693Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:53:49.840Z] GET campaigns | platform=google
+[2026-03-02T07:53:51.507Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:53:51.570Z] GET campaigns | platform=google
+[2026-03-02T07:53:51.572Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:54:51.616Z] GET campaigns | platform=google
+[2026-03-02T07:54:54.028Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:54:54.160Z] GET campaigns | platform=google
+[2026-03-02T07:54:54.163Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:54:56.379Z] GET ads | platform=google
+[2026-03-02T07:54:58.208Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:54:58.378Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T07:54:58.429Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T07:54:59.331Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T07:55:00.334Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T07:55:01.165Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T07:55:04.496Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T07:55:05.890Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T07:55:07.121Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T07:55:17.884Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T07:55:17.887Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:55:19.549Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T07:55:21.684Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T07:55:21.739Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T07:55:21.771Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T07:55:22.324Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T07:55:22.564Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T07:55:23.324Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T07:55:30.622Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T07:55:31.887Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T07:55:38.599Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T07:55:39.223Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T07:55:39.225Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T07:57:01.029Z] GET campaigns | platform=google
+[2026-03-02T07:57:02.780Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T07:57:02.838Z] GET campaigns | platform=google
+[2026-03-02T07:57:02.842Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:01:30.088Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:01:30.092Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:01:30.113Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:01:30.116Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:01:30.645Z] ERROR in POST ads/pmax_6673975076/analyze: 401 terminated
+[2026-03-02T08:01:30.666Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYduJQvR1qyP585XjcByE"}
+[2026-03-02T08:02:52.498Z] GET campaigns | platform=google
+[2026-03-02T08:02:54.637Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:02:54.766Z] GET campaigns | platform=google
+[2026-03-02T08:02:54.768Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:03:21.367Z] GET ads | platform=google
+[2026-03-02T08:03:24.154Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T08:03:24.219Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T08:03:24.381Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T08:03:24.439Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:03:25.131Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T08:03:26.100Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T08:03:27.327Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T08:03:28.234Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T08:03:29.418Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T08:03:34.049Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T08:03:34.052Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T08:03:41.325Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T08:03:42.916Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:03:43.008Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T08:03:43.133Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T08:03:43.532Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T08:03:44.024Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T08:03:45.170Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T08:03:52.021Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T08:03:53.194Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T08:03:57.526Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T08:03:58.256Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T08:03:58.259Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T08:04:06.255Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:04:06.260Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:04:06.279Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:04:06.283Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:04:06.766Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYduVvTytntsQJG3Y1XU5"}
+[2026-03-02T08:04:06.836Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYduVvavXeuSqEGZc279K"}
+[2026-03-02T08:04:13.633Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:04:13.636Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:04:13.652Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:04:13.655Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:04:14.138Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYduWTzo5jF7sUQr3CCKf"}
+[2026-03-02T08:04:14.900Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYduWXE1eXYWx6PYLM1E9"}
+[2026-03-02T08:04:21.944Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:04:21.947Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:04:21.966Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:04:21.969Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:04:22.636Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYduX6K6QdKzskYtwDwUg"}
+[2026-03-02T08:04:23.314Z] ERROR in POST ads/pmax_6673975076/analyze: 401 terminated
+[2026-03-02T08:04:29.710Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:04:29.714Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:04:29.729Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:04:29.732Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:04:30.178Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYduXeaJtqwCEdd6gSZRh"}
+[2026-03-02T08:04:30.247Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYduXesftN53a6PC2vd5Q"}
+[2026-03-02T08:06:30.690Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T08:06:32.756Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:06:32.803Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T08:06:32.928Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T08:06:33.720Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T08:06:34.020Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T08:06:34.658Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T08:06:40.943Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T08:06:42.006Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T08:06:46.643Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T08:06:50.571Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T08:06:50.574Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T08:13:11.421Z] GET campaigns | platform=google
+[2026-03-02T08:13:13.403Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:13:13.464Z] GET campaigns | platform=google
+[2026-03-02T08:13:13.465Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:13:26.541Z] GET ads | platform=google
+[2026-03-02T08:13:28.350Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:13:28.443Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T08:13:28.548Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T08:13:28.562Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T08:13:29.395Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T08:13:30.113Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T08:13:31.300Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T08:13:32.180Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T08:13:33.249Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T08:13:37.865Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T08:13:37.866Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T08:13:58.432Z] GET ads/pmax_6667734821/assets | platform=google
+[2026-03-02T08:14:00.262Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:14:00.413Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T08:14:00.615Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T08:14:01.049Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T08:14:01.321Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T08:14:02.146Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T08:14:09.195Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T08:14:10.833Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T08:14:14.458Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T08:14:18.164Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T08:14:18.171Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T08:15:13.182Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T08:15:15.317Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:15:15.556Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T08:15:15.653Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T08:15:16.405Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T08:15:16.757Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T08:15:17.238Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T08:15:24.216Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T08:15:25.795Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T08:15:30.266Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T08:15:34.538Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T08:15:34.540Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T08:15:51.072Z] GET campaigns | platform=adroll
+[2026-03-02T08:15:51.234Z] GET campaigns | platform=adroll
+[2026-03-02T08:16:13.493Z] GET campaigns | platform=google
+[2026-03-02T08:16:15.055Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:16:15.116Z] GET campaigns | platform=google
+[2026-03-02T08:16:15.119Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:20:55.810Z] GET campaigns | platform=google
+[2026-03-02T08:20:57.844Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:20:57.925Z] GET campaigns | platform=google
+[2026-03-02T08:20:57.927Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:21:20.057Z] GET ads | platform=google
+[2026-03-02T08:21:21.645Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T08:21:22.449Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:21:22.504Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T08:21:22.540Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T08:21:23.435Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T08:21:24.292Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T08:21:25.605Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T08:21:26.407Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T08:21:27.366Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T08:21:36.907Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T08:21:36.908Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T08:24:39.213Z] GET campaigns | platform=google
+[2026-03-02T08:24:41.535Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:24:48.212Z] GET ads | platform=google
+[2026-03-02T08:24:50.140Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T08:24:50.159Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:24:50.441Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T08:24:50.482Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T08:24:51.345Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T08:24:51.911Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T08:24:52.910Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T08:24:53.770Z] [DEBUG_SVC] PMAX Asset Groups: 25 rows
+[2026-03-02T08:24:54.784Z] [DEBUG_SVC] PMAX Assets: 1285 rows
+[2026-03-02T08:25:04.202Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=25
+[2026-03-02T08:25:04.205Z] [DEBUG_SVC] First PMAX ad images: 20
+[2026-03-02T08:25:49.487Z] GET campaigns | platform=google
+[2026-03-02T08:25:51.026Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:26:09.927Z] GET ads | platform=google
+[2026-03-02T08:26:11.741Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:26:11.783Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T08:26:11.811Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T08:26:11.979Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T08:26:13.235Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T08:26:13.985Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T08:26:17.248Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T08:26:19.316Z] [DEBUG_SVC] PMAX Asset Groups: 0 rows
+[2026-03-02T08:26:19.317Z] [DEBUG_SVC] fetchAds: baseAds=1, pmax=0
+[2026-03-02T08:38:35.268Z] GET campaigns | platform=google
+[2026-03-02T08:38:37.502Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:38:37.569Z] GET campaigns | platform=google
+[2026-03-02T08:38:37.571Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:38:41.865Z] GET ads | platform=google
+[2026-03-02T08:38:43.365Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T08:38:43.374Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:38:43.437Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T08:38:43.491Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T08:38:44.250Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T08:38:45.030Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T08:38:46.246Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T08:38:47.168Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T08:38:48.683Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T08:38:53.114Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T08:38:53.116Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T08:38:58.705Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:38:58.709Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:38:58.724Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:38:58.728Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:38:59.237Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdxAAjkyrz8TcaGQyHEZ"}
+[2026-03-02T08:38:59.460Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYdxAAx9yJMNMQ3TrJKV1"}
+[2026-03-02T08:39:01.212Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T08:39:02.865Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:39:02.901Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T08:39:03.115Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T08:39:03.585Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T08:39:34.204Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T08:39:35.302Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T08:39:42.425Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T08:39:43.329Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T08:39:48.280Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T08:39:52.044Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T08:39:52.045Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T08:39:59.643Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:39:59.646Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:39:59.665Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T08:39:59.669Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T08:40:00.182Z] ERROR in POST ads/pmax_6673975076/analyze: 401 terminated
+[2026-03-02T08:40:00.268Z] ERROR in POST ads/pmax_6673975076/analyze: 401 terminated
+[2026-03-02T08:41:41.301Z] GET campaigns | platform=google
+[2026-03-02T08:41:43.170Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:41:51.542Z] GET campaigns | platform=google
+[2026-03-02T08:41:51.545Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:41:51.598Z] GET campaigns | platform=google
+[2026-03-02T08:41:51.600Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:44:58.398Z] GET campaigns | platform=google
+[2026-03-02T08:45:00.241Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:45:00.296Z] GET campaigns | platform=google
+[2026-03-02T08:45:00.297Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T08:45:06.129Z] GET ads | platform=google
+[2026-03-02T08:45:07.649Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:45:07.750Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T08:45:08.002Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T08:45:08.185Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T08:45:08.901Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T08:45:09.649Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T08:45:10.918Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T08:45:12.237Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T08:45:13.365Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T08:45:16.972Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T08:45:16.972Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T08:45:23.471Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T08:45:25.409Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T08:45:25.702Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T08:45:25.798Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T08:45:26.389Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T08:45:26.622Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T08:45:27.421Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T08:45:33.688Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T08:45:34.743Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T08:45:38.082Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T08:45:38.472Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T08:45:38.494Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T09:29:49.855Z] GET campaigns | platform=google
+[2026-03-02T09:29:52.126Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T09:29:52.382Z] GET campaigns | platform=google
+[2026-03-02T09:29:52.383Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T09:30:00.080Z] GET campaigns | platform=google
+[2026-03-02T09:30:00.082Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T09:30:00.221Z] GET campaigns | platform=google
+[2026-03-02T09:30:00.233Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T09:30:04.883Z] GET ads | platform=google
+[2026-03-02T09:30:09.899Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T09:30:10.701Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T09:30:10.808Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T09:30:11.028Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T09:30:11.718Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T09:30:12.904Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T09:30:14.424Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T09:30:15.285Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T09:30:16.881Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T09:30:21.079Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T09:30:21.080Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T09:30:26.337Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T09:30:28.528Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T09:30:28.668Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T09:30:28.711Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T09:30:29.271Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T09:30:30.515Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T09:30:31.260Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T09:30:36.854Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T09:30:37.640Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T09:30:43.315Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T09:30:43.704Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T09:30:43.705Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T09:37:59.778Z] GET campaigns | platform=google
+[2026-03-02T09:38:01.778Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T09:38:01.882Z] GET campaigns | platform=google
+[2026-03-02T09:38:01.884Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T09:39:02.783Z] GET campaigns | platform=google
+[2026-03-02T09:39:04.889Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T09:39:04.957Z] GET campaigns | platform=google
+[2026-03-02T09:39:04.962Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T09:39:13.401Z] GET ads | platform=google
+[2026-03-02T09:39:15.022Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T09:39:15.086Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T09:39:15.136Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T09:39:15.287Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T09:39:16.077Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T09:39:16.906Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T09:39:18.202Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T09:39:19.242Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T09:39:20.034Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T09:39:25.471Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T09:39:25.473Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T09:39:32.134Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T09:39:32.138Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T09:39:32.159Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T09:39:32.163Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T09:39:32.596Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYe2n12pmdofqvFqC7SHx"}
+[2026-03-02T09:39:33.368Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYe2n4JXc52fpjyZ6fcue"}
+[2026-03-02T09:39:43.149Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T09:39:44.759Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T09:39:45.020Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T09:39:45.384Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T09:39:45.457Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T09:39:46.754Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T09:39:47.968Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T09:39:54.327Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T09:39:55.408Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T09:39:59.847Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T09:40:06.327Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T09:40:06.331Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T09:40:38.612Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T09:40:38.616Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T09:40:38.638Z] POST ads/pmax_6673975076/analyze
+[2026-03-02T09:40:38.642Z] Analyzing AdRoll ad: pmax_6673975076 | image: https://tpc.googlesyndication.com/simgad/11195846958089703559
+[2026-03-02T09:40:39.366Z] ERROR in POST ads/pmax_6673975076/analyze: 401 terminated
+[2026-03-02T09:40:40.095Z] ERROR in POST ads/pmax_6673975076/analyze: 401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"},"request_id":"req_011CYe2ryauHtqaBHVdE4jzA"}
+[2026-03-02T09:51:01.365Z] GET campaigns | platform=google
+[2026-03-02T09:51:03.215Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T09:51:03.280Z] GET campaigns | platform=google
+[2026-03-02T09:51:03.281Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T10:05:36.785Z] GET campaigns | platform=google
+[2026-03-02T10:05:39.351Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T10:05:39.396Z] GET campaigns | platform=google
+[2026-03-02T10:05:39.397Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-02T10:06:53.514Z] GET ads | platform=google
+[2026-03-02T10:06:55.557Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-02T10:06:55.630Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T10:06:55.653Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-02T10:06:55.714Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-02T10:06:56.359Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-02T10:06:57.358Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-02T10:06:58.615Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-02T10:06:59.433Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-02T10:07:00.755Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-02T10:07:08.549Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-02T10:07:08.549Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-02T10:07:12.055Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-02T10:07:14.062Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-02T10:07:14.245Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-02T10:07:14.265Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-02T10:07:15.491Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-02T10:07:15.550Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-02T10:07:16.319Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-02T10:07:22.404Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-02T10:07:23.322Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-02T10:07:26.755Z] [DEBUG_SVC] PMAX Assets: 25627 rows
+[2026-03-02T10:07:27.208Z] [DEBUG_SVC] fetchAds: baseAds=1247, pmax=482
+[2026-03-02T10:07:27.210Z] [DEBUG_SVC] First PMAX ad images: 25

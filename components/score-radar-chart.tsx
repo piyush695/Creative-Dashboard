@@ -159,7 +159,6 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                 className="cursor-pointer group"
                 onMouseEnter={() => setHoveredSubject(payload.value)}
                 onMouseLeave={() => setHoveredSubject(null)}
-                onClick={() => setDetailsOpen(true)}
             >
                 <circle cx={x} cy={y - 4} r={isHovered ? 16 : 0} fill={isDark ? "#ea580c" : "#ea580c"} opacity={isHovered ? 0.1 : 0} className="transition-all duration-300" />
                 <Text
@@ -215,9 +214,6 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
             onMouseMove: handleMouseMove,
             onClick: (data: any) => {
                 handleMouseMove(data);
-                if (data && (data.activeLabel || (data.activePayload && data.activePayload[0]))) {
-                    setDetailsOpen(true);
-                }
             },
         }
 
@@ -605,10 +601,6 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
 
                             {/* Actions Row */}
                             <div className="flex gap-2 pt-2">
-                                <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1.5 tracking-wider uppercase font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100" onClick={() => setDetailsOpen(true)}>
-                                    <Eye className="h-3 w-3" />
-                                    Details
-                                </Button>
                                 <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1.5 tracking-wider uppercase font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100" onClick={() => setShowBenchmark(!showBenchmark)}>
                                     <GitCompare className="h-3 w-3" />
                                     {showBenchmark ? "Hide Avg" : "Compare"}
@@ -632,34 +624,6 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                     )}
                 </div>
             </div>
-
-            {/* Drill Down Dialog */}
-            <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            {activeData?.label}
-                            {activeData && (
-                                <Badge variant={activeData.score >= 8 ? 'default' : activeData.score >= 5 ? 'secondary' : 'destructive'} className="ml-2 text-[10px] uppercase">
-                                    Score: {activeData.score}/10
-                                </Badge>
-                            )}
-                        </DialogTitle>
-                        <DialogDescription className="text-zinc-500 dark:text-zinc-400">
-                            Detailed breakdown of the {activeData?.label.toLowerCase()} analysis.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {activeData && (
-                        <div className="space-y-4 py-2">
-                            <div className="p-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-lg">
-                                <h4 className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-widest mb-1">Analysis</h4>
-                                <p className="text-sm text-zinc-600 dark:text-zinc-400">{activeData.justification}</p>
-                            </div>
-
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
         </div>
     )
 }

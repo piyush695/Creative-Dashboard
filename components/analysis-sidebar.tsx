@@ -56,10 +56,9 @@ export default function AnalysisSidebar({ activeDetail, onClose, onNavigate, adD
     const metrics = adData ? getMetricsList(adData) : []
     const scores = adData ? getScoresList(adData) : []
 
-    const allItems = [
-        ...metrics.map(m => ({ type: 'metric' as const, name: m.label })),
-        ...scores.map(s => ({ type: 'score' as const, name: s.name }))
-    ]
+    const allItems = activeDetail.type === 'metric'
+        ? metrics.map(m => ({ type: 'metric' as const, name: m.label }))
+        : scores.map(s => ({ type: 'score' as const, name: s.name }))
 
     const currentIndex = allItems.findIndex(item => item.type === activeDetail.type && item.name === activeDetail.name)
     const hasNext = currentIndex < allItems.length - 1
@@ -198,17 +197,17 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
     return (
         <div className="flex flex-col h-full bg-background dark:bg-zinc-950 animate-in fade-in duration-300">
             {/* Header Container */}
-            <div className={cn("p-4 md:p-5 pb-5 md:pb-6 relative overflow-hidden shrink-0 rounded-tl-[1.5rem]", color)}>
+            <div className={cn("p-3 md:p-4 pb-4 md:pb-5 relative overflow-hidden shrink-0 rounded-tl-xl", color)}>
                 <div className="relative z-10 space-y-2">
                     {Icon && (
-                        <div className="p-1.5 w-fit rounded-lg bg-background/80 dark:bg-white/10 shadow-md backdrop-blur-sm border border-white/50 dark:border-white/10">
-                            <Icon className="h-4 w-4 md:h-5 md:w-5 text-foreground dark:text-zinc-100" />
+                        <div className="p-1 w-fit rounded-lg bg-background/80 dark:bg-white/10 shadow-md backdrop-blur-sm border border-white/50 dark:border-white/10">
+                            <Icon className="h-4 w-4 text-foreground dark:text-zinc-100" />
                         </div>
                     )}
                     <div>
-                        <h2 className="text-xl md:text-2xl font-black text-foreground tracking-tighter uppercase italic">{name} Intelligence</h2>
-                        <div className="flex items-center gap-2 mt-2">
-                            <span className="px-3 py-1 rounded-full bg-primary text-white text-[11px] font-black tracking-widest uppercase whitespace-nowrap shadow-lg shadow-primary/20">
+                        <h2 className="text-lg md:text-xl font-black text-foreground tracking-tighter italic">{name} intelligence</h2>
+                        <div className="flex items-center gap-2 mt-1.5">
+                            <span className="px-2.5 py-1 rounded-full bg-primary text-white text-[10px] font-black tracking-tight whitespace-nowrap shadow-lg shadow-primary/20">
                                 Rating: {value}{isScore ? ' / 10' : ''}
                             </span>
                         </div>
@@ -220,7 +219,7 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800">
                 {/* Description */}
                 <section className="space-y-3">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Description</h3>
+                    <h3 className="text-[10px] font-black text-muted-foreground/60">Description</h3>
                     <p className="text-xs md:text-sm text-muted-foreground leading-relaxed font-bold italic">
                         "{itemData.desc || itemData.description || ""}"
                     </p>
@@ -230,7 +229,7 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
                 <section className="space-y-4">
                     <div className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-primary" />
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground">AI Analysis Insight</h3>
+                        <h3 className="text-[10px] font-black text-foreground">AI analysis insight</h3>
                     </div>
                     <div className="bg-primary/5 dark:bg-primary/10 border border-primary/10 rounded-2xl p-4 md:p-5">
                         <p className="text-xs md:text-sm text-foreground/80 dark:text-zinc-300 leading-relaxed font-bold">
@@ -243,16 +242,16 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
                 <section className="space-y-4 pb-4">
                     <div className="flex items-center gap-2">
                         <Zap className="h-4 w-4 text-amber-500" />
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground">Optimization</h3>
+                        <h3 className="text-[10px] font-black text-foreground">Optimization</h3>
                     </div>
-                    <div className="bg-zinc-900 dark:bg-zinc-900/50 rounded-2xl p-4 md:p-5 border border-white/5">
+                    <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-4 md:p-5 border border-zinc-100 dark:border-white/5">
                         <div className="space-y-4">
                             {[1].map((i) => (
                                 <div key={i} className="flex gap-4 items-start group">
-                                    <div className="h-6 w-6 rounded-lg bg-white/10 flex items-center justify-center shrink-0 text-[10px] font-black text-white/50 border border-white/5">
+                                    <div className="h-6 w-6 rounded-lg bg-white dark:bg-white/10 flex items-center justify-center shrink-0 text-[10px] font-black text-zinc-400 dark:text-white/50 border border-zinc-200 dark:border-white/5">
                                         0{i}
                                     </div>
-                                    <p className="text-xs md:text-sm text-white/80 leading-snug">
+                                    <p className="text-xs md:text-sm text-zinc-600 dark:text-white/80 leading-snug">
                                         {isScore ? `Review ${name.toLowerCase()} consistency.` : `Verify legibility across sizes.`}
                                     </p>
                                 </div>
@@ -261,8 +260,6 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
                     </div>
                 </section>
             </div>
-
-
         </div>
     )
 }
