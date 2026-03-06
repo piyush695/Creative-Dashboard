@@ -697,35 +697,17 @@ function DashboardContent() {
     return `${name}: ${count} Ads`;
   }, [ads, selectedPlatform, discoveryAccountFilter, accounts]);
 
-  // 4. Selection Sync
-  useEffect(() => {
-    const query = searchQuery.trim().toLowerCase();
+    // Removed auto-select useEffect to prevent jumping to Analysis while typing.
+    // Navigation should only happen when a specific ad is selected from the search results.
 
-    if (query && displayedAds.length > 0) {
-      const firstResultId = displayedAds[0].id;
-      // Disable auto-select for Google and AdRoll platforms to prevent jumping to Analysis while typing
-      if (selectedAdId !== firstResultId && selectedPlatform !== "google" && selectedPlatform !== "adroll") {
-        setSelectedAdId(firstResultId);
-        updateHistory(firstResultId);
-        setActiveAnalysis(null); // Reset on change
-      }
-    } else if (query && displayedAds.length === 0) {
-      setSelectedAdId(null);
-      setActiveAnalysis(null);
-    } else if (!query) {
-      // When search is cleared or empty, we generally want to hide the analysis
-      // unless the user implicitly selected something (which we can't easily distinguish here without more state)
-      // For now, we just ensure the sidebar is closed.
-      setActiveAnalysis(null);
-    }
-  }, [searchQuery, displayedAds, selectedAdId]);
 
   const updateHistory = (id: string) => {
     if (!id) return;
     setRecentHistory((prev) => {
       const filtered = prev.filter((item) => item !== id);
-      return [id, ...filtered].slice(0, 10);
+      return [id, ...filtered].slice(0, 3);
     });
+
   };
 
   const handleSelectAd = (id: string) => {
@@ -1411,17 +1393,29 @@ function DashboardContent() {
                     placeholder="Search ads by ID..."
                     className="bg-white/40 dark:bg-zinc-800/40 border-border/40 focus:border-primary/50 focus:bg-white transition-all rounded-2xl h-11 pl-10 text-xs font-bold"
                     value={searchQuery}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const val = e.target.value;
-                      setSearchQuery(val);
-                      if (!val.trim()) {
-                        setSelectedAccountId("all");
-                        setSelectedAdId(null);
-                        setSelectedPlatform("meta");
-                        setIsViewAllAdsOpen(false);
-                      }
-                      setIsSearchDropdownOpen(true);
-                    }}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const val = e.target.value;
+                        setSearchQuery(val);
+                        
+                        if (val.trim() === "") {
+                          setSelectedAdId(null);
+                          setIsSearchDropdownOpen(false);
+                          return;
+                        }
+
+                        // Immediate navigation on exact Ad ID match (useful for paste)
+                        const exactMatch = ads.find(ad => String(ad.adId) === val || String(ad.id) === val);
+                        if (exactMatch) {
+                          setSelectedAdId(exactMatch.id);
+                          updateHistory(exactMatch.id);
+                          setIsSearchDropdownOpen(false);
+                        } else {
+                          setIsSearchDropdownOpen(true);
+                        }
+                      }}
+
+
+
                     onFocus={() => setIsSearchDropdownOpen(true)}
                     onBlur={() =>
                       setTimeout(() => setIsSearchDropdownOpen(false), 200)
@@ -1431,12 +1425,11 @@ function DashboardContent() {
                     <button
                       onClick={() => {
                         setSearchQuery("");
-                        setSelectedAccountId("all");
                         setSelectedAdId(null);
-                        setSelectedPlatform("meta");
-                        setIsViewAllAdsOpen(false);
                         setIsSearchDropdownOpen(false);
+
                       }}
+
                       className="absolute right-3 top-3 h-4 w-4 flex items-center justify-center text-zinc-400 hover:text-red-500 transition-colors"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -3126,11 +3119,26 @@ function DashboardContent() {
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const val = e.target.value;
                             setSearchQuery(val);
-                            if (!val.trim()) {
-                              setSelectedAccountId("all");
+                            
+                            if (val.trim() === "") {
+                              setSelectedAdId(null);
+                              setIsSearchDropdownOpen(false);
+                              return;
                             }
-                            setIsSearchDropdownOpen(true);
+
+                            // Immediate navigation on exact Ad ID match
+                            const exactMatch = ads.find(ad => String(ad.adId) === val || String(ad.id) === val);
+                            if (exactMatch) {
+                              setSelectedAdId(exactMatch.id);
+                              updateHistory(exactMatch.id);
+                              setIsSearchDropdownOpen(false);
+                            } else {
+                              setIsSearchDropdownOpen(true);
+                            }
                           }}
+
+
+
                           onFocus={() => setIsSearchDropdownOpen(true)}
                           onBlur={() => {
                             // Slight delay to allow click event on dropdown items to fire
@@ -3142,10 +3150,11 @@ function DashboardContent() {
                           <button
                             onClick={() => {
                               setSearchQuery("");
-                              setSelectedAccountId("all");
                               setSelectedAdId(null);
                               setIsSearchDropdownOpen(false);
+
                             }}
+
                             className="absolute right-3 top-3 h-6 w-6 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-all"
                             title="Clear search"
                           >
