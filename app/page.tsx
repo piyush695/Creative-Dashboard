@@ -408,6 +408,19 @@ function DashboardContent() {
     setIsSearchDropdownOpen(false);
   }, [selectedPlatform]);
 
+  // Account-level state synchronization: Clear selected ad if it doesn't belong to the selected account
+  // This addresses the glitch where switching accounts while an ad is analyzed kept the old data visible.
+  useEffect(() => {
+    if (selectedAdId && selectedAccountId !== "all") {
+      const ad = ads.find((a) => a.id === selectedAdId);
+      // If the ad exists but its account ID doesn't match the selected account, clear selection
+      if (ad && ad.adAccountId !== selectedAccountId) {
+        setSelectedAdId(null);
+        setSearchQuery("");
+      }
+    }
+  }, [selectedAccountId, selectedAdId, ads]);
+
   // 1. Extract unique accounts from ad data — filtered by selected platform
   const accounts = useMemo(() => {
     let filtered = ACCOUNT_LIST;
@@ -660,6 +673,7 @@ function DashboardContent() {
             ad.platform === selectedPlatform ||
             (selectedPlatform === "google" && ad.platform === "youtube") ||
             (selectedPlatform === "meta" && !ad.platform)) &&
+          (selectedAccountId === "all" || ad.adAccountId === selectedAccountId) &&
           (String(ad.adId)
             .toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
@@ -722,10 +736,17 @@ function DashboardContent() {
     .filter((ad): ad is AdData => !!ad)
     .filter((ad) => {
       const p = ad.platform || "meta";
-      if (selectedPlatform === "all") return true;
-      if (selectedPlatform === "google") return p === "google" || p === "youtube";
-      if (selectedPlatform === "meta") return p === "meta";
-      return p === selectedPlatform;
+      const matchesPlatform =
+        selectedPlatform === "all" ||
+        (selectedPlatform === "google" &&
+          (p === "google" || p === "youtube")) ||
+        (selectedPlatform === "meta" && p === "meta") ||
+        p === selectedPlatform;
+
+      const matchesAccount =
+        selectedAccountId === "all" || ad.adAccountId === selectedAccountId;
+
+      return matchesPlatform && matchesAccount;
     });
 
   const handleAction = (action: string) => {
@@ -1404,7 +1425,10 @@ function DashboardContent() {
                         }
 
                         // Immediate navigation on exact Ad ID match (useful for paste)
-                        const exactMatch = ads.find(ad => String(ad.adId) === val || String(ad.id) === val);
+                        const exactMatch = ads.find(ad => 
+                          (String(ad.adId) === val || String(ad.id) === val) && 
+                          (selectedAccountId === "all" || ad.adAccountId === selectedAccountId)
+                        );
                         if (exactMatch) {
                           setSelectedAdId(exactMatch.id);
                           updateHistory(exactMatch.id);
@@ -3127,7 +3151,10 @@ function DashboardContent() {
                             }
 
                             // Immediate navigation on exact Ad ID match
-                            const exactMatch = ads.find(ad => String(ad.adId) === val || String(ad.id) === val);
+                            const exactMatch = ads.find(ad => 
+                              (String(ad.adId) === val || String(ad.id) === val) && 
+                              (selectedAccountId === "all" || ad.adAccountId === selectedAccountId)
+                            );
                             if (exactMatch) {
                               setSelectedAdId(exactMatch.id);
                               updateHistory(exactMatch.id);
@@ -3171,6 +3198,7 @@ function DashboardContent() {
                                   (ad) =>
                                     (selectedPlatform === "all" ||
                                       ad.platform === selectedPlatform) &&
+                                    (selectedAccountId === "all" || ad.adAccountId === selectedAccountId) &&
                                     (String(ad.adId)
                                       .toLowerCase()
                                       .includes(searchQuery.toLowerCase()) ||
