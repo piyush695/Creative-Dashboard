@@ -115,6 +115,7 @@ import AdrollView from "@/components/adroll-view";
 import { RealtimeNativeView } from "@/components/realtime-native-view";
 import AdDetailTabs from "@/components/ad-detail-tabs";
 import MetaAdDetailView from "@/components/meta-ad-detail-view";
+import MetaAdsView from "@/components/meta-ads-view";
 import {
   Select,
   SelectContent,
@@ -1835,6 +1836,38 @@ function DashboardContent() {
                           </Select>
                         </div>
 
+                        {selectedPlatform === "meta" && (
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1 uppercase">
+                              Select Account
+                            </label>
+                            <Select
+                              value={selectedAccountId}
+                              onValueChange={(v) => {
+                                setSelectedAccountId(v);
+                                setIsMobileMenuOpen(false);
+                              }}
+                            >
+                              <SelectTrigger className="w-full h-12 bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 rounded-xl font-bold text-sm">
+                                <div className="flex items-center gap-3">
+                                  <Activity className="w-4 h-4 text-[#007AFF]" />
+                                  <SelectValue placeholder="Select Account" />
+                                </div>
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-2xl z-[2000]">
+                                <SelectItem value="all" className="font-bold py-3 text-sm">
+                                  All Accounts
+                                </SelectItem>
+                                {ACCOUNT_LIST.filter(acc => acc.platform === "meta").map(acc => (
+                                  <SelectItem key={acc.id} value={acc.id} className="font-bold py-3 text-sm">
+                                    {acc.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
                         {/* Navigation — visible for all platforms */}
                         <div className="space-y-4">
                           <div className="space-y-1">
@@ -3229,54 +3262,23 @@ function DashboardContent() {
                           activeAnalysis={activeAnalysis}
                         />
                       ) : (
-                        <>
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between whitespace-nowrap overflow-x-auto no-scrollbar">
-                              <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#007AFF] animate-pulse flex-shrink-0" />
-                                <h3 className="text-[10px] md:text-[11px] font-black uppercase tracking-tight md:tracking-[0.2em] text-[#007AFF]">
-                                  HolaPrime Source Library
-                                </h3>
-                              </div>
-                              <span className="text-[10px] font-black text-muted-foreground uppercase opacity-60 tracking-wider ml-2">
-                                {displayedAds.length} Creatives
-                              </span>
-                            </div>
-                          </div>
-                          {displayedAds.length === 0 ? (
-                            <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-[32px] border-2 border-dashed border-zinc-200 dark:border-white/5 animate-in fade-in zoom-in-95 duration-500">
-                              <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-2">
-                                <Globe className="w-8 h-8 text-zinc-300" />
-                              </div>
-                              <div className="space-y-1">
-                                <h4 className="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">
-                                  No ads for this account
-                                </h4>
-                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                                  Connect more accounts or try a different filter
-                                </p>
-                              </div>
-                              <Button
-                                onClick={() => setSelectedAccountId("all")}
-                                variant="outline"
-                                className="mt-4 rounded-xl border-zinc-200 dark:border-zinc-800 font-black text-[10px] uppercase tracking-widest h-9 px-6 hover:bg-zinc-100"
-                              >
-                                Switch Account
-                              </Button>
-                            </div>
-                          ) : (
-                            <SampleAds
-                              ads={displayedAds}
-                              hasAdsInAccount={hasAdsInAccount}
-                              searchQuery={searchQuery}
-                              selectedAdId={selectedAdId}
-                              onSelect={handleSelectAd}
-                              onEnlargeImage={(url, title) =>
-                                setEnlargedImage({ url, title })
-                              }
-                            />
-                          )}
-                        </>
+                        <MetaAdsView
+                          metaAds={ads.filter(a => selectedPlatform === "meta" ? a.platform === "meta" || !a.platform : true)}
+                          selectedAccountId={selectedAccountId}
+                          searchQuery={searchQuery}
+                          onSearchChange={setSearchQuery}
+                          onSelectAd={(ad) => {
+                            setSelectedAdId(ad.id);
+                            updateHistory(ad.id);
+                          }}
+                          onEnlargeImage={(url, title) =>
+                            setEnlargedImage({ url, title })
+                          }
+                          selectedPlatform={selectedPlatform}
+                          onPlatformChange={(p) => setSelectedPlatform(p as PlatformType)}
+                          onRefresh={() => loadData(true)}
+                          isSyncing={isSyncing}
+                        />
                       )}
                     </section>
                   )}

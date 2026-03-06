@@ -108,7 +108,7 @@ export async function fetchAdsFromMongo(): Promise<AdData[]> {
                 cpm: Number(data.cpm) || 0,
                 roas: Number(data.roas) || 0,
                 purchases: Number(data.purchases || data.total_conversions) || 0,
-                purchaseValue: Number(data.purchaseValue || data.attributed_rev) || 0,
+                purchaseValue: Number(data.purchaseValue || data.revenue || data.attributed_rev) || 0,
                 // ── Analysis scores ───────────────────────────────────
                 scoreOverall: Number(data.scoreOverall || data.compositeRating) || 0,
                 compositeRating: Number(data.compositeRating || data.scoreOverall) || 0,

@@ -299,3 +299,17 @@
 [2026-03-05T13:28:24.655Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
 [2026-03-05T13:30:14.052Z] GET campaigns | platform=google
 [2026-03-05T13:30:16.432Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-06T06:21:05.250Z] GET campaigns | platform=google
+[2026-03-06T06:21:07.142Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-06T06:21:07.448Z] GET campaigns | platform=google
+[2026-03-06T06:21:07.449Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-06T06:21:11.964Z] GET ads | platform=google
+[2026-03-06T06:21:13.494Z] [DEBUG_SVC] PMAX Metrics r1 failed: Google Ads API error (400): The following field must be present in SELECT clause: 'campaign.advertising_channel_type'.
+[2026-03-06T06:21:14.098Z] [DEBUG_SVC] PMAX Assets: 491 rows
+[2026-03-06T06:21:18.116Z] [DEBUG_SVC] PMAX Metrics r2: 25637 rows
+[2026-03-06T06:21:18.124Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-06T06:21:18.125Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-06T11:41:41.792Z] GET campaigns | platform=google
+[2026-03-06T11:41:44.505Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-06T11:41:44.555Z] GET campaigns | platform=google
+[2026-03-06T11:41:44.556Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows

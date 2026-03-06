@@ -28,6 +28,7 @@ interface SampleAdsProps {
   selectedAdId: string | null
   onSelect: (id: string) => void
   onEnlargeImage?: (url: string, title: string) => void
+  extraActions?: React.ReactNode
 }
 
 const PlatformIcon = ({ platform, className }: { platform?: AdData['platform'], className?: string }) => {
@@ -453,7 +454,8 @@ export default function SampleAds({
   searchQuery,
   selectedAdId,
   onSelect,
-  onEnlargeImage
+  onEnlargeImage,
+  extraActions
 }: SampleAdsProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list" | "table">("grid")
   const adList = Array.isArray(ads) ? ads : []
@@ -461,10 +463,11 @@ export default function SampleAds({
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold text-foreground dark:text-zinc-50">Your Ads</h3>
-          <Select value={viewMode} onValueChange={(v: any) => setViewMode(v)}>
-            <SelectTrigger className="w-[150px] h-11 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl border border-border/40 rounded-2xl text-xs font-medium transition-all hover:bg-white hover:shadow-md group">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+          <h3 className="text-base sm:text-lg font-black tracking-tight text-zinc-900 dark:text-zinc-50 whitespace-nowrap uppercase">Your Ads</h3>
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+            <Select value={viewMode} onValueChange={(v: any) => setViewMode(v)}>
+              <SelectTrigger className="w-[120px] sm:w-[150px] h-11 shrink-0 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl border border-border/40 rounded-2xl text-xs font-medium transition-all hover:bg-white hover:shadow-md group">
               <SelectValue placeholder="Display" />
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl">
@@ -488,6 +491,12 @@ export default function SampleAds({
               </SelectItem>
             </SelectContent>
           </Select>
+          {extraActions && (
+            <div className="shrink-0 flex items-center">
+              {extraActions}
+            </div>
+          )}
+          </div>
         </div>
         {!searchQuery.trim() && hasAdsInAccount && (
           <div className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 dark:bg-primary/5 border border-primary/10 dark:border-primary/20 text-primary animate-in fade-in slide-in-from-right-4 duration-500">
