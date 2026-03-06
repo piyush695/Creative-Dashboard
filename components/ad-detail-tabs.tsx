@@ -39,14 +39,14 @@ export default function AdDetailTabs({ adData, benchmark, onClose, onEnlargeImag
     return (
         <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20 pt-8 mt-2">
             {/* Premium Header for Selected Ad */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 md:p-5 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl rounded-xl md:rounded-2xl border border-zinc-200 dark:border-white/10 shadow-xl relative overflow-hidden group">
+            <div className="flex flex-col gap-4 p-4 md:p-6 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl rounded-[1.5rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity pointer-events-none">
                     <Sparkles className="h-48 w-48 text-primary" />
                 </div>
 
-                <div className="flex items-start gap-4 md:gap-5 relative z-10 w-full">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-7 relative z-10 w-full">
                     <div
-                        className="h-16 w-24 md:h-20 md:w-32 rounded-lg md:rounded-xl overflow-hidden border-2 border-primary/20 shadow-md shrink-0 group-hover:scale-[1.05] transition-transform duration-700 cursor-pointer"
+                        className="h-24 w-40 md:h-28 md:w-44 rounded-xl md:rounded-2xl overflow-hidden border-2 border-primary/20 shadow-lg shrink-0 group-hover:scale-[1.05] transition-transform duration-700 cursor-pointer aspect-video"
                         onClick={(e) => {
                             e.stopPropagation();
                             if (onEnlargeImage) onEnlargeImage(adData.thumbnailUrl, adData.adName);
@@ -58,22 +58,22 @@ export default function AdDetailTabs({ adData, benchmark, onClose, onEnlargeImag
                             className="w-full h-full object-cover"
                         />
                     </div>
-                    <div className="flex-1 space-y-1.5 md:space-y-2">
-                        <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black tracking-tight">In-depth analysis</span>
-                            <span className="text-[10px] text-zinc-400 font-bold">{adData.platform || "Google"} Ads</span>
+                    <div className="flex-1 space-y-2 md:space-y-3 text-center md:text-left w-full min-w-0">
+                        <div className="flex items-center justify-center md:justify-start gap-2">
+                            <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black tracking-widest uppercase">In-depth analysis</span>
+                            <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">{adData.platform || "Google"} Ads</span>
                         </div>
-                        <h2 className="text-xl md:text-2xl font-black tracking-tightest text-zinc-900 dark:text-zinc-100 italic">
+                        <h2 className="text-xl md:text-3xl font-black tracking-tighter text-zinc-900 dark:text-zinc-100 italic leading-tight truncate px-2 md:px-0">
                             {adData.adName}
                         </h2>
-                        <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 dark:bg-white/5 rounded-full border border-zinc-200 dark:border-white/10">
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 md:gap-3">
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-zinc-100 dark:bg-white/5 rounded-full border border-zinc-200 dark:border-white/10">
                                 <span className="text-[10px] font-black text-zinc-400 leading-none">ID:</span>
                                 <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 font-mono tracking-tighter leading-none">{adData.adId}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 dark:bg-white/5 rounded-full border border-zinc-200 dark:border-white/10">
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-zinc-100 dark:bg-white/5 rounded-full border border-zinc-200 dark:border-white/10 max-w-[200px] md:max-w-[400px] lg:max-w-[600px] pr-8">
                                 <span className="text-[10px] font-black text-zinc-400 leading-none">Campaign:</span>
-                                <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 truncate max-w-[150px] md:max-w-[200px] leading-none">{adData.campaignName}</span>
+                                <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 truncate leading-none">{adData.campaignName}</span>
                             </div>
                         </div>
                     </div>
@@ -84,7 +84,7 @@ export default function AdDetailTabs({ adData, benchmark, onClose, onEnlargeImag
                         onClick={onClose}
                         variant="ghost"
                         size="icon"
-                        className="h-10 w-10 shrink-0 rounded-full absolute top-4 right-4 md:static bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all active:scale-90"
+                        className="h-10 w-10 shrink-0 rounded-full absolute top-2 right-2 md:top-6 md:right-6 bg-white/50 dark:bg-white/5 backdrop-blur-md border border-zinc-200 dark:border-white/10 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all active:scale-90 shadow-sm z-20"
                     >
                         <X className="h-5 w-5" />
                     </Button>

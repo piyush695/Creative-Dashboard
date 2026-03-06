@@ -229,13 +229,15 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
             const parts = path.split("/");
             const adId = parts[1];
             const dateRange = searchParams.get("dateRange") || "LAST_30_DAYS";
+            const campaignId = searchParams.get("campaignId");
+
             if (platform === "adroll") {
                 // For AdRoll, return the ad's own analysis data as its "asset"
                 const ads = await getAdrollAdsFromMongo();
                 const ad = ads.find((a: any) => a.adId === adId || a.id === adId);
                 return jsonResponse({ success: true, data: ad ? [ad] : [] });
             }
-            const assets = await fetchAdAssets(adId, dateRange);
+            const assets = await (fetchAdAssets as any)(adId, dateRange, campaignId || null);
             return jsonResponse({ success: true, data: assets });
         }
 

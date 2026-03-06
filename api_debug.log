@@ -190,3 +190,112 @@
 [2026-03-02T12:38:04.535Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
 [2026-03-02T12:38:04.572Z] GET campaigns | platform=google
 [2026-03-02T12:38:04.573Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T06:10:08.521Z] GET campaigns | platform=google
+[2026-03-03T06:10:11.214Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T06:10:11.379Z] GET campaigns | platform=google
+[2026-03-03T06:10:11.382Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T06:10:29.930Z] GET campaigns | platform=google
+[2026-03-03T06:10:29.931Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T06:10:29.963Z] GET campaigns | platform=google
+[2026-03-03T06:10:29.965Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T06:20:35.799Z] GET campaigns | platform=google
+[2026-03-03T06:20:39.587Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T06:20:39.621Z] GET campaigns | platform=google
+[2026-03-03T06:20:39.622Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T06:35:27.112Z] GET campaigns | platform=google
+[2026-03-03T06:35:29.276Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T06:35:29.296Z] GET campaigns | platform=google
+[2026-03-03T06:35:29.297Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T06:59:53.499Z] GET campaigns | platform=google
+[2026-03-03T06:59:55.893Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T06:59:55.917Z] GET campaigns | platform=google
+[2026-03-03T06:59:55.918Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T07:02:18.480Z] GET campaigns | platform=google
+[2026-03-03T07:02:20.921Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T07:02:20.942Z] GET campaigns | platform=google
+[2026-03-03T07:02:20.943Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T08:01:25.593Z] GET campaigns | platform=google
+[2026-03-03T08:01:27.805Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T08:01:27.834Z] GET campaigns | platform=google
+[2026-03-03T08:01:27.835Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T08:01:34.884Z] GET ads | platform=google
+[2026-03-03T08:01:36.982Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-03T08:01:36.994Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-03T08:01:37.066Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-03T08:01:37.120Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-03T08:01:37.909Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-03T08:01:38.751Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-03T08:01:40.164Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-03T08:01:40.951Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-03T08:01:42.242Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-03T08:01:45.786Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-03T08:01:45.786Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-03T08:01:51.166Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-03T08:01:53.145Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-03T08:01:53.289Z] [DEBUG_SVC] DemandGen Multi-Asset: 44 rows
+[2026-03-03T08:01:53.457Z] [DEBUG_SVC] Display enrichment: 52 rows
+[2026-03-03T08:01:53.780Z] [DEBUG_SVC] RSA enrichment: 959 rows
+[2026-03-03T08:01:54.443Z] [DEBUG_SVC] DemandGen Video Responsive: 64 rows
+[2026-03-03T08:01:55.303Z] [DEBUG_SVC] DemandGen Carousel: 1 rows
+[2026-03-03T08:02:01.427Z] [DEBUG_SVC] Asset View (all types): 33011 rows
+[2026-03-03T08:02:02.334Z] [DEBUG_SVC] PMAX Asset Groups: 482 rows
+[2026-03-03T08:02:11.170Z] [DEBUG_SVC] PMAX Assets: 25630 rows
+[2026-03-03T08:02:11.657Z] [DEBUG_SVC] fetchAds: baseAds=1249, pmax=482
+[2026-03-03T08:02:11.657Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-03T08:02:32.056Z] POST ads/pmax_6673975076/analyze-assets
+[2026-03-03T08:03:26.038Z] GET campaigns | platform=google
+[2026-03-03T08:03:27.677Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T09:04:41.751Z] GET campaigns | platform=google
+[2026-03-03T09:04:44.084Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-03T09:04:44.109Z] GET campaigns | platform=google
+[2026-03-03T09:04:44.113Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-05T13:01:27.280Z] GET campaigns | platform=google
+[2026-03-05T13:01:29.918Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-05T13:01:29.946Z] GET campaigns | platform=google
+[2026-03-05T13:01:29.948Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-05T13:07:58.767Z] GET campaigns | platform=google
+[2026-03-05T13:08:01.861Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-05T13:08:01.889Z] GET campaigns | platform=google
+[2026-03-05T13:08:01.890Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-05T13:08:04.506Z] GET ads | platform=google
+[2026-03-05T13:08:06.407Z] [DEBUG_SVC] RSA enrichment: 0 rows
+[2026-03-05T13:08:06.425Z] [DEBUG_SVC] Video Ads: 0 rows
+[2026-03-05T13:08:06.450Z] [DEBUG_SVC] DemandGen Multi-Asset: 0 rows
+[2026-03-05T13:08:06.518Z] [DEBUG_SVC] Display enrichment: 0 rows
+[2026-03-05T13:08:07.292Z] [DEBUG_SVC] DemandGen Video Responsive: 0 rows
+[2026-03-05T13:08:08.027Z] [DEBUG_SVC] DemandGen Carousel: 0 rows
+[2026-03-05T13:08:10.543Z] [DEBUG_SVC] Asset View (all types): 0 rows
+[2026-03-05T13:08:11.532Z] [DEBUG_SVC] PMAX Asset Groups: 10 rows
+[2026-03-05T13:08:12.769Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-05T13:08:18.369Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-05T13:08:18.369Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-05T13:25:17.352Z] GET campaigns | platform=google
+[2026-03-05T13:25:19.880Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-05T13:25:19.930Z] GET campaigns | platform=google
+[2026-03-05T13:25:19.932Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-05T13:25:22.839Z] GET ads | platform=google
+[2026-03-05T13:25:24.380Z] [DEBUG_SVC] PMAX Metrics r1 failed: Google Ads API error (400): The following field must be present in SELECT clause: 'campaign.advertising_channel_type'.
+[2026-03-05T13:25:25.017Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-05T13:25:28.453Z] [DEBUG_SVC] PMAX Metrics r2: 25631 rows
+[2026-03-05T13:25:28.459Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-05T13:25:28.460Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-05T13:25:37.704Z] GET ads/pmax_6673975076/assets | platform=google
+[2026-03-05T13:25:38.627Z] [DEBUG_SVC] PMAX Metrics r2: 25631 rows
+[2026-03-05T13:25:39.059Z] [DEBUG_SVC] PMAX Metrics r1 failed: Google Ads API error (400): The following field must be present in SELECT clause: 'campaign.advertising_channel_type'.
+[2026-03-05T13:25:39.761Z] [DEBUG_SVC] PMAX Assets: 62 rows
+[2026-03-05T13:25:39.773Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=1
+[2026-03-05T13:25:39.774Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-05T13:26:08.294Z] GET campaigns | platform=google
+[2026-03-05T13:26:10.168Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-05T13:26:38.839Z] GET ads | platform=google
+[2026-03-05T13:26:40.247Z] [DEBUG_SVC] PMAX Metrics r1 failed: Google Ads API error (400): The following field must be present in SELECT clause: 'campaign.advertising_channel_type'.
+[2026-03-05T13:26:41.217Z] [DEBUG_SVC] PMAX Assets: 489 rows
+[2026-03-05T13:26:45.325Z] [DEBUG_SVC] PMAX Metrics r2: 25631 rows
+[2026-03-05T13:26:45.336Z] [DEBUG_SVC] fetchAds: baseAds=0, pmax=10
+[2026-03-05T13:26:45.336Z] [DEBUG_SVC] First PMAX ad images: 25
+[2026-03-05T13:28:22.831Z] GET campaigns | platform=google
+[2026-03-05T13:28:24.629Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-05T13:28:24.655Z] GET campaigns | platform=google
+[2026-03-05T13:28:24.655Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-05T13:30:14.052Z] GET campaigns | platform=google
+[2026-03-05T13:30:16.432Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows

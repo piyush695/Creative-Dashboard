@@ -74,7 +74,20 @@ export async function fetchAdsFromMongo(): Promise<AdData[]> {
             if (!accountName) accountName = String(data.accountName || "Unknown Account").trim();
 
             const thumbnailUrl = String(data.thumbnailUrl || data.imageUrl || data.src || "").trim();
-            const platform = String(data.platform || (adAccountId.startsWith('3Q') ? 'adroll' : 'meta'));
+
+            // Smarter platform detection
+            let platform = data.platform;
+            if (!platform) {
+                if (adAccountId.startsWith('3Q')) {
+                    platform = 'adroll';
+                } else if (GOOGLE_ACCOUNT_MAPPING[adAccountId]) {
+                    platform = 'google';
+                } else if (adAccountId.length === 10 && /^\d+$/.test(adAccountId)) {
+                    platform = 'google';
+                } else {
+                    platform = 'meta';
+                }
+            }
 
             return {
                 ...data,
@@ -201,8 +214,7 @@ export async function fetchGoogleAdsFromMongo(): Promise<AdData[]> {
             const adId = String(data.adId || data.assetId || "").trim();
             const adName = String(data.asset || data.adName || "").trim();
             const adAccountId = String(data.adAccountId || "").trim();
-            // Reuse the existing GOOGLE_ACCOUNT_MAPPING from the same file, or just fallback if not exported.
-            // Wait, the mapping was defined at the top of the file!
+
             let accountName = String(data.accountName || "Google Ads Account").trim();
             const thumbnailUrl = String(data.thumbnailUrl || data.imageUrl || "").trim();
 
@@ -214,7 +226,7 @@ export async function fetchGoogleAdsFromMongo(): Promise<AdData[]> {
                 adName,
                 adAccountId,
                 accountName,
-                platform: 'google' as any,
+                platform: (data.platform || 'google') as any,
                 thumbnailUrl,
                 spend: Number(data.spend) || 0,
                 impressions: Number(data.impressions) || 0,
@@ -249,7 +261,17 @@ export async function saveAdToMongo(adData: Partial<AdData>) {
         const client = await clientPromise;
         const db = client.db(process.env.MONGODB_DB || "reddit_data");
         const { _id, ...rest } = adData;
-        const collection = adData.platform === 'adroll' ? 'adroll_data' : 'creative_data';
+
+        // Correctly partition data by platform
+        const googlePlatforms = ['google', 'youtube'];
+        let collection = 'creative_data';
+
+        if (adData.platform === 'adroll') {
+            collection = 'adroll_data';
+        } else if (googlePlatforms.includes(adData.platform as string)) {
+            collection = 'google_asset_data';
+        }
+
         const result = await db.collection(collection).insertOne({
             ...rest,
             analysisDate: new Date().toISOString()
@@ -259,3 +281,4 @@ export async function saveAdToMongo(adData: Partial<AdData>) {
         return { success: false, error: "Database error" };
     }
 }
+

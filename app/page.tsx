@@ -220,7 +220,7 @@ function DashboardContent() {
   const [isCompactModeEnabled, setIsCompactModeEnabled] = useState(false);
   const [isReducedMotionEnabled, setIsReducedMotionEnabled] = useState(false);
   const [isAlertSystemEnabled, setIsAlertSystemEnabled] = useState(false);
-  const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>("all");
+  const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>("meta");
   const [isAddAdDialogOpen, setIsAddAdDialogOpen] = useState(false);
   const [isAddingPlatform, setIsAddingPlatform] = useState(false);
   const [platformSearchQuery, setPlatformSearchQuery] = useState("");
@@ -284,6 +284,7 @@ function DashboardContent() {
   };
 
   const [connectedPlatforms, setConnectedPlatforms] = useState<PlatformType[]>([
+    "meta",
     "google",
   ]);
 
@@ -384,7 +385,7 @@ function DashboardContent() {
         ? localStorage.getItem("selected_platform")
         : null;
     if (uniqueCount <= 1 && !savedPlatform) {
-      setSelectedPlatform("google");
+      setSelectedPlatform("meta");
     }
   }, [connectedPlatforms.length, JSON.stringify(connectedPlatforms)]);
 
@@ -408,10 +409,14 @@ function DashboardContent() {
 
   // 1. Extract unique accounts from ad data — filtered by selected platform
   const accounts = useMemo(() => {
-    const filtered =
-      selectedPlatform === "all"
-        ? ACCOUNT_LIST
-        : ACCOUNT_LIST.filter((a) => a.platform === selectedPlatform);
+    let filtered = ACCOUNT_LIST;
+    if (selectedPlatform === "google") {
+      filtered = ACCOUNT_LIST.filter((a) => a.platform === "google" || a.platform === "youtube");
+    } else if (selectedPlatform === "meta") {
+      filtered = ACCOUNT_LIST.filter((a) => a.platform === "meta");
+    } else if (selectedPlatform !== "all") {
+      filtered = ACCOUNT_LIST.filter((a) => a.platform === selectedPlatform);
+    }
     return filtered.sort((a, b) => a.name.localeCompare(b.name));
   }, [selectedPlatform]);
 
@@ -421,9 +426,12 @@ function DashboardContent() {
       selectedPlatform === "all"
         ? ads
         : ads.filter(
-          (ad) =>
-            ad.platform === selectedPlatform ||
-            (!ad.platform && selectedPlatform === "meta")
+          (ad) => {
+            const p = ad.platform || "meta";
+            if (selectedPlatform === "google") return p === "google" || p === "youtube";
+            if (selectedPlatform === "meta") return p === "meta";
+            return p === selectedPlatform;
+          }
         );
     return accounts
       .map((account) => ({
@@ -467,7 +475,8 @@ function DashboardContent() {
       }
 
       setAds(data);
-      setGoogleAds(gData);
+      // Filter for all Google platforms including YouTube
+      setGoogleAds(data.filter(ad => ad.platform === 'google' || ad.platform === 'youtube'));
       setLastRefreshTime(new Date());
 
       // Show refresh text for 5 seconds only on manual refresh
@@ -533,16 +542,19 @@ function DashboardContent() {
     let filteredAds = [...ads];
 
     if (selectedPlatform === "meta") {
-      filteredAds = filteredAds.filter(
-        (ad) => !ad.platform || ad.platform === "meta",
-      );
+      // Strictly meta ads
+      filteredAds = filteredAds.filter((ad) => {
+        const p = ad.platform || "meta";
+        return p === "meta";
+      });
     } else if (selectedPlatform === "google") {
-      filteredAds = filteredAds.filter((ad) => ad.platform === "google");
+      // All Google platforms: Google Ads + YouTube
+      filteredAds = filteredAds.filter((ad) => ad.platform === "google" || ad.platform === "youtube");
     } else if (selectedPlatform === "adroll") {
       filteredAds = filteredAds.filter((ad) => ad.platform === "adroll");
     } else if (selectedPlatform !== "all") {
-      // Other platforms not yet integrated — return empty
-      return { displayedAds: [], hasAdsInAccount: false };
+      // Exact platform match for others
+      filteredAds = filteredAds.filter((ad) => ad.platform === selectedPlatform);
     }
 
     // 2. Filter by account
@@ -614,17 +626,14 @@ function DashboardContent() {
   const filteredDiscoveryAds = useMemo(() => {
     return ads.filter((ad) => {
       // Platform filter
-      if (selectedPlatform === "meta" && ad.platform && ad.platform !== "meta") return false;
-      if (selectedPlatform === "adroll" && ad.platform !== "adroll") return false;
-      if (selectedPlatform === "google" && ad.platform !== "google") return false;
-      if (
-        selectedPlatform !== "all" &&
-        selectedPlatform !== "meta" &&
-        selectedPlatform !== "adroll" &&
-        selectedPlatform !== "google" &&
-        ad.platform !== selectedPlatform
-      )
-        return false;
+      if (selectedPlatform === "meta") {
+        const p = ad.platform || "meta";
+        if (p !== "meta") return false;
+      } else if (selectedPlatform === "google") {
+        if (ad.platform !== "google" && ad.platform !== "youtube") return false;
+      } else if (selectedPlatform !== "all") {
+        if (ad.platform !== selectedPlatform) return false;
+      }
 
       if (discoverySearchQuery.trim()) {
         const q = discoverySearchQuery.toLowerCase();
@@ -646,7 +655,10 @@ function DashboardContent() {
     return ads
       .filter(
         (ad) =>
-          (selectedPlatform === "all" || ad.platform === selectedPlatform) &&
+          (selectedPlatform === "all" ||
+            ad.platform === selectedPlatform ||
+            (selectedPlatform === "google" && ad.platform === "youtube") ||
+            (selectedPlatform === "meta" && !ad.platform)) &&
           (String(ad.adId)
             .toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
@@ -663,10 +675,12 @@ function DashboardContent() {
       selectedPlatform === "all"
         ? ads
         : ads.filter(
-          (ad) =>
-            ad.platform ===
-            selectedPlatform ||
-            (!ad.platform && selectedPlatform === "meta")
+          (ad) => {
+            const p = ad.platform || "meta";
+            if (selectedPlatform === "google") return p === "google" || p === "youtube";
+            if (selectedPlatform === "meta") return p === "meta";
+            return p === selectedPlatform;
+          }
         );
     if (discoveryAccountFilter === "all")
       return `Total: ${platformAds.length} Ads`;
@@ -724,8 +738,11 @@ function DashboardContent() {
     .map((id) => ads.find((ad) => ad.id === id))
     .filter((ad): ad is AdData => !!ad)
     .filter((ad) => {
-      const platform = ad.platform || "meta";
-      return selectedPlatform === "all" || platform === selectedPlatform;
+      const p = ad.platform || "meta";
+      if (selectedPlatform === "all") return true;
+      if (selectedPlatform === "google") return p === "google" || p === "youtube";
+      if (selectedPlatform === "meta") return p === "meta";
+      return p === selectedPlatform;
     });
 
   const handleAction = (action: string) => {
@@ -1651,8 +1668,7 @@ function DashboardContent() {
           <div
             className={cn(
               "flex items-center justify-between h-10 md:h-11 py-1 border-b border-border bg-background/50 dark:bg-black/40 backdrop-blur-xl z-10 transition-all duration-300",
-              "px-4 md:px-6",
-              (!isProfileOpen && !isSettingsOpen && !isGuideOpen && !isViewAllAdsOpen && selectedPlatform === "google") ? "hidden md:hidden" : ""
+              "px-4 md:px-6"
             )}
           >
             <div className="flex items-center gap-2 md:gap-4 min-w-0 overflow-hidden">
@@ -2183,7 +2199,7 @@ function DashboardContent() {
               // Only add right padding for the analysis sidebar if we're actually looking at an ad analysis/details view
               !isGuideOpen &&
               activeAnalysis &&
-              !isMobile &&
+              !(mounted ? isMobile : false) &&
               selectedAdId &&
               "md:pr-[300px] xl:pr-[340px] 2xl:pr-[380px]",
             )}
@@ -3345,6 +3361,8 @@ function DashboardContent() {
                         onEnlargeImage={(url, title) =>
                           setEnlargedImage({ url, title })
                         }
+                        selectedPlatform={selectedPlatform}
+                        onPlatformChange={(p) => setSelectedPlatform(p as PlatformType)}
                       />
                     )}
                   </div>
@@ -3455,7 +3473,7 @@ function DashboardContent() {
               "mt-auto",
               activeAnalysis &&
               mounted &&
-              !isMobile &&
+              !(mounted ? isMobile : false) &&
               searchQuery.trim() &&
               "md:pr-[280px] xl:pr-[320px] 2xl:pr-[360px]",
             )}

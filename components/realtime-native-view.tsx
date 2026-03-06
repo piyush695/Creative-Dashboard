@@ -56,6 +56,16 @@ export function RealtimeNativeView({
     const [internalSearchQuery, setInternalSearchQuery] = useState('');
     const [analyzingAd, setAnalyzingAd] = useState<any>(null);
     const [showAllItems, setShowAllItems] = useState(false);
+    const [cardLimit, setCardLimit] = useState(4);
+
+    useEffect(() => {
+        const updateLimit = () => {
+            setCardLimit(window.innerWidth >= 1536 ? 4 : 3);
+        };
+        updateLimit();
+        window.addEventListener('resize', updateLimit);
+        return () => window.removeEventListener('resize', updateLimit);
+    }, []);
 
     // Use props if provided, otherwise use internal state
     const dateRange = propDateRange ?? internalDateRange;
@@ -139,12 +149,12 @@ export function RealtimeNativeView({
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`/api/realtime/ads/${ad.adId || ad.id}/assets?dateRange=${dateRange}&platform=${platform}`);
-            const data = await res.json();
-            if (data.success) {
-                setAssetsData(data.data || null);
+            const res = await fetch(`/api/realtime/ads/${ad.adId || ad.id}/assets?dateRange=${dateRange}&platform=${platform}&campaignId=${ad.campaignId || ""}`);
+            const json = await res.json();
+            if (json.success) {
+                setAssetsData(json.data || null);
             } else {
-                setError(data.error || 'Failed to fetch assets');
+                setError(json.error || 'Failed to fetch assets');
             }
         } catch (err: any) {
             setError(err.message);
@@ -227,8 +237,8 @@ export function RealtimeNativeView({
 
             {/* Top Level Stats */}
             {(view === 'campaigns' || view === 'ads') && !loading && !error && (
-                <div className="pt-6 pb-2 px-4 md:px-5 lg:px-6">
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+                <div className="pt-4 pb-2 px-4 md:px-5 lg:px-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
                         <StatBox index={0} label={view === 'campaigns' ? "Campaigns" : "Ads"} val={activeList.length.toString()} icon={<Layers />} />
                         <StatBox index={1} label="Total Spend" val={formatCurrency(topStats.spend)} icon={<DollarSign />} />
                         <StatBox index={2} label="Impressions" val={formatNumber(topStats.impr)} icon={<Eye />} />
@@ -239,7 +249,7 @@ export function RealtimeNativeView({
             )}
 
             {/* Main Area */}
-            <div className="flex-1 overflow-y-auto px-4 md:px-5 lg:px-6 py-4 relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex-1 overflow-y-auto px-4 md:px-5 lg:px-6 py-2 md:py-4 relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {/* Ambient glow orbs — using inline style as Tailwind has no radial-gradient utility */}
                 <div
                     className="pointer-events-none absolute top-0 right-0 w-[500px] h-[400px] blur-3xl opacity-60 dark:opacity-100"
@@ -328,8 +338,8 @@ export function RealtimeNativeView({
                             </div>
                         ) : (
                             <>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 md:gap-5 pb-8 md:pb-0 px-4 -mx-4 md:px-0 md:mx-0">
-                                    {(showAllItems ? activeList : activeList.slice(0, 4)).map((item, idx) => (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-5 pb-8 md:pb-0 px-4 -mx-4 md:px-0 md:mx-0">
+                                    {(showAllItems ? activeList : activeList.slice(0, cardLimit)).map((item, idx) => (
                                         <div key={item.id || item.adId || idx} className="h-full">
                                             <DataCard
                                                 item={item}
@@ -353,15 +363,27 @@ export function RealtimeNativeView({
                                         </div>
                                     ))}
                                 </div>
-                                {activeList.length > 4 && (
-                                    <div className="flex justify-center mt-6 pb-6">
+                                {!showAllItems && activeList.length > cardLimit && (
+                                    <div className="flex justify-center mt-12 pb-20">
                                         <Button
-                                            onClick={() => setShowAllItems(!showAllItems)}
+                                            onClick={() => setShowAllItems(true)}
                                             variant="ghost"
-                                            className="group text-[10px] font-black uppercase tracking-[0.2em] text-[#1a73e8] hover:bg-[#1a73e8]/10 rounded-2xl px-8 h-12"
+                                            className="group text-[11px] font-black uppercase tracking-[0.25em] text-[#1a73e8] hover:bg-[#1a73e8]/10 rounded-2xl px-16 h-16 border border-[#1a73e8]/20 shadow-xl transition-all hover:scale-105"
                                         >
-                                            {showAllItems ? 'Show Less' : `View All ${view === 'campaigns' ? 'Campaigns' : 'Ads'}`}
-                                            <ChevronRight className={cn("ml-2 h-4 w-4 transition-transform", showAllItems ? "rotate-90" : "")} />
+                                            View All {view === 'campaigns' ? 'Campaigns' : 'Ads'}
+                                            <ChevronRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                                        </Button>
+                                    </div>
+                                )}
+                                {showAllItems && (
+                                    <div className="flex justify-center mt-12 pb-20">
+                                        <Button
+                                            onClick={() => setShowAllItems(false)}
+                                            variant="ghost"
+                                            className="group text-[11px] font-black uppercase tracking-[0.25em] text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-2xl px-16 h-16 border border-zinc-200 dark:border-white/10 shadow-xl transition-all"
+                                        >
+                                            Show Less
+                                            <ChevronRight className="ml-3 h-5 w-5 -rotate-90" />
                                         </Button>
                                     </div>
                                 )}
@@ -415,23 +437,23 @@ function StatBox({ label, val, icon, index = 0 }: { label: string, val: string, 
     const bgGradient = gradients[index % gradients.length];
 
     return (
-        <div className="relative group overflow-hidden rounded-2xl p-3.5 bg-white dark:bg-[#0b0c10] border border-zinc-200 dark:border-white/5 hover:border-zinc-300 dark:hover:border-white/10 transition-all duration-300">
+        <div className="relative group overflow-hidden rounded-2xl p-3 bg-white dark:bg-[#0b0c10] border border-zinc-200 dark:border-white/5 hover:border-zinc-300 dark:hover:border-white/10 transition-all duration-300">
             {/* Subtle Hover Glow */}
             <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500", bgGradient)} />
 
-            <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-2">
+            <div className="flex flex-col items-center justify-center text-center space-y-1.5">
                 <div className={cn(
-                    "h-8 w-8 rounded-lg shadow-sm flex items-center justify-center border transition-all duration-500 group-hover:scale-110",
+                    "h-7 w-7 rounded-lg shadow-sm flex items-center justify-center border transition-all duration-500 group-hover:scale-110",
                     index % 5 === 0 ? "bg-blue-500/10 border-blue-500/20 text-blue-500" :
                         index % 5 === 1 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" :
                             index % 5 === 2 ? "bg-purple-500/10 border-purple-500/20 text-purple-500" :
                                 index % 5 === 3 ? "bg-amber-500/10 border-amber-500/20 text-amber-500" :
                                     "bg-rose-500/10 border-rose-500/20 text-rose-500"
                 )}>
-                    {React.cloneElement(icon as React.ReactElement<any>, { className: "h-3.5 w-3.5" })}
+                    {React.cloneElement(icon as React.ReactElement<any>, { className: "h-3 w-3" })}
                 </div>
                 <div>
-                    <span className="text-xl font-black tracking-tight text-zinc-900 dark:text-white block leading-none mb-1">{val}</span>
+                    <span className="text-lg font-black tracking-tight text-zinc-900 dark:text-white block leading-none mb-0.5">{val}</span>
                     <div className="flex items-center justify-center gap-1.5">
                         <div className={cn(
                             "w-1 h-1 rounded-full",
@@ -484,13 +506,13 @@ function DataCard({ item, type, platform = 'google', onClick, onAnalyze }: { ite
             className={cn(
                 "group relative rounded-[1.5rem] transition-all duration-500 cursor-pointer overflow-hidden flex flex-col h-full w-full",
                 "bg-white dark:bg-[#0c0c0e] border border-zinc-200 dark:border-white/10",
-                "hover:border-[#1a73e8]/40 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_12px_30px_rgba(0,0,0,0.3)]",
-                "hover:-translate-y-1"
+                "hover:border-[#1a73e8]/40 hover:shadow-[0_12px_30px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_12px_30px_rgba(0,0,0,0.3)]",
+                "hover:-translate-y-1.5 transition-all duration-500"
             )}
             onClick={onClick}
         >
             {/* Media Section */}
-            <div className="relative aspect-[2] w-full overflow-hidden bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-white/5">
+            <div className="relative aspect-video w-full overflow-hidden bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-white/5">
                 {(item.thumbnailUrl && !isCampaign) || (isCampaign && item.thumbnailUrl) ? (
                     <img
                         src={item.thumbnailUrl}
@@ -543,25 +565,25 @@ function DataCard({ item, type, platform = 'google', onClick, onAnalyze }: { ite
 
             {/* Information area */}
             <div className="p-4 flex flex-col gap-4 flex-1">
-                <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-[#1a73e8] opacity-80">
+                <div className="space-y-1 focus-within:ring-0">
+                    <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-[#1a73e8] border-b border-[#1a73e8]/30 pb-0.5">
                             {formatAdType(subType)}
                         </span>
                         <div className="flex items-center gap-1">
-                            <span className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800/50 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-white/5">
+                            <span className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800/80 px-2.5 py-0.5 rounded-full border border-zinc-200 dark:border-white/10 shadow-sm">
                                 ${formatNumber(spend)}
                             </span>
                         </div>
                     </div>
-                    <h3 className="text-[15px] font-black text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-1 group-hover:text-[#1a73e8] transition-colors tracking-tight">
+                    <h3 className="text-[15px] font-black text-zinc-900 dark:text-zinc-100 leading-tight line-clamp-1 group-hover:text-[#1a73e8] transition-colors tracking-tight">
                         {title}
                     </h3>
                 </div>
 
                 {/* Performance Grid */}
                 <div className="grid grid-cols-2 gap-2.5">
-                    <div className="relative bg-zinc-50 dark:bg-zinc-900/50 rounded-xl p-3 border border-zinc-100 dark:border-white/5 flex flex-col justify-center gap-0.5 overflow-hidden group/m transition-all hover:bg-[#1a73e8]/5">
+                    <div className="relative bg-zinc-50 dark:bg-zinc-900/40 rounded-xl p-3 border border-zinc-100 dark:border-white/5 flex flex-col justify-center gap-0.5 overflow-hidden group/m transition-all hover:bg-[#1a73e8]/5">
                         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#1a73e8] scale-y-0 group-hover/m:scale-y-100 transition-transform origin-center" />
                         <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Efficiency</p>
                         <div className="flex items-baseline gap-1">
@@ -569,12 +591,12 @@ function DataCard({ item, type, platform = 'google', onClick, onAnalyze }: { ite
                             <span className="text-[10px] font-bold text-[#1a73e8]">%</span>
                         </div>
                     </div>
-                    <div className="relative bg-zinc-50 dark:bg-zinc-900/50 rounded-xl p-3 border border-zinc-100 dark:border-white/5 flex flex-col justify-center gap-0.5 overflow-hidden group/m transition-all hover:bg-emerald-500/5">
+                    <div className="relative bg-zinc-50 dark:bg-zinc-900/40 rounded-xl p-3 border border-zinc-100 dark:border-white/5 flex flex-col justify-center gap-0.5 overflow-hidden group/m transition-all hover:bg-emerald-500/5">
                         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 scale-y-0 group-hover/m:scale-y-100 transition-transform origin-center" />
                         <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Scale</p>
                         <div className="flex items-baseline gap-1">
                             <span className="text-lg font-black text-zinc-900 dark:text-white leading-none tracking-tight">{isCampaign ? conv : impr}</span>
-                            <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">{isCampaign ? "Conv" : "Impr"}</span>
+                            <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest leading-none">{isCampaign ? "Conv" : "Impr"}</span>
                         </div>
                     </div>
                 </div>

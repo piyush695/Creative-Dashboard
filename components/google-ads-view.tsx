@@ -40,7 +40,10 @@ import {
     RotateCcw,
     Wifi,
     ZoomIn,
-    X
+    X,
+    Globe,
+    Facebook,
+    Target
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -78,6 +81,8 @@ interface GoogleAdsViewProps {
     onDataSourceChange?: (source: "database" | "realtime") => void
     onRefresh?: () => void
     isSyncing?: boolean
+    selectedPlatform?: string
+    onPlatformChange?: (platform: string) => void
 }
 
 export default function GoogleAdsView({
@@ -93,11 +98,23 @@ export default function GoogleAdsView({
     onDataSourceChange,
     onRefresh,
     isSyncing,
+    selectedPlatform = "google",
+    onPlatformChange
 }: GoogleAdsViewProps) {
     const { toast } = useToast()
     const [mounted, setMounted] = useState(false)
     const [activeTab, setActiveTab] = useState("ads")
     const [selectedCampaign, setSelectedCampaign] = useState<string>("all")
+    const [cardLimit, setCardLimit] = useState(4)
+
+    useEffect(() => {
+        const updateLimit = () => {
+            setCardLimit(window.innerWidth >= 1536 ? 4 : 3)
+        }
+        updateLimit()
+        window.addEventListener('resize', updateLimit)
+        return () => window.removeEventListener('resize', updateLimit)
+    }, [])
     const [selectedType, setSelectedType] = useState<string>("all")
     const [selectedDate, setSelectedDate] = useState<string>("all")
     const [dataSource, setDataSource] = useState<"database" | "realtime">("database")
@@ -184,7 +201,6 @@ export default function GoogleAdsView({
         { id: "campaigns", label: "Campaigns", icon: TrendingUp },
         { id: "ads", label: "Ads & assets", icon: Play },
         { id: "keywords", label: "Keywords", icon: Search },
-        { id: "audiences", label: "Audiences", icon: Info },
     ]
 
     // Memoize analytics data to prevent expensive recalculations on every render
@@ -246,34 +262,6 @@ export default function GoogleAdsView({
             ctr: kw.impr > 0 ? (kw.clicks / kw.impr) * 100 : 0
         })).sort((a, b) => b.spend - a.spend);
 
-        const audiencesMap = new Map<string, { name: string, reach: number, clicks: number }>();
-        filteredAds.forEach(ad => {
-            const auds: string[] = (ad as any).audiences || (ad as any).audienceSegments || [];
-            auds.forEach(aud => {
-                const existing = audiencesMap.get(aud) || { name: aud, reach: 0, clicks: 0 };
-                existing.reach += Number(ad.impressions || 0);
-                existing.clicks += Number(ad.clicks || 0);
-                audiencesMap.set(aud, existing);
-            });
-        });
-
-        const audiences = Array.from(audiencesMap.values()).map(aud => {
-            const engagementRate = aud.reach > 0 ? (aud.clicks / aud.reach) : 0;
-            const affinityScore = Math.min(99, Math.max(10, Math.round(engagementRate * 1700)));
-            let sizeStr = "S";
-            if (totalImpr > 0) {
-                const share = aud.reach / totalImpr;
-                if (share > 0.5) sizeStr = "XL";
-                else if (share > 0.3) sizeStr = "L";
-                else if (share > 0.1) sizeStr = "M";
-            }
-            return {
-                name: aud.name,
-                size: sizeStr,
-                reach: aud.reach,
-                score: affinityScore || 45
-            };
-        }).sort((a, b) => b.reach - a.reach).slice(0, 10);
 
         const avgOptScore = filteredAds.length > 0
             ? (filteredAds.reduce((sum, ad) => sum + (Number(ad.scoreOverall) || 0), 0) / filteredAds.length) * 10
@@ -297,14 +285,14 @@ export default function GoogleAdsView({
         // with both 'cost' and 'spend' property to satisfy all usages
         const keywords = detailedKeywords.slice(0, 8).map(k => ({ ...k, cost: k.spend }))
 
-        return { topCampaigns, typeBreakdown, keywords, avgOptScore, spendChartData, formatChartData, sortedAdsForChart, detailedKeywords, audiences }
+        return { topCampaigns, typeBreakdown, keywords, avgOptScore, spendChartData, formatChartData, sortedAdsForChart, detailedKeywords }
     }, [filteredAds])
 
     const renderMetricsCards = () => {
         if (filteredAds.length === 0 && searchQuery.trim() !== "") return null;
 
         return (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 mb-4 md:mb-6">
                 {[
                     { label: "Interactions", value: totalInteractions, color: "text-blue-500", icon: MousePointer2, id: "interactions", desc: "Total Clicks", info: "Measures how many times people interacted with your ad.", theme: "blue" },
                     { label: "Impressions", value: totalImpr, color: "text-indigo-500", icon: Eye, id: "impr", desc: "Total Reach", info: "The number of times your ad was displayed.", theme: "indigo" },
@@ -313,7 +301,7 @@ export default function GoogleAdsView({
                     { label: "Conv. Value", value: `$${totalConvValue.toLocaleString()}`, color: "text-violet-500", icon: BarChart3, id: "value", desc: "Gross Return", info: "The total value of all attributed conversions.", theme: "violet" },
                     { label: "Account ROAS", value: `${avgRoas.toFixed(2)}x`, color: "text-sky-500", icon: TrendingUp, id: "roas", desc: "Efficiency", info: "Return on Ad Spend (Conv Value / Spend).", theme: "sky" }
                 ].map((metric) => (
-                    <Card key={metric.id} className="relative p-3.5 border border-zinc-200/50 dark:border-white/5 shadow-sm bg-white dark:bg-[#09090b] rounded-2xl group transition-all duration-300 hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-700 overflow-hidden">
+                    <Card key={metric.id} className="relative p-2 md:p-3.5 border border-zinc-200/50 dark:border-white/5 shadow-sm bg-white dark:bg-[#09090b] rounded-2xl group transition-all duration-300 hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-700 overflow-hidden min-h-0">
                         {/* Thematic Background Glow */}
                         <div className={cn(
                             "absolute -right-6 -top-6 w-16 h-16 rounded-full blur-2xl opacity-0 group-hover:opacity-20 transition-all duration-700",
@@ -324,9 +312,9 @@ export default function GoogleAdsView({
                                             metric.theme === "violet" ? "bg-violet-500" : "bg-sky-500"
                         )} />
 
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-1.5 md:mb-4">
                             <div className={cn(
-                                "p-2 rounded-xl border transition-all duration-300 group-hover:scale-110",
+                                "p-1 md:p-2 rounded-xl border transition-all duration-300 group-hover:scale-110",
                                 metric.theme === "blue" ? "bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400" :
                                     metric.theme === "indigo" ? "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400" :
                                         metric.theme === "amber" ? "bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20 text-amber-600 dark:text-amber-400" :
@@ -334,26 +322,26 @@ export default function GoogleAdsView({
                                                 metric.theme === "violet" ? "bg-violet-50 dark:bg-violet-500/10 border-violet-100 dark:border-violet-500/20 text-violet-600 dark:text-violet-400" :
                                                     "bg-sky-50 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20 text-sky-600 dark:text-sky-400"
                             )}>
-                                <metric.icon className="h-4 w-4" />
+                                <metric.icon className="h-3.5 w-3.5 md:h-4 md:w-4" />
                             </div>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Info className="h-3.5 w-3.5 text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 transition-colors cursor-help" />
+                                    <Info className="h-3 w-3 md:h-3.5 md:w-3.5 text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 transition-colors cursor-help" />
                                 </TooltipTrigger>
                                 <TooltipContent className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-xl px-4 py-2 text-xs font-medium max-w-[200px]">
                                     <p>{metric.info}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </div>
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">{metric.label}</p>
+                        <div className="space-y-0 md:space-y-1">
+                            <p className="text-[8px] md:text-[10px] font-black text-zinc-500 dark:text-zinc-500 uppercase tracking-widest leading-tight">{metric.label}</p>
                             <div className="flex items-baseline gap-2">
-                                <h3 className="text-xl md:text-2xl font-black font-mono tracking-tighter text-zinc-900 dark:text-white leading-none">
+                                <h3 className="text-base md:text-2xl font-black font-mono tracking-tighter text-zinc-900 dark:text-white leading-none">
                                     {metric.value}
                                 </h3>
                             </div>
-                            <div className="pt-2 border-t border-zinc-100 dark:border-white/5 mt-3 flex items-center justify-between">
-                                <span className="text-[8px] font-black uppercase text-zinc-400 tracking-widest">{metric.desc}</span>
+                            <div className="pt-1 md:pt-2 border-t border-zinc-100 dark:border-white/5 mt-1.5 md:mt-3 hidden md:flex items-center justify-between">
+                                <span className="text-[7.5px] md:text-[8px] font-black uppercase text-zinc-400 tracking-widest">{metric.desc}</span>
                             </div>
                         </div>
                     </Card>
@@ -378,7 +366,7 @@ export default function GoogleAdsView({
                 }))
 
             return (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-20 overflow-hidden max-w-full">
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-20 overflow-hidden max-w-full">
                     {/* Primary Row: High-Level Insights */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         <Card className="lg:col-span-4 p-6 md:p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md shadow-2xl rounded-[2.5rem] relative overflow-hidden group">
@@ -634,8 +622,8 @@ export default function GoogleAdsView({
                                     <Search className="h-4 w-4 text-zinc-300" />
                                 </div>
                             </div>
-                            <div className="flex-1 overflow-x-auto overflow-y-auto pr-3 custom-scrollbar">
-                                <div className="min-w-[300px]">
+                            <div className="flex-1 overflow-y-auto pr-3 custom-scrollbar">
+                                <div className="w-full">
                                     <Table>
                                         <TableHeader>
                                             <TableRow className="border-none hover:bg-transparent">
@@ -650,7 +638,7 @@ export default function GoogleAdsView({
                                                     <TableCell className="py-4 pl-0">
                                                         <div className="flex items-center gap-3">
                                                             <div className="h-2 w-2 rounded-full bg-[#1a73e8] shadow-[0_0_8px_rgba(26,115,232,0.4)] opacity-20 group-hover/kw:opacity-100 transition-all duration-500" />
-                                                            <span className="text-[11px] font-black text-zinc-700 dark:text-zinc-300 group-hover/kw:text-[#1a73e8] transition-colors tracking-tight">{kw.word}</span>
+                                                            <span className="text-[10px] md:text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 group-hover/kw:text-[#1a73e8] transition-colors tracking-tight break-all">{kw.word}</span>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="py-4 text-right">
@@ -691,9 +679,9 @@ export default function GoogleAdsView({
                     {/* Tertiary Row: Creative Intelligence & Analytics */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Psychological Triggers Card */}
-                        <Card className="p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-2xl rounded-[2.5rem] relative overflow-hidden group">
+                        <Card className="p-6 md:p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-2xl rounded-[2.5rem] relative overflow-hidden group">
                             <div className="absolute -right-20 -top-20 w-64 h-64 bg-purple-500/5 rounded-full blur-[80px] group-hover:bg-purple-500/10 transition-all duration-1000" />
-                            <div className="flex items-center justify-between mb-8 relative z-10">
+                            <div className="flex items-center justify-between mb-6 relative z-10">
                                 <div>
                                     <h3 className="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">Psychological IQ</h3>
                                     <p className="text-[10px] text-zinc-500 font-bold mt-1">Winning behavioral patterns detected</p>
@@ -714,7 +702,7 @@ export default function GoogleAdsView({
                                     const percentage = filteredAds.length > 0 ? (count / filteredAds.length) * 100 : 0
 
                                     return (
-                                        <div key={trigger.label} className="p-5 rounded-[2rem] bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 group/trig hover:border-purple-500/30 transition-all hover:bg-white dark:hover:bg-white/10 shadow-sm hover:shadow-xl">
+                                        <div key={trigger.label} className="p-4 md:p-5 rounded-[2rem] bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 group/trig hover:border-purple-500/30 transition-all hover:bg-white dark:hover:bg-white/10 shadow-sm hover:shadow-xl">
                                             <div className="flex justify-between items-end mb-3">
                                                 <span className="text-[10px] font-black text-zinc-400 tracking-widest group-hover/trig:text-purple-500 transition-colors">{trigger.label}</span>
                                                 <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">{percentage.toFixed(0)}%</span>
@@ -728,12 +716,12 @@ export default function GoogleAdsView({
                             </div>
                         </Card>
 
-                        {/* AIDA Model Performance */}
-                        <Card className="p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-2xl rounded-[2.5rem] relative overflow-hidden group">
-                            <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] group-hover:bg-emerald-500/10 transition-all duration-1000" />
-                            <div className="flex items-center justify-between mb-8 relative z-10">
+                        {/* Behavioral Triggers */}
+                        <Card className="p-6 md:p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-2xl rounded-[2.5rem] relative overflow-hidden group">
+                            <div className="absolute -right-20 -top-20 w-64 h-64 bg-purple-500/5 rounded-full blur-[80px] group-hover:bg-purple-500/10 transition-all duration-1000" />
+                            <div className="flex items-center justify-between mb-6 relative z-10">
                                 <div>
-                                    <h3 className="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">AIDA funnel flow</h3>
+                                    <h3 className="text-lg md:text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">Behavioral Triggers</h3>
                                     <p className="text-[10px] text-zinc-500 font-bold mt-1">Creative resonance across user stages</p>
                                 </div>
                                 <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-inner group-hover:scale-110 transition-transform">
@@ -748,7 +736,7 @@ export default function GoogleAdsView({
                                     { label: "Action", score: filteredAds.reduce((sum, ad) => sum + (Number(ad.aidaActionScore) || 0), 0) / (filteredAds.length || 1), color: "bg-emerald-200" },
                                 ].map((stage, i) => (
                                     <div key={stage.label} className="group/stage">
-                                        <div className="flex justify-between mb-2 px-1">
+                                        <div className="flex justify-between mb-1.5 px-1">
                                             <div className="flex items-center gap-2">
                                                 <div className={cn("h-4 w-4 rounded-lg flex items-center justify-center text-[8px] font-black text-white", stage.color)}>{i + 1}</div>
                                                 <span className="text-[10px] font-black text-zinc-500 tracking-widest group-hover/stage:text-emerald-500 transition-colors pr-2">{stage.label}</span>
@@ -781,7 +769,7 @@ export default function GoogleAdsView({
                                         Active engine
                                     </Badge>
                                 </div>
-                                <h3 className="text-2xl md:text-3xl font-black tracking-tightest text-zinc-900 dark:text-white leading-none">
+                                <h3 className="text-xl md:text-2xl font-black tracking-tightest text-zinc-900 dark:text-white leading-none">
                                     Optimization Hub
                                 </h3>
                                 <p className="text-xs font-bold text-zinc-500">
@@ -831,8 +819,8 @@ export default function GoogleAdsView({
                                         </div>
                                     </div>
                                     <div className="space-y-1.5 mt-6 opacity-90 group-hover:opacity-100 transition-opacity duration-500 delay-100">
-                                        <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tightest">No Strategic Shifts Detected Yet</h3>
-                                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em]">Our analyzer needs more diverse data segments</p>
+                                        <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tightest">No Strategic Shifts Detected Yet</h3>
+                                        <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-[0.15em]">Our analyzer needs more diverse data segments</p>
                                     </div>
                                 </div>
                             )}
@@ -843,8 +831,8 @@ export default function GoogleAdsView({
                     <div className="space-y-8 pt-4">
                         <div className="flex items-center justify-between px-2">
                             <div className="space-y-2">
-                                <h3 className="text-2xl md:text-3xl font-black tracking-tightest text-zinc-900 dark:text-white leading-none">Power creatives</h3>
-                                <p className="text-[11px] md:text-xs text-zinc-500 font-black mt-1">Benchmarking highest efficiency neural outputs</p>
+                                <h3 className="text-xl md:text-2xl font-black tracking-tightest text-zinc-900 dark:text-white leading-none">Power creatives</h3>
+                                <p className="text-[10px] md:text-xs text-zinc-500 font-black mt-1">Benchmarking highest efficiency neural outputs</p>
                             </div>
                             <Button
                                 variant="ghost"
@@ -864,12 +852,12 @@ export default function GoogleAdsView({
                         </div>
 
                         {/* Mobile: Horizontal Scroll, Desktop: Grid */}
-                        <div className="flex md:grid md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 overflow-x-auto md:overflow-visible pb-8 md:pb-0 snap-x snap-mandatory -mx-3 px-3 md:mx-0 md:px-0 hide-scrollbar pt-2">
-                            {filteredAds.slice(0, 4).map((ad, i) => (
-                                <Card key={ad.id} className="min-w-[280px] md:min-w-0 w-[280px] md:w-full bg-white dark:bg-[#09090b] border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-2xl p-4 flex flex-col gap-4 group shadow-xl transition-all duration-300 snap-center flex-shrink-0 md:flex-shrink-1">
+                        <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6 overflow-x-auto md:overflow-visible pb-8 md:pb-0 snap-x snap-mandatory -mx-3 px-3 md:mx-0 md:px-0 hide-scrollbar pt-2">
+                            {filteredAds.slice(0, cardLimit).map((ad, i) => (
+                                <Card key={ad.id} className="min-w-[280px] md:min-w-0 w-[280px] md:w-full bg-white dark:bg-[#09090b] border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-2xl p-3.5 flex flex-col gap-4 group shadow-xl transition-all duration-300 snap-center flex-shrink-0 md:flex-shrink-1">
 
                                     {/* Image Header Section */}
-                                    <div className="relative aspect-[1.5] w-full rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/50">
+                                    <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/50">
                                         <img
                                             src={ad.thumbnailUrl || "/placeholder.svg"}
                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -892,30 +880,30 @@ export default function GoogleAdsView({
 
                                     {/* Title Section */}
                                     <div className="flex items-center justify-between gap-2 px-1">
-                                        <h3 className="text-zinc-900 dark:text-zinc-100 font-bold text-[15px] leading-tight truncate flex-1">{ad.adName}</h3>
+                                        <h3 className="text-zinc-900 dark:text-zinc-100 font-bold text-[14px] leading-tight truncate flex-1">{ad.adName}</h3>
                                     </div>
 
                                     {/* Stats Grid - MATCHING REFERENCE */}
                                     <div className="grid grid-cols-2 gap-3">
                                         {/* Spend Box */}
-                                        <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-3 border border-zinc-100 dark:border-zinc-800/50 flex flex-col justify-between h-[80px] group/spend transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900">
+                                        <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-2.5 border border-zinc-100 dark:border-zinc-800/50 flex flex-col justify-between h-[75px] group/spend transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900">
                                             <div className="flex items-center gap-1.5">
                                                 <div className="w-1 h-1 rounded-full bg-zinc-400 dark:bg-zinc-500 group-hover/spend:bg-zinc-600 dark:group-hover/spend:bg-zinc-300 transition-colors" />
-                                                <p className="text-[10px] text-zinc-500 font-black">Spend</p>
+                                                <p className="text-[9px] text-zinc-500 font-black">Spend</p>
                                             </div>
-                                            <p className="text-[18px] font-black text-zinc-900 dark:text-zinc-100 tracking-tightest">${Number(ad.spend).toLocaleString()}</p>
+                                            <p className="text-[17px] font-black text-zinc-900 dark:text-zinc-100 tracking-tightest">${Number(ad.spend).toLocaleString()}</p>
                                         </div>
 
                                         {/* CTR Box */}
-                                        <div className="bg-blue-50 dark:bg-blue-500/5 rounded-2xl p-3 border border-blue-100 dark:border-blue-500/10 flex flex-col justify-between h-[80px] relative overflow-hidden group/ctr transition-all hover:bg-blue-100/50 dark:hover:bg-blue-500/10">
+                                        <div className="bg-blue-50 dark:bg-blue-500/5 rounded-2xl p-2.5 border border-blue-100 dark:border-blue-500/10 flex flex-col justify-between h-[75px] relative overflow-hidden group/ctr transition-all hover:bg-blue-100/50 dark:hover:bg-blue-500/10">
                                             {/* Subtle background glow */}
                                             <div className="absolute top-0 right-0 w-12 h-12 bg-blue-500/10 blur-xl rounded-full -mr-4 -mt-4 transition-opacity" />
 
                                             <div className="flex justify-between items-center relative z-10">
                                                 <div className="w-1 h-1 rounded-full bg-blue-500" />
-                                                <p className="text-[10px] text-blue-500 dark:text-blue-400 font-black opacity-80">CTR efficiency</p>
+                                                <p className="text-[9px] text-blue-500 dark:text-blue-400 font-black opacity-80">Efficiency</p>
                                             </div>
-                                            <p className="text-[18px] font-black text-blue-600 dark:text-blue-500 tracking-tightest text-right relative z-10">
+                                            <p className="text-[17px] font-black text-blue-600 dark:text-blue-500 tracking-tightest text-right relative z-10">
                                                 {Number(ad.ctr).toFixed(2)}%
                                             </p>
                                         </div>
@@ -963,20 +951,21 @@ export default function GoogleAdsView({
 
             return (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
-                    <Card className="rounded-[2rem] border-zinc-200 dark:border-white/10 shadow-2xl overflow-hidden bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl group/table">
-                        <div className="w-full overflow-x-auto">
-                            <Table className="min-w-[800px]">
+                    {renderMetricsCards()}
+                    <Card className="rounded-[2.5rem] border-zinc-200 dark:border-white/10 shadow-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl group/table overflow-hidden">
+                        <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-white/10">
+                            <Table className="w-full min-w-full">
                                 <TableHeader>
                                     <TableRow className="bg-[#f8f9fa] dark:bg-white/5 hover:bg-[#f8f9fa] dark:hover:bg-white/5 transition-none border-b border-zinc-200 dark:border-white/10">
                                         <TableHead className="w-[40px] px-6 text-center hidden lg:table-cell">
                                             <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-white/10 text-[#1a73e8]" />
                                         </TableHead>
-                                        <TableHead className="min-w-[200px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-6 py-4">Campaign Name</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center px-2">Status</TableHead>
-                                        <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-2">Ads</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-2">Total Cost</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-2 hidden sm:table-cell">Impr.</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-6">Avg. CTR</TableHead>
+                                        <TableHead className="w-auto text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-4 py-4">Campaign</TableHead>
+                                        <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center px-1 hidden md:table-cell">Status</TableHead>
+                                        <TableHead className="w-[80px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-1 hidden md:table-cell">Ads</TableHead>
+                                        <TableHead className="w-[90px] md:w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-1">Cost</TableHead>
+                                        <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-1 hidden lg:table-cell">Impr.</TableHead>
+                                        <TableHead className="w-[80px] md:w-[120px] text-[#1a73e8] font-black text-[9px] uppercase tracking-widest text-right px-4 md:px-6">CTR</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -996,12 +985,12 @@ export default function GoogleAdsView({
                                                     <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-white/10" />
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-zinc-900 dark:text-zinc-100 font-black text-[13px] group-hover/row:text-[#1a73e8] transition-colors">{camp.name}</span>
-                                                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight mt-0.5">Campaign Analytics</span>
+                                                    <div className="flex flex-col w-full min-w-0 max-w-[150px] md:max-w-[220px] lg:max-w-[350px] xl:max-w-[500px]">
+                                                        <span className="text-zinc-900 dark:text-zinc-100 font-semibold text-[13px] md:text-[14px] group-hover/row:text-[#1a73e8] transition-colors truncate block leading-tight">{camp.name}</span>
+                                                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight mt-0.5 opacity-70 truncate block">Analytics</span>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center px-1 hidden md:table-cell">
                                                     <div className="flex items-center justify-center">
                                                         <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20">
                                                             <div className="h-1.5 w-1.5 rounded-full bg-[#34a853]" />
@@ -1009,10 +998,10 @@ export default function GoogleAdsView({
                                                         </div>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-right font-bold text-[13px] text-zinc-500 dark:text-zinc-400">{camp.count}</TableCell>
-                                                <TableCell className="text-right font-black text-[14px] text-zinc-900 dark:text-zinc-100 px-2">${camp.cost.toLocaleString()}</TableCell>
-                                                <TableCell className="text-right font-bold text-[13px] text-zinc-500 dark:text-zinc-400 px-2 hidden sm:table-cell">{camp.impr.toLocaleString()}</TableCell>
-                                                <TableCell className="text-right px-6 font-black text-[15px] text-[#1a73e8] bg-blue-50/5 dark:bg-blue-900/5">{camp.ctr.toFixed(2)}%</TableCell>
+                                                <TableCell className="text-right font-bold text-[13px] text-zinc-500 dark:text-zinc-400 px-1 hidden md:table-cell">{camp.count}</TableCell>
+                                                <TableCell className="text-right font-black text-[12px] md:text-[14px] text-zinc-900 dark:text-zinc-100 px-1">${camp.cost.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right font-bold text-[13px] text-zinc-500 dark:text-zinc-400 px-1 hidden lg:table-cell">{camp.impr.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right px-4 md:px-6 font-black text-[13px] md:text-[15px] text-[#1a73e8] bg-blue-50/5 dark:bg-blue-900/5">{camp.ctr.toFixed(1)}%</TableCell>
                                             </TableRow>
                                         ))
                                     )}
@@ -1029,20 +1018,21 @@ export default function GoogleAdsView({
 
             return (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
-                    <Card className="rounded-[2rem] border-zinc-200 dark:border-white/10 shadow-2xl overflow-hidden bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md group/table">
-                        <div className="w-full overflow-x-auto">
-                            <Table className="min-w-[800px]">
+                    {renderMetricsCards()}
+                    <Card className="rounded-[2.5rem] border-zinc-200 dark:border-white/10 shadow-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl group/table overflow-hidden">
+                        <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-white/10">
+                            <Table className="w-full min-w-[600px] md:min-w-full">
                                 <TableHeader>
                                     <TableRow className="bg-[#f8f9fa] dark:bg-white/5 hover:bg-[#f8f9fa] dark:hover:bg-white/5 transition-none border-b border-zinc-200 dark:border-white/10">
                                         <TableHead className="w-[40px] px-6 text-center hidden lg:table-cell">
                                             <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-white/10 text-[#1a73e8]" />
                                         </TableHead>
-                                        <TableHead className="min-w-[200px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-6 py-4">Search Keyword</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center">Match Type</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right">Spend</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right">Impr.</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right">Clicks</TableHead>
-                                        <TableHead className="w-[120px] text-[#1a73e8] font-black text-[9px] uppercase tracking-widest text-right px-6">CTR</TableHead>
+                                        <TableHead className="w-auto text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-4 py-4">Keyword</TableHead>
+                                        <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center px-1">Match</TableHead>
+                                        <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-1">Spend</TableHead>
+                                        <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-1 hidden md:table-cell">Impr.</TableHead>
+                                        <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-1 hidden md:table-cell">Clicks</TableHead>
+                                        <TableHead className="w-[100px] text-[#1a73e8] font-black text-[9px] uppercase tracking-widest text-right px-6">CTR</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -1074,14 +1064,16 @@ export default function GoogleAdsView({
                                                 <TableCell className="px-6 text-center hidden lg:table-cell">
                                                     <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-white/10" />
                                                 </TableCell>
-                                                <TableCell className="px-6 py-4">
-                                                    <span className="text-zinc-900 dark:text-zinc-100 font-black text-[13px] group-hover/row:text-[#1a73e8] transition-colors uppercase tracking-tight">{kw.word}</span>
+                                                <TableCell className="px-4 py-4">
+                                                    <div className="w-full min-w-0">
+                                                        <span className="text-zinc-900 dark:text-zinc-100 font-semibold text-[12px] md:text-[13px] group-hover/row:text-[#1a73e8] transition-colors uppercase tracking-tight truncate block leading-tight">{kw.word}</span>
+                                                    </div>
                                                 </TableCell>
-                                                <TableCell className="text-center font-bold text-[10px] text-zinc-400 uppercase tracking-widest">Broad Match</TableCell>
-                                                <TableCell className="text-right font-black text-[13px] text-zinc-900 dark:text-zinc-100">${kw.spend.toLocaleString()}</TableCell>
-                                                <TableCell className="text-right font-bold text-[12px] text-zinc-500 dark:text-zinc-400">{kw.impr.toLocaleString()}</TableCell>
-                                                <TableCell className="text-right font-bold text-[12px] text-zinc-500 dark:text-zinc-400">{kw.clicks.toLocaleString()}</TableCell>
-                                                <TableCell className="text-right px-6 font-black text-[14px] text-[#1a73e8]">{kw.ctr.toFixed(2)}%</TableCell>
+                                                <TableCell className="text-center font-bold text-[10px] text-zinc-400 uppercase tracking-widest px-1">Broad</TableCell>
+                                                <TableCell className="text-right font-black text-[12px] md:text-[13px] text-zinc-900 dark:text-zinc-100 px-1">${kw.spend.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right font-bold text-[11px] md:text-[12px] text-zinc-500 dark:text-zinc-400 px-1 hidden md:table-cell">{kw.impr.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right font-bold text-[11px] md:text-[12px] text-zinc-500 dark:text-zinc-400 px-1 hidden md:table-cell">{kw.clicks.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right px-6 font-black text-[13px] md:text-[14px] text-[#1a73e8]">{kw.ctr.toFixed(1)}%</TableCell>
                                             </TableRow>
                                         ))
                                     )}
@@ -1093,183 +1085,132 @@ export default function GoogleAdsView({
             )
         }
 
-        if (activeTab === "audiences") {
-            const { audiences } = analyticsData
-
-            return (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {audiences.length > 0 ? audiences.map((aud) => (
-                            <Card key={aud.name} className="p-6 border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 rounded-[2rem] hover:scale-[1.02] transition-transform cursor-pointer group shadow-xl">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-[#1a73e8]">
-                                        <Info className="h-5 w-5" />
-                                    </div>
-                                    <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[9px] uppercase tracking-widest">{aud.score}% Affinity</Badge>
-                                </div>
-                                <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest mb-2 group-hover:text-[#1a73e8] transition-colors">{aud.name}</h3>
-                                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-100 dark:border-white/5">
-                                    <div>
-                                        <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Potential Reach</p>
-                                        <p className="text-[13px] font-black text-zinc-900 dark:text-zinc-100">{aud.reach.toLocaleString()}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Segment Size</p>
-                                        <p className="text-[13px] font-black text-zinc-900 dark:text-zinc-100">{aud.size}</p>
-                                    </div>
-                                </div>
-                            </Card>
-                        )) : (
-                            <div className="col-span-full h-[400px] flex flex-col items-center justify-center text-center p-12 bg-white/50 dark:bg-zinc-900/30 backdrop-blur-md rounded-[2.5rem] border border-zinc-200/50 dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-500 group">
-                                <div className="flex flex-col items-center justify-center space-y-6 max-w-sm mx-auto">
-                                    <div className="relative">
-                                        <div className="absolute inset-0 bg-[#1a73e8]/10 blur-3xl rounded-full scale-[2] opacity-0 group-hover:opacity-40 transition-opacity duration-700" />
-                                        <div className="relative h-24 w-24 rounded-[2.5rem] bg-white dark:bg-zinc-800/80 border border-zinc-200/50 dark:border-white/10 shadow-2xl flex items-center justify-center group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500">
-                                            <Info className="h-10 w-10 text-[#1a73e8] bg-clip-text" />
-                                            <div className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-lg flex items-center justify-center animate-bounce delay-150">
-                                                <div className="h-2 w-2 rounded-full bg-[#1a73e8]" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1.5 opacity-90 group-hover:opacity-100 transition-opacity duration-500 delay-100">
-                                        <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tightest">No Audience Data Synchronized</h3>
-                                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em]">Try adjusting your search filters</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )
-        }
 
         // Ads & Assets tab (the main table)
         return (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
                 {renderMetricsCards()}
-                <Card className="rounded-[2rem] border border-zinc-200 dark:border-white/10 shadow-2xl overflow-hidden bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md group/table">
-                    <div className="overflow-x-auto custom-scrollbar">
-                        <div className="min-w-[800px]">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-[#f8f9fa] dark:bg-white/5 hover:bg-[#f8f9fa] dark:hover:bg-white/5 transition-none border-b border-zinc-200 dark:border-white/10">
-                                        <TableHead className="w-[40px] px-4 text-center hidden lg:table-cell">
-                                            <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-white/10 text-[#1a73e8] focus:ring-[#1a73e8]" />
-                                        </TableHead>
-                                        <TableHead className="w-[60px] md:w-[80px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-4">Creative</TableHead>
-                                        <TableHead className="min-w-[150px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-4">Details</TableHead>
-                                        <TableHead className="w-[90px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center px-4 hidden md:table-cell">Status</TableHead>
-                                        <TableHead className="w-[80px] md:w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-4">Cost</TableHead>
-                                        <TableHead className="w-[80px] md:w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-4 hidden sm:table-cell">Impr.</TableHead>
-                                        <TableHead className="w-[80px] md:w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-4 hidden md:table-cell">Int.</TableHead>
-                                        <TableHead className="w-[100px] md:w-[120px] text-[#1a73e8] font-black text-[9px] uppercase tracking-widest text-right px-6 bg-blue-50/10 dark:bg-blue-900/5">Int. Rate</TableHead>
-                                        <TableHead className="w-[120px] md:w-[140px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center px-4">Action</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredAds.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={9} className="h-[400px] text-center border-none p-0 relative">
-                                                <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                                                    <div className="flex flex-col items-center justify-center space-y-6 max-w-sm mx-auto group w-full">
-                                                        <div className="relative">
-                                                            <div className="absolute inset-0 bg-[#1a73e8]/10 blur-3xl rounded-full scale-[2] opacity-0 group-hover:opacity-40 transition-opacity duration-700" />
-                                                            <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-[2rem] md:rounded-[2.5rem] bg-white dark:bg-zinc-800/80 border border-zinc-200/50 dark:border-white/10 shadow-2xl flex items-center justify-center group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500">
-                                                                <Search className="h-8 w-8 md:h-10 md:w-10 text-[#1a73e8] bg-clip-text" />
-                                                                <div className="absolute -bottom-2 -right-2 h-6 w-6 md:h-8 md:w-8 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-lg flex items-center justify-center animate-bounce delay-150">
-                                                                    <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-[#1a73e8]" />
-                                                                </div>
+                <Card className="rounded-[2.5rem] border border-zinc-200 dark:border-white/10 shadow-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl group/table overflow-hidden">
+                    <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-white/10">
+                        <Table className="w-full min-w-[700px] md:min-w-full">
+                            <TableHeader>
+                                <TableRow className="bg-[#f8f9fa] dark:bg-white/5 hover:bg-[#f8f9fa] dark:hover:bg-white/5 transition-none border-b border-zinc-200 dark:border-white/10">
+                                    <TableHead className="w-[40px] px-4 text-center hidden lg:table-cell">
+                                        <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-white/10 text-[#1a73e8] focus:ring-[#1a73e8]" />
+                                    </TableHead>
+                                    <TableHead className="w-[60px] md:w-[80px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-2">Ad</TableHead>
+                                    <TableHead className="w-auto text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-2">Details</TableHead>
+                                    <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center px-4 hidden md:table-cell">Status</TableHead>
+                                    <TableHead className="w-[80px] md:w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-2">Cost</TableHead>
+                                    <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-4 hidden lg:table-cell">Impr.</TableHead>
+                                    <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-4 hidden lg:table-cell">Int.</TableHead>
+                                    <TableHead className="w-[80px] md:w-[120px] text-[#1a73e8] font-black text-[9px] uppercase tracking-widest text-right px-2 bg-blue-50/10 dark:bg-blue-900/5">Rate</TableHead>
+                                    <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center px-2">Action</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredAds.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={9} className="h-[400px] text-center border-none p-0 relative">
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                                                <div className="flex flex-col items-center justify-center space-y-6 max-w-sm mx-auto group w-full">
+                                                    <div className="relative">
+                                                        <div className="absolute inset-0 bg-[#1a73e8]/10 blur-3xl rounded-full scale-[2] opacity-0 group-hover:opacity-40 transition-opacity duration-700" />
+                                                        <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-[2rem] md:rounded-[2.5rem] bg-white dark:bg-zinc-800/80 border border-zinc-200/50 dark:border-white/10 shadow-2xl flex items-center justify-center group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500">
+                                                            <Search className="h-8 w-8 md:h-10 md:w-10 text-[#1a73e8] bg-clip-text" />
+                                                            <div className="absolute -bottom-2 -right-2 h-6 w-6 md:h-8 md:w-8 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-lg flex items-center justify-center animate-bounce delay-150">
+                                                                <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-[#1a73e8]" />
                                                             </div>
-                                                        </div>
-                                                        <div className="space-y-1.5 opacity-90 group-hover:opacity-100 transition-opacity duration-500 delay-100 text-center">
-                                                            <h3 className="text-base md:text-lg font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tightest">No Matching Creatives</h3>
-                                                            <p className="text-[9px] md:text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em] px-4">Adjust filters to see more results</p>
                                                         </div>
                                                     </div>
+                                                    <div className="space-y-1.5 opacity-90 group-hover:opacity-100 transition-opacity duration-500 delay-100 text-center">
+                                                        <h3 className="text-base md:text-lg font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tightest">No Matching Creatives</h3>
+                                                        <p className="text-[9px] md:text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em] px-4">Adjust filters to see more results</p>
+                                                    </div>
                                                 </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        <>
-                                            {filteredAds.slice(0, displayLimit).map((ad) => (
-                                                <TableRow
-                                                    key={ad.id}
-                                                // Removed row onClick to prevent accidental analysis openings
-                                                >
-                                                    <TableCell className="px-4 text-center hidden lg:table-cell">
-                                                        <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-white/10 text-[#1a73e8] focus:ring-[#1a73e8]" onClick={(e) => e.stopPropagation()} />
-                                                    </TableCell>
-                                                    <TableCell className="px-4">
-                                                        <div
-                                                            className="h-12 w-14 bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden border border-zinc-200 dark:border-white/5 shadow-sm group-hover/row:scale-105 transition-transform duration-300 cursor-pointer relative"
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    <>
+                                        {filteredAds.slice(0, displayLimit).map((ad) => (
+                                            <TableRow
+                                                key={ad.id}
+                                            // Removed row onClick to prevent accidental analysis openings
+                                            >
+                                                <TableCell className="px-4 text-center hidden lg:table-cell">
+                                                    <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-white/10 text-[#1a73e8] focus:ring-[#1a73e8]" onClick={(e) => e.stopPropagation()} />
+                                                </TableCell>
+                                                <TableCell className="px-4">
+                                                    <div
+                                                        className="h-12 w-14 bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden border border-zinc-200 dark:border-white/5 shadow-sm group-hover/row:scale-105 transition-transform duration-300 cursor-pointer relative"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName);
+                                                        }}
+                                                    >
+                                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-10">
+                                                            <ZoomIn className="text-white w-5 h-5" />
+                                                        </div>
+                                                        <img src={ad.thumbnailUrl || "/placeholder.svg"} className="w-full h-full object-cover group-hover/row:scale-110 transition-transform duration-500" alt="Preview" />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="px-4">
+                                                    <div className="flex flex-col min-w-0 md:max-w-[200px]">
+                                                        <span className="text-zinc-900 dark:text-zinc-100 font-semibold text-[12px] md:text-[12px] truncate leading-tight block">{ad.adName || "Unnamed"}</span>
+                                                        <span className="text-[10px] text-zinc-400 font-bold truncate opacity-80 block">{ad.campaignName}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="px-4 hidden md:table-cell">
+                                                    <div className="flex items-center justify-center">
+                                                        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Active</span>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right font-black text-[11px] md:text-[12px] text-zinc-900 dark:text-zinc-100 px-2">${Number(ad.spend).toLocaleString()}</TableCell>
+                                                <TableCell className="text-right font-bold text-[12px] text-zinc-500 px-4 hidden lg:table-cell">{Number(ad.impressions).toLocaleString()}</TableCell>
+                                                <TableCell className="text-right font-bold text-[12px] text-zinc-500 px-4 hidden lg:table-cell">{Number(ad.clicks).toLocaleString()}</TableCell>
+                                                <TableCell className="text-right font-black text-[12px] md:text-[15px] text-[#1a73e8] px-2 bg-blue-50/10 dark:bg-blue-900/5">{(Number(ad.ctr) || 0).toFixed(1)}%</TableCell>
+                                                <TableCell className="px-2">
+                                                    <div className="flex items-center justify-center">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName);
+                                                                onSelectAd(ad);
                                                             }}
+                                                            className="h-8 px-2 md:px-4 group-hover/row:bg-[#1a73e8] group-hover/row:text-white rounded-xl transition-all gap-1.5 font-black text-[10px] uppercase tracking-widest"
                                                         >
-                                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-10">
-                                                                <ZoomIn className="text-white w-5 h-5" />
-                                                            </div>
-                                                            <img src={ad.thumbnailUrl || "/placeholder.svg"} className="w-full h-full object-cover group-hover/row:scale-110 transition-transform duration-500" alt="Preview" />
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="px-4">
-                                                        <div className="flex flex-col max-w-[200px]">
-                                                            <span className="text-zinc-900 dark:text-zinc-100 font-black text-[13px] truncate leading-tight">{ad.adName || "Unnamed"}</span>
-                                                            <span className="text-[10px] text-zinc-400 font-bold truncate opacity-80">{ad.campaignName}</span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="px-4 hidden md:table-cell">
-                                                        <div className="flex items-center justify-center">
-                                                            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                                                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                                                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Active</span>
-                                                            </div>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-right font-black text-[14px] text-zinc-900 dark:text-zinc-100 px-4">${Number(ad.spend).toLocaleString()}</TableCell>
-                                                    <TableCell className="text-right font-bold text-[13px] text-zinc-500 px-4 hidden sm:table-cell">{Number(ad.impressions).toLocaleString()}</TableCell>
-                                                    <TableCell className="text-right font-bold text-[13px] text-zinc-500 px-4 hidden md:table-cell">{Number(ad.clicks).toLocaleString()}</TableCell>
-                                                    <TableCell className="text-right font-black text-[15px] text-[#1a73e8] px-6 bg-blue-50/10 dark:bg-blue-900/5">{(Number(ad.ctr) || 0).toFixed(2)}%</TableCell>
-                                                    <TableCell className="px-4">
-                                                        <div className="flex items-center justify-center">
-                                                            <Button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    onSelectAd(ad);
-                                                                }}
-                                                                className="relative h-9 px-5 bg-zinc-50 dark:bg-zinc-900/50 hover:bg-[#1a73e8] border border-zinc-200 dark:border-white/10 hover:border-[#1a73e8] text-zinc-600 dark:text-zinc-400 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-sm hover:shadow-[0_0_20px_rgba(26,115,232,0.3)] transition-all duration-300 group overflow-hidden"
-                                                            >
-                                                                <span className="relative z-10 flex items-center">
-                                                                    <Sparkles className="h-3.5 w-3.5 mr-2 text-[#1a73e8] group-hover:text-white transition-colors" />
-                                                                    Analyze
-                                                                </span>
-                                                            </Button>
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                            {filteredAds.length > displayLimit && (
-                                                <TableRow className="hover:bg-transparent">
-                                                    <TableCell colSpan={9} className="p-8 text-center border-none">
-                                                        <Button
-                                                            onClick={() => setDisplayLimit(prev => prev + 24)}
-                                                            variant="outline"
-                                                            className="h-12 px-8 border-none bg-blue-50 text-[#1a73e8] dark:bg-white/5 dark:text-blue-400 text-[11px] font-black uppercase tracking-widest rounded-2xl"
-                                                        >
-                                                            Show More Creatives
+                                                            <Sparkles className="h-3.5 w-3.5" />
+                                                            <span>Analyze</span>
                                                         </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                        {filteredAds.length > displayLimit && (
+                                            <TableRow className="hover:bg-transparent">
+                                                <TableCell colSpan={9} className="p-8 text-center border-none">
+                                                    <Button
+                                                        onClick={() => setDisplayLimit(prev => prev + 24)}
+                                                        variant="outline"
+                                                        className="h-12 px-8 border-none bg-blue-50 text-[#1a73e8] dark:bg-white/5 dark:text-blue-400 text-[11px] font-black uppercase tracking-widest rounded-2xl"
+                                                    >
+                                                        Show More Creatives
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </>
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
-                </Card>
-            </div>
+                </Card >
+            </div >
         )
     }
 
@@ -1286,16 +1227,15 @@ export default function GoogleAdsView({
                             <div className="w-9 h-9 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20 shadow-inner group/icon shrink-0">
                                 <TrendingUp className="h-4 w-4 text-[#1a73e8] dark:text-[#4285f4]" />
                             </div>
-                            <div className="flex flex-col min-w-0">
-                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#1a73e8] opacity-80 leading-tight">Google Ads Platform</span>
-                                <div className="flex items-center gap-1.5 group/acc cursor-pointer">
-                                    <h1 className="text-[13px] md:text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-100 group-hover/acc:text-[#1a73e8] transition-colors flex items-center gap-1.5 truncate leading-tight">
-                                        {selectedAccountId !== "all"
-                                            ? (googleAds.find(a => a.adAccountId === selectedAccountId)?.accountName || "Account")
-                                            : "Global Overview"}
-                                        <ChevronDown className="h-2.5 w-2.5 text-zinc-400 shrink-0" />
-                                    </h1>
-                                </div>
+                            <div className="flex flex-col min-w-0 gap-0.5">
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#1a73e8] opacity-80 leading-tight">
+                                    Google Ads Platform
+                                </span>
+                                <h1 className="text-[13px] font-black tracking-tight text-zinc-900 dark:text-zinc-100 truncate leading-tight">
+                                    {selectedAccountId !== "all"
+                                        ? (googleAds.find(a => a.adAccountId === selectedAccountId)?.accountName || "Account")
+                                        : "Global Overview"}
+                                </h1>
                             </div>
                         </div>
 
@@ -1308,7 +1248,7 @@ export default function GoogleAdsView({
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52 rounded-2xl p-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-2xl z-50">
-                                <DropdownMenuItem onClick={() => setDataSource("database")} className={cn("rounded-xl py-2.5 cursor-pointer mb-1", dataSource === "database" && "bg-blue-500/5")}>
+                                <DropdownMenuItem onClick={() => { setDataSource("database"); onDataSourceChange?.("database"); }} className={cn("rounded-xl py-2.5 cursor-pointer mb-1", dataSource === "database" && "bg-blue-500/5")}>
                                     <div className="flex items-center gap-2.5">
                                         <Database className={cn("h-4 w-4 shrink-0", dataSource === "database" ? "text-blue-500" : "text-zinc-500")} />
                                         <div>
@@ -1317,7 +1257,7 @@ export default function GoogleAdsView({
                                         </div>
                                     </div>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setDataSource("realtime")} className={cn("rounded-xl py-2.5 cursor-pointer", dataSource === "realtime" && "bg-blue-500/5")}>
+                                <DropdownMenuItem onClick={() => { setDataSource("realtime"); onDataSourceChange?.("realtime"); }} className={cn("rounded-xl py-2.5 cursor-pointer", dataSource === "realtime" && "bg-blue-500/5")}>
                                     <div className="flex items-center gap-2.5">
                                         <Wifi className={cn("h-4 w-4 shrink-0", dataSource === "realtime" ? "text-blue-500" : "text-zinc-500")} />
                                         <div>
@@ -1339,7 +1279,32 @@ export default function GoogleAdsView({
                             <TrendingUp className="h-4 w-4 text-[#1a73e8] dark:text-[#4285f4]" />
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#1a73e8] opacity-80 truncate">Google Ads Platform</span>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger className="flex items-center gap-1 cursor-pointer group/plat">
+                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#1a73e8] opacity-80 truncate group-hover/plat:opacity-100 transition-opacity">
+                                        {selectedPlatform === "all" ? "All Platforms" : `${selectedPlatform} Ads Platform`}
+                                    </span>
+                                    <ChevronDown className="h-2.5 w-2.5 text-[#1a73e8] opacity-50 group-hover/plat:opacity-100 transition-all" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className="w-52 rounded-2xl p-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-zinc-200 dark:border-white/10 shadow-2xl z-[100]">
+                                    <DropdownMenuItem onClick={() => onPlatformChange?.("all")} className="rounded-xl py-2 cursor-pointer mb-1">
+                                        <Globe className="h-4 w-4 mr-2 text-zinc-500" />
+                                        <span className="text-xs font-bold">All Platforms</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onPlatformChange?.("google")} className="rounded-xl py-2 cursor-pointer mb-1">
+                                        <Play className="h-4 w-4 mr-2 text-blue-500" />
+                                        <span className="text-xs font-bold">Google Ads</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onPlatformChange?.("meta")} className="rounded-xl py-2 cursor-pointer mb-1">
+                                        <Facebook className="h-4 w-4 mr-2 text-blue-600" />
+                                        <span className="text-xs font-bold">Meta Ads</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onPlatformChange?.("adroll")} className="rounded-xl py-2 cursor-pointer">
+                                        <Target className="h-4 w-4 mr-2 text-[#E0267D]" />
+                                        <span className="text-xs font-bold">AdRoll</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             <div className="flex items-center gap-2 group/acc cursor-pointer">
                                 <h1 className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-100 group-hover/acc:text-[#1a73e8] transition-colors flex items-center gap-1.5 truncate">
                                     {selectedAccountId !== "all"
@@ -1510,7 +1475,7 @@ export default function GoogleAdsView({
                 </div>
             ) : (
                 <div className="flex flex-col w-full">
-                    <div className="py-8 space-y-8 w-full max-w-full overflow-hidden px-0">
+                    <div className="py-4 md:py-6 space-y-4 md:space-y-6 w-full max-w-full overflow-hidden px-0">
                         <div className="flex flex-col lg:flex-row lg:items-center gap-4 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl md:rounded-[1.5rem] p-3 shadow-xl relative group">
                             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 flex-1 min-w-0">
                                 <div className="relative group w-full md:max-w-xs">
