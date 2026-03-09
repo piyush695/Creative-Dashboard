@@ -3297,6 +3297,7 @@ function DashboardContent() {
                             setActiveAnalysis({ type: "score", name: name })
                           }
                           activeAnalysis={activeAnalysis}
+                          onTabChange={() => setActiveAnalysis(null)}
                         />
                       ) : (
                         <MetaAdsView
@@ -3340,6 +3341,7 @@ function DashboardContent() {
                           setActiveAnalysis({ type: "score", name: name })
                         }
                         activeAnalysis={activeAnalysis}
+                        onTabChange={() => setActiveAnalysis(null)}
                       />
                     ) : (
                       <AdrollView

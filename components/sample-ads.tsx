@@ -171,19 +171,31 @@ const AdGridCard = ({
         </div>
 
         {/* Metrics Grid */}
-        <div className="grid grid-cols-2 gap-2 mt-auto">
+        <div className="grid grid-cols-3 gap-1.5 mt-auto">
           {/* Spend */}
-          <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-2 border border-zinc-100 dark:border-zinc-800/50 group-hover:border-zinc-200 dark:group-hover:border-zinc-700 transition-colors cursor-text select-text">
-            <p className="text-[9px] font-medium text-muted-foreground mb-0.5">Spend</p>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">
+          <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-1.5 border border-zinc-100 dark:border-zinc-800/50 group-hover:border-zinc-200 dark:group-hover:border-zinc-700 transition-colors cursor-text select-text">
+            <p className="text-[8px] font-bold text-muted-foreground mb-0.5">Spend</p>
+            <p className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
               ${Number(ad.spend || 0).toLocaleString()}
             </p>
           </div>
 
+          {/* ROAS */}
+          <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-lg p-1.5 border border-indigo-100 dark:border-indigo-500/20 group-hover:border-indigo-200 dark:group-hover:border-indigo-700 transition-colors cursor-text select-text text-center">
+            <p className="text-[8px] font-bold text-indigo-500 mb-0.5">ROAS</p>
+            <p className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 tracking-tight tabular-nums">
+              {(() => {
+                  const rev = Number(ad.purchaseValue) || 0;
+                  const sp = Number(ad.spend) || 0;
+                  return sp > 0 ? (rev / sp).toFixed(2) : "0.00";
+              })()}x
+            </p>
+          </div>
+
           {/* CTR */}
-          <div className="bg-primary/5 dark:bg-primary/10 rounded-lg p-2 border border-primary/10 dark:border-primary/20 text-right group-hover:border-primary/20 transition-colors cursor-text select-text">
-            <p className="text-[9px] font-medium text-muted-foreground mb-0.5">CTR</p>
-            <p className="text-sm font-semibold text-primary tracking-tight tabular-nums">
+          <div className="bg-primary/5 dark:bg-primary/10 rounded-lg p-1.5 border border-primary/10 dark:border-primary/20 text-right group-hover:border-primary/20 transition-colors cursor-text select-text">
+            <p className="text-[8px] font-bold text-muted-foreground mb-0.5">CTR</p>
+            <p className="text-[11px] font-black text-primary tracking-tight tabular-nums">
               {Number(ad.ctr || 0).toFixed(2)}%
             </p>
           </div>
@@ -349,18 +361,29 @@ const AdListCard = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-6 sm:gap-8 pt-3 border-t border-zinc-100 dark:border-white/5 mt-auto">
+        <div className="flex items-center gap-4 sm:gap-6 pt-3 border-t border-zinc-100 dark:border-white/5 mt-auto">
           <div>
-            <p className="text-[10px] text-muted-foreground font-medium mb-0.5 cursor-text">Spend</p>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 cursor-text">
+            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-tightest mb-0.5 cursor-text">Spend</p>
+            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100 cursor-text tracking-tighter">
               ${Number(ad.spend || 0).toLocaleString()}
             </p>
           </div>
 
           <div>
-            <p className="text-[10px] text-muted-foreground font-medium mb-0.5 cursor-text">CTR</p>
+            <p className="text-[9px] text-indigo-500 font-black uppercase tracking-tightest mb-0.5 cursor-text">ROAS</p>
+            <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 cursor-text tracking-tighter">
+              {(() => {
+                  const rev = Number(ad.purchaseValue) || 0;
+                  const sp = Number(ad.spend) || 0;
+                  return sp > 0 ? (rev / sp).toFixed(2) : "0.00";
+              })()}x
+            </p>
+          </div>
+
+          <div>
+            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-tightest mb-0.5 cursor-text">CTR</p>
             <div className="flex items-center gap-1.5">
-              <p className="text-sm font-semibold text-primary leading-none tabular-nums cursor-text">
+              <p className="text-xs font-black text-primary leading-none tabular-nums cursor-text tracking-tighter">
                 {Number(ad.ctr || 0).toFixed(2)}%
               </p>
             </div>
@@ -442,8 +465,15 @@ const AdTableRow = ({
           {ad.performanceLabel || "Active"}
         </span>
       </TableCell>
-      <TableCell className="text-right font-bold text-xs cursor-text">${Number(ad.spend || 0).toLocaleString()}</TableCell>
-      <TableCell className="text-right font-black text-primary text-sm cursor-text">{Number(ad.ctr || 0).toFixed(2)}%</TableCell>
+      <TableCell className="text-right font-bold text-xs cursor-text whitespace-nowrap">${Number(ad.spend || 0).toLocaleString()}</TableCell>
+      <TableCell className="text-right font-black text-indigo-600 dark:text-indigo-400 text-xs cursor-text">
+          {(() => {
+                  const rev = Number(ad.purchaseValue) || 0;
+                  const sp = Number(ad.spend) || 0;
+                  return sp > 0 ? (rev / sp).toFixed(2) : "0.00";
+              })()}x
+      </TableCell>
+      <TableCell className="text-right font-black text-primary text-xs cursor-text">{Number(ad.ctr || 0).toFixed(2)}%</TableCell>
     </TableRow>
   );
 }
@@ -560,6 +590,7 @@ export default function SampleAds({
                     <TableHead className="font-bold text-[10px] uppercase">Ad Name</TableHead>
                     <TableHead className="font-bold text-[10px] uppercase">Status</TableHead>
                     <TableHead className="text-right font-bold text-[10px] uppercase">Spend</TableHead>
+                    <TableHead className="text-right font-bold text-[10px] uppercase text-indigo-500">ROAS</TableHead>
                     <TableHead className="text-right font-bold text-[10px] uppercase">CTR</TableHead>
                   </TableRow>
                 </TableHeader>

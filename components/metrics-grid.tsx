@@ -68,7 +68,7 @@ export default function MetricsGrid({ adData, selectedMetricLabel, onSelectMetri
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 pb-2">
+      <div className="grid grid-cols-2 2xl:grid-cols-3 gap-3 md:gap-4 pb-2 w-full">
         {metrics.map((metric) => {
           const Icon = metric.icon
           const isSelected = selectedMetricLabel === metric.label
@@ -94,8 +94,8 @@ export default function MetricsGrid({ adData, selectedMetricLabel, onSelectMetri
                     </div>
                   </div>
                   <div className="flex items-baseline gap-1 flex-wrap">
-                    <span className="text-lg md:text-xl lg:text-2xl font-black text-foreground tracking-tightest leading-none truncate max-w-full">{metric.value}</span>
-                    <span className="text-[9px] md:text-[10px] font-extrabold text-primary/60">{metric.unit}</span>
+                    <span className="text-xl sm:text-2xl font-black text-foreground tracking-tightest leading-none truncate max-w-full">{metric.value}</span>
+                    <span className="text-[10px] sm:text-xs font-extrabold text-primary/60">{metric.unit}</span>
                   </div>
                   <div className="flex items-center gap-1.5 pt-1.5 border-t border-zinc-100 dark:border-white/5 w-full mt-1">
                     <div className="w-1 h-1 rounded-full bg-primary/40 group-hover:bg-primary transition-colors shrink-0" />

@@ -38,6 +38,7 @@ interface MetaAdDetailViewProps {
     onSelectMetric?: (label: string) => void
     onSelectScore?: (label: string) => void
     activeAnalysis?: { type: string, name: string } | null
+    onTabChange?: () => void
 }
 
 // Sub-components defined first to avoid hoisting issues and ensure clean symbol table
@@ -50,7 +51,7 @@ function SummaryTab({ ad, formatCurrency, benchmark, onSelectMetric, activeAnaly
 }) {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
                 <Card className="p-3 md:p-5 bg-zinc-950 border-white/5 rounded-2xl shadow-xl relative overflow-hidden flex flex-col min-h-[180px] md:min-h-[250px]">
                     <div className="absolute top-0 right-0 w-32 md:w-48 h-32 md:h-48 bg-blue-500/10 rounded-full blur-[60px] md:blur-[80px] -mr-16 md:-mr-24 -mt-16 md:-mt-24" />
                     <div className="relative z-10 flex flex-col h-full">
@@ -166,7 +167,7 @@ function AnalysisTab({ ad, benchmark }: { ad: AdData, benchmark?: any }) {
                 </div>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
                 {metrics.map((m, i) => (
                     <Card key={i} className="p-5 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/5 rounded-2xl hover:border-blue-500/40 transition-all group">
                         <div className="flex items-start justify-between mb-4">
@@ -244,7 +245,7 @@ function AIDATab({ ad }: { ad: AdData }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-12">
+            <div className="grid gap-6 md:gap-12" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
                 {aida.map((item, i) => (
                     <div key={i} className="space-y-3 md:space-y-4">
                         <div className="flex items-center justify-between">
@@ -263,7 +264,7 @@ function AIDATab({ ad }: { ad: AdData }) {
 
             <div className="mt-6 md:mt-10 pt-6 md:pt-8 border-t border-zinc-200 dark:border-white/10">
                 <h4 className="text-[8px] md:text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-4 md:mb-6 text-center">Psychological Biases</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
+                <div className="grid gap-2 md:gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
                     <PsychBox label="Loss Aversion" present={ad.lossAversionPresent} strength={ad.lossAversionStrength} icon={AlertCircle} />
                     <PsychBox label="Scarcity" present={ad.scarcityPresent} strength={ad.scarcityStrength} icon={Activity} />
                     <PsychBox label="Social Proof" present={ad.socialProofPresent} strength={ad.socialProofStrength} icon={Shield} />
@@ -276,7 +277,7 @@ function AIDATab({ ad }: { ad: AdData }) {
 function InsightsTab({ ad }: { ad: AdData }) {
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500 pr-2 overflow-x-hidden">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
                         <div className="p-1 px-2 rounded-md bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase tracking-widest">Strengths</div>
@@ -312,7 +313,7 @@ function InsightsTab({ ad }: { ad: AdData }) {
                         <div className="p-1 px-2 rounded-md bg-blue-500/10 text-blue-600 text-[9px] font-black uppercase tracking-widest">Intelligence</div>
                         <h3 className="text-xs font-bold text-zinc-400">Deep Creative Analysis</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
                         {ad.psychology_analysis && (
                             <Card className="p-4 bg-blue-500/5 border-blue-500/10 rounded-2xl">
                                 <h4 className="text-[8px] font-black uppercase tracking-widest text-blue-500 mb-2">Psychology</h4>
@@ -400,7 +401,7 @@ function StrategyTab({ ad }: { ad: AdData }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
                 {recommendations.map((r, i) => (
                     <Card key={i} className={cn("p-4 md:p-5 rounded-2xl md:rounded-3xl border flex flex-col gap-3 group transition-all hover:shadow-xl hover:bg-white dark:hover:bg-zinc-900", r.color)}>
                         <div className="flex items-center justify-between gap-3">
@@ -441,7 +442,7 @@ function StrategyTab({ ad }: { ad: AdData }) {
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+            <div className="grid gap-8 mt-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
                 <Card className="p-6 bg-zinc-50 dark:bg-white/2 border border-zinc-200 dark:border-white/5 rounded-3xl">
                     <div className="flex items-center gap-2 mb-4">
                         <MessageSquare className="h-5 w-5 text-blue-500" />
@@ -483,7 +484,8 @@ export default function MetaAdDetailView({
     onEnlargeImage,
     onSelectMetric,
     onSelectScore,
-    activeAnalysis
+    activeAnalysis,
+    onTabChange
 }: MetaAdDetailViewProps) {
     const [activeTab, setActiveTab] = useState('summary')
 
@@ -502,6 +504,9 @@ export default function MetaAdDetailView({
         const num = typeof val === 'string' ? parseFloat(val) : val
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num)
     }
+
+    const activeTabObj = tabs.find(t => t.id === activeTab) || tabs[0]
+    const ActiveTabIcon = activeTabObj.icon
 
     return (
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 h-full min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-4 lg:pb-10 pt-2 lg:pt-4">
@@ -523,7 +528,10 @@ export default function MetaAdDetailView({
                             return (
                                 <button
                                     key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
+                                    onClick={() => {
+                                        setActiveTab(tab.id)
+                                        onTabChange?.()
+                                    }}
                                     className={cn(
                                         "w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-200 group relative",
                                         isActive
@@ -573,7 +581,10 @@ export default function MetaAdDetailView({
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => {
+                                setActiveTab(tab.id)
+                                onTabChange?.()
+                            }}
                             className={cn(
                                 "whitespace-nowrap px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
                                 activeTab === tab.id
@@ -589,40 +600,64 @@ export default function MetaAdDetailView({
                 <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pr-2 lg:pr-6">
                     <div className="space-y-6 pb-10">
                         {/* Global Sticky Header */}
-                        <div className="sticky top-0 z-30 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-zinc-100 dark:border-white/5 pb-3 pt-1 mb-4">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                                <div className="space-y-1 min-w-0 flex-1">
-                                    <div className="flex flex-wrap items-center gap-1">
-                                        <Badge variant="outline" className="text-[6px] md:text-[7px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-600 border-none px-1.5 py-0.5">
-                                            {ad.platform || 'Meta'} Intelligence
-                                        </Badge>
-                                        <Badge variant="outline" className={cn(
-                                            "text-[6px] md:text-[7px] font-black uppercase tracking-widest border-none px-1.5 py-0.5",
-                                            ad.performanceLabel === 'TOP_PERFORMER' ? "bg-emerald-500/10 text-emerald-600" : "bg-zinc-500/10 text-zinc-500"
-                                        )}>
-                                            {ad.performanceLabel?.replace(/_/g, ' ') || 'STANDARD'}
-                                        </Badge>
+                        <div className="sticky top-0 z-40 pb-3 pt-2 mb-4 lg:mb-6">
+                            <div className="bg-white/90 dark:bg-[#09090b]/95 backdrop-blur-xl border border-zinc-200/50 dark:border-white/5 shadow-sm rounded-[20px] p-3.5 md:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 transition-all duration-300 relative">
+                                <div className="flex items-center gap-3 min-w-0 flex-1 pr-10 sm:pr-0">
+                                    <div className={cn("flex flex-shrink-0 items-center justify-center w-9 h-9 md:w-10 md:h-10 border border-zinc-100 dark:border-white/5 rounded-xl shadow-inner", activeTabObj.bgColor)}>
+                                        <ActiveTabIcon className={cn("h-4 w-4 md:h-5 md:w-5 transition-colors duration-300", activeTabObj.color)} />
                                     </div>
-                                    <h2 className="text-xs md:text-base lg:text-lg font-bold text-zinc-900 dark:text-white truncate max-w-full tracking-tight">
-                                        {ad.adName}
-                                    </h2>
+                                    <div className="space-y-0.5 md:space-y-1 min-w-0 flex-1">
+                                        <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+                                            <Badge variant="outline" className={cn(
+                                                "text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] border-none px-1.5 py-0.5 flex items-center gap-1 shrink-0 rounded-md",
+                                                ad.performanceLabel === 'TOP_PERFORMER' ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400" : "bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-400"
+                                            )}>
+                                                <div className={cn("w-1 h-1 rounded-full shrink-0", 
+                                                    ad.performanceLabel === 'TOP_PERFORMER' ? "bg-emerald-500 animate-pulse" : "bg-zinc-400"
+                                                )} />
+                                                {ad.performanceLabel?.replace(/_/g, ' ') || 'STANDARD'}
+                                            </Badge>
+                                            <span className="text-[8px] font-mono text-zinc-400 truncate opacity-60 min-w-0 shrink">ID: {ad.adId}</span>
+                                        </div>
+                                        <h2 
+                                            className="text-xs md:text-sm font-bold text-zinc-900 dark:text-white truncate max-w-full tracking-tight"
+                                            title={ad.adName}
+                                        >
+                                            {ad.adName}
+                                        </h2>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                    <div className="flex flex-col items-end px-2 py-0.5 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-100 dark:border-white/5">
-                                        <span className="text-[6px] font-black uppercase tracking-widest text-zinc-400">Total Spend</span>
-                                        <span className="text-[10px] md:text-xs font-bold font-mono tracking-tighter">{formatCurrency(ad.spend)}</span>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-3 bg-zinc-50 dark:bg-white/[0.02] border border-zinc-100 dark:border-white/5 rounded-[14px] px-3.5 py-2 w-full sm:w-auto">
+                                        <div className="flex flex-col border-r border-zinc-200 dark:border-white/10 pr-4 sm:pr-3">
+                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-500 mb-0.5">Total Spend</span>
+                                            <span className="text-[10px] md:text-xs font-bold font-mono tracking-tighter text-zinc-900 dark:text-zinc-100">{formatCurrency(ad.spend)}</span>
+                                        </div>
+                                        <div className="flex flex-col pl-1">
+                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-500 mb-0.5">Efficiency</span>
+                                            <span className="text-[10px] md:text-xs font-bold font-mono tracking-tighter text-blue-600 dark:text-blue-400">{ad.ctr}% CTR</span>
+                                        </div>
                                     </div>
-                                    <div className="flex flex-col items-end px-2 py-0.5 bg-blue-50 dark:bg-blue-600/10 rounded-lg border border-blue-100 dark:border-blue-600/10">
-                                        <span className="text-[6px] font-black uppercase tracking-widest text-blue-600">Efficiency</span>
-                                        <span className="text-[10px] md:text-xs font-bold font-mono tracking-tighter text-blue-600">{ad.ctr}% CTR</span>
-                                    </div>
+                                    
+                                    {/* Desktop flow close button */}
                                     <Button
                                         variant="ghost"
                                         size="icon"
                                         onClick={onClose}
-                                        className="h-8 w-8 md:h-10 md:w-10 rounded-xl hover:bg-red-500/10 text-red-500 transition-all duration-300 group/exit"
+                                        className="hidden sm:flex shrink-0 h-9 w-9 rounded-xl border border-transparent hover:border-rose-200 dark:hover:border-rose-500/20 bg-zinc-50 dark:bg-white/[0.02] hover:bg-rose-50 dark:hover:bg-rose-500/10 text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all duration-300 ml-1"
                                     >
-                                        <X className="h-5 w-5 md:h-6 md:w-6 transition-transform group-hover/exit:scale-110 group-active/exit:scale-90" strokeWidth={3} />
+                                        <X className="h-4 w-4" strokeWidth={2.5} />
+                                    </Button>
+                                    
+                                    {/* Mobile absolute right close button */}
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={onClose}
+                                        className="sm:hidden absolute top-3 right-3 shrink-0 h-7 w-7 rounded-lg bg-zinc-100/70 dark:bg-white/5 text-zinc-500 dark:text-zinc-400 hover:text-rose-500"
+                                    >
+                                        <X className="h-3.5 w-3.5" strokeWidth={2.5} />
                                     </Button>
                                 </div>
                             </div>
