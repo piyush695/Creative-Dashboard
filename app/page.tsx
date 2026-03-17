@@ -299,6 +299,28 @@ function DashboardContent() {
     setLastRefreshTime(new Date());
     document.body.style.pointerEvents = "auto";
     document.body.style.overflow = "";
+
+    // History Guard: Trap the browser back button to prevent jumping back to auth pages
+    const handlePopState = (event: PopStateEvent) => {
+      // Re-push state immediately to stay on the current page
+      window.history.pushState(null, "", window.location.href);
+      
+      // Close any open overlays instead of navigating away
+      setIsProfileOpen((prev) => { if(prev) return false; return prev; });
+      setIsSettingsOpen((prev) => { if(prev) return false; return prev; });
+      setIsGuideOpen((prev) => { if(prev) return false; return prev; });
+      setIsViewAllAdsOpen((prev) => { if(prev) return false; return prev; });
+      setSelectedAdId((prev) => { if(prev) return null; return prev; });
+      setActiveView((prev) => { if(prev !== "dashboard") return "dashboard"; return prev; });
+    };
+
+    // Initialize the trap
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
   }, []);
 
   // Synchronize settings and platform state from localStorage (only once on mount/settings close)
@@ -359,7 +381,7 @@ function DashboardContent() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.replace("/login");
+      window.location.replace("/login");
     } else if (status === "authenticated") {
       // Load connected platforms from DB
       getConnectedPlatforms().then((res) => {
@@ -410,7 +432,12 @@ function DashboardContent() {
     setSelectedAccountId("all");
     setIsViewAllAdsOpen(false);
     setIsSearchDropdownOpen(false);
-  }, [selectedPlatform]);
+
+    // Revert to dashboard if switching away from Meta while in AI Studio
+    if (selectedPlatform !== "meta" && activeView === "ai-studio") {
+      setActiveView("dashboard");
+    }
+  }, [selectedPlatform, activeView]);
 
   // Account-level state synchronization: Clear selected ad if it doesn't belong to the selected account
   // This addresses the glitch where switching accounts while an ad is analyzed kept the old data visible.
@@ -550,8 +577,8 @@ function DashboardContent() {
         });
       }
 
-      // Remove the query param without refreshing
-      router.replace("/");
+      // Remove the query param without refreshing and without adding to history
+      window.history.replaceState({}, '', '/');
     }
   }, [searchParams, router, toast, session, status]);
 
@@ -806,6 +833,7 @@ function DashboardContent() {
         className="flex items-center justify-between px-6 md:px-8 border-b border-border shadow-[0_2px_4px_rgba(0,0,0,0.02)] h-12 md:h-14 z-[70] shrink-0 sticky top-0 bg-white dark:bg-zinc-950 transition-all duration-300 relative"
       >
         <button
+          type="button"
           suppressHydrationWarning
           onClick={() => {
             // Close all overlay views
@@ -950,8 +978,9 @@ function DashboardContent() {
                 <div suppressHydrationWarning className="h-4 w-px bg-border dark:bg-zinc-700 mx-1"></div>
               )}
 
-            <div className="relative group/help flex items-center">
+            <div suppressHydrationWarning className="relative group/help flex items-center">
               <Button
+                suppressHydrationWarning
                 variant="outline"
                 size="icon"
                 className="rounded-full h-8 w-8 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800/80 active:scale-95 flex-shrink-0 group"
@@ -964,8 +993,9 @@ function DashboardContent() {
               >
                 <HelpCircle className="h-[1rem] w-[1rem] text-muted-foreground group-hover:text-primary transition-transform" />
               </Button>
-              <div className="absolute right-[100%] top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover/help:opacity-100 group-hover/help:pointer-events-auto transition-all duration-300 translate-x-1 group-hover/help:translate-x-0 z-30 pr-3">
+              <div suppressHydrationWarning className="absolute right-[100%] top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover/help:opacity-100 group-hover/help:pointer-events-auto transition-all duration-300 translate-x-1 group-hover/help:translate-x-0 z-30 pr-3">
                 <button
+                  suppressHydrationWarning
                   className="flex"
                   onClick={() => {
                     setIsGuideOpen(true);
@@ -974,18 +1004,20 @@ function DashboardContent() {
                     setIsViewAllAdsOpen(false);
                   }}
                 >
-                  <div className="px-3 py-1.5 bg-zinc-950 dark:bg-white text-zinc-50 dark:text-zinc-900 text-[10px] font-black rounded-lg shadow-2xl whitespace-nowrap flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all border border-black/10 dark:border-white/10">
+                  <div suppressHydrationWarning className="px-3 py-1.5 bg-zinc-950 dark:bg-white text-zinc-50 dark:text-zinc-900 text-[10px] font-black rounded-lg shadow-2xl whitespace-nowrap flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all border border-black/10 dark:border-white/10">
                     <BookOpen className="w-3.5 h-3.5 text-primary" />
                     Help & Guide
                   </div>
                 </button>
               </div>
               {/* Invisible Bridge to maintain hover state */}
-              <div className="absolute right-full top-0 bottom-0 w-12 hidden group-hover/help:block" />
+              <div suppressHydrationWarning className="absolute right-full top-0 bottom-0 w-12 hidden group-hover/help:block" />
             </div>
 
-            <div className="h-4 w-px bg-border dark:bg-zinc-700 mx-1"></div>
-            <ModeToggle />
+            <div suppressHydrationWarning className="h-4 w-px bg-border dark:bg-zinc-700 mx-1"></div>
+            <div suppressHydrationWarning>
+              <ModeToggle />
+            </div>
           </div>
 
           {/* Mobile Controls (9-dots Menu) */}
@@ -1564,46 +1596,48 @@ function DashboardContent() {
                   )}
                 </Button>
 
-                {/* AI Studio Link */}
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setActiveView("ai-studio");
-                    setSelectedAdId(null);
-                    setIsViewAllAdsOpen(false);
-                    setIsGuideOpen(false);
-                    setIsProfileOpen(false);
-                    setIsSettingsOpen(false);
-                    if (isMobile) setIsMobileMenuOpen(false);
-                  }}
-                  className={cn(
-                    "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
-                    activeView === "ai-studio"
-                      ? "bg-[#020617] text-white border border-[#007AFF] active:scale-95"
-                      : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-secondary dark:hover:bg-zinc-800 shadow-none",
-                    isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : "",
-                  )}
-                  title="AI Studio"
-                >
-                  <div
+                {/* AI Studio Link - ONLY VISIBLE ON META */}
+                {selectedPlatform === "meta" && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setActiveView("ai-studio");
+                      setSelectedAdId(null);
+                      setIsViewAllAdsOpen(false);
+                      setIsGuideOpen(false);
+                      setIsProfileOpen(false);
+                      setIsSettingsOpen(false);
+                      if (isMobile) setIsMobileMenuOpen(false);
+                    }}
                     className={cn(
-                      "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
+                      "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
                       activeView === "ai-studio"
-                        ? "bg-white/20"
-                        : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
+                        ? "bg-[#020617] text-white border border-[#007AFF] active:scale-95"
+                        : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-secondary dark:hover:bg-zinc-800 shadow-none",
+                      isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : "",
                     )}
+                    title="AI Studio"
                   >
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  {!isSidebarCollapsed && (
-                    <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
-                      AI Studio
-                    </span>
-                  )}
-                  {!isSidebarCollapsed && activeView === "ai-studio" && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  )}
-                </Button>
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
+                        activeView === "ai-studio"
+                          ? "bg-white/20"
+                          : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
+                      )}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+                    {!isSidebarCollapsed && (
+                      <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                        AI Studio
+                      </span>
+                    )}
+                    {!isSidebarCollapsed && activeView === "ai-studio" && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    )}
+                  </Button>
+                )}
               </div>
             )}
 

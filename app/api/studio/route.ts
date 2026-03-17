@@ -195,9 +195,17 @@ export async function POST(request: Request) {
       const response = await generateWithFallback(userMessageContent, 4000);
 
       const aiText = response.content[0].type === 'text' ? response.content[0].text : '';
-      const { parsed: brief } = extractAndRepairJson(aiText);
-
-      if (!brief) throw new Error('Failed to parse creative brief from AI');
+      let brief: any;
+      try {
+        brief = extractAndRepairJson(aiText);
+      } catch (e) {
+        console.error("Error parsing AI Text", e);
+      }
+      
+      if (!brief) {
+        console.error("AI response could not be parsed as JSON:", aiText);
+        throw new Error(`Failed to parse AI response. Raw output: ${aiText.substring(0, 150)}...`);
+      }
 
       let imageResult: any = null;
       try {
@@ -237,7 +245,12 @@ export async function POST(request: Request) {
         text: `Generate a detailed creative brief for a ${type} advertisement based on this instruction: "${generationPrompt}".
         You MUST return valid JSON in this exact structure:
         {
-          "creativeConcept": { "title": "Creative Title", "rationale": "Explanation" },
+          "creativeConcept": { 
+            "title": "Creative Title", 
+            "rationale": "Explanation",
+            "targetScore": 8.5,
+            "performanceTier": "ELITE"
+          },
           "copywriting": { 
             "headline": { "primary": "Text" }, 
             "body": { "primary": "Text" }, 
@@ -250,9 +263,17 @@ export async function POST(request: Request) {
       const response = await generateWithFallback(userContent, 2000);
 
       const aiText = response.content[0].type === 'text' ? response.content[0].text : '';
-      const { parsed: brief } = extractAndRepairJson(aiText);
-      
-      if (!brief) throw new Error('Failed to generate creative brief');
+      let brief: any;
+      try {
+        brief = extractAndRepairJson(aiText);
+      } catch (e) {
+        console.error("Error parsing AI Text", e);
+      }
+
+      if (!brief) {
+        console.error("Custom AI response could not be parsed as JSON:", aiText);
+        throw new Error(`Failed to generate creative brief. Raw output: ${aiText.substring(0, 150)}...`);
+      }
 
       let imageResult: any = null;
       try {

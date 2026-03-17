@@ -127,6 +127,7 @@ Based on the winning patterns above AND the source creative images provided, syn
     "title": "Short creative concept name",
     "rationale": "Why this specific combination of patterns will outperform - cite specific source data",
     "targetScore": "Expected composite rating (aim for 9.0+)",
+    "performanceTier": "Expected tier (ELITE, PREMIUM, or STANDARD)",
     "adType": "${adType}"
   },
 

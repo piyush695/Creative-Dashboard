@@ -55,7 +55,6 @@ export const authConfig = {
             allowDangerousEmailAccountLinking: true,
             authorization: {
                 params: {
-                    prompt: "consent",
                     access_type: "offline",
                     response_type: "code"
                 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { signIn } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,6 +21,7 @@ import Link from "next/link"
 
 export default function LoginPage() {
     const { toast } = useToast()
+    const { data: session, status } = useSession()
     const searchParams = useSearchParams()
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
@@ -48,6 +49,12 @@ export default function LoginPage() {
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (status === "authenticated") {
+            window.location.replace("/");
+        }
+    }, [status]);
 
     useEffect(() => {
         const error = searchParams.get("error")
@@ -116,7 +123,7 @@ export default function LoginPage() {
             toast({ title: "Error", description: result.error, variant: "destructive" })
         } else {
             toast({ title: "Success", description: "Account verified! Welcome aboard.", variant: "success" })
-            window.location.href = "/?loggedIn=true&welcome=true"
+            window.location.replace("/?loggedIn=true&welcome=true")
         }
     }
 
@@ -191,8 +198,26 @@ export default function LoginPage() {
         }
     }
 
-    const handleGoogleLogin = () => {
-        signIn("google", { callbackUrl: "/?loggedIn=true" })
+    const handleGoogleLogin = async () => {
+        try {
+            // Initiate sign-in but don't automatically redirect
+            // This allows us to use window.location.replace to avoid history entries
+            const result = await signIn("google", { 
+                callbackUrl: "/?loggedIn=true",
+                redirect: false 
+            })
+            
+            if (result?.url) {
+                window.location.replace(result.url)
+            }
+        } catch (error) {
+            console.error("Google login error:", error)
+            toast({
+                title: "Connection Error",
+                description: "Failed to initialize Google login. Please try again.",
+                variant: "destructive"
+            })
+        }
     }
 
     const toggleTheme = () => {
@@ -202,27 +227,25 @@ export default function LoginPage() {
     if (!mounted) return <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#0A0C10]" />;
 
     return (
-        <div className={`min-h-[100svh] w-full flex flex-col items-center transition-all duration-700 relative font-sans ${theme === "dark" ? "bg-[#000000] text-white" : "bg-[#F8F9FB] text-[#081329]"}`}>
+        <div suppressHydrationWarning className={`min-h-[100svh] w-full flex flex-col items-center transition-all duration-700 relative font-sans ${theme === "dark" ? "bg-[#000000] text-white" : "bg-[#F8F9FB] text-[#081329]"}`}>
             {/* Ambient Background Glows */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full opacity-20 blur-[120px] transition-colors duration-1000 bg-blue-300 dark:bg-[#007AFF]" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full opacity-10 blur-[100px] transition-colors duration-1000 bg-indigo-300 dark:bg-[#2DA6E3]" />
+            <div suppressHydrationWarning className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div suppressHydrationWarning className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full opacity-20 blur-[120px] transition-colors duration-1000 bg-blue-300 dark:bg-[#007AFF]" />
+                <div suppressHydrationWarning className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full opacity-10 blur-[100px] transition-colors duration-1000 bg-indigo-300 dark:bg-[#2DA6E3]" />
             </div>
 
             {/* Header: Exact Logo and Theme Toggle */}
-            <header className="w-full flex justify-between items-center z-20 p-4 md:p-8 flex-shrink-0 sticky top-0 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                    <a href="/">
-                        <div className="flex flex-col items-start leading-none cursor-pointer hover:opacity-80 transition-opacity">
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-xl md:text-2xl font-black tracking-tightest text-zinc-900 dark:text-white">
-                                    hola<span className="text-[#007AFF]">prime</span>
-                                </span>
-                                <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-[#007AFF] animate-pulse" />
-                            </div>
-                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-[#007AFF] opacity-80 mt-1">Creative Analyzer</span>
+            <header suppressHydrationWarning className="w-full flex justify-between items-center z-20 p-4 md:p-8 flex-shrink-0 sticky top-0 backdrop-blur-sm">
+                <div suppressHydrationWarning className="flex items-center gap-3">
+                    <div className="flex flex-col items-start leading-none cursor-default">
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-xl md:text-2xl font-black tracking-tightest text-zinc-900 dark:text-white">
+                                hola<span className="text-[#007AFF]">prime</span>
+                            </span>
+                            <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-[#007AFF] animate-pulse" />
                         </div>
-                    </a>
+                        <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-[#007AFF] opacity-80 mt-1">Creative Analyzer</span>
+                    </div>
                 </div>
                 <button
                     onClick={toggleTheme}
@@ -294,7 +317,7 @@ export default function LoginPage() {
                                                         : "Invalid email or password";
                                                     toast({ title: "Login Failed", description: msg, variant: "destructive" })
                                                 } else {
-                                                    window.location.href = "/?loggedIn=true"
+                                                    window.location.replace("/?loggedIn=true")
                                                 }
                                             } finally {
                                                 setIsLoading(false)
