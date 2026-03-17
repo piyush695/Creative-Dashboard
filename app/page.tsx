@@ -101,6 +101,7 @@ import MetricsGrid from "@/components/metrics-grid";
 import ScoresSection from "@/components/scores-section";
 import InsightsSection from "@/components/insights-section";
 import SampleAds from "@/components/sample-ads";
+import CreativeStudioView from "@/components/creative-studio-view";
 import AnalysisSidebar from "@/components/analysis-sidebar";
 import Footer from "@/components/footer";
 import { AdData, PlatformType } from "@/lib/types";
@@ -183,6 +184,10 @@ function DashboardContent() {
   const [googleAds, setGoogleAds] = useState<AdData[]>([]);
   const [recentHistory, setRecentHistory] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPlatform, setSelectedPlatform] = useState<string>("meta");
+  const [activeView, setActiveView] = useState<"dashboard" | "ai-studio">(
+    "dashboard",
+  );
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [activeAnalysis, setActiveAnalysis] = useState<{
@@ -221,7 +226,6 @@ function DashboardContent() {
   const [isCompactModeEnabled, setIsCompactModeEnabled] = useState(false);
   const [isReducedMotionEnabled, setIsReducedMotionEnabled] = useState(false);
   const [isAlertSystemEnabled, setIsAlertSystemEnabled] = useState(false);
-  const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>("meta");
   const [isAddAdDialogOpen, setIsAddAdDialogOpen] = useState(false);
   const [isAddingPlatform, setIsAddingPlatform] = useState(false);
   const [platformSearchQuery, setPlatformSearchQuery] = useState("");
@@ -792,7 +796,9 @@ function DashboardContent() {
   return (
     <div
       suppressHydrationWarning
-      className="flex flex-col h-[100dvh] bg-background dark:bg-[#000000] overflow-hidden relative"
+      className={cn(
+"flex flex-col h-[100dvh] bg-background dark:bg-[#000000] overflow-hidden relative"
+      )}
     >
       {/* Global Sticky Banner - High-End Premium Header */}
       <div
@@ -813,6 +819,7 @@ function DashboardContent() {
             setActiveAnalysis(null);
             setSelectedAccountId("all");
             setIsSearchDropdownOpen(false);
+            setActiveView("dashboard"); // Ensure we are on the dashboard view
           }}
           className="hover:opacity-80 transition-opacity relative z-10"
         >
@@ -1527,10 +1534,11 @@ function DashboardContent() {
                     setIsProfileOpen(false);
                     setIsSettingsOpen(false);
                     if (isMobile) setIsMobileMenuOpen(false);
+                    setActiveView("dashboard");
                   }}
                   className={cn(
                     "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
-                    isViewAllAdsOpen
+                    isViewAllAdsOpen && activeView === "dashboard"
                       ? "bg-[#020617] text-white border border-[#007AFF] active:scale-95"
                       : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-secondary dark:hover:bg-zinc-800 shadow-none",
                     isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : "",
@@ -1539,7 +1547,7 @@ function DashboardContent() {
                   <div
                     className={cn(
                       "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
-                      isViewAllAdsOpen
+                      isViewAllAdsOpen && activeView === "dashboard"
                         ? "bg-white/20"
                         : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
                     )}
@@ -1547,11 +1555,52 @@ function DashboardContent() {
                     <LayoutDashboard className="h-4 w-4" />
                   </div>
                   {!isSidebarCollapsed && (
-                    <span className="text-[11px] font-black uppercase tracking-widest">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
                       Library
                     </span>
                   )}
-                  {isViewAllAdsOpen && !isSidebarCollapsed && (
+                  {isViewAllAdsOpen && activeView === "dashboard" && !isSidebarCollapsed && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  )}
+                </Button>
+
+                {/* AI Studio Link */}
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setActiveView("ai-studio");
+                    setSelectedAdId(null);
+                    setIsViewAllAdsOpen(false);
+                    setIsGuideOpen(false);
+                    setIsProfileOpen(false);
+                    setIsSettingsOpen(false);
+                    if (isMobile) setIsMobileMenuOpen(false);
+                  }}
+                  className={cn(
+                    "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
+                    activeView === "ai-studio"
+                      ? "bg-[#020617] text-white border border-[#007AFF] active:scale-95"
+                      : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-secondary dark:hover:bg-zinc-800 shadow-none",
+                    isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : "",
+                  )}
+                  title="AI Studio"
+                >
+                  <div
+                    className={cn(
+                      "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
+                      activeView === "ai-studio"
+                        ? "bg-white/20"
+                        : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
+                    )}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  {!isSidebarCollapsed && (
+                    <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                      AI Studio
+                    </span>
+                  )}
+                  {!isSidebarCollapsed && activeView === "ai-studio" && (
                     <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                   )}
                 </Button>
@@ -1583,6 +1632,7 @@ function DashboardContent() {
                           setSearchQuery(ad.adId);
                         }
                         setIsViewAllAdsOpen(false);
+                        setActiveView("dashboard");
                       }}
                       className="w-full text-left px-3 py-3 rounded-xl transition-all border group/audit relative overflow-hidden border-transparent hover:bg-secondary/50 dark:hover:bg-zinc-800/40 text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 font-bold"
                     >
@@ -2000,6 +2050,7 @@ function DashboardContent() {
                   isSettingsOpen ||
                   isGuideOpen ||
                   isViewAllAdsOpen ||
+                  activeView === "ai-studio" ||
                   selectedPlatform === "meta" ||
                   selectedPlatform === "google" ||
                   selectedPlatform === "adroll" ||
@@ -2015,19 +2066,21 @@ function DashboardContent() {
                               ? "Guide"
                               : isViewAllAdsOpen
                                 ? "All Ads"
-                                : (selectedPlatform === "meta" || selectedPlatform === "all")
-                                  ? selectedAccountId === "all"
-                                    ? "All Accounts"
-                                    : accounts.find(
-                                      (a) => a.id === selectedAccountId,
-                                    )?.name || "All Accounts"
-                                  : (selectedPlatform === "google" || selectedPlatform === "adroll")
-                                    ? selectedRealtimeCampaign === "all"
-                                      ? "All Campaigns"
-                                      : realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.name ||
-                                      realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.campaignName ||
-                                      "Campaign"
-                                    : ""}
+                                : activeView === "ai-studio"
+                                  ? "AI Studio"
+                                  : (selectedPlatform === "meta" || selectedPlatform === "all")
+                                    ? selectedAccountId === "all"
+                                      ? "All Accounts"
+                                      : accounts.find(
+                                        (a) => a.id === selectedAccountId,
+                                      )?.name || "All Accounts"
+                                    : (selectedPlatform === "google" || selectedPlatform === "adroll")
+                                      ? selectedRealtimeCampaign === "all"
+                                        ? "All Campaigns"
+                                        : realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.name ||
+                                        realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.campaignName ||
+                                        "Campaign"
+                                      : ""}
                       </span>
                     </>
                   )}
@@ -2055,6 +2108,7 @@ function DashboardContent() {
                   isSettingsOpen ||
                   isGuideOpen ||
                   isViewAllAdsOpen ||
+                  activeView === "ai-studio" ||
                   selectedPlatform === "meta" ||
                   selectedPlatform === "google" ||
                   selectedPlatform === "adroll" ||
@@ -2070,21 +2124,23 @@ function DashboardContent() {
                               ? "Guide"
                               : isViewAllAdsOpen
                                 ? "All Ads"
-                                : selectedAdId
-                                  ? "Analysis"
-                                  : (selectedPlatform === "meta" || selectedPlatform === "all")
-                                    ? selectedAccountId === "all"
-                                      ? "All Accounts"
-                                      : accounts.find(
-                                        (a) => a.id === selectedAccountId,
-                                      )?.name || "All Accounts"
-                                    : (selectedPlatform === "google" || selectedPlatform === "adroll")
-                                      ? selectedRealtimeCampaign === "all"
-                                        ? "All Campaigns"
-                                        : realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.name ||
-                                        realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.campaignName ||
-                                        "Campaign"
-                                      : ""}
+                                : activeView === "ai-studio"
+                                  ? "AI Studio"
+                                  : selectedAdId
+                                    ? "Analysis"
+                                    : (selectedPlatform === "meta" || selectedPlatform === "all")
+                                      ? selectedAccountId === "all"
+                                        ? "All Accounts"
+                                        : accounts.find(
+                                          (a) => a.id === selectedAccountId,
+                                        )?.name || "All Accounts"
+                                      : (selectedPlatform === "google" || selectedPlatform === "adroll")
+                                        ? selectedRealtimeCampaign === "all"
+                                          ? "All Campaigns"
+                                          : realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.name ||
+                                          realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.campaignName ||
+                                          "Campaign"
+                                        : ""}
                       </span>
                     </>
                   )}
@@ -2254,7 +2310,9 @@ function DashboardContent() {
               "md:pr-[300px] xl:pr-[340px] 2xl:pr-[380px]",
             )}
           >
-            {isGuideOpen ? (
+            {activeView === "ai-studio" ? (
+              <CreativeStudioView onClose={() => setActiveView("dashboard")} />
+            ) : isGuideOpen ? (
               <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
                 <div
                   className={cn(
@@ -2297,20 +2355,9 @@ function DashboardContent() {
                           <Sparkles className="w-8 h-8 text-blue-500" />
                         </div>
                         <div className="relative z-10">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                            <span className="text-[10px] font-bold uppercase tracking-tighter text-blue-600 dark:text-blue-400">
-                              About Hola Prime
-                            </span>
-                          </div>
-                          <p className="text-[11px] leading-relaxed text-muted-foreground font-medium">
-                            <span className="text-foreground font-bold">
-                              Hola Prime
-                            </span>{" "}
-                            is your advanced AI-driven creative intelligence
-                            platform, designed to transform raw performance data
-                            into actionable visual insights and aesthetic
-                            excellence.
+                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
+                            Need help building a custom strategy? Ask our AI
+                            assistant for recommendations.
                           </p>
                         </div>
                       </div>
@@ -3499,13 +3546,6 @@ function DashboardContent() {
                   )
                 )}
 
-                {displayedAds.length > 0 &&
-                  selectedPlatform === "all" &&
-                  !selectedAdId && (
-                    <div className="space-y-6 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                      {/* Old sections only for generic library view if no ad is selected */}
-                    </div>
-                  )}
               </>
             )}
           </div>
@@ -3655,7 +3695,7 @@ function DashboardContent() {
         <AddAdDialog
           open={isAddAdDialogOpen}
           onOpenChange={setIsAddAdDialogOpen}
-          defaultPlatform={selectedPlatform}
+          defaultPlatform={selectedPlatform as PlatformType}
           onSuccess={() => loadData(true)}
         />
       </div>

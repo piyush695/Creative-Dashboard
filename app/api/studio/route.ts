@@ -1,0 +1,281 @@
+import { NextResponse } from 'next/server';
+import clientPromise from '@/lib/mongodb-client';
+import Anthropic from '@anthropic-ai/sdk';
+import { extractWinningPatterns, filterPatternsBySelection } from '@/lib/ai-studio/patterns';
+import { buildGenerationPrompt } from '@/lib/ai-studio/prompts';
+import { extractAndRepairJson } from '@/lib/ai-studio/parser';
+import { generateImage } from '@/lib/ai-studio/imagegen';
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
+});
+
+// Dynamic model fallback sequence to bypass tier restrictions and 404 errors
+const ANTHROPIC_MODELS = [
+  'claude-3-7-sonnet-20250219',
+  'claude-3-5-sonnet-20241022', 
+  'claude-3-5-sonnet-20240620',
+  'claude-3-haiku-20240307',
+  'claude-3-sonnet-20240229'
+];
+
+async function generateWithFallback(messages: any[], maxTokens: number = 4000) {
+  let lastError: any = null;
+  
+  for (const modelId of ANTHROPIC_MODELS) {
+    try {
+      console.log(`[Studio] Attempting Anthropic generation with model: ${modelId}`);
+      const response = await anthropic.messages.create({
+        model: modelId,
+        max_tokens: maxTokens,
+        messages: [{ role: 'user', content: messages }] as any
+      });
+      return response;
+    } catch (err: any) {
+      console.warn(`[Studio] Anthropic model ${modelId} failed:`, err.message);
+      lastError = err;
+      
+      // If it's a 404, we continue to the next fallback model.
+      // If it's an API key error (e.g. 401), we throw immediately.
+      if (err.status === 401 || err.status === 403) {
+        throw new Error(`Anthropic Authentication Error (${err.status}): Check your API key.`);
+      }
+    }
+  }
+  
+  throw lastError || new Error("All Anthropic models failed to generate content.");
+}
+
+async function fetchImageAsBase64(url: string) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    const mimeType = response.headers.get('content-type') || 'image/jpeg';
+    return { 
+      data: base64, 
+      media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp" 
+    };
+  } catch (err) {
+    console.warn(`Failed to fetch image for Anthropic: ${url}`, err);
+    return null;
+  }
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const action = searchParams.get('action');
+
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME || 'reddit_data');
+    const collection = db.collection(process.env.MONGODB_COLLECTION || 'creative_data');
+
+    if (action === 'list') {
+      const creatives = await collection
+        .find({})
+        .project({
+          adId: 1, adName: 1, adType: 1, thumbnailUrl: 1, 
+          compositeRating: 1, ctr: 1, spend: 1, roas: 1,
+          performanceLabel: 1
+        })
+        .sort({ compositeRating: -1 })
+        .limit(100)
+        .toArray();
+      
+      console.log(`API Found ${creatives.length} creatives for library`);
+      return NextResponse.json({ creatives: creatives || [] });
+    }
+
+    if (action === 'aspects') {
+      const adId = searchParams.get('adId');
+      const doc = await collection.findOne({ adId });
+      if (!doc) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+      return NextResponse.json({
+        adId: doc.adId,
+        adName: doc.adName,
+        adType: doc.adType,
+        thumbnailUrl: doc.thumbnailUrl,
+        ctr: doc.ctr,
+        scoreOverall: doc.scoreOverall,
+        compositeRating: doc.compositeRating,
+        verdictRating: doc.verdictRating,
+        verdictDecision: doc.verdictDecision,
+        whatWorks: Array.isArray(doc.whatWorks) ? doc.whatWorks : (doc.whatWorks ? String(doc.whatWorks).split(' | ') : []),
+        whatDoesntWork: Array.isArray(doc.whatDoesntWork) ? doc.whatDoesntWork : (doc.whatDoesntWork ? String(doc.whatDoesntWork).split(' | ') : []),
+        scores: {
+          visualDesign: doc.scoreVisualDesign || 0,
+          typography: doc.scoreTypography || 0,
+          colorUsage: doc.scoreColorUsage || 0,
+          composition: doc.scoreComposition || 0,
+          ctaEffectiveness: doc.scoreCTA || 0,
+          emotionalAppeal: doc.scoreEmotionalAppeal || 0,
+          trustSignals: doc.scoreTrustSignals || 0,
+          urgencyScarcity: doc.scoreUrgency || 0,
+        },
+        psychology: {
+          lossAversion: { present: doc.lossAversionPresent, strength: doc.lossAversionStrength, evidence: doc.lossAversionEvidence },
+          scarcity: { present: doc.scarcityPresent, strength: doc.scarcityStrength, evidence: doc.scarcityEvidence },
+          socialProof: { present: doc.socialProofPresent, strength: doc.socialProofStrength, evidence: doc.socialProofEvidence },
+          anchoring: { present: doc.anchoringPresent, strength: doc.anchoringStrength, evidence: doc.anchoringEvidence },
+        },
+        visual: {
+          creativeType: doc.creativeType,
+          dominantColors: Array.isArray(doc.dominantColors) ? doc.dominantColors : (doc.dominantColors ? String(doc.dominantColors).split(' | ') : []),
+          keyVisualElements: Array.isArray(doc.keyVisualElements) ? doc.keyVisualElements : (doc.keyVisualElements ? String(doc.keyVisualElements).split(' | ') : []),
+          brandingElements: doc.brandingElements,
+        },
+        aida: {
+          attention: { score: doc.aidaAttentionScore, analysis: doc.aidaAttentionAnalysis },
+          interest: { score: doc.aidaInterestScore, analysis: doc.aidaInterestAnalysis },
+          desire: { score: doc.aidaDesireScore, analysis: doc.aidaDesireAnalysis },
+          action: { score: doc.aidaActionScore, analysis: doc.aidaActionAnalysis },
+        },
+        recommendations: [doc.recommendation1, doc.recommendation2, doc.recommendation3].filter(Boolean),
+        verdictSummary: doc.verdictSummary,
+        keyInsight: doc.keyInsight,
+        keepElements: doc.keepElements,
+        changeElements: doc.changeElements,
+        addElements: doc.addElements,
+        hookOptions: doc.hookOptions,
+        ctaOptions: doc.ctaOptions
+      });
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+  } catch (err: any) {
+    console.error('Studio API GET Error:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  let body: any = null;
+  try {
+    body = await request.json();
+    const { adIds, selectedAspects, type, prompt: userPrompt, reference } = body;
+
+    if (type === 'pattern-based') {
+      const client = await clientPromise;
+      const db = client.db(process.env.MONGODB_DB_NAME || 'reddit_data');
+      const collection = db.collection(process.env.MONGODB_COLLECTION || 'creative_data');
+      const creatives = await collection.find({ adId: { $in: adIds } }).toArray();
+
+      if (creatives.length === 0) {
+        return NextResponse.json({ error: 'Source creatives not found' }, { status: 404 });
+      }
+
+      let patterns = extractWinningPatterns(creatives);
+      if (selectedAspects) {
+        patterns = filterPatternsBySelection(patterns, selectedAspects, creatives);
+      }
+
+      const promptData = buildGenerationPrompt(patterns, body);
+      const userMessageContent: any[] = [];
+      const promptArray = Array.isArray(promptData) ? promptData : [];
+      const firstMessage = promptArray[0] || { content: [] };
+      const contentArray = Array.isArray(firstMessage.content) ? firstMessage.content : [];
+
+      for (const part of contentArray) {
+        if (part.type === 'image') {
+          const base64Data = await fetchImageAsBase64(part.source.url);
+          if (base64Data) {
+            userMessageContent.push({
+              type: 'image',
+              source: { type: 'base64', media_type: base64Data.media_type, data: base64Data.data }
+            });
+          }
+        } else {
+          userMessageContent.push(part);
+        }
+      }
+
+      const response = await generateWithFallback(userMessageContent, 4000);
+
+      const aiText = response.content[0].type === 'text' ? response.content[0].text : '';
+      const { parsed: brief } = extractAndRepairJson(aiText);
+
+      if (!brief) throw new Error('Failed to parse creative brief from AI');
+
+      let imageResult: any = null;
+      try {
+        imageResult = await generateImage(brief.imageGenerationPrompt || brief, { tier: 'pro' });
+      } catch (e: any) {
+        console.warn('[Studio] Image generation failed, proceeding with text creative:', e.message);
+      }
+
+      return NextResponse.json({
+        creative: {
+          ...brief,
+          imageUrl: imageResult?.url || imageResult?.dataUri || null,
+          sourceAdIds: adIds
+        }
+      });
+    }
+
+    if (type === 'custom' || type === 'image' || type === 'video') {
+      const userContent: any[] = [];
+      if (reference) {
+         if (reference.startsWith('data:')) {
+           const [meta, data] = reference.split(',');
+           const mimeType = meta.split(':')[1].split(';')[0];
+           userContent.push({ type: 'image', source: { type: 'base64', media_type: mimeType, data } });
+         } else {
+           const base64Data = await fetchImageAsBase64(reference);
+           if (base64Data) {
+             userContent.push({ type: 'image', source: { type: 'base64', media_type: base64Data.media_type, data: base64Data.data } });
+           }
+         }
+      }
+      
+      const generationPrompt = type === 'custom' ? userPrompt : `Instructions: ${userPrompt}. Reference analysis applied.`;
+      
+      userContent.push({ 
+        type: 'text', 
+        text: `Generate a detailed creative brief for a ${type} advertisement based on this instruction: "${generationPrompt}".
+        You MUST return valid JSON in this exact structure:
+        {
+          "creativeConcept": { "title": "Creative Title", "rationale": "Explanation" },
+          "copywriting": { 
+            "headline": { "primary": "Text" }, 
+            "body": { "primary": "Text" }, 
+            "cta": { "primary": "Text" } 
+          },
+          "imageGenerationPrompt": { "detailed": "A very detailed prompt for an image generator (DALL-E style)" }
+        }`
+      });
+
+      const response = await generateWithFallback(userContent, 2000);
+
+      const aiText = response.content[0].type === 'text' ? response.content[0].text : '';
+      const { parsed: brief } = extractAndRepairJson(aiText);
+      
+      if (!brief) throw new Error('Failed to generate creative brief');
+
+      let imageResult: any = null;
+      try {
+        imageResult = await generateImage({ 
+          detailed: brief?.imageGenerationPrompt?.detailed || brief?.imageGenerationPrompt || userPrompt,
+          referenceUrl: reference
+        }, { tier: 'pro' });
+      } catch (e: any) {
+        console.warn('[Studio] Custom image generation failed, proceeding without new image:', e.message);
+      }
+
+      return NextResponse.json({
+        creative: {
+          ...brief,
+          imageUrl: imageResult?.url || imageResult?.dataUri || reference || null
+        }
+      });
+    }
+
+    return NextResponse.json({ error: 'Invalid generation type' }, { status: 400 });
+
+  } catch (err: any) {
+    console.error('Studio API POST Error:', err);
+    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+  }
+}

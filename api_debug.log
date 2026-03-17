@@ -4,3 +4,7 @@
 [2026-03-09T06:12:22.467Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
 [2026-03-09T06:12:43.892Z] GET campaigns | platform=google
 [2026-03-09T06:12:44.912Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-16T07:57:34.509Z] GET campaigns | platform=google
+[2026-03-16T07:57:36.641Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
+[2026-03-16T07:57:36.660Z] GET campaigns | platform=google
+[2026-03-16T07:57:36.661Z] [DEBUG_SVC] Campaign Thumbnails: 270 rows
