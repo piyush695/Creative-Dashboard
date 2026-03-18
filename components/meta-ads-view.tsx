@@ -44,6 +44,8 @@ interface MetaAdsViewProps {
     isSyncing?: boolean
     selectedPlatform?: string
     onPlatformChange?: (platform: string) => void
+    onViewLibrary?: () => void
+    defaultShowOverview?: boolean
 }
 
 const PIE_COLORS = ["#1877F2", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6"]
@@ -59,10 +61,12 @@ export default function MetaAdsView({
     onRefresh,
     isSyncing,
     selectedPlatform = "meta",
-    onPlatformChange
+    onPlatformChange,
+    onViewLibrary,
+    defaultShowOverview = false
 }: MetaAdsViewProps) {
     const [mounted, setMounted] = useState(false)
-    const [showOverview, setShowOverview] = useState(false)
+    const [showOverview, setShowOverview] = useState(defaultShowOverview)
     const [isDark, setIsDark] = useState(false)
 
     useEffect(() => {
@@ -73,6 +77,10 @@ export default function MetaAdsView({
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
         return () => observer.disconnect()
     }, [])
+
+    useEffect(() => {
+        setShowOverview(defaultShowOverview);
+    }, [defaultShowOverview]);
 
     // --- Core data filtered by account + search ---
     const filteredAds = useMemo(() => {
@@ -278,19 +286,13 @@ export default function MetaAdsView({
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setShowOverview(false)}
-                                className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 transition-colors"
-                            >
-                                <X className="h-3.5 w-3.5" />
-                            </button>
                         </div>
 
                         {/* ── ZONE 1: Hero KPI cards ── */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-3">
                             {[
                                 { label: "Total Spend",   value: `$${totalSpend.toLocaleString(undefined,   { maximumFractionDigits: 0 })}`, sub: "ad spend",  color: "blue" },
-                                { label: "Total Revenue", value: `$${totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, sub: "revenue",   color: "emerald" },
+                                { label: "Revenue", value: `$${totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, sub: "revenue",   color: "emerald" },
                                 { label: "Net Profit",    value: `$${netProfit.toLocaleString(undefined,    { maximumFractionDigits: 0 })}`, sub: netProfit >= 0 ? "profit" : "loss", color: netProfit >= 0 ? "emerald" : "red" },
                                 { label: "Purchases",     value: totalPurchases.toLocaleString(undefined),                                 sub: "total sales", color: "amber" },
                                 { label: "ROAS",          value: `${avgRoas.toFixed(2)}x`,                                                 sub: "on ad spend", color: "indigo" },
@@ -431,7 +433,7 @@ export default function MetaAdsView({
                         <Tabs defaultValue="spend" className="w-full">
                             <TabsList className="mb-4 h-auto p-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-xl grid grid-cols-2 lg:grid-cols-4 w-full">
                                 <TabsTrigger value="spend" className="rounded-lg py-2 text-[10px] sm:text-xs font-black uppercase tracking-wide data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-md flex items-center justify-center gap-1.5">
-                                    <BarChart2 className="h-3 w-3 shrink-0" /><span className="hidden sm:inline">Spend &amp; Revenue</span><span className="sm:hidden">Spend</span>
+                                    <BarChart2 className="h-3 w-3 shrink-0" /><span className="hidden sm:inline">ROAS Trends</span><span className="sm:hidden">ROAS</span>
                                 </TabsTrigger>
                                 <TabsTrigger value="ctr" className="rounded-lg py-2 text-[10px] sm:text-xs font-black uppercase tracking-wide data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-md flex items-center justify-center gap-1.5">
                                     <Percent className="h-3 w-3 shrink-0" /><span className="hidden sm:inline">CTR Analysis</span><span className="sm:hidden">CTR</span>
@@ -450,7 +452,7 @@ export default function MetaAdsView({
                                     <div className="grid grid-cols-1 md:grid-cols-2 min-h-[280px]">
                                         {/* LEFT: Chart */}
                                         <div className="p-5 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-white/5 transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.01]">
-                                            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-0.5">Spend vs Revenue</p>
+                                            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-0.5">ROAS Trends</p>
                                             <p className="text-[9px] text-zinc-400 font-medium mb-4">Top 10 ads by ROAS</p>
                                             <div className="h-52">
                                                 <ResponsiveContainer width="100%" height="100%">
@@ -738,7 +740,9 @@ export default function MetaAdsView({
                         </div>
 
                         <SampleAds
-                            ads={[...filteredAds].sort((a, b) => {
+                            ads={[...filteredAds]
+                                .filter((ad, index, self) => index === self.findIndex((t) => t.adId === ad.adId))
+                                .sort((a, b) => {
                                 const revA = Number(a.purchaseValue) || 0;
                                 const spA = Number(a.spend) || 0;
                                 const roasA = spA > 0 ? revA / spA : 0;
@@ -750,8 +754,11 @@ export default function MetaAdsView({
                             hasAdsInAccount={metaAds.length > 0}
                             searchQuery={searchQuery}
                             selectedAdId={null}
-                            onSelect={() => {
-                                // Click action blocked to prevent navigation to detail view
+                            onSelect={(id) => {
+                                const ad = filteredAds.find(a => a.id === id);
+                                if (ad && onSelectAd) {
+                                  onSelectAd(ad);
+                                }
                             }}
                             onEnlargeImage={onEnlargeImage}
                             extraActions={

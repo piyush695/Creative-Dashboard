@@ -83,6 +83,7 @@ interface GoogleAdsViewProps {
     isSyncing?: boolean
     selectedPlatform?: string
     onPlatformChange?: (platform: string) => void
+    defaultTab?: string
 }
 
 export default function GoogleAdsView({
@@ -99,11 +100,12 @@ export default function GoogleAdsView({
     onRefresh,
     isSyncing,
     selectedPlatform = "google",
-    onPlatformChange
+    onPlatformChange,
+    defaultTab = "ads"
 }: GoogleAdsViewProps) {
     const { toast } = useToast()
     const [mounted, setMounted] = useState(false)
-    const [activeTab, setActiveTab] = useState("ads")
+    const [activeTab, setActiveTab] = useState(defaultTab)
     const [selectedCampaign, setSelectedCampaign] = useState<string>("all")
     const [cardLimit, setCardLimit] = useState(4)
 

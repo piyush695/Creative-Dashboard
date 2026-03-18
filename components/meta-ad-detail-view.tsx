@@ -639,26 +639,6 @@ export default function MetaAdDetailView({
                                             <span className="text-[10px] md:text-xs font-bold font-mono tracking-tighter text-blue-600 dark:text-blue-400">{ad.ctr}% CTR</span>
                                         </div>
                                     </div>
-                                    
-                                    {/* Desktop flow close button */}
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={onClose}
-                                        className="hidden sm:flex shrink-0 h-9 w-9 rounded-xl border border-transparent hover:border-rose-200 dark:hover:border-rose-500/20 bg-zinc-50 dark:bg-white/[0.02] hover:bg-rose-50 dark:hover:bg-rose-500/10 text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all duration-300 ml-1"
-                                    >
-                                        <X className="h-4 w-4" strokeWidth={2.5} />
-                                    </Button>
-                                    
-                                    {/* Mobile absolute right close button */}
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={onClose}
-                                        className="sm:hidden absolute top-3 right-3 shrink-0 h-7 w-7 rounded-lg bg-zinc-100/70 dark:bg-white/5 text-zinc-500 dark:text-zinc-400 hover:text-rose-500"
-                                    >
-                                        <X className="h-3.5 w-3.5" strokeWidth={2.5} />
-                                    </Button>
                                 </div>
                             </div>
                         </div>

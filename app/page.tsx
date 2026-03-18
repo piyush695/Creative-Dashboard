@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useMemo } from "react";
+import { Suspense, useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -56,6 +56,8 @@ import {
   Newspaper,
   Database,
   Wifi,
+  Home,
+  ArrowLeft,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -97,6 +99,7 @@ import { useTheme } from "next-themes";
 import { Moon, Sun, Settings2 } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import DashboardHeader from "@/components/dashboard-header";
+import HomeOverviewView from "@/components/home-overview-view";
 import MetricsGrid from "@/components/metrics-grid";
 import ScoresSection from "@/components/scores-section";
 import InsightsSection from "@/components/insights-section";
@@ -154,6 +157,7 @@ const ACCOUNT_LIST = [
 ];
 
 const PLATFORM_META: Record<string, { label: string; icon: any }> = {
+  home: { label: "Home", icon: Home },
   all: { label: "All Platforms", icon: Globe },
   meta: { label: "Meta", icon: Facebook },
   tiktok: { label: "TikTok", icon: Smartphone },
@@ -178,15 +182,117 @@ function DashboardContent() {
   const [adrollDataSource, setAdrollDataSource] = useState<
     "database" | "realtime"
   >("database");
-  const [selectedAdId, setSelectedAdId] = useState<string | null>(null);
-  const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
+  const [selectedAdId, setSelectedAdIdState] = useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountIdState] = useState<string>("all");
   const [ads, setAds] = useState<AdData[]>([]);
   const [googleAds, setGoogleAds] = useState<AdData[]>([]);
   const [recentHistory, setRecentHistory] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedPlatform, setSelectedPlatform] = useState<string>("meta");
-  const [activeView, setActiveView] = useState<"dashboard" | "ai-studio">(
+  const [selectedPlatform, setSelectedPlatformState] = useState<string>("home");
+
+  useEffect(() => {
+    const platform = searchParams.get("platform");
+    setSelectedPlatformState(platform || "home");
+
+    const adId = searchParams.get("adId");
+    setSelectedAdIdState(adId);
+
+    const accountId = searchParams.get("account");
+    setSelectedAccountIdState(accountId || "all");
+
+    const view = searchParams.get("view");
+    if (view === "library") {
+      setIsViewAllAdsOpenState(true);
+      setActiveViewState("dashboard");
+    } else if (view === "ai-studio") {
+      setIsViewAllAdsOpenState(false);
+      setActiveViewState("ai-studio");
+    } else {
+      setIsViewAllAdsOpenState(false);
+      setActiveViewState("dashboard");
+    }
+
+    const profile = searchParams.get("profile");
+    setIsProfileOpenState(profile === "true");
+
+    const settings = searchParams.get("settings");
+    setIsSettingsOpenState(settings === "true");
+
+    const guide = searchParams.get("guide");
+    setIsGuideOpenState(guide === "true");
+  }, [searchParams]);
+
+  const updateUrl = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      let changed = false;
+      Object.entries(updates).forEach(([key, value]) => {
+        const current = params.get(key);
+        if (value === null) {
+          if (current !== null) {
+            params.delete(key);
+            changed = true;
+          }
+        } else {
+          if (current !== value) {
+            params.set(key, value);
+            changed = true;
+          }
+        }
+      });
+      if (changed) {
+        const query = params.toString();
+        router.push(query ? `?${query}` : "/", { scroll: false });
+      }
+    },
+    [router, searchParams],
+  );
+
+  const setSelectedPlatform = useCallback(
+    (val: string | ((prev: string) => string)) => {
+      const current = searchParams.get("platform") || "home";
+      const next = typeof val === "function" ? val(current) : val;
+      updateUrl({ 
+        platform: next === "home" ? null : next,
+        view: null,
+        adId: null,
+        account: "all"
+      });
+    },
+    [updateUrl],
+  );
+
+  const setSelectedAdId = useCallback(
+    (val: string | null | ((prev: string | null) => string | null)) => {
+      const current = searchParams.get("adId");
+      const next = typeof val === "function" ? val(current) : val;
+      updateUrl({ adId: next });
+    },
+    [updateUrl],
+  );
+
+  const setSelectedAccountId = useCallback(
+    (val: string | ((prev: string) => string)) => {
+      const current = searchParams.get("account") || "all";
+      const next = typeof val === "function" ? val(current) : val;
+      updateUrl({ account: next === "all" ? null : next });
+    },
+    [updateUrl],
+  );
+  const [activeView, setActiveViewState] = useState<"dashboard" | "ai-studio">(
     "dashboard",
+  );
+  const setActiveView = useCallback(
+    (val: ("dashboard" | "ai-studio") | ((prev: "dashboard" | "ai-studio") => "dashboard" | "ai-studio")) => {
+      const current = searchParams.get("view") === "ai-studio" ? "ai-studio" : "dashboard";
+      const next = typeof val === "function" ? val(current) : val;
+      if (next === "ai-studio") {
+        updateUrl({ view: "ai-studio", adId: null });
+      } else {
+        updateUrl({ view: null });
+      }
+    },
+    [updateUrl],
   );
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -213,15 +319,38 @@ function DashboardContent() {
   ]);
   const isMobile = useIsMobile();
   const [viewFilter, setViewFilter] = useState("Top Perf.");
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const [isViewAllAdsOpen, setIsViewAllAdsOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpenState] = useState(false);
+  const setIsGuideOpen = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
+    const current = searchParams.get("guide") === "true";
+    const next = typeof val === "function" ? val(current) : val;
+    updateUrl({ guide: next ? "true" : null });
+  }, [updateUrl, searchParams]);
+
+  const [isViewAllAdsOpen, setIsViewAllAdsOpenState] = useState(false);
+  const setIsViewAllAdsOpen = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
+    const current = searchParams.get("view") === "library";
+    const next = typeof val === "function" ? val(current) : val;
+    updateUrl({ view: next ? "library" : null });
+  }, [updateUrl, searchParams]);
+
+  const [isProfileOpen, setIsProfileOpenState] = useState(false);
+  const setIsProfileOpen = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
+    const current = searchParams.get("profile") === "true";
+    const next = typeof val === "function" ? val(current) : val;
+    updateUrl({ profile: next ? "true" : null });
+  }, [updateUrl, searchParams]);
+
+  const [isSettingsOpen, setIsSettingsOpenState] = useState(false);
+  const setIsSettingsOpen = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
+    const current = searchParams.get("settings") === "true";
+    const next = typeof val === "function" ? val(current) : val;
+    updateUrl({ settings: next ? "true" : null });
+  }, [updateUrl, searchParams]);
   const [discoveryAccountFilter, setDiscoveryAccountFilter] = useState("all");
   const [discoverySearchQuery, setDiscoverySearchQuery] = useState("");
-  const [discoveryViewMode, setDiscoveryViewMode] = useState<
-    "grid" | "list" | "table"
-  >("grid");
+  const [discoveryViewMode, setDiscoveryViewMode] = useState<"grid" | "list" | "table">("grid");
+  const [discoveryCurrentPage, setDiscoveryCurrentPage] = useState(1);
+  const discoveryItemsPerPage = 12;
   const [isGlassmorphismEnabled, setIsGlassmorphismEnabled] = useState(true);
   const [isCompactModeEnabled, setIsCompactModeEnabled] = useState(false);
   const [isReducedMotionEnabled, setIsReducedMotionEnabled] = useState(false);
@@ -236,6 +365,60 @@ function DashboardContent() {
   const [googleAdsDataSource, setGoogleAdsDataSource] = useState<
     "database" | "realtime"
   >("database");
+  const [forceShowOverview, setForceShowOverview] = useState(false);
+
+  const setMultipleStates = useCallback((updates: {
+    platform?: string;
+    adId?: string | null;
+    account?: string;
+    view?: "library" | "ai-studio" | "dashboard" | null;
+    profile?: boolean;
+    settings?: boolean;
+    guide?: boolean;
+    analysis?: { type: "score" | "metric", name: string } | null;
+  }) => {
+    const urlUpdates: Record<string, string | null> = {};
+    
+    if (updates.platform !== undefined) {
+      urlUpdates.platform = updates.platform === "home" ? null : updates.platform;
+      // Reset some states on platform change
+      urlUpdates.view = null;
+      urlUpdates.adId = null;
+      urlUpdates.account = "all";
+    }
+
+    if (updates.adId !== undefined) {
+      urlUpdates.adId = updates.adId;
+    }
+
+    if (updates.account !== undefined) {
+      urlUpdates.account = updates.account === "all" ? null : updates.account;
+    }
+
+    if (updates.view !== undefined) {
+      if (updates.view === "library") {
+        urlUpdates.view = "library";
+      } else if (updates.view === "ai-studio") {
+        urlUpdates.view = "ai-studio";
+      } else {
+        urlUpdates.view = null;
+      }
+    }
+
+    if (updates.profile !== undefined) {
+      urlUpdates.profile = updates.profile ? "true" : null;
+    }
+
+    if (updates.settings !== undefined) {
+      urlUpdates.settings = updates.settings ? "true" : null;
+    }
+
+    if (updates.guide !== undefined) {
+      urlUpdates.guide = updates.guide ? "true" : null;
+    }
+
+    updateUrl(urlUpdates);
+  }, [updateUrl]);
 
   useEffect(() => {
     if (isAddingPlatform) {
@@ -299,28 +482,6 @@ function DashboardContent() {
     setLastRefreshTime(new Date());
     document.body.style.pointerEvents = "auto";
     document.body.style.overflow = "";
-
-    // History Guard: Trap the browser back button to prevent jumping back to auth pages
-    const handlePopState = (event: PopStateEvent) => {
-      // Re-push state immediately to stay on the current page
-      window.history.pushState(null, "", window.location.href);
-      
-      // Close any open overlays instead of navigating away
-      setIsProfileOpen((prev) => { if(prev) return false; return prev; });
-      setIsSettingsOpen((prev) => { if(prev) return false; return prev; });
-      setIsGuideOpen((prev) => { if(prev) return false; return prev; });
-      setIsViewAllAdsOpen((prev) => { if(prev) return false; return prev; });
-      setSelectedAdId((prev) => { if(prev) return null; return prev; });
-      setActiveView((prev) => { if(prev !== "dashboard") return "dashboard"; return prev; });
-    };
-
-    // Initialize the trap
-    window.history.pushState(null, "", window.location.href);
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
   }, []);
 
   // Synchronize settings and platform state from localStorage (only once on mount/settings close)
@@ -404,40 +565,38 @@ function DashboardContent() {
     }
   }, [status, router]);
 
-  // Enforce default platform selection: if only Meta is connected AND no saved preference, default to 'meta'
+  // handle storage persistence
   useEffect(() => {
-    const uniqueCount = new Set(connectedPlatforms).size;
-    const savedPlatform =
-      typeof window !== "undefined"
-        ? localStorage.getItem("selected_platform")
-        : null;
-    if (uniqueCount <= 1 && !savedPlatform) {
-      setSelectedPlatform("meta");
-    }
-  }, [connectedPlatforms.length, JSON.stringify(connectedPlatforms)]);
-
-  // Persist selectedPlatform to localStorage whenever it changes
-  useEffect(() => {
-    if (typeof window !== "undefined" && selectedPlatform) {
+    if (mounted && selectedPlatform) {
       localStorage.setItem("selected_platform", selectedPlatform);
     }
-  }, [selectedPlatform]);
+  }, [selectedPlatform, mounted]);
+
+  // handle initial platform logic
+  useEffect(() => {
+    if (!mounted) return;
+    const uniqueCount = new Set(connectedPlatforms).size;
+    const savedPlatform = localStorage.getItem("selected_platform");
+    
+    // Only redirect to home if we are truly at a clean state with no other instructions
+    if (uniqueCount <= 1 && !savedPlatform && !searchParams.get("platform")) {
+      setSelectedPlatform("home");
+    }
+  }, [connectedPlatforms.length, mounted]);
 
   // Reset ALL view state on every platform switch
   // This ensures no stale search, selection, or account bleeds across platforms
   useEffect(() => {
+    if (!mounted) return;
     setSearchQuery("");
-    setSelectedAdId(null);
+    setSelectedAdIdState(null);
     setActiveAnalysis(null);
-    setSelectedAccountId("all");
-    setIsViewAllAdsOpen(false);
+    setSelectedAccountIdState("all");
+    setIsViewAllAdsOpenState(false);
     setIsSearchDropdownOpen(false);
 
-    // Revert to dashboard if switching away from Meta while in AI Studio
-    if (selectedPlatform !== "meta" && activeView === "ai-studio") {
-      setActiveView("dashboard");
-    }
-  }, [selectedPlatform, activeView]);
+    // Persist AI Studio view across platforms
+  }, [selectedPlatform, activeView, mounted]);
 
   // Account-level state synchronization: Clear selected ad if it doesn't belong to the selected account
   // This addresses the glitch where switching accounts while an ad is analyzed kept the old data visible.
@@ -554,13 +713,16 @@ function DashboardContent() {
     loadData();
   }, [isLoading]); // Removed interval for manual-only refresh
 
+  const hasShownWelcome = useRef(false);
   // handle login success toast
   useEffect(() => {
+    if (hasShownWelcome.current) return;
     const loggedIn = searchParams.get("loggedIn") === "true";
     const welcome = searchParams.get("welcome") === "true";
     const nameParam = searchParams.get("name");
 
     if (loggedIn && status === "authenticated") {
+      hasShownWelcome.current = true;
       const userName = nameParam || session?.user?.name || "User";
 
       if (welcome) {
@@ -577,8 +739,8 @@ function DashboardContent() {
         });
       }
 
-      // Remove the query param without refreshing and without adding to history
-      window.history.replaceState({}, '', '/');
+      // Allow Next.js to replace state and clear params from URL state properly
+      router.replace("/", { scroll: false });
     }
   }, [searchParams, router, toast, session, status]);
 
@@ -873,7 +1035,7 @@ function DashboardContent() {
         >
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_12px_rgba(var(--primary-rgb),0.5)]"></span>
           <span className="text-[10px] font-black uppercase tracking-[0.4em] bg-clip-text text-transparent bg-gradient-to-r from-zinc-900 via-primary to-zinc-900 dark:from-zinc-400 dark:via-white dark:to-zinc-400 bg-[length:200%_auto] animate-gradient">
-            Hola Prime Creative AI Analyzer
+            Intelligent Creative Analyzer
           </span>
         </div>
 
@@ -1226,6 +1388,34 @@ function DashboardContent() {
                 isSidebarCollapsed ? "hidden" : "",
               )}
             >
+              <Button
+                variant="ghost"
+                onClick={() => setSelectedPlatform("home")}
+                className={cn(
+                  "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
+                  selectedPlatform === "home"
+                    ? "bg-zinc-100 dark:bg-zinc-800/80 text-foreground border border-zinc-200 dark:border-zinc-700/50 shadow-sm"
+                    : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent shadow-none",
+                )}
+              >
+                <div
+                  className={cn(
+                    "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
+                    selectedPlatform === "home"
+                      ? "bg-white dark:bg-zinc-700 shadow-sm border border-zinc-200 dark:border-zinc-600"
+                      : "bg-transparent group-hover/nav:bg-white dark:group-hover/nav:bg-zinc-700 shadow-sm border border-transparent dark:group-hover/nav:border-zinc-600",
+                  )}
+                >
+                  <Home className={cn("h-4 w-4", selectedPlatform === "home" ? "text-primary" : "text-muted-foreground")} />
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                  Home
+                </span>
+                {selectedPlatform === "home" && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                )}
+              </Button>
+
               {/* Platform Section */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black tracking-widest text-primary/60 ml-1 uppercase">
@@ -1244,6 +1434,18 @@ function DashboardContent() {
                   <SelectTrigger className="w-full h-10 px-3 border border-border/40 bg-white/40 dark:bg-zinc-800/40 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md focus:ring-0 rounded-xl transition-all duration-300 group/hub text-left">
                     <div className="flex items-center gap-3 truncate py-1 w-full text-left">
                       {(() => {
+                        if (selectedPlatform === "home") {
+                          return (
+                            <>
+                              <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center transition-all group-hover/hub:scale-110 shadow-sm border border-border">
+                                <Globe className="w-4 h-4 text-muted-foreground" />
+                              </div>
+                              <span className="truncate text-muted-foreground opacity-70 font-bold text-xs uppercase tracking-tight">
+                                All Platforms
+                              </span>
+                            </>
+                          );
+                        }
                         const currentPlatform =
                           PLATFORM_META[selectedPlatform] || PLATFORM_META.all;
                         return (
@@ -1262,7 +1464,8 @@ function DashboardContent() {
                   <SelectContent className="rounded-2xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-3xl animate-in fade-in zoom-in-95 duration-200">
                     <SelectItem
                       value="all"
-                      className="font-bold text-xs py-3 rounded-xl mx-1 my-1 transition-colors cursor-pointer"
+                      disabled
+                      className="font-bold text-xs py-3 rounded-xl mx-1 my-1 opacity-60 flex items-center gap-3 cursor-default"
                     >
                       <div className="flex items-center gap-3">
                         <Globe className="w-4 h-4 text-zinc-400" />
@@ -1271,7 +1474,7 @@ function DashboardContent() {
                     </SelectItem>
                     {Object.entries(PLATFORM_META)
                       .filter(
-                        ([id]) => id !== "all" && enabledPlatforms.includes(id),
+                        ([id]) => id !== "all" && id !== "home" && enabledPlatforms.includes(id),
                       )
                       .map(([id, meta]) => (
                         <SelectItem
@@ -1302,80 +1505,38 @@ function DashboardContent() {
                 </Select>
               </div>
 
-              {/* Account Section — shown for all platforms that have accounts */}
-              {accounts.length > 0 && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black tracking-widest text-primary/60 ml-1 uppercase">
-                    Account
+              {/* Meta account selector - RESTORED per user request */}
+              {!isSidebarCollapsed && (selectedPlatform === 'meta') && (
+                <div className="pb-2 mt-4 space-y-1.5 animate-in fade-in slide-in-from-left-2 duration-300">
+                  <label className="text-[10px] font-black tracking-[0.2em] ml-1 uppercase block text-muted-foreground/60 transition-colors">
+                    Meta Account
                   </label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-between bg-white/40 dark:bg-zinc-800/40 border border-border/40 shadow-sm hover:shadow-md font-black h-10 text-[11px] rounded-xl hover:bg-white dark:hover:bg-zinc-800 transition-all px-3 group/hub"
-                      >
-                        <div className="flex items-center gap-3 truncate">
-                          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center group-hover/hub:scale-110 transition-transform">
-                            <BarChart3 className="w-4 h-4 text-primary" />
-                          </div>
-                          <span className="truncate text-muted-foreground group-hover/hub:text-foreground dark:group-hover/hub:text-zinc-100 font-bold text-xs">
-                            {selectedAccountId === "all"
-                              ? "All Accounts"
-                              : accounts.find((a) => a.id === selectedAccountId)
-                                ?.name || "Select Account"}
-                          </span>
+                  <Select 
+                    value={selectedAccountId} 
+                    onValueChange={(val) => {
+                      setSelectedAccountId(val);
+                      setForceShowOverview(false); // Switch to Overview only on direct request from Library
+                    }}
+                  >
+                    <SelectTrigger className="w-full h-10 px-3 border border-border/40 bg-white/40 dark:bg-zinc-800/40 hover:bg-white dark:hover:bg-zinc-800 shadow-sm transition-all duration-300 rounded-xl text-left text-[11px] font-bold">
+                      <div className="flex items-center gap-2 truncate">
+                        <SelectValue placeholder="Select Account" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-3xl z-[2000]">
+                      <SelectItem value="all" className="font-bold py-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-zinc-400" />
+                          <span>All Accounts</span>
                         </div>
-                        <ChevronDown className="h-3 w-3 opacity-30 ml-2 flex-shrink-0 group-hover/hub:opacity-100 transition-opacity" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="start"
-                      className="w-64 max-h-[400px] overflow-y-auto rounded-2xl shadow-3xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 border animate-in slide-in-from-top-2 duration-300"
-                    >
-                      <DropdownMenuItem
-                        onClick={() => setSelectedAccountId("all")}
-                        className={cn(
-                          "py-3 px-4 rounded-xl mx-1 my-1 transition-all",
-                          selectedAccountId === "all"
-                            ? "bg-primary/10 font-black text-primary"
-                            : "hover:bg-zinc-100 dark:hover:bg-zinc-800 font-bold",
-                        )}
-                      >
-                        <Globe className="h-4 w-4 mr-3 opacity-70" />
-                        <span className="text-xs uppercase tracking-widest font-black">
-                          All Accounts
-                        </span>
-                      </DropdownMenuItem>
-                      <div className="h-[1px] bg-zinc-100 dark:bg-white/5 mx-2 my-1" />
-                      {accounts.map((account) => (
-                        <DropdownMenuItem
-                          key={account.id}
-                          onClick={() => {
-                            setSelectedAccountId(account.id || "");
-                            setIsViewAllAdsOpen(false);
-                          }}
-                          className={cn(
-                            "py-3 px-4 rounded-xl mx-1 my-0.5 transition-all group/item",
-                            selectedAccountId === account.id
-                              ? "bg-primary/10 font-black text-primary shadow-sm"
-                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800 font-bold",
-                          )}
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mr-3 group-hover/item:scale-110 transition-transform">
-                            <BarChart3 className="h-4 w-4 text-zinc-500" />
-                          </div>
-                          <div className="flex flex-col items-start leading-tight overflow-hidden">
-                            <span className="font-bold text-xs truncate w-full">
-                              {account.name}
-                            </span>
-                            <span className="text-[9px] text-muted-foreground font-mono leading-none mt-1 opacity-50 uppercase tracking-tighter">
-                              {account.id}
-                            </span>
-                          </div>
-                        </DropdownMenuItem>
+                      </SelectItem>
+                      {ACCOUNT_LIST.filter(acc => acc.platform === "meta").map(acc => (
+                        <SelectItem key={acc.id} value={acc.id} className="font-bold py-3 text-sm">
+                          {acc.name}
+                        </SelectItem>
                       ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
             </div>
@@ -1432,6 +1593,12 @@ function DashboardContent() {
             <div
               className={`px-3 ${isSidebarCollapsed ? "flex flex-col items-center gap-4" : "hidden"}`}
             >
+              <div 
+                className={cn("w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-transform shadow-sm", selectedPlatform === "home" ? "bg-primary text-white" : "bg-primary/10 text-primary hover:scale-110")}
+                onClick={() => setSelectedPlatform("home")}
+              >
+                <Home className="w-5 h-5" />
+              </div>
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-sm">
                 <Globe className="w-5 h-5 text-primary" />
               </div>
@@ -1441,7 +1608,7 @@ function DashboardContent() {
             </div>
 
             <div
-              className={`px-4 mt-2 ${isSidebarCollapsed || selectedPlatform === "google" || selectedPlatform === "adroll" ? "hidden" : ""}`}
+              className={`px-4 mt-2 ${isSidebarCollapsed || selectedPlatform === "google" || selectedPlatform === "adroll" || selectedPlatform === "home" ? "hidden" : ""}`}
             >
               {/* Search bar — shown for all platforms */}
               {true && (
@@ -1548,8 +1715,8 @@ function DashboardContent() {
               )}
             </div>
 
-            {/* Navigation — shown for all platforms */}
-            {true && (
+            {/* Navigation — visible even on Home */}
+            {(selectedPlatform !== "home" || true) && (
               <div
                 className={`px-3 mt-4 space-y-2 ${isSidebarCollapsed ? "flex flex-col items-center" : ""}`}
               >
@@ -1558,15 +1725,19 @@ function DashboardContent() {
                 >
                   Navigation
                 </label>
+                {selectedPlatform !== "home" && (
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    setIsViewAllAdsOpen(true);
-                    setIsGuideOpen(false);
-                    setIsProfileOpen(false);
-                    setIsSettingsOpen(false);
+                    setSearchQuery("");
+                    setMultipleStates({
+                      view: "library",
+                      adId: null,
+                      guide: false,
+                      profile: false,
+                      settings: false
+                    });
                     if (isMobile) setIsMobileMenuOpen(false);
-                    setActiveView("dashboard");
                   }}
                   className={cn(
                     "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
@@ -1595,49 +1766,52 @@ function DashboardContent() {
                     <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                   )}
                 </Button>
-
-                {/* AI Studio Link - ONLY VISIBLE ON META */}
-                {selectedPlatform === "meta" && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setActiveView("ai-studio");
-                      setSelectedAdId(null);
-                      setIsViewAllAdsOpen(false);
-                      setIsGuideOpen(false);
-                      setIsProfileOpen(false);
-                      setIsSettingsOpen(false);
-                      if (isMobile) setIsMobileMenuOpen(false);
-                    }}
-                    className={cn(
-                      "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
-                      activeView === "ai-studio"
-                        ? "bg-[#020617] text-white border border-[#007AFF] active:scale-95"
-                        : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-secondary dark:hover:bg-zinc-800 shadow-none",
-                      isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : "",
-                    )}
-                    title="AI Studio"
-                  >
-                    <div
-                      className={cn(
-                        "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
-                        activeView === "ai-studio"
-                          ? "bg-white/20"
-                          : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
-                      )}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                    </div>
-                    {!isSidebarCollapsed && (
-                      <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
-                        AI Studio
-                      </span>
-                    )}
-                    {!isSidebarCollapsed && activeView === "ai-studio" && (
-                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                    )}
-                  </Button>
                 )}
+
+                {/* AI Studio Link - ONLY VISIBLE ON HOME per user request */}
+                {selectedPlatform === "home" && (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setMultipleStates({
+                      view: "ai-studio",
+                      adId: null,
+                      guide: false,
+                      profile: false,
+                      settings: false
+                    });
+                    if (isMobile) setIsMobileMenuOpen(false);
+                  }}
+                  className={cn(
+                    "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
+                    activeView === "ai-studio"
+                      ? "bg-[#020617] text-white border border-[#007AFF] active:scale-95"
+                      : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-secondary dark:hover:bg-zinc-800 shadow-none",
+                    isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : "",
+                  )}
+                  title="AI Studio"
+                >
+                  <div
+                    className={cn(
+                      "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
+                      activeView === "ai-studio"
+                        ? "bg-white/20"
+                        : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
+                    )}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  {!isSidebarCollapsed && (
+                    <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                      AI Studio
+                    </span>
+                  )}
+                  {!isSidebarCollapsed && activeView === "ai-studio" && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  )}
+                </Button>
+                )}
+
               </div>
             )}
 
@@ -1705,44 +1879,6 @@ function DashboardContent() {
               </div>
             )}
 
-            {/* Account Audit Section — to match user screenshot */}
-            {!isSidebarCollapsed && (
-              <div className="px-3 mt-4">
-                <div className="flex items-center justify-between px-1 mb-3">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                    Account Audit
-                  </h3>
-                  <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5 ml-4" />
-                </div>
-                <div className="space-y-1">
-                  <button
-                    onClick={() => setSelectedPlatform("meta")}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all font-bold text-[11px] uppercase tracking-widest",
-                      selectedPlatform === "meta" ||
-                        selectedPlatform === "adroll"
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-secondary/50",
-                    )}
-                  >
-                    <Facebook className="w-4 h-4" />
-                    <span>Meta Ads</span>
-                  </button>
-                  <button
-                    onClick={() => setSelectedPlatform("google")}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all font-bold text-[11px] uppercase tracking-widest",
-                      selectedPlatform === "google"
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-secondary/50",
-                    )}
-                  >
-                    <Play className="w-4 h-4" />
-                    <span>Google Ads</span>
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Bottom: Sidebar Toggle */}
@@ -1869,6 +2005,25 @@ function DashboardContent() {
                       <div className="flex-1 overflow-auto py-4 px-3 space-y-4">
                         {/* Mobile Platform Switcher */}
                         <div className="space-y-1.5 pt-2">
+                          <Button
+                            variant="ghost"
+                            onClick={() => {
+                              setSelectedPlatform("home");
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className={cn(
+                              "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all font-bold mb-4",
+                              selectedPlatform === "home"
+                                ? "bg-zinc-100 dark:bg-zinc-800/80 text-foreground border border-zinc-200 dark:border-zinc-700/50 shadow-sm"
+                                : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent shadow-none",
+                            )}
+                          >
+                            <Home className={cn("h-4 w-4", selectedPlatform === "home" ? "text-primary" : "text-muted-foreground")} />
+                            <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                              Home
+                            </span>
+                          </Button>
+
                           <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1 uppercase">
                             Select Platform
                           </label>
@@ -1887,8 +2042,23 @@ function DashboardContent() {
                           >
                             <SelectTrigger className="w-full h-12 bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 rounded-xl font-bold text-sm">
                               <div className="flex items-center gap-3">
-                                <Globe className="w-4 h-4 text-[#007AFF]" />
-                                <SelectValue placeholder="Platform" />
+                                {(() => {
+                                  if (selectedPlatform !== "home" && PLATFORM_META[selectedPlatform]?.icon) {
+                                    const PlatformIcon = PLATFORM_META[selectedPlatform].icon;
+                                    return (
+                                      <>
+                                        <PlatformIcon className="w-4 h-4 text-[#007AFF]" />
+                                        <span>{PLATFORM_META[selectedPlatform].label}</span>
+                                      </>
+                                    );
+                                  }
+                                  return (
+                                    <>
+                                      <Globe className="w-4 h-4 text-[#007AFF]" />
+                                      <span>Select Platform...</span>
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </SelectTrigger>
                             <SelectContent className="rounded-xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-2xl z-[2000]">
@@ -1904,7 +2074,7 @@ function DashboardContent() {
                               {Object.entries(PLATFORM_META)
                                 .filter(
                                   ([id]) =>
-                                    id !== "all" &&
+                                    id !== "all" && id !== "home" &&
                                     enabledPlatforms.includes(id),
                                 )
                                 .map(([id, meta]) => (
@@ -1957,7 +2127,10 @@ function DashboardContent() {
                               </SelectTrigger>
                               <SelectContent className="rounded-xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-2xl z-[2000]">
                                 <SelectItem value="all" className="font-bold py-3 text-sm">
-                                  All Accounts
+                                  <div className="flex items-center gap-2">
+                                    <Globe className="w-4 h-4 text-zinc-400" />
+                                    <span>All Accounts</span>
+                                  </div>
                                 </SelectItem>
                                 {ACCOUNT_LIST.filter(acc => acc.platform === "meta").map(acc => (
                                   <SelectItem key={acc.id} value={acc.id} className="font-bold py-3 text-sm">
@@ -1970,6 +2143,7 @@ function DashboardContent() {
                         )}
 
                         {/* Navigation — visible for all platforms */}
+                        {selectedPlatform !== "home" && (
                         <div className="space-y-4">
                           <div className="space-y-1">
                             <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1 uppercase">
@@ -1977,13 +2151,15 @@ function DashboardContent() {
                             </label>
                             <Button
                               variant="ghost"
-                              onClick={() => {
-                                setIsViewAllAdsOpen(true);
-                                setIsGuideOpen(false);
-                                setIsProfileOpen(false);
-                                setIsSettingsOpen(false);
-                                setIsMobileMenuOpen(false);
-                              }}
+                               onClick={() => {
+                                 setMultipleStates({
+                                   view: "library",
+                                   guide: false,
+                                   profile: false,
+                                   settings: false
+                                 });
+                                 setIsMobileMenuOpen(false);
+                               }}
                               className={cn(
                                 "w-full justify-start gap-3 h-12 px-3 rounded-2xl transition-all relative group/nav overflow-hidden",
                                 isViewAllAdsOpen
@@ -2057,6 +2233,7 @@ function DashboardContent() {
                             </div>
                           )}
                         </div>
+                        )}
                       </div>
                     </div>
                   </SheetContent>
@@ -2064,17 +2241,17 @@ function DashboardContent() {
               </div>
 
               {/* Mobile Title - Breadcrumbs Style */}
-              <div className="flex items-center md:hidden min-w-0 flex-1 gap-0.5 h-full">
-                <span className="text-[11px] font-medium text-muted-foreground flex-shrink-0 leading-none">
+              <div className="flex items-center md:hidden min-w-0 flex-1 gap-1.5 h-full">
+                <span className="text-[11px] text-muted-foreground flex-shrink-0 leading-none">
                   Dashboard
                 </span>
                 {(selectedPlatform !== "all" ||
                   connectedPlatforms.length <= 1) && (
                     <>
                       <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
-                      <span className="text-[11px] font-medium text-muted-foreground flex-shrink-0 leading-none whitespace-nowrap">
+                      <span className="text-[11px] text-muted-foreground flex-shrink-0 leading-none whitespace-nowrap uppercase tracking-wider">
                         {selectedPlatform === "all"
-                          ? "Meta"
+                          ? "All Platforms"
                           : PLATFORM_META[selectedPlatform]?.label ||
                           selectedPlatform}
                       </span>
@@ -2091,7 +2268,7 @@ function DashboardContent() {
                   selectedPlatform === "all") && (
                     <>
                       <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
-                      <span className="text-[12px] font-semibold text-foreground whitespace-nowrap leading-none truncate min-w-0">
+                      <span className="text-[11px] text-foreground whitespace-nowrap leading-none truncate min-w-0 uppercase tracking-wider">
                         {isProfileOpen
                           ? "Profile"
                           : isSettingsOpen
@@ -2120,18 +2297,20 @@ function DashboardContent() {
                   )}
               </div>
 
-              <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground">
+              <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground/80 dark:text-muted-foreground pt-1 pb-1">
                 <LayoutDashboard className="h-3.5 w-3.5 text-muted-foreground/50" />
-                <span>/</span>
-                <span className="font-medium text-foreground">Dashboard</span>
+                <span className="text-muted-foreground/40">/</span>
+                <span className="text-foreground">Dashboard</span>
 
                 {(selectedPlatform !== "all" ||
                   connectedPlatforms.length <= 1) && (
                     <>
-                      <span>/</span>
-                      <span className="font-medium text-muted-foreground uppercase tracking-widest text-[11px] opacity-70">
-                        {selectedPlatform === "all"
-                          ? "Meta"
+                      <span className="mx-1 text-muted-foreground/40">/</span>
+                      <span className="text-foreground uppercase tracking-widest text-[11px] opacity-90">
+                        {selectedPlatform === "home"
+                          ? "Home"
+                          : selectedPlatform === "all"
+                          ? "All Platforms"
                           : PLATFORM_META[selectedPlatform]?.label ||
                           selectedPlatform}
                       </span>
@@ -2148,8 +2327,8 @@ function DashboardContent() {
                   selectedPlatform === "adroll" ||
                   selectedPlatform === "all") && (
                     <>
-                      <span>/</span>
-                      <span className="truncate max-w-[150px] lg:max-w-none font-semibold text-foreground">
+                      <span className="mx-1 text-muted-foreground/40">/</span>
+                      <span className="truncate max-w-[150px] lg:max-w-none text-foreground opacity-100 text-[11px] uppercase tracking-wider">
                         {isProfileOpen
                           ? "Profile"
                           : isSettingsOpen
@@ -2201,51 +2380,43 @@ function DashboardContent() {
                   <X className="h-4 w-4" />
                 </Button>
               ) : isViewAllAdsOpen ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    setIsViewAllAdsOpen(false);
-                    setEnlargedImage(null);
-                  }}
-                  className="rounded-full hover:bg-red-50 hover:text-red-500 h-9 w-9 border border-zinc-200 dark:border-zinc-800"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                <></>
               ) : (
                 <>
-                  <button
-                    onClick={() => loadData(true)}
-                    disabled={isSyncing}
-                    className={cn(
-                      "hidden md:flex group items-center transition-all duration-300 flex-shrink-0 relative h-10 active:scale-[0.96]",
-                      "rounded-2xl bg-white dark:bg-zinc-900 border border-border hover:bg-zinc-50 dark:hover:bg-zinc-800 shadow-sm",
-                      showRefreshText || isSyncing
-                        ? "px-4"
-                        : "w-10 justify-center",
-                      isSyncing && "opacity-70 pointer-events-none",
-                      (selectedPlatform === "google" && googleAdsDataSource === "realtime") && "hidden"
-                    )}
-                  >
-                    <RefreshCcw
+                  {selectedPlatform !== "home" && (
+                    <button
+                      onClick={() => loadData(true)}
+                      disabled={isSyncing}
                       className={cn(
-                        "h-4 w-4 transition-transform duration-1000 text-zinc-600 dark:text-zinc-400",
-                        isSyncing && "animate-spin",
-                      )}
-                    />
-                    <div
-                      className={cn(
-                        "overflow-hidden transition-all duration-500 flex items-center",
+                        "hidden md:flex group items-center transition-all duration-300 flex-shrink-0 relative h-10 active:scale-[0.96]",
+                        "rounded-2xl bg-white dark:bg-zinc-900 border border-border hover:bg-zinc-50 dark:hover:bg-zinc-800 shadow-sm",
                         showRefreshText || isSyncing
-                          ? "max-w-[180px] opacity-100 ml-2.5"
-                          : "max-w-0 opacity-0 ml-0",
+                          ? "px-4"
+                          : "w-10 justify-center",
+                        isSyncing && "opacity-70 pointer-events-none",
+                        (selectedPlatform === "google" && googleAdsDataSource === "realtime") && "hidden"
                       )}
                     >
-                      <span className="text-[12px] font-bold text-zinc-500 whitespace-nowrap uppercase tracking-wider">
-                        {isSyncing ? "Syncing..." : "Updated"}
-                      </span>
-                    </div>
-                  </button>
+                      <RefreshCcw
+                        className={cn(
+                          "h-4 w-4 transition-transform duration-1000 text-zinc-600 dark:text-zinc-400",
+                          isSyncing && "animate-spin",
+                        )}
+                      />
+                      <div
+                        className={cn(
+                          "overflow-hidden transition-all duration-500 flex items-center",
+                          showRefreshText || isSyncing
+                            ? "max-w-[180px] opacity-100 ml-2.5"
+                            : "max-w-0 opacity-0 ml-0",
+                        )}
+                      >
+                        <span className="text-[12px] font-bold text-zinc-500 whitespace-nowrap uppercase tracking-wider">
+                          {isSyncing ? "Syncing..." : "Updated"}
+                        </span>
+                      </div>
+                    </button>
+                  )}
 
                   <div className="md:hidden">
                     <DropdownMenu>
@@ -2345,7 +2516,7 @@ function DashboardContent() {
             )}
           >
             {activeView === "ai-studio" ? (
-              <CreativeStudioView onClose={() => setActiveView("dashboard")} />
+              <CreativeStudioView />
             ) : isGuideOpen ? (
               <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
                 <div
@@ -2717,22 +2888,12 @@ function DashboardContent() {
               <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
                 <div
                   className={cn(
-                    "max-w-7xl mx-auto mt-2 md:mt-4 rounded-[12px] border border-zinc-200/50 dark:border-white/10 shadow-2xl relative overflow-hidden group h-[calc(100vh-140px)] md:h-[calc(100vh-160px)] flex flex-col",
+                    "max-w-7xl mx-auto mt-2 md:mt-4 rounded-[12px] shadow-2xl relative group h-auto flex flex-col mb-10",
                     "bg-white dark:bg-[#020617]",
                   )}
                 >
-                  <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-10 relative">
-                    {/* Corner Close Button */}
-                    <button
-                      onClick={() => {
-                        setIsViewAllAdsOpen(false);
-                        setDiscoveryAccountFilter("all");
-                        setEnlargedImage(null);
-                      }}
-                      className="absolute top-3 right-3 p-2 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-all z-50 shadow-sm border border-zinc-200 dark:border-zinc-700 active:scale-95 group focus:outline-none"
-                    >
-                      <X className="w-5 h-5 text-zinc-600 dark:text-zinc-400 group-hover:text-red-500 transition-colors" />
-                    </button>
+                  <div className="flex-1 p-4 md:p-10 relative">
+
 
                     <div className="relative z-10 pt-2">
                       {/* Header Section - STRICTLY STACKED to prevent ANY overlap */}
@@ -2753,9 +2914,10 @@ function DashboardContent() {
                             <Input
                               placeholder="Search ads by name or ID..."
                               value={discoverySearchQuery}
-                              onChange={(e) =>
-                                setDiscoverySearchQuery(e.target.value)
-                              }
+                              onChange={(e) => {
+                                setDiscoverySearchQuery(e.target.value);
+                                setDiscoveryCurrentPage(1);
+                              }}
                               className="pl-10 pr-10 h-11 w-full bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 rounded-xl text-xs md:text-sm focus-visible:ring-[#007AFF]/20 shadow-sm transition-all"
                             />
                             {discoverySearchQuery && (
@@ -2833,9 +2995,10 @@ function DashboardContent() {
                                 </DropdownMenuLabel>
                                 <div className="space-y-1">
                                   <DropdownMenuItem
-                                    onClick={() =>
-                                      setDiscoveryAccountFilter("all")
-                                    }
+                                    onClick={() => {
+                                      setDiscoveryAccountFilter("all");
+                                      setDiscoveryCurrentPage(1);
+                                    }}
                                     className={cn(
                                       "flex items-center justify-between p-2.5 rounded-lg transition-colors cursor-pointer",
                                       discoveryAccountFilter === "all"
@@ -2862,11 +3025,12 @@ function DashboardContent() {
                                     {accountStats.map((stat) => (
                                       <DropdownMenuItem
                                         key={stat.id}
-                                        onClick={() =>
+                                        onClick={() => {
                                           setDiscoveryAccountFilter(
                                             stat.id || "",
-                                          )
-                                        }
+                                          );
+                                          setDiscoveryCurrentPage(1);
+                                        }}
                                         className={cn(
                                           "flex items-center justify-between p-2.5 rounded-lg transition-colors cursor-pointer",
                                           discoveryAccountFilter === stat.id
@@ -2920,36 +3084,40 @@ function DashboardContent() {
                           <>
                             {discoveryViewMode === "grid" && (
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {filteredDiscoveryAds.map((ad: AdData) => {
+                                {filteredDiscoveryAds
+                                  .slice((discoveryCurrentPage - 1) * discoveryItemsPerPage, discoveryCurrentPage * discoveryItemsPerPage)
+                                  .map((ad: AdData) => {
                                   const account = accounts.find(
                                     (a) => a.id === ad.adAccountId,
                                   );
                                   return (
                                     <div
                                       key={ad.id}
-                                      onClick={() => {
-                                        const adAccount = accounts.find(
-                                          (acc) => acc.id === ad.adAccountId,
-                                        );
-                                        if (
-                                          ad.adAccountId &&
-                                          discoveryAccountFilter !==
-                                          ad.adAccountId
-                                        ) {
-                                          setDiscoveryAccountFilter(
-                                            ad.adAccountId,
-                                          );
-                                        }
-                                        setDiscoverySearchQuery("");
-                                        setEnlargedImage({
-                                          url: ad.thumbnailUrl,
-                                          title: ad.adName,
-                                          accountName: adAccount?.name,
-                                        });
-                                      }}
+                                        onClick={() => {
+                                          const platform = ad.platform || "meta";
+                                          setMultipleStates({
+                                            platform: platform as PlatformType,
+                                            account: ad.adAccountId,
+                                            adId: ad.id,
+                                            view: "dashboard"
+                                          });
+                                          setForceShowOverview(false);
+                                          updateHistory(ad.id);
+                                        }}
                                       className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/60 dark:border-white/5 rounded-2xl overflow-hidden hover:border-[#007AFF]/50 transition-all group cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300"
                                     >
-                                      <div className="aspect-[16/9] w-full relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                                      <div 
+                                        className="aspect-[16/9] w-full relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 cursor-pointer"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const adAccount = accounts.find((acc) => acc.id === ad.adAccountId);
+                                          setEnlargedImage({
+                                            url: ad.thumbnailUrl,
+                                            title: ad.adName,
+                                            accountName: adAccount?.name,
+                                          });
+                                        }}
+                                      >
                                         <img
                                           src={ad.thumbnailUrl}
                                           alt={ad.adName}
@@ -3002,7 +3170,9 @@ function DashboardContent() {
 
                             {discoveryViewMode === "list" && (
                               <div className="space-y-4">
-                                {filteredDiscoveryAds.map((ad: AdData) => {
+                                {filteredDiscoveryAds
+                                  .slice((discoveryCurrentPage - 1) * discoveryItemsPerPage, discoveryCurrentPage * discoveryItemsPerPage)
+                                  .map((ad: AdData) => {
                                   const account = accounts.find(
                                     (a) => a.id === ad.adAccountId,
                                   );
@@ -3010,28 +3180,30 @@ function DashboardContent() {
                                     <div
                                       key={ad.id}
                                       onClick={() => {
-                                        const adAccount = accounts.find(
-                                          (acc) => acc.id === ad.adAccountId,
-                                        );
-                                        if (
-                                          ad.adAccountId &&
-                                          discoveryAccountFilter !==
-                                          ad.adAccountId
-                                        ) {
-                                          setDiscoveryAccountFilter(
-                                            ad.adAccountId,
-                                          );
-                                        }
-                                        setDiscoverySearchQuery("");
-                                        setEnlargedImage({
-                                          url: ad.thumbnailUrl,
-                                          title: ad.adName,
-                                          accountName: adAccount?.name,
+                                        const platform = ad.platform || "meta";
+                                        setMultipleStates({
+                                          platform: platform as PlatformType,
+                                          account: ad.adAccountId,
+                                          adId: ad.id,
+                                          view: "dashboard"
                                         });
+                                        setForceShowOverview(false);
+                                        updateHistory(ad.id);
                                       }}
                                       className="flex items-start md:items-center gap-3 md:gap-6 p-3 md:p-4 bg-white/60 dark:bg-zinc-900/60 border border-zinc-100 dark:border-white/5 rounded-2xl hover:border-[#007AFF]/40 hover:bg-white dark:hover:bg-zinc-900 transition-all group cursor-pointer shadow-sm hover:shadow-md"
                                     >
-                                      <div className="w-20 h-20 md:w-32 md:h-20 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border border-border/50">
+                                      <div 
+                                        className="w-20 h-20 md:w-32 md:h-20 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border border-border/50 cursor-pointer"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const adAccount = accounts.find((acc) => acc.id === ad.adAccountId);
+                                          setEnlargedImage({
+                                            url: ad.thumbnailUrl,
+                                            title: ad.adName,
+                                            accountName: adAccount?.name,
+                                          });
+                                        }}
+                                      >
                                         <img
                                           src={ad.thumbnailUrl}
                                           className="w-full h-full object-cover"
@@ -3107,7 +3279,9 @@ function DashboardContent() {
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                    {filteredDiscoveryAds.map((ad: AdData) => {
+                                    {filteredDiscoveryAds
+                                      .slice((discoveryCurrentPage - 1) * discoveryItemsPerPage, discoveryCurrentPage * discoveryItemsPerPage)
+                                      .map((ad: AdData) => {
                                       const account = accounts.find(
                                         (a) => a.id === ad.adAccountId,
                                       );
@@ -3116,29 +3290,30 @@ function DashboardContent() {
                                           key={ad.id}
                                           className="cursor-pointer hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors"
                                           onClick={() => {
-                                            const adAccount = accounts.find(
-                                              (acc) =>
-                                                acc.id === ad.adAccountId,
-                                            );
-                                            if (
-                                              ad.adAccountId &&
-                                              discoveryAccountFilter !==
-                                              ad.adAccountId
-                                            ) {
-                                              setDiscoveryAccountFilter(
-                                                ad.adAccountId,
-                                              );
-                                            }
-                                            setDiscoverySearchQuery("");
-                                            setEnlargedImage({
-                                              url: ad.thumbnailUrl,
-                                              title: ad.adName,
-                                              accountName: adAccount?.name,
+                                            const platform = ad.platform || "meta";
+                                            setMultipleStates({
+                                              platform: platform as PlatformType,
+                                              account: ad.adAccountId,
+                                              adId: ad.id,
+                                              view: "dashboard"
                                             });
+                                            setForceShowOverview(false);
+                                            updateHistory(ad.id);
                                           }}
                                         >
                                           <TableCell>
-                                            <div className="w-16 h-9 rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-border">
+                                            <div 
+                                              className="w-16 h-9 rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-border cursor-pointer"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                const adAccount = accounts.find((acc) => acc.id === ad.adAccountId);
+                                                setEnlargedImage({
+                                                  url: ad.thumbnailUrl,
+                                                  title: ad.adName,
+                                                  accountName: adAccount?.name,
+                                                });
+                                              }}
+                                            >
                                               <img
                                                 src={ad.thumbnailUrl}
                                                 className="w-full h-full object-cover"
@@ -3184,6 +3359,30 @@ function DashboardContent() {
                           </>
                         );
                       })()}
+                      
+                      {filteredDiscoveryAds.length > 0 && (
+                        <div className="flex justify-center items-center mt-8 gap-4">
+                          <Button
+                            variant="outline"
+                            onClick={() => setDiscoveryCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={discoveryCurrentPage === 1}
+                            className="bg-white dark:bg-zinc-900 rounded-full border-zinc-200 dark:border-white/10"
+                          >
+                            Previous
+                          </Button>
+                          <span className="text-sm font-bold text-zinc-500">
+                            Page {discoveryCurrentPage} of {Math.max(1, Math.ceil(filteredDiscoveryAds.length / discoveryItemsPerPage))}
+                          </span>
+                          <Button
+                            variant="outline"
+                            onClick={() => setDiscoveryCurrentPage(p => Math.min(Math.ceil(filteredDiscoveryAds.length / discoveryItemsPerPage), p + 1))}
+                            disabled={discoveryCurrentPage >= Math.ceil(filteredDiscoveryAds.length / discoveryItemsPerPage)}
+                            className="bg-white dark:bg-zinc-900 rounded-full border-zinc-200 dark:border-white/10"
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -3213,6 +3412,9 @@ function DashboardContent() {
               </div>
             ) : (
               <>
+                {selectedPlatform === "home" && (
+                  <HomeOverviewView />
+                )}
                 {(selectedPlatform === "all" ||
                   selectedPlatform === "meta") && (
                     <div className="md:hidden space-y-4">
@@ -3304,14 +3506,15 @@ function DashboardContent() {
                                       <button
                                         key={ad.id}
                                         onClick={() => {
-                                          const accountExists = accounts.some(
-                                            (a) => a.id === ad.adAccountId,
-                                          );
-                                          if (accountExists) {
-                                            setSelectedAccountId(ad.adAccountId);
-                                          }
-                                          setSelectedAdId(ad.id);
-                                          setSearchQuery(ad.adId);
+                                          const platform = ad.platform || "meta";
+                                          setMultipleStates({
+                                            platform: platform as PlatformType,
+                                            account: ad.adAccountId,
+                                            adId: ad.id,
+                                            view: "dashboard"
+                                          });
+                                          setForceShowOverview(false);
+                                          setSearchQuery("");
                                           updateHistory(ad.id);
                                           setIsSearchDropdownOpen(false);
                                         }}
@@ -3352,7 +3555,7 @@ function DashboardContent() {
                       className={cn(
                         "flex-1 flex flex-col min-h-0",
                         !selectedAdId
-                          ? "overflow-y-auto custom-scrollbar space-y-6"
+                          ? "space-y-6"
                           : "space-y-0",
                       )}
                     >
@@ -3397,6 +3600,7 @@ function DashboardContent() {
                           onPlatformChange={(p) => setSelectedPlatform(p as PlatformType)}
                           onRefresh={() => loadData(true)}
                           isSyncing={isSyncing}
+                          defaultShowOverview={forceShowOverview}
                         />
                       )}
                     </section>
@@ -3489,7 +3693,7 @@ function DashboardContent() {
                     )}
                   </div>
                 ) : (
-                  !["all", "meta", "google", "adroll"].includes(
+                  !["home", "all", "meta", "google", "adroll"].includes(
                     selectedPlatform,
                   ) && (
                     <div className="flex-1 w-full flex flex-col items-center justify-center min-h-[400px] relative overflow-hidden rounded-[20px] md:rounded-[48px] border border-slate-200/80 dark:border-white/5 bg-gradient-to-br from-white via-white to-slate-50/80 dark:from-zinc-950/50 dark:via-zinc-950/50 dark:to-zinc-950/50 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.08)] dark:shadow-2xl transition-all duration-1000 group p-4 md:p-8">

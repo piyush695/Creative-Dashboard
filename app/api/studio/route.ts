@@ -207,9 +207,36 @@ export async function POST(request: Request) {
         throw new Error(`Failed to parse AI response. Raw output: ${aiText.substring(0, 150)}...`);
       }
 
+      // --- Pass source creative thumbnails as reference for visual-grounded generation ---
+      const sourceCreativeUrls = patterns.sourceCreatives
+        .map((c: any) => c.thumbnailUrl)
+        .filter(Boolean) as string[];
+
+      // Build a rich image spec that includes the reference and improvement data
+      const imageSpec = {
+        ...(brief.imageGenerationPrompt || {}),
+        detailed: (
+          typeof brief.imageGenerationPrompt === 'string'
+            ? brief.imageGenerationPrompt
+            : brief.imageGenerationPrompt?.detailed || ''
+        ) + `
+
+## IMPROVEMENT DIRECTIVES (apply these to the source creative):
+- KEEP from source: ${(patterns.optimizationSynthesis?.keepElements || []).join('; ')}
+- CHANGE in new version: ${(patterns.optimizationSynthesis?.changeElements || []).join('; ')}
+- ADD to new version: ${(patterns.optimizationSynthesis?.addElements || []).join('; ')}
+- Use hook concept: ${(patterns.optimizationSynthesis?.hookOptions || [])[0] || ''}
+- Use CTA: ${(patterns.optimizationSynthesis?.ctaOptions || [])[0] || ''}
+
+Brand: Hola Prime prop trading firm. Professional, elite aesthetic. DO NOT generate random lifestyle images.`,
+        sourceCreativeUrls,
+        // Also set primary reference to best-performing source creative
+        referenceUrl: patterns.bestCreative?.thumbnailUrl || sourceCreativeUrls[0] || undefined,
+      };
+
       let imageResult: any = null;
       try {
-        imageResult = await generateImage(brief.imageGenerationPrompt || brief, { tier: 'pro' });
+        imageResult = await generateImage(imageSpec, { tier: 'pro' });
       } catch (e: any) {
         console.warn('[Studio] Image generation failed, proceeding with text creative:', e.message);
       }
@@ -240,24 +267,47 @@ export async function POST(request: Request) {
       
       const generationPrompt = type === 'custom' ? userPrompt : `Instructions: ${userPrompt}. Reference analysis applied.`;
       
-      userContent.push({ 
-        type: 'text', 
-        text: `Generate a detailed creative brief for a ${type} advertisement based on this instruction: "${generationPrompt}".
-        You MUST return valid JSON in this exact structure:
-        {
-          "creativeConcept": { 
-            "title": "Creative Title", 
-            "rationale": "Explanation",
-            "targetScore": 8.5,
-            "performanceTier": "ELITE"
-          },
-          "copywriting": { 
-            "headline": { "primary": "Text" }, 
-            "body": { "primary": "Text" }, 
-            "cta": { "primary": "Text" } 
-          },
-          "imageGenerationPrompt": { "detailed": "A very detailed prompt for an image generator (DALL-E style)" }
-        }`
+      userContent.push({
+        type: 'text',
+        text: `You are a world-class direct-response creative strategist for Hola Prime funded trading challenges.
+
+BRAND: Hola Prime (#WeAreTraders). Product: funded trading challenges $2K\u2013$25K+. USPs: 1-step process, 5% profit target, no time limits, fast payouts. Disclaimer required.
+
+USER INSTRUCTION: "${generationPrompt}"
+
+Generate a high-converting Hola Prime ad creative brief applying ALL 10 rules:
+1. URGENCY \u2014 countdown timer or 'Only X spots left' (MANDATORY)
+2. PRICE ANCHOR \u2014 hero dollar amount ($2K/$25K) as 3D bold typography
+3. DISCOUNT \u2014 '40% OFF' badge or promo code 'TAKEOFF40'
+4. LOW BARRIER \u2014 'Lowest Barrier Ever', 'Risk-free', 'Easiest path'
+5. BULLETS \u2014 3-4 bullet benefit block: 1-Step, 5% Target, No Time Limits
+6. CTA \u2014 full-width button: 'CLAIM YOUR $2K CHALLENGE NOW' (commanding verb)
+7. DARK THEME \u2014 navy/black bg, white text, electric blue accent
+8. VISUAL MOTIFS \u2014 rockets, chart grids, gradient glows
+9. SOCIAL PROOF \u2014 'Trusted by 100K+ traders', #WeAreTraders
+10. MOBILE-FIRST \u2014 top 30% hooks in 0.5s, discount/amount leads
+
+Return ONLY valid JSON:
+{
+  "creativeConcept": {
+    "title": "V2 concept name",
+    "rationale": "Which rules applied and why",
+    "targetScore": 9.0,
+    "performanceTier": "ELITE",
+    "improvementSummary": "3-4 improvements made"
+  },
+  "copywriting": {
+    "headline": { "primary": "Main headline" },
+    "body": { "primary": "Body copy with bullet benefits" },
+    "cta": { "primary": "CLAIM YOUR $2K CHALLENGE NOW" },
+    "hookText": "Thumb-stop first line",
+    "urgencyText": "Countdown or spots-left mechanic",
+    "trustText": "Social proof line"
+  },
+  "imageGenerationPrompt": {
+    "detailed": "600+ word image prompt for Hola Prime ad: dark navy background, large bold '$2K' or '$25K' hero text in 3D style, countdown timer badge showing '03:25:17', 'Only 47 Spots Left!', 40% OFF badge top corner, Hola Prime logo top-left, #WeAreTraders top-right, rounded benefit box with checkmarks (1-Step Process / 5% Profit Target / No Time Limits), full-width blue gradient CTA button 'CLAIM YOUR $2K CHALLENGE NOW', subtle trading chart grid background pattern, electric blue glowing accents, fine print disclaimer at bottom in small text. Polished, professional, $100M brand aesthetic. Mobile-first vertical composition. Thumb-stop worthy."
+  }
+}`
       });
 
       const response = await generateWithFallback(userContent, 2000);
@@ -277,9 +327,16 @@ export async function POST(request: Request) {
 
       let imageResult: any = null;
       try {
+        const imagePrompt = brief?.imageGenerationPrompt?.detailed 
+          || (typeof brief?.imageGenerationPrompt === 'string' ? brief.imageGenerationPrompt : null)
+          || userPrompt
+          || 'Professional prop trading advertisement creative';
+
         imageResult = await generateImage({ 
-          detailed: brief?.imageGenerationPrompt?.detailed || brief?.imageGenerationPrompt || userPrompt,
-          referenceUrl: reference
+          detailed: imagePrompt,
+          referenceUrl: reference || undefined,  // user-uploaded reference image
+          negative: brief?.imageGenerationPrompt?.negative,
+          technicalSpecs: brief?.imageGenerationPrompt?.technicalSpecs,
         }, { tier: 'pro' });
       } catch (e: any) {
         console.warn('[Studio] Custom image generation failed, proceeding without new image:', e.message);

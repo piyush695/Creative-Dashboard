@@ -76,19 +76,8 @@ export default function AdDetailTabs({ adData, benchmark, onClose, onEnlargeImag
                                 <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 truncate leading-none">{adData.campaignName}</span>
                             </div>
                         </div>
-                    </div>
                 </div>
-
-                {onClose && (
-                    <Button
-                        onClick={onClose}
-                        variant="ghost"
-                        size="icon"
-                        className="h-10 w-10 shrink-0 rounded-full absolute top-2 right-2 md:top-6 md:right-6 bg-white/50 dark:bg-white/5 backdrop-blur-md border border-zinc-200 dark:border-white/10 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all active:scale-90 shadow-sm z-20"
-                    >
-                        <X className="h-5 w-5" />
-                    </Button>
-                )}
+                </div>
             </div>
 
             {/* Tabbed Navigation Content */}

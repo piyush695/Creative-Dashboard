@@ -23,6 +23,7 @@ import {
   Database,
   Activity,
   Layout,
+  Brain,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -65,6 +66,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [base64File, setBase64File] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [copiedText, setCopiedText] = useState(false)
 
   const [creatives, setCreatives] = useState<any[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -128,9 +130,11 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
   }
 
   const toggleAdSelection = (adId: string) => {
-    setSelectedIds(prev => 
+    setSelectedIds(prev =>
       prev.includes(adId) ? prev.filter(id => id !== adId) : [...prev, adId]
     )
+    // Clear generation inputs whenever the selection changes so stale text doesn't carry over
+    updateTabState('top-ads', { prompt: '', generationOptions: {} })
   }
 
   const toggleAspect = (adId: string, category: string, value: any) => {
@@ -391,7 +395,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                         <div className="flex items-center gap-1.5 text-[10px] font-semibold text-blue-400 uppercase tracking-widest">
                           <Database className="w-3 h-3" /> Pattern Repository
                         </div>
-                        <h2 className="text-3xl font-black italic text-white uppercase tracking-tight leading-none">
+                        <h2 className="text-3xl font-black italic text-foreground uppercase tracking-tight leading-none">
                           Winning <span className="text-blue-500">Library</span>
                         </h2>
                         <p className="text-[11px] text-zinc-500 font-medium max-w-md">
@@ -796,6 +800,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                         <textarea 
                            placeholder="e.g. Bold, meme-friendly, trader-culture"
                            className="w-full h-20 bg-muted/20 border border-border rounded-lg p-4 text-[12px] font-medium text-foreground focus:ring-1 focus:ring-primary/30 outline-none transition-all placeholder:opacity-30 resize-none"
+                           value={currentTabState.generationOptions?.tone || ''}
                            onChange={(e) => updateTabState('top-ads', { generationOptions: { ...currentTabState.generationOptions, tone: e.target.value } })}
                         />
                       </div>
@@ -819,112 +824,310 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
             </div>
           )}
 
-          {/* LOADING MODE */}
-          {currentTabState.mode === "loading" && (
-            <div className="flex-1 flex flex-col items-center justify-center relative animate-in fade-in duration-700 overflow-hidden">
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] rounded-full animate-pulse" />
-               
-               <div className="z-10 flex flex-col items-center space-y-12 w-full max-w-2xl px-8">
-                  {/* Visual Automation Pipeline Flow */}
-                  <div className="flex items-center justify-between w-full relative px-4">
-                     {/* Dynamic Pipeline Path */}
-                     <div className="absolute top-[31px] left-[15%] right-[15%] h-[2px] bg-muted shadow-inner rounded-full z-0">
-                        {/* Progress Fill */}
-                        <div 
-                           className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-500"
-                           style={{ width: `${Math.min(100, currentTabState.progress * 1.5)}%` }}
-                        />
-                     </div>
+          {/* LOADING MODE — Automation Pipeline Animation */}
+          {currentTabState.mode === "loading" && (() => {
+            const progress = currentTabState.progress;
 
-                     {/* Animated Data Packets (Automation Event Flow) */}
-                     {currentTabState.progress > 0 && currentTabState.progress < 100 && (
-                        <div className="absolute top-[31px] left-[15%] right-[15%] z-0 pointer-events-none">
-                           <div className="absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-blue-400 rounded-full shadow-[0_0_12px_2px_rgba(96,165,250,0.8)] animate-[flow_2s_linear_infinite]" />
-                           <div className="absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_10px_2px_rgba(52,211,153,0.8)] animate-[flow_2s_linear_infinite_0.7s]" />
-                           <div className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-cyan-400 rounded-full shadow-[0_0_15px_3px_rgba(34,211,238,0.8)] animate-[flow_2.5s_linear_infinite_1.4s]" />
-                        </div>
-                     )}
-                     
-                     {[
-                       { icon: Database, label: "Data Input", threshold: 1, delay: 0 },
-                       { icon: Activity, label: "AI Analysis", threshold: 30, delay: 200 },
-                       { icon: Layout, label: "Final Output", threshold: 85, delay: 400 }
-                     ].map(({ icon: Icon, label, threshold, delay }) => {
-                        const active = currentTabState.progress >= threshold;
-                        return (
-                          <div key={label} className="flex flex-col items-center gap-4 relative z-10 w-24">
-                             <div className={cn(
-                               "w-16 h-16 rounded-2xl border-2 flex items-center justify-center transition-all duration-700 relative bg-background z-20",
-                               active 
-                                  ? "border-primary text-primary shadow-[0_0_30px_rgba(var(--primary-rgb),0.2)] scale-110" 
-                                  : "border-border text-muted-foreground scale-100"
-                             )}>
-                                {/* Active Processing Pulse */}
-                                {active && currentTabState.progress < 100 && (
-                                   <div className="absolute inset-0 border-2 border-blue-400/50 rounded-2xl animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
-                                )}
-                                <Icon className={cn("w-7 h-7 relative z-10", active && "animate-pulse")} />
-                             </div>
-                             <span className={cn(
-                               "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors duration-500 text-center mt-2", 
-                               active ? "text-primary" : "text-muted-foreground"
-                             )}>
-                                {label}
-                             </span>
+            const stages = [
+              { id: 'input',   label: 'Source Input',       sub: activeMainTab === 'top-ads' ? `${selectedIds.length} creative${selectedIds.length !== 1 ? 's' : ''} selected` : 'Prompt received', color: '#3b82f6', threshold: 0  },
+              { id: 'extract', label: 'Pattern Extraction', sub: 'Analyzing winning elements',   color: '#8b5cf6', threshold: 20 },
+              { id: 'brief',   label: 'Brief Generation',   sub: 'Claude AI synthesizing',       color: '#06b6d4', threshold: 45 },
+              { id: 'render',  label: 'Visual Rendering',   sub: 'Gemini generating image',      color: '#10b981', threshold: 70 },
+              { id: 'output',  label: 'Output Ready',       sub: 'Packaging creative',           color: '#f59e0b', threshold: 92 },
+            ];
+
+            const activeIdx   = stages.reduce((acc: number, s: any, i: number) => progress >= s.threshold ? i : acc, 0);
+            const activeStage = stages[activeIdx];
+
+            const iconPaths: Record<string, string> = {
+              input:   'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
+              extract: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+              brief:   'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
+              render:  'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
+              output:  'M5 13l4 4L19 7',
+            };
+
+            return (
+            <div className="flex-1 flex flex-col items-center justify-center relative p-8 animate-in fade-in duration-500 overflow-hidden bg-background h-full">
+
+              {/* Ambient background */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 opacity-[0.025]"
+                  style={{ backgroundImage: 'linear-gradient(rgba(59,130,246,1) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,1) 1px,transparent 1px)', backgroundSize: '48px 48px' }} />
+                <div className="absolute inset-0 transition-all duration-[1200ms]"
+                  style={{ background: `radial-gradient(ellipse 80% 60% at 50% 40%, ${activeStage.color}12, transparent 70%)` }} />
+                <div className="absolute top-1/4 left-1/3 w-64 h-64 rounded-full blur-[120px] transition-all duration-[1200ms]"
+                  style={{ background: activeStage.color, opacity: 0.05 }} />
+              </div>
+
+              <div className="relative w-full max-w-3xl flex flex-col items-center gap-10 animate-in fade-in zoom-in-98 duration-700">
+
+                {/* Header */}
+                <div className="text-center space-y-2">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-1 transition-all duration-700"
+                    style={{ background: `${activeStage.color}10`, borderColor: `${activeStage.color}30` }}>
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: activeStage.color }} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest transition-colors duration-700" style={{ color: activeStage.color }}>
+                      Holaprime Neural Engine · Active
+                    </span>
+                  </div>
+                  <h2 className="text-xl font-black text-white uppercase tracking-tight">{activeStage.label}</h2>
+                  <p className="text-[11px] font-medium transition-all duration-700" style={{ color: `${activeStage.color}aa` }}>{activeStage.sub}</p>
+                </div>
+
+                {/* Pipeline */}
+                <div className="w-full relative">
+                  {/* SVG connector lines */}
+                  <svg className="absolute top-0 left-0 w-full pointer-events-none" height="56" style={{ zIndex: 0 }} preserveAspectRatio="none">
+                    {stages.map((_: any, i: number) => {
+                      if (i >= stages.length - 1) return null;
+                      const segW = 100 / (stages.length - 1);
+                      const x1 = i * segW + segW * 0.12;
+                      const x2 = (i + 1) * segW - segW * 0.12;
+                      const y = 28;
+                      const done   = i < activeIdx;
+                      const active = i === activeIdx;
+                      return (
+                        <g key={i}>
+                          <line x1={`${x1}%`} y1={y} x2={`${x2}%`} y2={y} stroke="rgba(255,255,255,0.07)" strokeWidth="1.5" />
+                          {done && (
+                            <>
+                              <defs>
+                                <linearGradient id={`lg${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                  <stop offset="0%" stopColor={stages[i].color} stopOpacity="0.7" />
+                                  <stop offset="100%" stopColor={stages[i + 1].color} stopOpacity="0.7" />
+                                </linearGradient>
+                              </defs>
+                              <line x1={`${x1}%`} y1={y} x2={`${x2}%`} y2={y} stroke={`url(#lg${i})`} strokeWidth="1.5" />
+                            </>
+                          )}
+                          {active && (
+                            <>
+                              <line x1={`${x1}%`} y1={y} x2={`${x2}%`} y2={y} stroke={stages[i].color} strokeWidth="1" strokeOpacity="0.35" />
+                              <line x1={`${x1}%`} y1={y} x2={`${x2}%`} y2={y}
+                                stroke={stages[i].color} strokeWidth="2" strokeOpacity="0.2"
+                                strokeDasharray="4 7" strokeLinecap="round"
+                                style={{ animation: 'dashFlow 0.9s linear infinite' }} />
+                            </>
+                          )}
+                        </g>
+                      );
+                    })}
+                  </svg>
+
+                  {/* Nodes */}
+                  <div className="flex items-start justify-between" style={{ zIndex: 1, position: 'relative' }}>
+                    {stages.map((stage: any, i: number) => {
+                      const isDone   = i < activeIdx;
+                      const isActive = i === activeIdx;
+                      const col = isDone || isActive ? stage.color : 'rgba(255,255,255,0.18)';
+
+                      return (
+                        <div key={stage.id} className="flex flex-col items-center gap-3" style={{ width: '20%' }}>
+                          <div className="relative flex items-center justify-center">
+                            {isActive && <div className="absolute w-20 h-20 rounded-full animate-ping" style={{ background: `${stage.color}06`, border: `1px solid ${stage.color}20` }} />}
+                            {isActive && <div className="absolute w-16 h-16 rounded-full animate-pulse" style={{ background: `${stage.color}0c`, border: `1px solid ${stage.color}30` }} />}
+                            {isDone   && <div className="absolute w-14 h-14 rounded-full" style={{ border: `1px solid ${stage.color}25` }} />}
+
+                            {/* Main node */}
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center relative transition-all duration-700"
+                              style={{
+                                background: isDone ? `linear-gradient(135deg, ${stage.color}22, ${stage.color}0a)`
+                                  : isActive ? `linear-gradient(135deg, ${stage.color}30, ${stage.color}10)`
+                                  : 'rgba(255,255,255,0.025)',
+                                border: `2px solid ${isDone ? stage.color + '80' : isActive ? stage.color : 'rgba(255,255,255,0.1)'}`,
+                                boxShadow: isActive ? `0 0 0 3px ${stage.color}18, 0 0 30px ${stage.color}35` : isDone ? `0 0 12px ${stage.color}22` : 'none',
+                                color: col, zIndex: 10,
+                              }}>
+                              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                {isDone
+                                  ? <polyline points="20 6 9 17 4 12" strokeWidth="2.5" />
+                                  : <path d={iconPaths[stage.id] || ''} />
+                                }
+                              </svg>
+                            </div>
+
+                            {/* Spinning arc for active */}
+                            {isActive && (
+                              <svg className="absolute w-[60px] h-[60px]" viewBox="0 0 60 60"
+                                style={{ animation: 'spinRing 2s linear infinite', position: 'absolute' }}>
+                                <circle cx="30" cy="30" r="28" fill="none"
+                                  stroke={stage.color} strokeWidth="1.5" strokeOpacity="0.6"
+                                  strokeDasharray="44 132" strokeLinecap="round" />
+                              </svg>
+                            )}
                           </div>
-                        );
-                     })}
-                  </div>
 
-                  <div className="space-y-5 text-center w-full max-w-sm">
-                     <div className="h-8">
-                       <h3 className="text-xl font-bold text-foreground/90 animate-in fade-in slide-in-from-bottom-2">
-                          {currentTabState.progress < 30 ? "Initializing Neural Synapses..." : 
-                           currentTabState.progress < 75 ? "Synthesizing Creative Variation..." : 
-                           "Finalizing Visual Assets..."}
-                       </h3>
-                     </div>
-                     
-                     <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden shadow-inner border border-border/50">
-                        <div 
-                           className="h-full bg-gradient-to-r from-primary via-primary/80 to-emerald-500 transition-all duration-300 ease-out rounded-full relative" 
-                           style={{ width: `${currentTabState.progress}%` }}
-                        >
-                           <div className="absolute top-0 right-0 bottom-0 w-20 bg-gradient-to-r from-transparent to-background/50 blur-sm animate-pulse" />
+                          <div className="text-center space-y-1">
+                            <p className="text-[9px] font-bold uppercase tracking-wider leading-tight transition-colors duration-500"
+                              style={{ color: isDone ? stage.color + 'bb' : isActive ? '#f1f5f9' : 'rgba(255,255,255,0.18)' }}>
+                              {stage.label}
+                            </p>
+                            {isActive && (
+                              <div className="flex justify-center gap-[3px]">
+                                {[0, 110, 220].map((d: number) => (
+                                  <div key={d} className="w-[3px] h-[3px] rounded-full animate-bounce"
+                                    style={{ background: stage.color, animationDelay: `${d}ms` }} />
+                                ))}
+                              </div>
+                            )}
+                            {isDone && <div className="text-[8px] font-semibold" style={{ color: stage.color + '70' }}>done</div>}
+                          </div>
                         </div>
-                     </div>
-                     <span className="text-[12px] font-mono font-bold text-muted-foreground block">{Math.floor(currentTabState.progress)}% COMPLETED</span>
+                      );
+                    })}
                   </div>
-               </div>
+                </div>
 
-               <button onClick={cancelProcess} className="absolute bottom-12 px-8 py-2.5 bg-muted/50 border border-border rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive transition-all text-foreground">
-                  Abort Pipeline
-               </button>
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 w-full">
+                  {[
+                    { label: 'Sources',  value: activeMainTab === 'top-ads' ? String(selectedIds.length) : '—', sub: activeMainTab === 'top-ads' ? 'creatives' : 'prompt', color: '#3b82f6' },
+                    { label: 'Stage',    value: `${activeIdx + 1}`,  sub: 'of 5 steps',    color: activeStage.color },
+                    { label: 'Progress', value: `${Math.floor(progress)}%`, sub: 'complete', color: '#10b981' },
+                  ].map((s: any) => (
+                    <div key={s.label} className="p-4 rounded-2xl text-center transition-all duration-700"
+                      style={{ background: `${s.color}08`, border: `1px solid ${s.color}18` }}>
+                      <div className="text-[9px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: `${s.color}65` }}>{s.label}</div>
+                      <div className="text-2xl font-black font-mono" style={{ color: s.color }}>{s.value}</div>
+                      <div className="text-[9px] mt-0.5" style={{ color: `${s.color}45` }}>{s.sub}</div>
+                    </div>
+                  ))}
+                </div>
 
-               <style dangerouslySetInnerHTML={{__html: `
-                  @keyframes flow {
-                    0% { left: 0%; opacity: 0; transform: scale(0.5); }
-                    10% { opacity: 1; transform: scale(1); }
-                    90% { opacity: 1; transform: scale(1); }
-                    100% { left: 100%; opacity: 0; transform: scale(0.5); }
-                  }
-               `}} />
+                {/* Progress bar */}
+                <div className="w-full space-y-2.5">
+                  <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                    <div className="h-full rounded-full relative overflow-hidden transition-all duration-500 ease-out"
+                      style={{ width: `${progress}%`, background: `linear-gradient(90deg, #1d4ed8, ${activeStage.color}, #06b6d4)` }}>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                        style={{ animation: 'shimmerBar 1.2s ease-in-out infinite' }} />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.2)' }}>Processing pipeline</span>
+                    <button onClick={cancelProcess}
+                      className="text-[9px] font-semibold uppercase tracking-widest flex items-center gap-1 transition-colors hover:text-red-400"
+                      style={{ color: 'rgba(255,255,255,0.2)' }}>
+                      <X className="w-3 h-3" /> Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <style dangerouslySetInnerHTML={{__html: `
+                @keyframes spinRing { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+                @keyframes dashFlow { from{stroke-dashoffset:0} to{stroke-dashoffset:-20} }
+                @keyframes shimmerBar { 0%{transform:translateX(-200%)} 100%{transform:translateX(600%)} }
+              `}} />
             </div>
-          )}
+            );
+          })()}
 
-          {/* COMPLETE MODE */}
-          {currentTabState.mode === "complete" && currentTabState.result && (
+          {/* COMPLETE MODE — Image Viewport */}
+          {currentTabState.mode === "complete" && currentTabState.result && (() => {
+            const r = currentTabState.result;
+            // Resolve all possible result shapes from different API paths
+            const headline = r.copywriting?.headline?.primary || r.metaAd?.headline || r.creativeConcept?.title || "Creative Generated";
+            const bodyText = r.copywriting?.body?.primary 
+              || r.metaAd?.primaryText 
+              || r.copywriting?.body?.variations?.[0]
+              || r.psychologyBlueprint?.emotionalJourney
+              || r.creativeConcept?.rationale
+              || "Your Holaprime creative has been generated based on the selected winning patterns and prompt.";
+            const ctaText = r.copywriting?.cta?.primary || r.metaAd?.cta || "";
+            const hookText = r.copywriting?.hookText || "";
+            const score = r.creativeConcept?.targetScore || r.targetScore || "8.5";
+            const tier = r.creativeConcept?.performanceTier || r.performanceTier || "PREMIUM";
+            const isImprovement = activeMainTab === 'top-ads' && r.sourceAdIds;
+            const improvementSummary = r.creativeConcept?.improvementSummary;
+
+            const handleCopyText = () => {
+              const fullCopy = [headline, bodyText, ctaText, hookText].filter(Boolean).join("\n\n");
+              navigator.clipboard.writeText(fullCopy);
+              setCopiedText(true);
+              setTimeout(() => setCopiedText(false), 3500);
+            };
+
+            const handleExport = async () => {
+              if (!r.imageUrl) {
+                toast.info("No image to export");
+                return;
+              }
+              try {
+                // Try downloading via fetch (works for data URIs and same-origin)
+                if (r.imageUrl.startsWith('data:')) {
+                  const a = document.createElement('a');
+                  a.href = r.imageUrl;
+                  a.download = `holaprime-creative-${Date.now()}.png`;
+                  a.click();
+                } else {
+                  const resp = await fetch(r.imageUrl);
+                  const blob = await resp.blob();
+                  const blobUrl = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = blobUrl;
+                  a.download = `holaprime-creative-${Date.now()}.png`;
+                  a.click();
+                  setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+                }
+                toast.success("Creative downloaded!");
+              } catch {
+                // Fallback: open in new tab
+                window.open(r.imageUrl);
+              }
+            };
+
+            return (
             <div className="flex-1 flex flex-col animate-in zoom-in-95 duration-700 h-full overflow-hidden">
                <div className="flex-1 relative group overflow-hidden bg-background flex items-center justify-center">
-                  {currentTabState.result.imageUrl ? (
-                    <img src={currentTabState.result.imageUrl} className="w-full h-full object-contain transition-transform duration-[20s] group-hover:scale-105" alt="" />
+                  {r.imageUrl ? (
+                    <img src={r.imageUrl} className="w-full h-full object-contain transition-transform duration-[20s] group-hover:scale-105" alt="Creative" />
                   ) : (
                     <div className="flex flex-col items-center justify-center opacity-40">
                       <ImageIcon className="w-24 h-24 mb-4 text-muted-foreground" />
-                      <p className="text-sm font-semibold text-muted-foreground">Image Generation Failed / Skipped</p>
+                      <p className="text-sm font-semibold text-muted-foreground">Image Generation Processing / No Image Provider</p>
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-80 pointer-events-none" />
+
+                  {/* Top-right: Clear Creative × button */}
+                  <div className="absolute top-4 right-4 z-20 animate-in fade-in slide-in-from-top-2 duration-500">
+                    <button
+                      onClick={() => {
+                        updateTabState(activeMainTab, { result: null, mode: activeMainTab === 'top-ads' ? 'ad-details' : 'standby', progress: 0 });
+                        if (activeMainTab === 'top-ads') setTopAdsStep('generate');
+                      }}
+                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-black/70 backdrop-blur-xl border border-white/10 hover:bg-rose-500/25 hover:border-rose-400/50 hover:shadow-[0_0_20px_rgba(239,68,68,0.15)] transition-all duration-300 group/clear shadow-xl"
+                      title="Remove this creative — keeps the full preview open"
+                    >
+                      <div className="w-4 h-4 rounded-full bg-rose-500/20 border border-rose-400/40 flex items-center justify-center group-hover/clear:bg-rose-500/40 transition-colors">
+                        <X className="w-2.5 h-2.5 text-rose-400" />
+                      </div>
+                      <span className="text-[10px] font-bold text-white/60 group-hover/clear:text-rose-300 uppercase tracking-widest transition-colors">Clear Creative</span>
+                    </button>
+                  </div>
+                  
+                  {/* Source creative reference thumbnails (top-left) */}
+                  {isImprovement && selectedIds.length > 0 && (
+                    <div className="absolute top-4 left-4 z-20 animate-in fade-in slide-in-from-top-2 duration-500">
+                      <div className="flex items-center gap-2">
+                        <div className="px-2.5 py-1.5 rounded-lg bg-black/70 backdrop-blur-xl border border-emerald-500/30 flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">V2 — Improved from source</span>
+                        </div>
+                        <div className="flex -space-x-2">
+                          {selectedIds.slice(0, 3).map(id => (
+                            <div key={id} className="w-7 h-7 rounded-md overflow-hidden border-2 border-emerald-500/40 shadow-md">
+                              <img src={creatives.find(c => c.adId === id)?.thumbnailUrl} className="w-full h-full object-cover" alt="source" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bottom-right: Action buttons */}
                   <div className="absolute bottom-6 right-6 flex items-center gap-3">
                         <button 
                      onClick={() => {
@@ -939,7 +1142,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                   >
                      <Zap className="w-3.5 h-3.5" /> Regenerate
                   </button>
-                  <button onClick={() => window.open(currentTabState.result.imageUrl)} className="px-5 py-2 bg-muted text-foreground border border-border rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:bg-muted/80 transition-all">
+                  <button onClick={handleExport} className="px-5 py-2 bg-muted text-foreground border border-border rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:bg-muted/80 transition-all">
                      <Download className="w-3.5 h-3.5" /> Export
                   </button>
                   </div>
@@ -947,42 +1150,97 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
 
                <div className="absolute bottom-6 left-6 max-w-lg space-y-2">
                   <Badge className="bg-primary/10 border-primary/30 text-[9px] font-semibold px-3 py-1 rounded-full backdrop-blur-xl text-primary">
-                    Generated Creative
+                    {isImprovement ? 'Version 2 — Improvement Based' : 'Generated Creative'}
                   </Badge>
                   <h2 className="text-2xl font-bold text-foreground drop-shadow-xl">
-                     {currentTabState.result.copywriting?.headline?.primary || currentTabState.result.metaAd?.headline || "Creative Generated"}
+                     {headline}
                   </h2>
                </div>
             </div>
-          )}
+            );
+          })()}
 
-          {currentTabState.mode === "complete" && currentTabState.result && (
+          {currentTabState.mode === "complete" && currentTabState.result && (() => {
+            const r = currentTabState.result;
+
+            // --- Dynamic content from AI result ---
+            const headline = r.copywriting?.headline?.primary || r.metaAd?.headline || r.creativeConcept?.title || 'Creative Generated';
+            const bodyText = r.copywriting?.body?.primary
+              || r.metaAd?.primaryText
+              || r.copywriting?.body?.variations?.[0]
+              || r.psychologyBlueprint?.emotionalJourney
+              || r.creativeConcept?.rationale
+              || `Creative generated from ${selectedIds.length} source creative${selectedIds.length !== 1 ? 's' : ''}.`;
+            const ctaText   = r.copywriting?.cta?.primary || r.metaAd?.cta || '';
+            const hookText  = r.copywriting?.hookText || r.psychologyBlueprint?.aidaFlow?.attention || '';
+            const urgency   = r.copywriting?.urgencyText || '';
+            const trust     = r.copywriting?.trustText || '';
+            const score     = r.creativeConcept?.targetScore || r.targetScore || '8.5';
+            const tier      = r.creativeConcept?.performanceTier || r.performanceTier || 'PREMIUM';
+            const improvementSummary = r.creativeConcept?.improvementSummary || r.creativeConcept?.rationale || '';
+            const primaryTrigger    = r.psychologyBlueprint?.primaryTrigger || '';
+            const scoreNum  = parseFloat(String(score)) || 8.5;
+            const scoreColor = scoreNum >= 9 ? '#10b981' : scoreNum >= 8 ? '#3b82f6' : scoreNum >= 7 ? '#f59e0b' : '#ef4444';
+
+            const handleCopyText = () => {
+              const fullCopy = [headline, hookText, bodyText, ctaText, urgency].filter(Boolean).join('\n\n');
+              navigator.clipboard.writeText(fullCopy);
+              setCopiedText(true);
+              setTimeout(() => setCopiedText(false), 3500);
+            };
+
+            return (
             <div className="shrink-0 p-6 grid grid-cols-[1fr_200px] gap-4 bg-background border-t border-border">
-               <div className="bg-muted/30 border border-border rounded-xl p-5 relative flex items-center min-h-[80px]">
-                 <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 pr-10">
-                    {currentTabState.result.copywriting?.body?.primary || currentTabState.result.metaAd?.primaryText || "High-performance creative generated."}
-                 </p>
-                 <button onClick={() => { navigator.clipboard.writeText(currentTabState.result.copywriting?.body?.primary || ""); toast.success("Copied!"); }} className="absolute top-3 right-3 p-2 text-muted-foreground hover:text-primary transition-all bg-muted border border-border rounded-lg">
-                   <Copy className="w-4 h-4" />
+               <div className="bg-muted/30 border border-border rounded-xl p-5 relative flex items-start min-h-[80px]">
+                 <div className="flex-1 pr-10 space-y-2">
+                   {hookText && (
+                     <p className="text-xs font-bold text-primary/80 leading-tight">{hookText}</p>
+                   )}
+                   <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                      {bodyText}
+                   </p>
+                   {ctaText && (
+                     <span className="inline-block text-[10px] font-bold text-primary uppercase tracking-wider border border-primary/30 rounded-full px-3 py-0.5">{ctaText}</span>
+                   )}
+                   {improvementSummary && (
+                     <div className="mt-2 pt-2 border-t border-border">
+                       <span className="text-[9px] font-bold text-emerald-400/70 uppercase tracking-wider">Improvements applied:</span>
+                       <p className="text-[10px] text-emerald-400/60 leading-relaxed mt-0.5 line-clamp-2">{improvementSummary}</p>
+                     </div>
+                   )}
+                 </div>
+                 <button
+                   onClick={handleCopyText}
+                   className={cn(
+                     "absolute top-3 right-3 p-2 transition-all border rounded-lg",
+                     copiedText
+                       ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/30"
+                       : "text-muted-foreground hover:text-primary bg-muted border-border"
+                   )}
+                   title={copiedText ? "Copied!" : "Copy creative text"}
+                 >
+                   {copiedText ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                  </button>
                </div>
                <div className="flex flex-col gap-3">
                   <div className="flex-1 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col justify-center">
                      <span className="text-[9px] font-semibold text-emerald-500/60 uppercase tracking-wider">Score</span>
                      <div className="text-2xl font-bold font-mono text-emerald-500">
-                       {currentTabState.result?.creativeConcept?.targetScore || (currentTabState.result?.targetScore) || "8.5"}
+                       {score}
                        <span className="text-xs opacity-30 ml-1">/10</span>
                      </div>
                   </div>
                   <div className="flex-1 p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex flex-col justify-center">
                      <span className="text-[9px] font-semibold text-blue-400/60 uppercase tracking-wider">Tier</span>
                      <div className="text-lg font-bold text-blue-400 capitalize">
-                       {currentTabState.result?.creativeConcept?.performanceTier || currentTabState.result?.performanceTier || "PREMIUM"}
+                       {tier}
                      </div>
                   </div>
                </div>
             </div>
-          )}
+            );
+          })()}
+
         </section>
       </main>
 
