@@ -42,27 +42,95 @@ export function buildGenerationPrompt(patterns: any, options: any = {}) {
   const mainText = `You are a world-class direct-response creative strategist who has generated $500M+ in revenue through paid social ads for fintech and prop trading firms.
 
 ## OBJECTIVE
-Generate a high-converting ad creative for Hola Prime's funded trading challenges that maximizes CTR, conversion rate, and ROAS across Meta, TikTok, and Google Display.
+Generate a high-converting Version 2 ad creative for Hola Prime's funded trading challenges — a direct, data-driven upgrade of the source creative(s) provided. Maximize CTR, CVR, and ROAS across Meta, TikTok, and Google Display.
 
 ## BRAND CONTEXT — HOLA PRIME
 - Brand: Hola Prime (#WeAreTraders)
 - Product: Funded trading challenges ($2K to $25K+)
 - Key USPs: 1-step process, 5% profit target, no time limits, fast withdrawals (10 min), high payouts, no activation fees
-- Disclaimer: SIME provides demo accounts with fictitious funds. Clients may earn monetary rewards based on performance.
+- Disclaimer: HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON PERFORMANCE.
 - Target: Aspiring traders & affiliates, 18–65, male-dominant, USA. Bold, confident, trader-focused, meme-literate tone.
 
-## CRITICAL — THIS IS AN IMPROVEMENT TASK
-You are creating a **Version 2** of the source creative(s) shown above. The output MUST:
+## CRITICAL MISSION — THIS IS AN IMPROVEMENT TASK
+You are creating a Version 2 of the source creative(s) shown above. The output MUST:
 1. Be visually derived from the source creative(s) — preserve their color palette, layout structure, and brand aesthetic.
-2. Fix the specific weaknesses listed in the analysis below.
-3. Keep and amplify proven winning elements.
+2. Fix every specific weakness listed in the analysis below.
+3. Keep and amplify every proven winning element.
 4. "Hola Prime" MUST appear in the copy.
 5. Focus strictly on prop trading — no generic crypto content.
 
-## SOURCE CREATIVES BEING IMPROVED (${(patterns.sourceCreatives || []).length} source creatives)
-${sourceCreativesList}
+---
 
-## ANALYSIS FROM SOURCE CREATIVES
+## CREATIVE ANALYSIS FRAMEWORK — YOUR STRATEGIC FOUNDATION
+Every design, copy, and layout decision must be anchored to these 10 Core Creative Fundamentals. You must implicitly evaluate the source creative against these fundamentals before generating the Version 2 improvements.
+
+**1. Strategic Clarity (Weight: High)**
+Every creative must be rooted in a clear objective. What is the goal? Who is the audience? Can a viewer understand what to do or feel within 2 seconds?
+
+**2. Information Hierarchy (Weight: High)**
+The creative must have a clear visual "reading order" (Hook → Supporting Visual → Value Prop → CTA). The CTA must not visually compete with the headline.
+
+**3. Single-Message Discipline (Weight: High)**
+Communicate one core idea — not two, not three. Reduce the message to a single sentence. Multiple competing headlines dilute the message.
+
+**4. Visual Contrast & Focal Point (Weight: Medium–High)**
+Use contrast (color, size, weight, whitespace) to establish a clear focal point. The primary element must stand out instantly.
+
+**5. Brand Consistency (Weight: Medium)**
+Fonts, colors, tone, and imagery must align with the Hola Prime brand system. Bold redesigns must still feel native to the brand.
+
+**6. Context & Platform Awareness (Weight: Medium–High)**
+Design for where the ad will actually live (mobile-first). Dimensions, text-to-image ratios, and platform-specific rules must be respected.
+
+**7. Copy–Visual Synergy (Weight: Medium)**
+Copy and visual must complement, not repeat. The copy should add a layer of meaning the visual alone cannot convey.
+
+**8. Whitespace & Breathing Room (Weight: Medium)**
+Use adequate spacing around elements to feel premium, confident, and easy to process. Avoid overcrowding and "filler".
+
+**9. Testability & Iteration Potential (Weight: Low–Medium)**
+Diagnose specific weaknesses. Identify which variable is underperforming (hook, CTA, visual). Fix the weakest link first.
+
+**10. Emotional Resonance (Weight: High)**
+People remember how a creative made them feel. Trigger an emotional reaction — curiosity, desire, urgency, aspiration. Avoid feature-dumping without emotional stakes.
+
+---
+
+## 10 MANDATORY CONVERSION RULES — APPLY ALL TO VERSION 2
+
+**RULE 1 — URGENCY & SCARCITY (NON-NEGOTIABLE):**
+Every creative MUST include at least one urgency element. Use countdown timers ("Ends in 03:25:17"), "Only 47 Spots Left!", or "Ends [date]". This is the #1 conversion driver.
+
+**RULE 2 — PRICE ANCHORING:**
+Show the challenge size ($2K, $25K) as a LARGE, BOLD, prominent hero element — ideally 3D or oversized typography. The dollar amount IS the hero. Make it impossible to scroll past.
+
+**RULE 3 — DISCOUNT PSYCHOLOGY:**
+Always include a specific discount badge ("40% OFF", "TAKEOFF40", slashed prices). Creates immediate perceived value and a reason to act now.
+
+**RULE 4 — LOW BARRIER MESSAGING:**
+Use friction-reducing phrases: "Lowest Barrier Ever", "Your Easiest Path to Funded Trading", "No Activation Fee", "No Time Limits". Directly overcome the risk objection.
+
+**RULE 5 — BULLET-POINT BENEFIT BLOCK:**
+Include a clean rounded container with 3–4 concise bullets: "• 1-Step Process", "• 5% Profit Target", "• No Time Limits", "• Fast Payouts". Each bullet under 5 words. This outperforms paragraphs every time.
+
+**RULE 6 — CTA DESIGN:**
+Full-width, high-contrast CTA button with a commanding verb: "CLAIM YOUR $2K CHALLENGE NOW", "UNLOCK FUNDED ACCOUNT". Use: Claim, Start, Unlock, Get, Join — never passive language.
+
+**RULE 7 — COLOR PSYCHOLOGY:**
+Dark navy/black background. White bold text. Electric blue, neon green, or gold accents. Dark theme = trading professionalism and authority.
+
+**RULE 8 — VISUAL MOTIFS:**
+Use rockets (growth/momentum), 3D text effects on dollar amounts, gradient glows, subtle chart/grid patterns in background. These are thumb-stop visual hooks that signal trading context instantly.
+
+**RULE 9 — SOCIAL PROOF:**
+Include "Trusted by X+ traders", "#WeAreTraders" community hashtag, trader count badge, or trust seals. Credibility signals convert cold audiences.
+
+**RULE 10 — MOBILE-FIRST:**
+Design for vertical 9:16 or square 1:1. Text readable at small sizes. Top 30% of the creative MUST hook attention — lead with offer, discount badge, or countdown. Every creative must pass the 0.5-second thumb-stop test.
+
+---
+
+## SOURCE CREATIVE ANALYSIS (provided dynamically)
 
 ### ✅ What WORKS — KEEP & AMPLIFY:
 ${(patterns.whatWorks || []).map((w: string) => `• ${w}`).join('\n') || '• (No specific elements noted)'}
@@ -70,178 +138,160 @@ ${(patterns.whatWorks || []).map((w: string) => `• ${w}`).join('\n') || '• (
 ### ❌ What Does NOT Work — FIX in Version 2:
 ${(patterns.whatDoesntWork || []).map((w: string) => `• ${w}`).join('\n') || '• (No specific weaknesses noted)'}
 
-### 📊 Score Analysis (current → target):
-- Visual Design: ${patterns.scores?.averages?.scoreVisualDesign || 0}/10 → Target 9+
-- Typography: ${patterns.scores?.averages?.scoreTypography || 0}/10 → Target 9+
+### 📊 Score Targets (current → target 9+):
+- Visual Design: ${patterns.scores?.averages?.scoreVisualDesign || 0}/10
+- Typography: ${patterns.scores?.averages?.scoreTypography || 0}/10
 - Color Usage: ${patterns.scores?.averages?.scoreColorUsage || 0}/10
 - Composition: ${patterns.scores?.averages?.scoreComposition || 0}/10
-- CTA Effectiveness: ${patterns.scores?.averages?.scoreCTA || 0}/10 → Target 9+
+- CTA Effectiveness: ${patterns.scores?.averages?.scoreCTA || 0}/10
 - Emotional Appeal: ${patterns.scores?.averages?.scoreEmotionalAppeal || 0}/10
 - Trust Signals: ${patterns.scores?.averages?.scoreTrustSignals || 0}/10
 - Urgency/Scarcity: ${patterns.scores?.averages?.scoreUrgency || 0}/10
 
-### 🧠 Psychology Triggers (from source):
+### 🧠 Psychology Triggers Active:
 - Loss Aversion: ${patterns.psychology?.lossAversion?.used || 0}/${patterns.psychology?.lossAversion?.total || 0} creatives
 - Scarcity: ${patterns.psychology?.scarcity?.used || 0}/${patterns.psychology?.scarcity?.total || 0} creatives
 - Social Proof: ${patterns.psychology?.socialProof?.used || 0}/${patterns.psychology?.socialProof?.total || 0} creatives
 - Anchoring: ${patterns.psychology?.anchoring?.used || 0}/${patterns.psychology?.anchoring?.total || 0} creatives
 
-### 🎯 Specific Improvements:
+### 🎯 Optimization Directives:
 - KEEP: ${(patterns.optimizationSynthesis?.keepElements || []).join(' | ') || 'Core visual style and brand identity'}
-- CHANGE/FIX: ${(patterns.optimizationSynthesis?.changeElements || []).join(' | ') || 'Strengthen CTA clarity'}
-- ADD to V2: ${(patterns.optimizationSynthesis?.addElements || []).join(' | ') || 'Social proof and urgency elements'}
+- FIX: ${(patterns.optimizationSynthesis?.changeElements || []).join(' | ') || 'Strengthen CTA clarity'}
+- ADD: ${(patterns.optimizationSynthesis?.addElements || []).join(' | ') || 'Social proof and urgency elements'}
 - Best Hook: ${(patterns.optimizationSynthesis?.hookOptions || [])[0] || 'Power hook from best performing source'}
 - Best CTA: ${(patterns.optimizationSynthesis?.ctaOptions || [])[0] || 'Strong direct-response CTA'}
 
-### 💡 Best Performer Insight:
-${patterns.bestCreative?.keyInsight || 'N/A'}
-${patterns.bestCreative?.verdictSummary || 'N/A'}
+### 📈 Performance Baseline to Beat:
+- Avg CTR: ${patterns.performance?.avgCtr || 0}% | Avg ROAS: ${patterns.performance?.avgRoas || 0}x
 
-### 🎨 Visual DNA from Source:
-- Creative Types: ${JSON.stringify(patterns.visual?.creativeTypes || {})}
-- Dominant Colors: ${(patterns.visual?.dominantColors || []).join(' | ')}
-- CTA Texts Used: ${(patterns.visual?.ctaTexts || []).join(' | ')}
-- Primary Messages: ${(patterns.visual?.primaryMessages || []).join(' | ')}
+---
 
-### 📈 Performance Baseline:
-- Avg CTR: ${patterns.performance?.avgCtr || 0}% → Beat this
-- Avg ROAS: ${patterns.performance?.avgRoas || 0}x
-
-## GENERATION PARAMETERS
+## USER OVERRIDES — HIGHEST PRIORITY 🔥
+These MUST override all defaults and heavily influence the final output:
 - Ad Type: ${adType}
 - Target Audience: ${targetAudience}
 ${offer ? `- Specific Offer: ${offer}` : ''}
-${tone ? `- Tone/Style Override: ${tone}` : ''}
+${tone ? `- Tone/Style Override: ${tone} — Apply this precisely to copy, rationale, and visual style.` : ''}
 ${additionalInstructions ? `- Additional Instructions: ${additionalInstructions}` : ''}
+- Design Standard: Ultra-premium, professional design language. No cheap, spammy aesthetics. Sleek, sophisticated layouts that elevate perceived brand value.
 
 ---
 
-## 10 PROVEN CONVERSION RULES — APPLY ALL OF THESE TO VERSION 2
-
-**RULE 1 — URGENCY & SCARCITY (MANDATORY):**
-Every creative MUST include at least ONE urgency element. Use: countdown timers ("Ends in 03:25:17"), "Only 47 Spots Left!", "Ends [date]", "Limited Time Deal". This is the #1 conversion driver.
-
-**RULE 2 — PRICE ANCHORING:**
-Show the challenge size ($2K, $25K) as a LARGE, BOLD, prominent hero visual element — ideally 3D or oversized typography. The dollar amount IS the hero. Make it impossible to scroll past.
-
-**RULE 3 — DISCOUNT PSYCHOLOGY:**
-Include a specific discount badge ("40% OFF", "TAKEOFF40", slashed prices). Always include a specific percentage or promo code. Creates immediate perceived value.
-
-**RULE 4 — LOW BARRIER MESSAGING:**
-Use friction-reducing phrases: "Lowest Barrier Ever", "Your Easiest Path to Funded Trading", "Start trading today, risk-free!", "No Activation Fee", "No Time Limits". Overcome the risk objection.
-
-**RULE 5 — BULLET-POINT BENEFIT BLOCK:**
-Include a clean rounded container with 3–4 concise bullet points: "• 1-Step Process", "• 5% Profit Target", "• No Time Limits", "• Fast Payouts". Each bullet under 5 words. This outperforms paragraphs.
-
-**RULE 6 — CTA DESIGN:**
-Full-width, high-contrast CTA button with commanding verb: "CLAIM YOUR $2K CHALLENGE NOW", "CLAIM 40% OFF NOW", "UNLOCK FUNDED ACCOUNT". Use: Claim, Start, Unlock, Get, Join.
-
-**RULE 7 — COLOR PSYCHOLOGY:**
-Dark navy/black background. White bold text. Electric blue, neon green, or gold accents. Dark theme = trading professionalism and sophistication.
-
-**RULE 8 — VISUAL MOTIFS:**
-Use: rockets (growth/momentum), 3D text effects on dollar amounts, gradient glows, subtle chart/grid patterns in background to reinforce trading context. These are thumb-stop visual hooks.
-
-**RULE 9 — SOCIAL PROOF:**
-Include: "Trusted by X+ traders", "#WeAreTraders" community hashtag, trader count badge, trust seals. Credibility signals are high-converting.
-
-**RULE 10 — MOBILE-FIRST:**
-Design for vertical 9:16 or square 1:1. Text readable at small sizes. Top 30% of creative MUST hook attention — lead with offer, discount badge, or countdown. Pass the 0.5-second thumb-stop test.
-
----
-
-## YOUR TASK
-
-Generate a **Version 2 Improved Creative Brief** that is a direct, data-driven upgrade of the source creative(s). Apply ALL 10 rules above. Every decision must be tied to the analysis data.
-
-### STRICT OUTPUT RULES:
-1. No markdown fences — return ONLY a raw JSON object
-2. \`imageGenerationPrompt.detailed\` MUST describe a visually improved version of the source creative — reference its specific visual elements, colors, layout
-3. Apply ALL 10 conversion rules to the image prompt
-4. The output must pass the "0.5-second thumb-stop test"
+## OUTPUT FORMAT
+Return ONLY a raw JSON object. No markdown, no preamble, no explanation outside the JSON.
 
 {
   "creativeConcept": {
-    "title": "Short concept name (e.g. 'V2: Scarcity + Price Anchor + Trust')",
-    "rationale": "Specific explanation citing which of the 10 rules were applied, which weaknesses were fixed, and which strengths amplified",
-    "targetScore": "Expected composite rating (aim for 9.0+)",
-    "performanceTier": "Expected tier (ELITE, PREMIUM, or STANDARD)",
-    "adType": "${adType}",
-    "improvementSummary": "3-4 bullet points listing specific improvements made vs. source"
+    "title": "V2: [Core concept name e.g. 'Scarcity + Price Anchor + Trust']",
+    "rationale": "Cite specific rules applied, weaknesses fixed, strengths amplified",
+    "targetScore": "9.0+",
+    "performanceTier": "ELITE | PREMIUM | STANDARD",
+    "adType": "",
+    "improvementSummary": ["Bullet 1", "Bullet 2", "Bullet 3", "Bullet 4"]
   },
-
   "visualDesign": {
-    "layout": "Detailed layout description — how it builds on the source creative's layout while applying mobile-first Rule 10: top 30% hooks attention with discount/offer/countdown",
+    "layout": "Detailed layout — top 30% hooks attention per Rule 10",
     "dimensions": "1080x1080 or 1080x1920",
     "colorPalette": {
-      "primary": "#hex — dark navy/black (Rule 7)",
-      "secondary": "#hex — electric blue or neon green accent",
-      "accent": "#hex — gold for premium or red for urgency",
-      "background": "#hex — dark trading-professional feel",
+      "primary": "#hex — dark navy/black",
+      "secondary": "#hex — electric blue or neon green",
+      "accent": "#hex — gold or urgency red",
+      "background": "#hex — dark trading feel",
       "text": "#fff"
     },
     "typography": {
-      "headlineFont": "Bold, heavy weight — Rule 2: dollar amount must be hero size",
-      "bodyFont": "Clean, readable at small mobile sizes",
-      "ctaFont": "Bold, full-width button font",
-      "hierarchy": "Hero: challenge amount in 3D/oversized → Sub: urgency element → Body: benefit bullets → CTA"
+      "headlineFont": "Bold heavy weight — dollar amount as hero (Rule 2)",
+      "bodyFont": "Clean, readable at mobile sizes",
+      "ctaFont": "Bold, full-width button",
+      "hierarchy": "Hero dollar amount → Urgency element → Benefit bullets → CTA"
     },
     "keyVisualElements": [
-      "Hero dollar amount display (Rule 2: price anchoring)",
-      "Urgency countdown or spots-left badge (Rule 1)",
-      "Discount/promo code badge (Rule 3)",
-      "3-4 bullet point benefit block (Rule 5)",
+      "Hero dollar amount in 3D/oversized (Rule 2)",
+      "Countdown timer or spots-left badge (Rule 1)",
+      "Discount/promo badge (Rule 3)",
+      "3–4 bullet benefit block in rounded container (Rule 5)",
       "Full-width CTA button (Rule 6)",
       "Social proof badge / #WeAreTraders (Rule 9)",
-      "Trading visual motif — rocket/chart/grid (Rule 8)",
-      "Legal disclaimer in small text at bottom"
+      "Rocket or chart motif (Rule 8)",
+      "Legal disclaimer at bottom"
     ],
-    "brandingPlacement": "Hola Prime logo top-left, #WeAreTraders top-right — matching source layout"
+    "brandingPlacement": "Hola Prime logo top-left, #WeAreTraders top-right — match source layout"
   },
-
   "copywriting": {
     "headline": {
-      "primary": "Main headline applying Rule 4 (low barrier) + Rule 2 (price anchor)",
+      "primary": "Low barrier + price anchor (Rules 4+2)",
       "variations": ["FOMO variant (Rule 1)", "Value variant (Rule 3)"]
     },
     "body": {
-      "primary": "Supporting copy — bullet points (Rule 5) + trust element (Rule 9)",
-      "variations": ["Scarcity-heavy variant", "Aspiration-heavy variant"]
+      "primary": "Bullet points + trust element (Rules 5+9)",
+      "variations": ["Scarcity-heavy", "Aspiration-heavy"]
     },
     "cta": {
-      "primary": "CLAIM YOUR $[X]K CHALLENGE NOW (Rule 6 — commanding verb)",
+      "primary": "CLAIM YOUR $[X]K CHALLENGE NOW",
       "variations": ["UNLOCK FUNDED ACCOUNT NOW", "START TRADING RISK-FREE"]
     },
-    "hookText": "Scroll-stopping first line — USE THE HOOK FROM HOOK OPTIONS ABOVE. Must pass 0.5s thumb-stop test",
-    "urgencyText": "Specific urgency mechanic: countdown timer OR spots left OR end date (Rule 1 — MANDATORY)",
-    "trustText": "Social proof element: 'Trusted by X+ traders' or '#WeAreTraders' (Rule 9)",
-    "discountText": "Discount badge: '40% OFF' or promo code 'TAKEOFF40' (Rule 3)",
+    "hookText": "Scroll-stopping first line — must pass 0.5s thumb-stop test",
+    "urgencyText": "Countdown timer OR spots left OR end date (Rule 1 — MANDATORY)",
+    "trustText": "Trusted by X+ traders or #WeAreTraders (Rule 9)",
+    "discountText": "40% OFF or promo code TAKEOFF40 (Rule 3)",
     "benefitBullets": ["• 1-Step Process", "• 5% Profit Target", "• No Time Limits", "• Fast Withdrawals"],
     "disclaimerText": "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON PERFORMANCE THROUGH HOLA PRIME ACCOUNTS."
   },
-
   "psychologyBlueprint": {
-    "primaryTrigger": "Main behavioral trigger (scarcity / loss aversion / anchoring / social proof)",
+    "primaryTrigger": "Main behavioral trigger + implementation method",
     "secondaryTrigger": "Supporting trigger for dual-punch conversion",
     "aidaFlow": {
-      "attention": "How top 30% of creative hooks in 0.5s (Rule 10 + Rule 2)",
+      "attention": "How top 30% hooks in 0.5s (Rules 10+2)",
       "interest": "How benefit bullets sustain interest (Rule 5)",
       "desire": "How price anchor + discount creates desire (Rules 2+3)",
       "action": "How full-width CTA drives the click (Rule 6)"
     },
-    "emotionalJourney": "Fear of missing out → Excitement at low barrier → Confidence from social proof → Urgency to act NOW"
+    "emotionalJourney": "FOMO → Excitement at low barrier → Confidence from social proof → Urgency to act NOW"
   },
-
   "imageGenerationPrompt": {
-    "detailed": "COMPREHENSIVE image generation prompt (600+ words). Start by describing the source creative's visual style, then explain how V2 improves it. MANDATORY elements to include in the image: (1) LARGE BOLD dollar amount '$2K' or '$25K' as hero — 3D text effect, impossible to miss (Rule 2). (2) Countdown timer or 'Only X Spots Left!' urgency badge (Rule 1). (3) Dark navy/black background with electric blue accents and subtle grid/chart pattern (Rules 7+8). (4) Rounded white container with 3 bullet checkmarks: '1-Step Process', '5% Profit Target', 'No Time Limits' (Rule 5). (5) Large gradient CTA button with 'CLAIM YOUR $2K CHALLENGE NOW' text (Rule 6). (6) Hola Prime logo top-left, '#WeAreTraders' top-right (Rule 9). (7) Discount badge '40% OFF' or promo code (Rule 3). (8) 'Start trading today, risk-free!' trust line (Rule 4). (9) Rocket or upward chart motif as background element (Rule 8). (10) Small legal disclaimer text at bottom. VISUAL STYLE: Reference the source creative's exact color palette, layout, and composition — this is an IMPROVED VERSION not a replacement. Professional trading brand aesthetic, premium dark theme, high contrast, thumb-stop worthy.",
-    "negative": "generic stock photos, unrelated subjects, inconsistent style with source, multiple styles, low quality, blurry, cluttered without clear hierarchy, bright white background",
-    "styleReference": "Dark navy trading professional creative matching source visual identity, with bold typography hierarchy and high-contrast CTA",
+    "detailed": "600+ word comprehensive prompt. Open by describing the source creative's visual DNA (colors, layout, style), then describe exactly how V2 improves it. Embed ALL 10 rules as mandatory visual elements: hero dollar amount in 3D, countdown timer, dark navy with electric blue accents, bullet block, CTA button, Hola Prime branding, discount badge, trust line, rocket/chart motif, legal disclaimer. Ultra-premium, professional aesthetic. No cheap or spammy elements. Must pass 0.5-second thumb-stop test.",
+    "negative": "generic stock photos, white backgrounds, inconsistent style with source, cluttered without hierarchy, blurry, low quality, unrelated subjects",
+    "styleReference": "Dark navy trading-professional creative matching source visual identity, bold typography hierarchy, high-contrast CTA",
     "technicalSpecs": {
       "aspectRatio": "1:1 or 9:16",
       "resolution": "1080x1080 or 1080x1920",
       "format": "PNG",
       "textOverlay": "YES"
     }
+  },
+  "metaAdSetup": {
+    "campaignObjective": "CONVERSIONS | TRAFFIC | ENGAGEMENT",
+    "adFormat": "Single Image | Carousel | Collection",
+    "primaryText": "Feed copy — max 125 chars",
+    "primaryTextVariations": ["Variation 2", "Variation 3"],
+    "headline": "Link headline — max 40 chars",
+    "headlineVariations": ["Variation 2", "Variation 3"],
+    "description": "Link description — max 30 chars",
+    "ctaButton": "LEARN_MORE | SIGN_UP | GET_OFFER | SHOP_NOW",
+    "displayLink": "holaprime.com",
+    "targetingNotes": "Audience targeting recommendations from winning patterns"
+  },
+  "testingPlan": {
+    "variableToTest": "Single most impactful A/B variable",
+    "controlVersion": "What A looks like",
+    "testVersion": "What B changes",
+    "hypothesis": "If we [change], then [metric] will improve because [reason]",
+    "successMetric": "Primary KPI",
+    "minimumBudget": "$X",
+    "minimumDuration": "X days"
+  },
+  "expectedPerformance": {
+    "estimatedCtr": "X–X% range",
+    "estimatedCpc": "$X–$X range",
+    "estimatedRoas": "Xx–Xx range",
+    "confidenceLevel": "HIGH | MEDIUM | LOW",
+    "rationale": "Tied to source creative benchmarks"
+  },
+  "patternsUsed": {
+    "fromWhatWorks": ["Winning elements incorporated"],
+    "weaknessesFixed": ["What doesn't work — addressed"],
+    "psychologyAmplified": ["Triggers strengthened vs source"],
+    "newElements": ["Net-new additions beyond source patterns"]
   }
 }`;
 

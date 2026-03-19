@@ -16,13 +16,13 @@ export function EnlargedImageModal({ url, title, accountName, onClose, container
     return (
         <div
             className={cn(
-                "fixed inset-0 z-[600] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-6 sm:p-8",
+                "fixed inset-0 z-[600] flex items-start justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4 sm:p-8 pt-10 sm:pt-20",
                 containerClassName
             )}
             onClick={onClose}
         >
             <div
-                className="relative w-[95vw] max-w-3xl h-[80vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10 animate-in zoom-in-95 duration-300 mx-auto"
+                className="relative w-[95vw] max-w-3xl h-[70vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10 animate-in zoom-in-95 duration-300 mx-auto"
                 onClick={(e) => e.stopPropagation()}
             >
                 <button

@@ -179,9 +179,19 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [adrollDataSource, setAdrollDataSource] = useState<
-    "database" | "realtime"
-  >("database");
+  const [mounted, setMounted] = useState(false);
+  const [activeView, setActiveViewState] = useState<"dashboard" | "ai-studio">("dashboard");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [activeAnalysis, setActiveAnalysis] = useState<{ type: "score" | "metric"; name: string; } | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [viewFilter, setViewFilter] = useState("Top Perf.");
+  const [isGuideOpen, setIsGuideOpenState] = useState(false);
+  const [isViewAllAdsOpen, setIsViewAllAdsOpenState] = useState(false);
+  const [isProfileOpen, setIsProfileOpenState] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpenState] = useState(false);
+  const [adrollDataSource, setAdrollDataSource] = useState<"database" | "realtime">("database");
   const [selectedAdId, setSelectedAdIdState] = useState<string | null>(null);
   const [selectedAccountId, setSelectedAccountIdState] = useState<string>("all");
   const [ads, setAds] = useState<AdData[]>([]);
@@ -191,8 +201,30 @@ function DashboardContent() {
   const [selectedPlatform, setSelectedPlatformState] = useState<string>("home");
 
   useEffect(() => {
-    const platform = searchParams.get("platform");
-    setSelectedPlatformState(platform || "home");
+    // Land on platform's main view on mount/refresh per user request
+    const isInitialVisit = !mounted;
+    
+    if (isInitialVisit) {
+      // Get current platform from URL or default to home
+      const platformFromUrl = searchParams.get("platform");
+      const currentPlatform = platformFromUrl || "home";
+      setSelectedPlatformState(currentPlatform);
+
+      // On initial entry/refresh, clear sub-views (library, adId, etc.) but keep platform
+      // This fulfills the 'take me to the platform main view' request
+      const hasOtherParams = Array.from(searchParams.keys()).some(k => k !== "platform" && k !== "loggedIn");
+      
+      if (hasOtherParams) {
+        const nextQuery = currentPlatform === "home" ? "" : `?platform=${currentPlatform}`;
+        // Preserve loggedIn if it exists to allow welcome toast
+        const loggedIn = searchParams.get("loggedIn");
+        const finalUrl = loggedIn ? `${nextQuery}${nextQuery ? '&' : '?'}loggedIn=true` : (nextQuery || "/");
+        router.replace(finalUrl, { scroll: false });
+      }
+    } else {
+      const p = searchParams.get("platform");
+      setSelectedPlatformState(p || "home");
+    }
 
     const adId = searchParams.get("adId");
     setSelectedAdIdState(adId);
@@ -202,25 +234,25 @@ function DashboardContent() {
 
     const view = searchParams.get("view");
     if (view === "library") {
-      setIsViewAllAdsOpenState(true);
+      setIsViewAllAdsOpenState(isInitialVisit ? false : true);
       setActiveViewState("dashboard");
     } else if (view === "ai-studio") {
       setIsViewAllAdsOpenState(false);
-      setActiveViewState("ai-studio");
+      setActiveViewState(isInitialVisit ? "dashboard" : "ai-studio");
     } else {
       setIsViewAllAdsOpenState(false);
       setActiveViewState("dashboard");
     }
 
     const profile = searchParams.get("profile");
-    setIsProfileOpenState(profile === "true");
+    if (!isInitialVisit) setIsProfileOpenState(profile === "true");
 
     const settings = searchParams.get("settings");
-    setIsSettingsOpenState(settings === "true");
+    if (!isInitialVisit) setIsSettingsOpenState(settings === "true");
 
     const guide = searchParams.get("guide");
-    setIsGuideOpenState(guide === "true");
-  }, [searchParams]);
+    if (!isInitialVisit) setIsGuideOpenState(guide === "true");
+  }, [searchParams, router, mounted]);
 
   const updateUrl = useCallback(
     (updates: Record<string, string | null>) => {
@@ -279,9 +311,6 @@ function DashboardContent() {
     },
     [updateUrl],
   );
-  const [activeView, setActiveViewState] = useState<"dashboard" | "ai-studio">(
-    "dashboard",
-  );
   const setActiveView = useCallback(
     (val: ("dashboard" | "ai-studio") | ((prev: "dashboard" | "ai-studio") => "dashboard" | "ai-studio")) => {
       const current = searchParams.get("view") === "ai-studio" ? "ai-studio" : "dashboard";
@@ -294,19 +323,10 @@ function DashboardContent() {
     },
     [updateUrl],
   );
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
-  const [activeAnalysis, setActiveAnalysis] = useState<{
-    type: "score" | "metric";
-    name: string;
-  } | null>(null);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const [relativeTime, setRelativeTime] = useState("just now");
   const [newEntriesCount, setNewEntriesCount] = useState(0);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [showRefreshText, setShowRefreshText] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState<{
     url: string;
     title: string;
@@ -314,33 +334,29 @@ function DashboardContent() {
   } | null>(null);
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [enabledPlatforms, setEnabledPlatforms] = useState<string[]>([
+    "meta",
     "google",
     "youtube",
   ]);
   const isMobile = useIsMobile();
-  const [viewFilter, setViewFilter] = useState("Top Perf.");
-  const [isGuideOpen, setIsGuideOpenState] = useState(false);
   const setIsGuideOpen = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
     const current = searchParams.get("guide") === "true";
     const next = typeof val === "function" ? val(current) : val;
     updateUrl({ guide: next ? "true" : null });
   }, [updateUrl, searchParams]);
 
-  const [isViewAllAdsOpen, setIsViewAllAdsOpenState] = useState(false);
   const setIsViewAllAdsOpen = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
     const current = searchParams.get("view") === "library";
     const next = typeof val === "function" ? val(current) : val;
     updateUrl({ view: next ? "library" : null });
   }, [updateUrl, searchParams]);
 
-  const [isProfileOpen, setIsProfileOpenState] = useState(false);
   const setIsProfileOpen = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
     const current = searchParams.get("profile") === "true";
     const next = typeof val === "function" ? val(current) : val;
     updateUrl({ profile: next ? "true" : null });
   }, [updateUrl, searchParams]);
 
-  const [isSettingsOpen, setIsSettingsOpenState] = useState(false);
   const setIsSettingsOpen = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
     const current = searchParams.get("settings") === "true";
     const next = typeof val === "function" ? val(current) : val;
@@ -482,6 +498,13 @@ function DashboardContent() {
     setLastRefreshTime(new Date());
     document.body.style.pointerEvents = "auto";
     document.body.style.overflow = "";
+    
+    // Thoroughly clear dashboard cache upon mount per user request
+    localStorage.removeItem("selected_platform");
+    localStorage.removeItem("connected_platforms");
+    localStorage.removeItem("dashboard_settings");
+    localStorage.removeItem("profile_last_updated");
+    localStorage.removeItem("selected_account");
   }, []);
 
   // Synchronize settings and platform state from localStorage (only once on mount/settings close)
@@ -519,12 +542,8 @@ function DashboardContent() {
       setIsReducedMotionEnabled(settings.reducedMotion ?? false);
       setIsAlertSystemEnabled(settings.alertSystem ?? false);
     }
-
-    // Restore selected platform
-    const savedPlatform = localStorage.getItem("selected_platform");
-    if (savedPlatform) {
-      setSelectedPlatform(savedPlatform as PlatformType);
-    }
+    
+    // Explicitly removed platform persistence from localStorage per user request
   }, [mounted, isSettingsOpen]); // Refresh when settings view is closed
 
   // Update relative time text every minute
@@ -565,12 +584,7 @@ function DashboardContent() {
     }
   }, [status, router]);
 
-  // handle storage persistence
-  useEffect(() => {
-    if (mounted && selectedPlatform) {
-      localStorage.setItem("selected_platform", selectedPlatform);
-    }
-  }, [selectedPlatform, mounted]);
+  // removed storage persistence of platform per user request
 
   // handle initial platform logic
   useEffect(() => {
@@ -1723,7 +1737,7 @@ function DashboardContent() {
                 <label
                   className={`text-[10px] font-black tracking-widest text-zinc-400 uppercase ml-1 ${isSidebarCollapsed ? "hidden" : "block"}`}
                 >
-                  Navigation
+                  {selectedPlatform === "home" ? "AI Workspace" : "Navigation"}
                 </label>
                 {selectedPlatform !== "home" && (
                 <Button
@@ -1923,7 +1937,7 @@ function DashboardContent() {
                   </SheetTrigger>
                   <SheetContent side="left" className="p-0 w-72">
                     <SheetHeader className="sr-only">
-                      <SheetTitle>Navigation Menu</SheetTitle>
+                      <SheetTitle>AI Workspace Menu</SheetTitle>
                       <SheetDescription>
                         Access your profile, settings, and ad accounts.
                       </SheetDescription>
@@ -2001,7 +2015,7 @@ function DashboardContent() {
                         </DropdownMenu>
                       </div>
 
-                      {/* Navigation / Accounts */}
+                      {/* AI Workspace / Accounts */}
                       <div className="flex-1 overflow-auto py-4 px-3 space-y-4">
                         {/* Mobile Platform Switcher */}
                         <div className="space-y-1.5 pt-2">
@@ -2142,13 +2156,14 @@ function DashboardContent() {
                           </div>
                         )}
 
-                        {/* Navigation — visible for all platforms */}
-                        {selectedPlatform !== "home" && (
+                        {/* AI Workspace — visible for all platforms */}
+                        {(selectedPlatform !== "home" || true) && (
                         <div className="space-y-4">
                           <div className="space-y-1">
                             <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1 uppercase">
-                              Navigation
+                              {selectedPlatform === "home" ? "AI Workspace" : "Navigation"}
                             </label>
+                            {selectedPlatform !== "home" && (
                             <Button
                               variant="ghost"
                                onClick={() => {
@@ -2181,6 +2196,43 @@ function DashboardContent() {
                                 Library
                               </span>
                             </Button>
+                            )}
+
+                            {/* AI Studio Link on Mobile - visible when on Home */}
+                            {selectedPlatform === "home" && (
+                            <Button
+                              variant="ghost"
+                               onClick={() => {
+                                 setMultipleStates({
+                                   view: "ai-studio",
+                                   guide: false,
+                                   profile: false,
+                                   settings: false
+                                 });
+                                 setIsMobileMenuOpen(false);
+                               }}
+                              className={cn(
+                                "w-full justify-start gap-3 h-12 px-3 rounded-2xl transition-all relative group/nav overflow-hidden",
+                                activeView === "ai-studio"
+                                  ? "bg-[#020617] text-white border border-[#007AFF]"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                              )}
+                            >
+                              <div
+                                className={cn(
+                                  "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300",
+                                  activeView === "ai-studio"
+                                    ? "bg-white/20"
+                                    : "bg-zinc-100 dark:bg-zinc-800",
+                                )}
+                              >
+                                <Sparkles className="h-4 w-4" />
+                              </div>
+                              <span className="text-sm font-black uppercase tracking-widest">
+                                AI Studio
+                              </span>
+                            </Button>
+                            )}
                           </div>
 
                           {recentAds.length > 0 && (
@@ -3107,16 +3159,7 @@ function DashboardContent() {
                                       className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/60 dark:border-white/5 rounded-2xl overflow-hidden hover:border-[#007AFF]/50 transition-all group cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300"
                                     >
                                       <div 
-                                        className="aspect-[16/9] w-full relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 cursor-pointer"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          const adAccount = accounts.find((acc) => acc.id === ad.adAccountId);
-                                          setEnlargedImage({
-                                            url: ad.thumbnailUrl,
-                                            title: ad.adName,
-                                            accountName: adAccount?.name,
-                                          });
-                                        }}
+                                        className="aspect-[16/9] w-full relative overflow-hidden bg-zinc-100 dark:bg-zinc-800"
                                       >
                                         <img
                                           src={ad.thumbnailUrl}
@@ -3193,16 +3236,7 @@ function DashboardContent() {
                                       className="flex items-start md:items-center gap-3 md:gap-6 p-3 md:p-4 bg-white/60 dark:bg-zinc-900/60 border border-zinc-100 dark:border-white/5 rounded-2xl hover:border-[#007AFF]/40 hover:bg-white dark:hover:bg-zinc-900 transition-all group cursor-pointer shadow-sm hover:shadow-md"
                                     >
                                       <div 
-                                        className="w-20 h-20 md:w-32 md:h-20 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border border-border/50 cursor-pointer"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          const adAccount = accounts.find((acc) => acc.id === ad.adAccountId);
-                                          setEnlargedImage({
-                                            url: ad.thumbnailUrl,
-                                            title: ad.adName,
-                                            accountName: adAccount?.name,
-                                          });
-                                        }}
+                                        className="w-20 h-20 md:w-32 md:h-20 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border border-border/50"
                                       >
                                         <img
                                           src={ad.thumbnailUrl}
@@ -3303,16 +3337,7 @@ function DashboardContent() {
                                         >
                                           <TableCell>
                                             <div 
-                                              className="w-16 h-9 rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-border cursor-pointer"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                const adAccount = accounts.find((acc) => acc.id === ad.adAccountId);
-                                                setEnlargedImage({
-                                                  url: ad.thumbnailUrl,
-                                                  title: ad.adName,
-                                                  accountName: adAccount?.name,
-                                                });
-                                              }}
+                                              className="w-16 h-9 rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-border"
                                             >
                                               <img
                                                 src={ad.thumbnailUrl}

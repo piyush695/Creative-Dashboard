@@ -227,8 +227,9 @@ export async function POST(request: Request) {
 - ADD to new version: ${(patterns.optimizationSynthesis?.addElements || []).join('; ')}
 - Use hook concept: ${(patterns.optimizationSynthesis?.hookOptions || [])[0] || ''}
 - Use CTA: ${(patterns.optimizationSynthesis?.ctaOptions || [])[0] || ''}
+${body.tone ? `\n- TONE OVERRIDE (CRITICAL): The user requires this exact tone/style: "${body.tone}". You MUST apply this aesthetic.` : ''}
 
-Brand: Hola Prime prop trading firm. Professional, elite aesthetic. DO NOT generate random lifestyle images.`,
+Brand: Hola Prime prop trading firm. Produce an ultra-premium, million-dollar professional design language. No cheap or spammy aesthetics. DO NOT generate random lifestyle images.`,
         sourceCreativeUrls,
         // Also set primary reference to best-performing source creative
         referenceUrl: patterns.bestCreative?.thumbnailUrl || sourceCreativeUrls[0] || undefined,
@@ -286,6 +287,16 @@ Generate a high-converting Hola Prime ad creative brief applying ALL 10 rules:
 8. VISUAL MOTIFS \u2014 rockets, chart grids, gradient glows
 9. SOCIAL PROOF \u2014 'Trusted by 100K+ traders', #WeAreTraders
 10. MOBILE-FIRST \u2014 top 30% hooks in 0.5s, discount/amount leads
+
+---
+## STRATEGIC FOUNDATION (CREATIVE ANALYSIS FRAMEWORK)
+Factor the following methodology into your structural thinking and copy rationale:
+- Hook Rule: Aim for a massive thumbstop ratio. Optimize opening frames for attention.
+- Deconstruct: Balance hook, visuals, body, offer, CTA, and audio.
+- Metric Focus: Design for high CTR (>1.5%) and Hold Rate (>25%). Avoid engagement traps; optimize for CVR and ROAS.
+- Anti-Prettiness: Remember that highly-polished ads can flop compared to normalized organic content.
+- Inversion: Actively anticipate why this ad might fail and pre-emptively fix it in the brief.
+---
 
 Return ONLY valid JSON:
 {

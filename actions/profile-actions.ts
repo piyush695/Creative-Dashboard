@@ -63,7 +63,10 @@ export async function getConnectedPlatforms() {
         const client = await clientPromise
         const db = client.db(process.env.MONGODB_DB || "reddit_data")
         const user = await db.collection("users").findOne({ email: session.user.email })
-        return { success: true, platforms: user?.connectedPlatforms || [] }
+        const platforms = user?.connectedPlatforms || []
+        // Ensure at least meta and google are there if nothing is set
+        const finalPlatforms = platforms.length > 0 ? platforms : ["meta", "google"]
+        return { success: true, platforms: finalPlatforms }
     } catch (error) {
         console.error("Get platforms error:", error)
         return { error: "Failed to get platforms" }
@@ -95,8 +98,10 @@ export async function getEnabledPlatforms() {
         const client = await clientPromise
         const db = client.db(process.env.MONGODB_DB || "reddit_data")
         const user = await db.collection("users").findOne({ email: session.user.email })
-        // Default to meta and youtube if nothing is set
-        return { success: true, platforms: user?.enabledPlatforms || ["meta", "youtube"] }
+        const platforms = user?.enabledPlatforms || []
+        // Default to meta and youtube if nothing is set or empty
+        const finalPlatforms = platforms.length > 0 ? platforms : ["meta", "youtube"]
+        return { success: true, platforms: finalPlatforms }
     } catch (error) {
         console.error("Get enabled platforms error:", error)
         return { error: "Failed to get enabled platforms" }

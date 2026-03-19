@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { EnlargedImageModal } from "./enlarged-image-modal"
 
 interface CreativeStudioViewProps {
   onClose?: () => void
@@ -67,6 +68,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
   const [base64File, setBase64File] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [copiedText, setCopiedText] = useState(false)
+  const [previewImagePopup, setPreviewImagePopup] = useState<{ url: string; title: string } | null>(null)
 
   const [creatives, setCreatives] = useState<any[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -189,6 +191,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
           adIds: selectedIds, 
           selectedAspects, 
           type: "pattern-based",
+          prompt: currentTabState.prompt,
           ...(optionsOverride || currentTabState.generationOptions || {})
         }
       }
@@ -236,49 +239,45 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden font-sans select-none" suppressHydrationWarning>
+    <div className="flex flex-col h-[100dvh] bg-background text-foreground overflow-hidden font-sans select-none" suppressHydrationWarning>
       
       {/* Header */}
-         <header className="px-5 py-3 border-b border-white/[0.06] dark:border-white/[0.06] bg-background/90 backdrop-blur-xl z-50 shrink-0">
-        <div className="flex items-center justify-between w-full gap-4">
-           <div className="flex items-center gap-3">
-             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/8 border border-blue-500/15 rounded-full">
-                <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-                <span className="text-[10px] font-semibold text-blue-400 tracking-wide">Holaprime Neural Core</span>
-             </div>
-             <h1 className="text-base font-bold tracking-tight italic text-foreground/90">Creative Analyzer</h1>
-           </div>
-           
-           <div className="flex items-center gap-3">
-             <div className="bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.06]">
-               <button 
-                 onClick={() => setActiveMainTab("custom")}
-                 className={cn("px-4 py-1.5 text-[11px] font-semibold rounded-md transition-all", activeMainTab === "custom" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
-               >Custom</button>
-               <button 
-                 onClick={() => setActiveMainTab("top-ads")}
-                 className={cn("px-4 py-1.5 text-[11px] font-semibold rounded-md transition-all", activeMainTab === "top-ads" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
-               >Top Ads</button>
-               <button 
-                 onClick={() => setActiveMainTab("studio")}
-                 className={cn("px-4 py-1.5 text-[11px] font-semibold rounded-md transition-all", activeMainTab === "studio" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
-               >AI Studio</button>
-             </div>
-             {onClose && (
-               <button onClick={onClose} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors border border-border">
-                 <X className="w-4 h-4 text-muted-foreground" />
-               </button>
-             )}
-           </div>
+        <header className="px-3 md:px-5 py-2 md:py-3 border-b border-white/[0.06] bg-background/90 backdrop-blur-xl z-50 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/8 border border-blue-500/15 rounded-full shrink-0">
+                <Sparkles className="w-3 h-3 text-blue-400" />
+              </div>
+              <h1 className="text-sm font-bold tracking-tight italic text-foreground/90 truncate">Creative Analyzer</h1>
+            </div>
+            {onClose && (
+              <button onClick={onClose} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors border border-border shrink-0 sm:hidden">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.06] flex w-full sm:w-auto">
+              <button onClick={() => setActiveMainTab("custom")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all", activeMainTab === "custom" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Custom</button>
+              <button onClick={() => setActiveMainTab("top-ads")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all", activeMainTab === "top-ads" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Top Ads</button>
+              <button onClick={() => setActiveMainTab("studio")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all", activeMainTab === "studio" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>AI Studio</button>
+            </div>
+            {onClose && (
+              <button onClick={onClose} className="hidden sm:flex w-8 h-8 rounded-full bg-muted items-center justify-center hover:bg-muted/80 transition-colors border border-border shrink-0">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
       {/* Main Container */}
-         <main className="flex-1 flex overflow-hidden w-full relative">
+        <main className="flex-1 flex flex-col md:flex-row overflow-hidden w-full relative min-h-0">
         
         {/* Sidebar — Hidden for Top Ads */}
         <aside className={cn(
-          "w-[280px] border-r border-border flex flex-col bg-card/50 transition-all duration-300 z-40 shrink-0",
+          "w-full md:w-[280px] border-b md:border-b-0 md:border-r border-border flex flex-col bg-card/50 transition-all duration-300 z-40 shrink-0",
           activeMainTab === 'top-ads' && "hidden"
         )}>
           <div className="p-4 shrink-0 border-b border-white/[0.04]">
@@ -288,7 +287,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
             </h2>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 custom-scrollbar min-h-0">
+          <div className="flex-1 overflow-y-auto px-4 py-3 md:py-4 space-y-3 custom-scrollbar min-h-0 max-h-[40vh] md:max-h-none">
             {activeMainTab === "studio" && (
               <div className="space-y-4 animate-in slide-in-from-bottom-2">
                 <div className="grid grid-cols-2 bg-muted p-0.5 rounded-lg border border-border">
@@ -376,7 +375,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
         </aside>
 
         {/* Viewport */}
-        <section className="flex-1 bg-background relative flex flex-col min-w-0 overflow-y-auto custom-scrollbar scroll-smooth">
+        <section className="flex-1 bg-background relative flex flex-col min-w-0 min-h-0 overflow-y-auto custom-scrollbar scroll-smooth">
           
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.015] pointer-events-none" 
             style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '60px 60px' }} 
@@ -388,14 +387,14 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
               {activeMainTab === "top-ads" && (
                 <div className="flex-1 flex flex-col">
                   {/* Library Header */}
-                     <div className="px-8 py-8 border-b border-white/[0.04] relative overflow-hidden">
+                  <div className="px-4 md:px-8 py-5 md:py-8 border-b border-white/[0.04] relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent pointer-events-none" />
-                    <div className="relative z-10 flex items-end justify-between gap-4">
+                    <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-1.5 text-[10px] font-semibold text-blue-400 uppercase tracking-widest">
                           <Database className="w-3 h-3" /> Pattern Repository
                         </div>
-                        <h2 className="text-3xl font-black italic text-foreground uppercase tracking-tight leading-none">
+                        <h2 className="text-xl md:text-3xl font-black italic text-foreground uppercase tracking-tight leading-none">
                           Winning <span className="text-blue-500">Library</span>
                         </h2>
                         <p className="text-[11px] text-zinc-500 font-medium max-w-md">
@@ -404,16 +403,16 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                       </div>
                       
                       {selectedIds.length > 0 && (
-                        <div className="flex items-center gap-3 animate-in slide-in-from-right-4">
-                          <span className="text-[10px] font-semibold text-zinc-500">{selectedIds.length} selected</span>
-                          <button 
+                        <div className="flex items-center gap-3 backdrop-blur-md animate-in fade-in z-20 w-full sm:w-auto mt-3 sm:mt-0">
+                          <span className="text-[11px] font-semibold text-white px-2 hidden lg:block">{selectedIds.length} Selected</span>
+                          <button
                             onClick={() => {
                               const ad = creatives.find(c => c.adId === selectedIds[0])
                               if (ad) handleAdCardClick(ad)
                             }}
-                            className="bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-md"
+                            className="bg-primary text-primary-foreground w-full sm:w-auto justify-center px-5 py-2.5 rounded-lg font-bold text-[12px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] border border-blue-400/50"
                           >
-                            Analyze <ArrowRight className="w-3.5 h-3.5" />
+                            Analyze Selected <ArrowRight className="w-4 h-4" />
                           </button>
                         </div>
                       )}
@@ -421,8 +420,8 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                   </div>
 
                   {/* Ad Grid */}
-                  <div className="flex-1 p-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 max-w-[1600px] mx-auto pb-20">
+                  <div className="flex-1 p-3 md:p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 max-w-[1600px] mx-auto pb-16">
                       {creatives.map((ad, idx) => (
                         <div 
                           key={`lib-${ad.adId || idx}`}
@@ -450,16 +449,15 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                             {selectedIds.includes(ad.adId) && (
                               <div className="absolute inset-0 border-2 border-blue-500/50 rounded-xl pointer-events-none" />
                             )}
-
-                            {/* Eye Button */}
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleAdCardClick(ad); }}
-                              className="absolute top-2 right-2 w-7 h-7 rounded-md bg-white/10 border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-black"
-                            >
+                             {/* Eye Button (Preview) */}
+                             <button 
+                               onClick={(e) => { e.stopPropagation(); setPreviewImagePopup({ url: ad.thumbnailUrl, title: ad.adName }); }}
+                               className="absolute top-2 right-2 w-7 h-7 rounded-md bg-white/20 border border-white/20 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:bg-white group-hover:bg-white hover:text-black shadow-lg"
+                             >
                                <Eye className="w-3.5 h-3.5 text-white group-hover:text-primary transition-colors" />
                             </button>
 
-                            <div className="absolute bottom-2 left-2 right-2 space-y-0.5">
+                            <div className="absolute bottom-2 left-2 right-2 space-y-0.5 pointer-events-none">
                                <h3 className="text-[11px] font-semibold text-white truncate">{ad.adName || "Unnamed"}</h3>
                                <div className="flex items-center gap-1">
                                  <div className="w-1 h-1 rounded-full bg-emerald-500" />
@@ -470,37 +468,6 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                         </div>
                       ))}
                     </div>
-
-                    {/* Floating Selection Bar */}
-                    {selectedIds.length > 0 && (
-                      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-8 duration-500">
-                        <div className="bg-black/90 backdrop-blur-2xl border border-white/10 py-2 px-3 rounded-full shadow-2xl flex items-center gap-3">
-                          <div className="flex -space-x-3 ml-1">
-                            {selectedIds.slice(0, 3).map((id) => (
-                              <div key={id} className="w-8 h-8 rounded-full border-2 border-black overflow-hidden bg-zinc-900">
-                                <img src={creatives.find(c => c.adId === id)?.thumbnailUrl} className="w-full h-full object-cover" alt="" />
-                              </div>
-                            ))}
-                            {selectedIds.length > 3 && (
-                              <div className="w-8 h-8 rounded-full border-2 border-black bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-white">
-                                +{selectedIds.length - 3}
-                              </div>
-                            )}
-                          </div>
-                          <div className="h-6 w-px bg-white/10" />
-                          <span className="text-[11px] font-semibold text-white">{selectedIds.length} selected</span>
-                          <button 
-                            onClick={() => {
-                              const ad = creatives.find(c => c.adId === selectedIds[0])
-                              if (ad) handleAdCardClick(ad)
-                            }}
-                            className="bg-primary text-primary-foreground px-5 py-2 rounded-full font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all"
-                          >
-                            Analyze <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -528,7 +495,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
           {currentTabState.mode === "ad-details" && activeMainTab === "top-ads" && (
             <div className="flex-1 flex flex-col animate-in fade-in duration-300 min-h-full">
               {/* Step Header */}
-                 <div className="px-6 py-3 border-b border-border bg-background/90 backdrop-blur-xl sticky top-0 z-50 flex items-center justify-between gap-4">
+                 <div className="px-3 md:px-6 py-2 md:py-3 border-b border-border bg-background/90 backdrop-blur-xl sticky top-0 z-50 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-4">
                   <button 
                     onClick={() => cancelProcess()}
@@ -537,20 +504,20 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                     <ChevronLeft className="w-4 h-4 text-foreground" />
                   </button>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 overflow-x-auto shrink min-w-0">
                     {['aspects', 'generate', 'results'].map((step, i) => (
                       <React.Fragment key={step}>
-                        {i > 0 && <div className="w-6 h-px bg-white/10" />}
-                        <button 
+                        {i > 0 && <div className="w-4 h-px bg-white/10 shrink-0" />}
+                        <button
                           disabled={step === 'results' && !currentTabState.result}
                           onClick={() => setTopAdsStep(step as TopAdsStep)}
                           className={cn(
-                            "flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider transition-all disabled:opacity-30",
+                            "flex items-center gap-1 text-[9px] md:text-[10px] font-semibold uppercase tracking-wider transition-all disabled:opacity-30 shrink-0",
                             topAdsStep === step ? "text-primary" : "text-muted-foreground"
                           )}
                         >
-                          <span className={cn("w-5 h-5 rounded-md flex items-center justify-center text-[9px] border transition-all", topAdsStep === step ? "bg-primary border-primary text-primary-foreground" : "bg-muted border-border")}>{i + 1}</span>
-                          {step === 'aspects' ? 'Aspects' : step === 'generate' ? 'Generate' : 'Results'}
+                          <span className={cn("w-4 h-4 md:w-5 md:h-5 rounded-md flex items-center justify-center text-[8px] md:text-[9px] border transition-all shrink-0", topAdsStep === step ? "bg-primary border-primary text-primary-foreground" : "bg-muted border-border")}>{i + 1}</span>
+                          <span className="hidden sm:inline">{step === 'aspects' ? 'Aspects' : step === 'generate' ? 'Generate' : 'Results'}</span>
                         </button>
                       </React.Fragment>
                     ))}
@@ -583,30 +550,38 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                 </div>
               </div>
 
-              <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+              <div className="flex-1 p-3 md:p-6 overflow-y-auto custom-scrollbar">
                 {/* ASPECTS STEP */}
                 {topAdsStep === 'aspects' && currentPreviewId && fullData[currentPreviewId] && (
-                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-5xl mx-auto w-full space-y-6 pb-16">
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-5xl mx-auto w-full space-y-4 pb-4">
                     
                     {/* Compact Card */}
                     <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                      <div className="flex gap-0">
-                        {/* Image — Fixed small size */}
-                        <div className="w-[180px] shrink-0 relative overflow-hidden border-r border-border">
+                      <div className="flex flex-col sm:flex-row gap-0">
+                        {/* Image */}
+                        <div 
+                          className="w-full h-36 sm:w-[180px] sm:h-auto shrink-0 relative overflow-hidden border-b sm:border-b-0 sm:border-r border-border group cursor-pointer" 
+                          onClick={() => setPreviewImagePopup({ 
+                            url: fullData[currentPreviewId].thumbnailUrl, 
+                            title: fullData[currentPreviewId].adName 
+                          })}
+                        >
                           <img src={fullData[currentPreviewId].thumbnailUrl} className="w-full h-full object-cover" alt="" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                          <button 
-                            onClick={() => toggleAdSelection(currentPreviewId)}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-white pointer-events-none">
+                             <Eye className="w-5 h-5" />
+                          </div>
+                          <div 
                             className={cn(
                               "absolute bottom-2 left-2 right-2 py-1.5 rounded-md text-[9px] font-semibold flex items-center justify-center gap-1 transition-all border backdrop-blur-md",
                               selectedIds.includes(currentPreviewId) 
-                                ? "bg-blue-600 border-blue-400 text-white" 
-                                : "bg-white/10 text-white border-white/20 hover:bg-white/20"
+                                ? "bg-blue-600 border-blue-400 text-white cursor-default" 
+                                : "bg-white/10 text-white border-white/20"
                             )}
                           >
                             {selectedIds.includes(currentPreviewId) ? "Selected" : "Select"}
                             <CheckCircle2 className={cn("w-3 h-3", selectedIds.includes(currentPreviewId) ? "opacity-100" : "opacity-40")} />
-                          </button>
+                          </div>
                         </div>
 
                         {/* Info */}
@@ -649,13 +624,13 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                     </div>
 
                     {/* Analysis Tabs */}
-                    <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+                    <div className="bg-card border border-border rounded-2xl p-4 md:p-5 shadow-sm overflow-hidden">
                       <Tabs defaultValue="highlights" className="w-full">
-                        <TabsList className="bg-muted p-0.5 rounded-lg h-auto w-full flex gap-0.5 mb-5 border border-border">
-                          <TabsTrigger value="highlights" className="flex-1 text-[10px] font-semibold uppercase tracking-wide rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all py-2">DNA Points</TabsTrigger>
-                          <TabsTrigger value="aida" className="flex-1 text-[10px] font-semibold uppercase tracking-wide rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all py-2">AIDA</TabsTrigger>
-                          <TabsTrigger value="neural" className="flex-1 text-[10px] font-semibold uppercase tracking-wide rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all py-2">Psychology</TabsTrigger>
-                          <TabsTrigger value="insights" className="flex-1 text-[10px] font-semibold uppercase tracking-wide rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all py-2">Insights</TabsTrigger>
+                        <TabsList className="bg-muted p-0.5 rounded-xl h-auto w-full flex flex-nowrap overflow-x-auto custom-scrollbar gap-0.5 mb-5 border border-border justify-start">
+                          <TabsTrigger value="highlights" className="flex-1 min-w-[100px] text-[10px] font-semibold uppercase tracking-wide rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all py-2.5">DNA Points</TabsTrigger>
+                          <TabsTrigger value="aida" className="flex-1 min-w-[80px] text-[10px] font-semibold uppercase tracking-wide rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all py-2.5">AIDA</TabsTrigger>
+                          <TabsTrigger value="neural" className="flex-1 min-w-[100px] text-[10px] font-semibold uppercase tracking-wide rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all py-2.5">Psychology</TabsTrigger>
+                          <TabsTrigger value="insights" className="flex-1 min-w-[80px] text-[10px] font-semibold uppercase tracking-wide rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all py-2.5">Insights</TabsTrigger>
                         </TabsList>
                              
                         <TabsContent value="highlights" className="space-y-2 outline-none">
@@ -699,7 +674,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                           ))}
                         </TabsContent>
 
-                        <TabsContent value="neural" className="grid grid-cols-2 gap-3 outline-none">
+                        <TabsContent value="neural" className="grid grid-cols-1 sm:grid-cols-2 gap-3 outline-none">
                           {Object.entries(fullData[currentPreviewId]?.psychology || {}).map(([key, val]: any) => (
                             <div 
                               key={key} 
@@ -736,12 +711,12 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                       </Tabs>
                     </div>
 
-                    {/* Next Step Button */}
-                    <div className="flex justify-end">
-                      <button 
+                    {/* Next Step Button — fixed floating at bottom on mobile, inline on desktop */}
+                    <div className="flex justify-end pt-6 pb-4">
+                      <button
                         disabled={selectedIds.length === 0}
                         onClick={() => setTopAdsStep('generate')}
-                        className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all disabled:opacity-40 shadow-lg"
+                        className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all disabled:opacity-40 shadow-lg w-auto"
                       >
                         Next: Configure Generation <ArrowRight className="w-4 h-4" />
                       </button>
@@ -806,14 +781,15 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                       </div>
                     </div>
 
-                    <div className="p-5 rounded-xl bg-blue-600/5 border border-blue-500/10 flex items-center justify-between gap-4">
+                    {/* Generate Button */}
+                    <div className="flex items-center justify-between gap-4 pt-4 pb-4 border-t border-border">
                       <div>
                         <h3 className="text-sm font-bold text-foreground">Ready to Generate</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{selectedIds.length} creatives selected · {Object.keys(selectedAspects).reduce((acc, k) => acc + (selectedAspects[k]?.whatWorks?.length || 0), 0)} aspects active</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{selectedIds.length} creatives · {Object.keys(selectedAspects).reduce((acc, k) => acc + (selectedAspects[k]?.whatWorks?.length || 0), 0)} aspects active</p>
                       </div>
-                      <button 
+                      <button
                         onClick={() => handleGenerate()}
-                        className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-lg"
+                        className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-lg shrink-0"
                       >
                         Generate <Sparkles className="w-4 h-4 text-blue-500" />
                       </button>
@@ -848,7 +824,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
             };
 
             return (
-            <div className="flex-1 flex flex-col items-center justify-center relative p-8 animate-in fade-in duration-500 overflow-hidden bg-background h-full">
+            <div className="flex-1 flex flex-col items-center justify-center relative p-4 md:p-8 animate-in fade-in duration-500 overflow-hidden bg-background h-full">
 
               {/* Ambient background */}
               <div className="absolute inset-0 pointer-events-none">
@@ -860,7 +836,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                   style={{ background: activeStage.color, opacity: 0.05 }} />
               </div>
 
-              <div className="relative w-full max-w-3xl flex flex-col items-center gap-10 animate-in fade-in zoom-in-98 duration-700">
+              <div className="relative w-full max-w-3xl flex flex-col items-center gap-5 md:gap-10 animate-in fade-in zoom-in-98 duration-700">
 
                 {/* Header */}
                 <div className="text-center space-y-2">
@@ -871,14 +847,14 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                       Holaprime Neural Engine · Active
                     </span>
                   </div>
-                  <h2 className="text-xl font-black text-white uppercase tracking-tight">{activeStage.label}</h2>
+                  <h2 className="text-sm md:text-xl font-black text-white uppercase tracking-tight">{activeStage.label}</h2>
                   <p className="text-[11px] font-medium transition-all duration-700" style={{ color: `${activeStage.color}aa` }}>{activeStage.sub}</p>
                 </div>
 
                 {/* Pipeline */}
                 <div className="w-full relative">
-                  {/* SVG connector lines */}
-                  <svg className="absolute top-0 left-0 w-full pointer-events-none" height="56" style={{ zIndex: 0 }} preserveAspectRatio="none">
+                  {/* SVG connector lines — height responsive */}
+                  <svg className="absolute top-0 left-0 w-full pointer-events-none" height="40" style={{ zIndex: 0 }} preserveAspectRatio="none">
                     {stages.map((_: any, i: number) => {
                       if (i >= stages.length - 1) return null;
                       const segW = 100 / (stages.length - 1);
@@ -916,21 +892,21 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                   </svg>
 
                   {/* Nodes */}
-                  <div className="flex items-start justify-between" style={{ zIndex: 1, position: 'relative' }}>
+                  <div className="flex items-start justify-between pt-0" style={{ zIndex: 1, position: 'relative', marginTop: 0 }}>
                     {stages.map((stage: any, i: number) => {
                       const isDone   = i < activeIdx;
                       const isActive = i === activeIdx;
                       const col = isDone || isActive ? stage.color : 'rgba(255,255,255,0.18)';
 
                       return (
-                        <div key={stage.id} className="flex flex-col items-center gap-3" style={{ width: '20%' }}>
+                        <div key={stage.id} className="flex flex-col items-center gap-1 md:gap-3" style={{ width: '20%' }}>
                           <div className="relative flex items-center justify-center">
-                            {isActive && <div className="absolute w-20 h-20 rounded-full animate-ping" style={{ background: `${stage.color}06`, border: `1px solid ${stage.color}20` }} />}
-                            {isActive && <div className="absolute w-16 h-16 rounded-full animate-pulse" style={{ background: `${stage.color}0c`, border: `1px solid ${stage.color}30` }} />}
-                            {isDone   && <div className="absolute w-14 h-14 rounded-full" style={{ border: `1px solid ${stage.color}25` }} />}
+                            {isActive && <div className="absolute w-10 md:w-20 h-10 md:h-20 rounded-full animate-ping" style={{ background: `${stage.color}06`, border: `1px solid ${stage.color}20` }} />}
+                            {isActive && <div className="absolute w-8 md:w-16 h-8 md:h-16 rounded-full animate-pulse" style={{ background: `${stage.color}0c`, border: `1px solid ${stage.color}30` }} />}
+                            {isDone   && <div className="absolute w-7 md:w-14 h-7 md:h-14 rounded-full" style={{ border: `1px solid ${stage.color}25` }} />}
 
                             {/* Main node */}
-                            <div className="w-12 h-12 rounded-full flex items-center justify-center relative transition-all duration-700"
+                            <div className="w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center relative transition-all duration-700"
                               style={{
                                 background: isDone ? `linear-gradient(135deg, ${stage.color}22, ${stage.color}0a)`
                                   : isActive ? `linear-gradient(135deg, ${stage.color}30, ${stage.color}10)`
@@ -939,7 +915,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                                 boxShadow: isActive ? `0 0 0 3px ${stage.color}18, 0 0 30px ${stage.color}35` : isDone ? `0 0 12px ${stage.color}22` : 'none',
                                 color: col, zIndex: 10,
                               }}>
-                              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 md:w-5 md:h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 {isDone
                                   ? <polyline points="20 6 9 17 4 12" strokeWidth="2.5" />
                                   : <path d={iconPaths[stage.id] || ''} />
@@ -949,29 +925,29 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
 
                             {/* Spinning arc for active */}
                             {isActive && (
-                              <svg className="absolute w-[60px] h-[60px]" viewBox="0 0 60 60"
+                              <svg className="absolute w-[28px] h-[28px] md:w-[60px] md:h-[60px]" viewBox="0 0 60 60"
                                 style={{ animation: 'spinRing 2s linear infinite', position: 'absolute' }}>
                                 <circle cx="30" cy="30" r="28" fill="none"
-                                  stroke={stage.color} strokeWidth="1.5" strokeOpacity="0.6"
+                                  stroke={stage.color} strokeWidth="2" strokeOpacity="0.6"
                                   strokeDasharray="44 132" strokeLinecap="round" />
                               </svg>
                             )}
                           </div>
 
-                          <div className="text-center space-y-1">
-                            <p className="text-[9px] font-bold uppercase tracking-wider leading-tight transition-colors duration-500"
+                          <div className="text-center space-y-0.5 max-w-[40px] md:max-w-none">
+                            <p className="text-[6px] md:text-[9px] font-bold uppercase tracking-tight md:tracking-wider leading-tight transition-colors duration-500 break-words"
                               style={{ color: isDone ? stage.color + 'bb' : isActive ? '#f1f5f9' : 'rgba(255,255,255,0.18)' }}>
-                              {stage.label}
+                              {stage.label.split(' ')[0]}
                             </p>
                             {isActive && (
-                              <div className="flex justify-center gap-[3px]">
+                              <div className="flex justify-center gap-[2px] md:gap-[3px]">
                                 {[0, 110, 220].map((d: number) => (
-                                  <div key={d} className="w-[3px] h-[3px] rounded-full animate-bounce"
+                                  <div key={d} className="w-[2px] h-[2px] md:w-[3px] md:h-[3px] rounded-full animate-bounce"
                                     style={{ background: stage.color, animationDelay: `${d}ms` }} />
                                 ))}
                               </div>
                             )}
-                            {isDone && <div className="text-[8px] font-semibold" style={{ color: stage.color + '70' }}>done</div>}
+                            {isDone && <div className="text-[6px] md:text-[8px] font-semibold" style={{ color: stage.color + '70' }}>done</div>}
                           </div>
                         </div>
                       );
@@ -980,17 +956,17 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 w-full">
+                <div className="grid grid-cols-3 gap-2 md:gap-4 w-full">
                   {[
                     { label: 'Sources',  value: activeMainTab === 'top-ads' ? String(selectedIds.length) : '—', sub: activeMainTab === 'top-ads' ? 'creatives' : 'prompt', color: '#3b82f6' },
                     { label: 'Stage',    value: `${activeIdx + 1}`,  sub: 'of 5 steps',    color: activeStage.color },
                     { label: 'Progress', value: `${Math.floor(progress)}%`, sub: 'complete', color: '#10b981' },
                   ].map((s: any) => (
-                    <div key={s.label} className="p-4 rounded-2xl text-center transition-all duration-700"
+                    <div key={s.label} className="p-2 md:p-4 rounded-xl md:rounded-2xl text-center transition-all duration-700"
                       style={{ background: `${s.color}08`, border: `1px solid ${s.color}18` }}>
-                      <div className="text-[9px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: `${s.color}65` }}>{s.label}</div>
-                      <div className="text-2xl font-black font-mono" style={{ color: s.color }}>{s.value}</div>
-                      <div className="text-[9px] mt-0.5" style={{ color: `${s.color}45` }}>{s.sub}</div>
+                      <div className="text-[7px] md:text-[9px] font-semibold uppercase tracking-widest mb-1 md:mb-1.5" style={{ color: `${s.color}65` }}>{s.label}</div>
+                      <div className="text-lg md:text-2xl font-black font-mono" style={{ color: s.color }}>{s.value}</div>
+                      <div className="text-[7px] md:text-[9px] mt-0.5" style={{ color: `${s.color}45` }}>{s.sub}</div>
                     </div>
                   ))}
                 </div>
@@ -1079,83 +1055,100 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
             };
 
             return (
-            <div className="flex-1 flex flex-col animate-in zoom-in-95 duration-700 h-full overflow-hidden">
-               <div className="flex-1 relative group overflow-hidden bg-background flex items-center justify-center">
+            <div className="flex-1 flex flex-col animate-in zoom-in-95 duration-700 overflow-hidden min-h-0">
+
+               {/* Image area */}
+               <div className="flex-1 relative group overflow-hidden bg-background flex items-center justify-center min-h-[180px] md:min-h-0">
                   {r.imageUrl ? (
                     <img src={r.imageUrl} className="w-full h-full object-contain transition-transform duration-[20s] group-hover:scale-105" alt="Creative" />
                   ) : (
-                    <div className="flex flex-col items-center justify-center opacity-40">
-                      <ImageIcon className="w-24 h-24 mb-4 text-muted-foreground" />
-                      <p className="text-sm font-semibold text-muted-foreground">Image Generation Processing / No Image Provider</p>
+                    <div className="flex flex-col items-center justify-center opacity-40 px-4">
+                      <ImageIcon className="w-12 md:w-24 h-12 md:h-24 mb-2 md:mb-4 text-muted-foreground" />
+                      <p className="text-xs font-semibold text-muted-foreground text-center">Image Generation / No Provider</p>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-80 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60 pointer-events-none" />
 
-                  {/* Top-right: Clear Creative × button */}
-                  <div className="absolute top-4 right-4 z-20 animate-in fade-in slide-in-from-top-2 duration-500">
+                  {/* V2 source badge — md+ only */}
+                  {isImprovement && selectedIds.length > 0 && (
+                    <div className="hidden md:flex absolute top-4 left-4 z-20 items-center gap-2">
+                      <div className="px-2.5 py-1.5 rounded-lg bg-black/70 backdrop-blur-xl border border-emerald-500/30 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">V2 — Improved from source</span>
+                      </div>
+                      <div className="flex -space-x-2">
+                        {selectedIds.slice(0, 3).map(id => (
+                          <div key={id} className="w-7 h-7 rounded-md overflow-hidden border-2 border-emerald-500/40 shadow-md">
+                            <img src={creatives.find(c => c.adId === id)?.thumbnailUrl} className="w-full h-full object-cover" alt="source" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Clear button — visible on md+ AND mobile as a floating button */}
+                  <div className="absolute top-4 right-4 z-20">
                     <button
                       onClick={() => {
                         updateTabState(activeMainTab, { result: null, mode: activeMainTab === 'top-ads' ? 'ad-details' : 'standby', progress: 0 });
                         if (activeMainTab === 'top-ads') setTopAdsStep('generate');
                       }}
-                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-black/70 backdrop-blur-xl border border-white/10 hover:bg-rose-500/25 hover:border-rose-400/50 hover:shadow-[0_0_20px_rgba(239,68,68,0.15)] transition-all duration-300 group/clear shadow-xl"
-                      title="Remove this creative — keeps the full preview open"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-xl border border-white/10 hover:bg-rose-500/25 hover:border-rose-400/50 transition-all shadow-xl"
                     >
-                      <div className="w-4 h-4 rounded-full bg-rose-500/20 border border-rose-400/40 flex items-center justify-center group-hover/clear:bg-rose-500/40 transition-colors">
+                      <div className="w-4 h-4 rounded-full bg-rose-500/20 border border-rose-400/40 flex items-center justify-center">
                         <X className="w-2.5 h-2.5 text-rose-400" />
                       </div>
-                      <span className="text-[10px] font-bold text-white/60 group-hover/clear:text-rose-300 uppercase tracking-widest transition-colors">Clear Creative</span>
+                      <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Clear</span>
                     </button>
                   </div>
-                  
-                  {/* Source creative reference thumbnails (top-left) */}
-                  {isImprovement && selectedIds.length > 0 && (
-                    <div className="absolute top-4 left-4 z-20 animate-in fade-in slide-in-from-top-2 duration-500">
-                      <div className="flex items-center gap-2">
-                        <div className="px-2.5 py-1.5 rounded-lg bg-black/70 backdrop-blur-xl border border-emerald-500/30 flex items-center gap-1.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">V2 — Improved from source</span>
-                        </div>
-                        <div className="flex -space-x-2">
-                          {selectedIds.slice(0, 3).map(id => (
-                            <div key={id} className="w-7 h-7 rounded-md overflow-hidden border-2 border-emerald-500/40 shadow-md">
-                              <img src={creatives.find(c => c.adId === id)?.thumbnailUrl} className="w-full h-full object-cover" alt="source" />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Bottom-right: Action buttons */}
-                  <div className="absolute bottom-6 right-6 flex items-center gap-3">
-                        <button 
-                     onClick={() => {
-                        if (activeMainTab === 'top-ads') {
-                           setTopAdsStep('generate')
-                           updateTabState('top-ads', { mode: 'ad-details' })
-                        } else {
-                           handleGenerate()
-                        }
-                     }} 
-                     className="px-5 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 transition-all"
-                  >
-                     <Zap className="w-3.5 h-3.5" /> Regenerate
-                  </button>
-                  <button onClick={handleExport} className="px-5 py-2 bg-muted text-foreground border border-border rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:bg-muted/80 transition-all">
-                     <Download className="w-3.5 h-3.5" /> Export
-                  </button>
+                  {/* Headline overlay — md+ only */}
+                  <div className="hidden md:block absolute bottom-6 left-6 max-w-lg space-y-2">
+                    <Badge className="bg-primary/10 border-primary/30 text-[9px] font-semibold px-3 py-1 rounded-full backdrop-blur-xl text-primary">
+                      {isImprovement ? 'Version 2 — Improvement Based' : 'Generated Creative'}
+                    </Badge>
+                    <h2 className="text-2xl font-bold text-foreground drop-shadow-xl">{headline}</h2>
                   </div>
-               </div>
 
-               <div className="absolute bottom-6 left-6 max-w-lg space-y-2">
-                  <Badge className="bg-primary/10 border-primary/30 text-[9px] font-semibold px-3 py-1 rounded-full backdrop-blur-xl text-primary">
-                    {isImprovement ? 'Version 2 — Improvement Based' : 'Generated Creative'}
-                  </Badge>
-                  <h2 className="text-2xl font-bold text-foreground drop-shadow-xl">
-                     {headline}
-                  </h2>
-               </div>
+                   {/* Action buttons — md+ only overlay */}
+                   <div className="hidden md:flex absolute bottom-6 right-6 items-center gap-3">
+                     <button
+                       onClick={() => { if (activeMainTab === 'top-ads') { setTopAdsStep('generate'); updateTabState('top-ads', { mode: 'ad-details' }) } else { handleGenerate() } }}
+                       className="px-5 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 transition-all"
+                     >
+                       <Zap className="w-3.5 h-3.5" /> Regenerate
+                     </button>
+                     <button onClick={handleExport} className="px-5 py-2 bg-muted text-foreground border border-border rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:bg-muted/80 transition-all">
+                       <Download className="w-3.5 h-3.5" /> Export
+                     </button>
+                   </div>
+                </div>
+
+                {/* Mobile action bar - BELOW image */}
+                <div className="md:hidden flex flex-col gap-3 p-4 bg-background border-b border-border shrink-0">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <Badge className="bg-primary/10 border-primary/30 text-[9px] font-semibold px-2 py-0.5 rounded-full text-primary mb-1">
+                        {isImprovement ? 'V2 · Improved' : 'Generated'}
+                      </Badge>
+                      <h2 className="text-sm font-bold text-foreground truncate">{headline}</h2>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <button
+                         onClick={() => { if (activeMainTab === 'top-ads') { setTopAdsStep('generate'); updateTabState('top-ads', { mode: 'ad-details' }) } else { handleGenerate() } }}
+                         className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-[11px] flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                       >
+                         <Zap className="w-3.5 h-3.5" /> Regen
+                       </button>
+                       <button 
+                         onClick={handleExport} 
+                         className="w-9 h-9 flex items-center justify-center bg-muted text-foreground border border-border rounded-lg active:scale-95 transition-all"
+                       >
+                         <Download className="w-4 h-4" />
+                       </button>
+                    </div>
+                  </div>
+                </div>
             </div>
             );
           })()}
@@ -1190,7 +1183,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
             };
 
             return (
-            <div className="shrink-0 p-6 grid grid-cols-[1fr_200px] gap-4 bg-background border-t border-border">
+            <div className="shrink-0 p-3 md:p-6 grid grid-cols-1 md:grid-cols-[1fr_200px] gap-3 md:gap-4 bg-background border-t border-border">
                <div className="bg-muted/30 border border-border rounded-xl p-5 relative flex items-start min-h-[80px]">
                  <div className="flex-1 pr-10 space-y-2">
                    {hookText && (
@@ -1205,7 +1198,9 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                    {improvementSummary && (
                      <div className="mt-2 pt-2 border-t border-border">
                        <span className="text-[9px] font-bold text-emerald-400/70 uppercase tracking-wider">Improvements applied:</span>
-                       <p className="text-[10px] text-emerald-400/60 leading-relaxed mt-0.5 line-clamp-2">{improvementSummary}</p>
+                       <p className="text-[10px] text-emerald-400/60 leading-relaxed mt-0.5 line-clamp-2">
+                         {Array.isArray(improvementSummary) ? improvementSummary.join(' • ') : improvementSummary}
+                       </p>
                      </div>
                    )}
                  </div>
@@ -1242,6 +1237,15 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
           })()}
 
         </section>
+
+        {/* Global Image Popup Modal */}
+        {previewImagePopup && (
+          <EnlargedImageModal 
+            url={previewImagePopup.url}
+            title={previewImagePopup.title || "Ad Preview"}
+            onClose={() => setPreviewImagePopup(null)}
+          />
+        )}
       </main>
 
       <style jsx global>{`
