@@ -181,6 +181,7 @@ function DashboardContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
   const [activeView, setActiveViewState] = useState<"dashboard" | "ai-studio">("dashboard");
+  const [isStudioHistoryOpen, setIsStudioHistoryOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [activeAnalysis, setActiveAnalysis] = useState<{ type: "score" | "metric"; name: string; } | null>(null);
@@ -1027,21 +1028,21 @@ function DashboardContent() {
           }}
           className="hover:opacity-80 transition-opacity relative z-10"
         >
-          <div
+          <span
             suppressHydrationWarning
             className="flex flex-col items-start leading-none cursor-pointer"
           >
-            <div suppressHydrationWarning className="flex items-center gap-1.5">
+            <span suppressHydrationWarning className="flex items-center gap-1.5">
               <span className="text-xl md:text-2xl font-black tracking-tightest text-foreground dark:text-white">
                 hola
                 <span className="text-[#007AFF] dark:text-primary">prime</span>
               </span>
               <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-[#007AFF] dark:text-primary animate-pulse" />
-            </div>
+            </span>
             <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-[#007AFF] dark:text-primary opacity-80 mt-1">
               Creative Analyzer
             </span>
-          </div>
+          </span>
         </button>
         <div
           suppressHydrationWarning
@@ -1180,10 +1181,10 @@ function DashboardContent() {
                     setIsViewAllAdsOpen(false);
                   }}
                 >
-                  <div suppressHydrationWarning className="px-3 py-1.5 bg-zinc-950 dark:bg-white text-zinc-50 dark:text-zinc-900 text-[10px] font-black rounded-lg shadow-2xl whitespace-nowrap flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all border border-black/10 dark:border-white/10">
+                  <span suppressHydrationWarning className="px-3 py-1.5 bg-zinc-950 dark:bg-white text-zinc-50 dark:text-zinc-900 text-[10px] font-black rounded-lg shadow-2xl whitespace-nowrap flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all border border-black/10 dark:border-white/10">
                     <BookOpen className="w-3.5 h-3.5 text-primary" />
                     Help & Guide
-                  </div>
+                  </span>
                 </button>
               </div>
               {/* Invisible Bridge to maintain hover state */}
@@ -1197,7 +1198,7 @@ function DashboardContent() {
           </div>
 
           {/* Mobile Controls (9-dots Menu) */}
-          <div className="md:hidden">
+          <div suppressHydrationWarning className="md:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -1705,13 +1706,13 @@ function DashboardContent() {
                               <span className="font-bold text-zinc-900 dark:text-zinc-100 block truncate mb-0.5">
                                 {ad.adName}
                               </span>
-                              <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono tracking-tighter">
+                              <span className="flex items-center justify-between text-[10px] text-zinc-500 font-mono tracking-tighter">
                                 <span>{ad.adId}</span>
                                 <span className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded uppercase font-black">
                                   {PLATFORM_META[ad.platform as any]?.label ||
                                     "AD"}
                                 </span>
-                              </div>
+                              </span>
                             </button>
                           ))
                         ) : (
@@ -1799,8 +1800,8 @@ function DashboardContent() {
                   className={cn(
                     "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
                     activeView === "ai-studio"
-                      ? "bg-[#020617] text-white border border-[#007AFF] active:scale-95"
-                      : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-secondary dark:hover:bg-zinc-800 shadow-none",
+                      ? "bg-zinc-100 dark:bg-zinc-800/80 text-foreground dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700/50 shadow-sm active:scale-95"
+                      : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent shadow-none",
                     isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : "",
                   )}
                   title="AI Studio"
@@ -1809,11 +1810,11 @@ function DashboardContent() {
                     className={cn(
                       "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
                       activeView === "ai-studio"
-                        ? "bg-white/20"
+                        ? "bg-white dark:bg-zinc-700 shadow-sm border border-zinc-200 dark:border-zinc-600"
                         : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
                     )}
                   >
-                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className={cn("h-4 w-4", activeView === "ai-studio" ? "text-primary dark:text-blue-400" : "text-muted-foreground")} />
                   </div>
                   {!isSidebarCollapsed && (
                     <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
@@ -1821,7 +1822,7 @@ function DashboardContent() {
                     </span>
                   )}
                   {!isSidebarCollapsed && activeView === "ai-studio" && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-white animate-pulse" />
                   )}
                 </Button>
                 )}
@@ -1858,8 +1859,8 @@ function DashboardContent() {
                       }}
                       className="w-full text-left px-3 py-3 rounded-xl transition-all border group/audit relative overflow-hidden border-transparent hover:bg-secondary/50 dark:hover:bg-zinc-800/40 text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 font-bold"
                     >
-                      <div className="flex items-center gap-3 relative z-10">
-                        <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black uppercase tracking-tighter transition-colors bg-secondary dark:bg-zinc-800 text-muted-foreground group-hover/audit:bg-card dark:group-hover/audit:bg-zinc-700 shadow-sm">
+                      <span className="flex items-center gap-3 relative z-10 w-full">
+                        <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black uppercase tracking-tighter transition-colors bg-secondary dark:bg-zinc-800 text-muted-foreground group-hover/audit:bg-card dark:group-hover/audit:bg-zinc-700 shadow-sm flex-shrink-0">
                           {ad.platform === "meta"
                             ? "M"
                             : ad.platform === "google"
@@ -1877,16 +1878,16 @@ function DashboardContent() {
                                         : ad.platform === "adroll"
                                           ? "AR"
                                           : "A"}
-                        </div>
-                        <div className="flex-1 overflow-hidden text-left">
+                        </span>
+                        <span className="flex-1 overflow-hidden text-left">
                           <span className="text-[11px] font-black leading-tight truncate block group-hover/audit:tracking-tight transition-all uppercase tracking-widest">
                             {ad.adName}
                           </span>
                           <span className="text-[9px] opacity-40 font-mono block truncate mt-0.5">
                             {ad.adId}
                           </span>
-                        </div>
-                      </div>
+                        </span>
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -2262,23 +2263,35 @@ function DashboardContent() {
                                     }}
                                     className="w-full text-left px-3 py-3 rounded-xl transition-all border group/audit border-transparent hover:bg-secondary/50 dark:hover:bg-zinc-800/40 text-muted-foreground hover:text-foreground font-bold"
                                   >
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black uppercase bg-secondary dark:bg-zinc-800 shrink-0">
+                                    <span className="flex items-center gap-3">
+                                      <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black uppercase bg-secondary dark:bg-zinc-800 shrink-0">
                                         {ad.platform === "meta"
                                           ? "M"
                                           : ad.platform === "google"
                                             ? "G"
-                                            : "A"}
-                                      </div>
-                                      <div className="flex-1 min-w-0 text-left">
+                                            : ad.platform === "tiktok"
+                                              ? "T"
+                                              : ad.platform === "youtube"
+                                                ? "Y"
+                                                : ad.platform === "linkedin"
+                                                  ? "L"
+                                                  : ad.platform === "taboola"
+                                                    ? "TB"
+                                                    : ad.platform === "bing"
+                                                      ? "B"
+                                                      : ad.platform === "adroll"
+                                                        ? "AR"
+                                                        : "A"}
+                                      </span>
+                                      <span className="flex-1 min-w-0 text-left">
                                         <span className="text-[11px] font-black leading-tight truncate block uppercase tracking-widest">
                                           {ad.adName}
                                         </span>
                                         <span className="text-[9px] opacity-40 font-mono block truncate mt-0.5">
                                           {ad.adId}
                                         </span>
-                                      </div>
-                                    </div>
+                                      </span>
+                                    </span>
                                   </button>
                                 ))}
                               </div>
@@ -2297,8 +2310,8 @@ function DashboardContent() {
                 <span className="text-[11px] text-muted-foreground flex-shrink-0 leading-none">
                   Dashboard
                 </span>
-                {(selectedPlatform !== "all" ||
-                  connectedPlatforms.length <= 1) && (
+                {((selectedPlatform !== "all" ||
+                  connectedPlatforms.length <= 1) && activeView !== "ai-studio") && (
                     <>
                       <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
                       <span className="text-[11px] text-muted-foreground flex-shrink-0 leading-none whitespace-nowrap uppercase tracking-wider">
@@ -2347,6 +2360,14 @@ function DashboardContent() {
                       </span>
                     </>
                   )}
+                {activeView === "ai-studio" && isStudioHistoryOpen && (
+                  <>
+                    <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
+                    <span className="text-[11px] text-foreground whitespace-nowrap leading-none truncate min-w-0 uppercase tracking-wider">
+                      History
+                    </span>
+                  </>
+                )}
               </div>
 
               <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground/80 dark:text-muted-foreground pt-1 pb-1">
@@ -2354,8 +2375,8 @@ function DashboardContent() {
                 <span className="text-muted-foreground/40">/</span>
                 <span className="text-foreground">Dashboard</span>
 
-                {(selectedPlatform !== "all" ||
-                  connectedPlatforms.length <= 1) && (
+                {((selectedPlatform !== "all" ||
+                  connectedPlatforms.length <= 1) && activeView !== "ai-studio") && (
                     <>
                       <span className="mx-1 text-muted-foreground/40">/</span>
                       <span className="text-foreground uppercase tracking-widest text-[11px] opacity-90">
@@ -2409,6 +2430,14 @@ function DashboardContent() {
                       </span>
                     </>
                   )}
+                {activeView === "ai-studio" && isStudioHistoryOpen && (
+                  <>
+                    <span className="mx-1 text-muted-foreground/40">/</span>
+                    <span className="truncate max-w-[150px] lg:max-w-none text-foreground opacity-100 text-[11px] uppercase tracking-wider">
+                      History
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0 ml-1">
@@ -2568,7 +2597,7 @@ function DashboardContent() {
             )}
           >
             {activeView === "ai-studio" ? (
-              <CreativeStudioView />
+              <CreativeStudioView onHistoryChange={setIsStudioHistoryOpen} />
             ) : isGuideOpen ? (
               <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
                 <div
@@ -3548,7 +3577,7 @@ function DashboardContent() {
                                         <span className="font-bold text-zinc-900 dark:text-zinc-100 truncate">
                                           {ad.adName}
                                         </span>
-                                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                        <span className="flex items-center justify-between text-xs text-muted-foreground">
                                           <span className="font-mono truncate max-w-[150px]">
                                             {ad.adId}
                                           </span>
@@ -3559,7 +3588,7 @@ function DashboardContent() {
                                               )?.name
                                             }
                                           </span>
-                                        </div>
+                                        </span>
                                       </button>
                                     ))
                                 ) : (

@@ -23,11 +23,11 @@ const GEMINI_IMAGE_MODELS = [
 ];
 
 // Imagen text-to-image models (no reference image support)
-// Confirmed available on this API key (tested 2026-03-18)
+// Ultra first for best quality, fast as fallback
 const IMAGEN_MODELS = [
-  'imagen-4.0-generate-001',       // ✅ Confirmed available
-  'imagen-4.0-fast-generate-001',  // ✅ Confirmed available (faster)
-  'imagen-4.0-ultra-generate-001', // ✅ Confirmed available (best quality)
+  'imagen-4.0-ultra-generate-001', // Best quality
+  'imagen-4.0-generate-001',       // Standard
+  'imagen-4.0-fast-generate-001',  // Fastest fallback
 ];
 
 /**
@@ -75,8 +75,9 @@ async function tryGeminiGeneration(prompt: string, referenceImageData: { mimeTyp
   const body = {
     contents: [{ role: 'user', parts }],
     generationConfig: {
-      responseModalities: ['TEXT', 'IMAGE'],
-      temperature: 0.9,
+      // When we have a reference image, we only need IMAGE output — no text commentary
+      responseModalities: referenceImageData ? ['IMAGE'] : ['TEXT', 'IMAGE'],
+      temperature: 0.7,
     },
     safetySettings: [
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
@@ -138,7 +139,7 @@ async function tryImagenGeneration(prompt: string): Promise<string | null> {
       instances: [{ prompt }],
       parameters: {
         sampleCount: 1,
-        aspectRatio: '1:1',
+        aspectRatio: '9:16',   // Mobile-first vertical ads
         safetyFilterLevel: 'block_few',
         personGeneration: 'allow_adult',
       }
@@ -235,24 +236,42 @@ export async function generateImage(imageSpec: any, options: any = {}) {
     console.log('[ImageGen] Fetching reference image for visual-grounded generation...');
     referenceImageData = await fetchImageBase64(primaryRefUrl);
     if (referenceImageData) {
-      // Prepend a rich, rule-driven instruction for reference-grounded generation
-      prompt = `You are given a SOURCE AD CREATIVE image for Hola Prime, a prop trading firm. Generate a VERSION 2 — a visually improved ad creative that looks like a premium upgrade of the source creative.
+      // ── CRITICAL DESIGN DECISION ──
+      // Claude's brief generates a DETAILED, LAYOUT-SPECIFIC image prompt (600+ words)
+      // describing exact compositions (split-screen, element positions, typography hierarchy, etc.)
+      // We MUST preserve that prompt — it's what makes each creative unique.
+      //
+      // We only:
+      // 1. PREPEND a short reference-grounding instruction (tells Gemini to use the source image)
+      // 2. APPEND quality guardrails (spelling accuracy, no clutter)
+      // 3. Trim if excessively long (Gemini degrades past ~2500 words)
+      //
+      // We NEVER replace Claude's prompt with a generic template.
 
-CRITICAL CONVERSION RULES — APPLY ALL TO THE IMAGE:
-1. URGENCY: Include a countdown timer OR 'Only X Spots Left!' OR 'Limited Time' badge — MANDATORY
-2. HERO DOLLAR AMOUNT: The challenge size (e.g. $2K, $25K) MUST appear as a LARGE, BOLD, 3D-style typographic hero element — the dollar amount IS the #1 visual
-3. DISCOUNT BADGE: Include '40% OFF' badge OR promo code 'TAKEOFF40' prominently
-4. LOW BARRIER TEXT: Include 'Lowest Barrier Ever', 'Risk-Free', or 'Your Easiest Path to Funded Trading'
-5. BULLET BENEFITS: Rounded container with 3 checkmarks: '1-Step Process', '5% Profit Target', 'No Time Limits'
-6. CTA BUTTON: Full-width, high-contrast button — text: 'CLAIM YOUR $2K CHALLENGE NOW' or similar commanding verb
-7. COLOR: Dark navy/black background, white bold text, electric blue accents — NO bright white backgrounds
-8. VISUAL MOTIFS: Subtle trading chart grid pattern in background, rocket or upward arrow motifs
-9. SOCIAL PROOF: 'Trusted by X+ traders' badge OR '#WeAreTraders' hashtag
-10. MOBILE-FIRST: Top 30% of image MUST immediately hook — lead with discount badge or dollar amount
+      const claudePrompt = prompt; // This is Claude's detailed layout-specific prompt
+      
+      // Trim only if truly excessive — preserve as much detail as possible
+      const maxPromptLength = 2500;
+      const trimmedPrompt = claudePrompt.length > maxPromptLength
+        ? claudePrompt.substring(0, maxPromptLength) + '\n[...continued — maintain the same direction]'
+        : claudePrompt;
 
-STYLE: Match source creative's exact color palette, layout structure, and brand aesthetic. This is an UPGRADE not a replacement. Hola Prime logo top-left. Fine print disclaimer at bottom.
+      // Short reference header + Claude's full prompt + layout quality guardrails
+      // NOTE: Text accuracy (spelling, no duplicates) is handled by the TEXT MANIFEST
+      // injected by the studio route BEFORE this prompt. These rules focus on VISUAL quality.
+      prompt = `You are given a SOURCE AD CREATIVE image. Generate an improved VERSION 2 that is a premium visual upgrade of the source.
 
-NOW APPLY THE SPECIFIC IMPROVEMENTS BELOW:\n\n${prompt}`;
+${trimmedPrompt}
+
+LAYOUT QUALITY RULES (override the above if there's a conflict):
+1. WHITESPACE — at least 15-20% of the image must be empty breathing room. Generous margins on all sides and between elements. Nothing touches the edges of the image.
+2. ALL TEXT MUST FIT — every text element, including the disclaimer at the bottom, must be fully visible within the image boundaries. Nothing gets cut off.
+3. MAXIMUM 5-6 DISTINCT ELEMENTS — logo, hero text, visual/illustration, bullet block, CTA button, disclaimer. If there are more, remove the least important. Less is more.
+4. SINGLE FOCAL POINT — one element (hero dollar amount or key visual) must be dramatically larger than everything else, occupying 30-40% of visual attention.
+5. CLEAR GRID ALIGNMENT — all text blocks and boxes align cleanly on an invisible grid. No randomly floating or misaligned elements.
+6. RENDER ONLY TEXT FROM THE PROMPT — do not add labels, captions, watermarks, or any text not explicitly provided in the prompt above. If a text manifest was provided, follow it exactly.`;
+
+      console.log(`[ImageGen] Prompt length: ${prompt.length} chars (Claude's original: ${claudePrompt.length} chars)`);
     }
   }
 

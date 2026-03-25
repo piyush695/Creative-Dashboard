@@ -267,8 +267,52 @@ export function filterPatternsBySelection(patterns: any, selectedAspects: any, c
   }
 
   // Apply filters
-  if (selectedWhatWorks.length > 0) filtered.whatWorks = selectedWhatWorks;
-  if (selectedWhatDoesntWork.length > 0) filtered.whatDoesntWork = selectedWhatDoesntWork;
+  if (selectedWhatWorks.length > 0) filtered.whatWorks = selectedWhatWorks.slice(0, 12);
+  if (selectedWhatDoesntWork.length > 0) filtered.whatDoesntWork = selectedWhatDoesntWork.slice(0, 6);
+  
+  // Filter scores to only include dimensions the user selected
+  if (selectedScoreKeys.size > 0) {
+    const nextScores: any = { averages: {}, bestPerDimension: {} };
+    selectedScoreKeys.forEach(k => {
+      const scoreKey = k.startsWith('score') ? k : `score${k.charAt(0).toUpperCase()}${k.slice(1)}`;
+      if (patterns.scores?.averages?.[scoreKey]) {
+        nextScores.averages[scoreKey] = patterns.scores.averages[scoreKey];
+      }
+      if (patterns.scores?.bestPerDimension?.[scoreKey]) {
+        nextScores.bestPerDimension[scoreKey] = patterns.scores.bestPerDimension[scoreKey];
+      }
+    });
+    if (Object.keys(nextScores.averages).length > 0) filtered.scores = nextScores;
+  }
+
+  // Filter psychology elements
+  if (selectedPsychology.size > 0) {
+    const nextPsych: any = {};
+    selectedPsychology.forEach(k => {
+      if (patterns.psychology?.[k]) nextPsych[k] = patterns.psychology[k];
+    });
+    if (Object.keys(nextPsych).length > 0) filtered.psychology = nextPsych;
+  }
+
+  // Filter AIDA categories
+  if (selectedAidaKeys.size > 0) {
+    const nextAida: any = {};
+    selectedAidaKeys.forEach(k => {
+       const key = k.toLowerCase();
+       if (patterns.aida?.[key] !== undefined) {
+          nextAida[key] = patterns.aida[key];
+       }
+    });
+    if (Object.keys(nextAida).length > 0) filtered.aida = nextAida;
+  }
+
+  // Filter strategic recommendations
+  if (selectedRecommendations.length > 0) {
+    filtered.optimizationSynthesis = {
+      ...patterns.optimizationSynthesis,
+      recommendations: selectedRecommendations.slice(0, 8)
+    };
+  }
 
   return filtered;
 }

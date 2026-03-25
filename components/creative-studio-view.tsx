@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect, useCallback } from "react"
 import { 
   Sparkles, 
   Image as ImageIcon, 
@@ -24,21 +24,45 @@ import {
   Activity,
   Layout,
   Brain,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  Save,
+  Clock,
+  History,
+  MessageSquare,
+  Send,
+  PanelRightOpen,
+  BookOpen,
+  Plus
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
+// Lightweight custom fetch for history
 import { toast } from "sonner"
 import { EnlargedImageModal } from "./enlarged-image-modal"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import { createPortal } from "react-dom"
 
 interface CreativeStudioViewProps {
   onClose?: () => void
+  onHistoryChange?: (isOpen: boolean) => void
 }
 
 type ViewportMode = 'standby' | 'ad-details' | 'loading' | 'complete'
 type TopAdsStep = 'aspects' | 'generate' | 'results'
 
-export default function CreativeStudioView({ onClose }: CreativeStudioViewProps) {
+
+
+export default function CreativeStudioView({ onClose, onHistoryChange }: CreativeStudioViewProps) {
   const [activeMainTab, setActiveMainTab] = useState<string>("custom")
   const [studioSubTab, setStudioSubTab] = useState<"image" | "video">("image")
   const [topAdsStep, setTopAdsStep] = useState<TopAdsStep>('aspects')
@@ -49,10 +73,11 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
     progress: number;
     prompt: string;
     generationOptions?: any;
+    sessionHistory: any[];
   }>>({
-    custom: { mode: 'standby', isGenerating: false, result: null, progress: 0, prompt: "" },
-    'top-ads': { mode: 'standby', isGenerating: false, result: null, progress: 0, prompt: "" },
-    studio: { mode: 'standby', isGenerating: false, result: null, progress: 0, prompt: "" }
+    custom: { mode: 'standby', isGenerating: false, result: null, progress: 0, prompt: "", sessionHistory: [] },
+    'top-ads': { mode: 'standby', isGenerating: false, result: null, progress: 0, prompt: "", sessionHistory: [] },
+    studio: { mode: 'standby', isGenerating: false, result: null, progress: 0, prompt: "", sessionHistory: [] }
   })
 
   const currentTabState = tabStates[activeMainTab]
@@ -68,7 +93,8 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
   const [base64File, setBase64File] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [copiedText, setCopiedText] = useState(false)
-  const [previewImagePopup, setPreviewImagePopup] = useState<{ url: string; title: string } | null>(null)
+  const [previewImagePopup, setPreviewImagePopup] = useState<{ url: string; title: string; id?: string } | null>(null)
+  const [selectedVariantIdx, setSelectedVariantIdx] = useState(0)
 
   const [creatives, setCreatives] = useState<any[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -76,11 +102,53 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
   const [fullData, setFullData] = useState<Record<string, any>>({})
   const [selectedAspects, setSelectedAspects] = useState<Record<string, any>>({})
   
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  const totalPages = Math.ceil(creatives.length / itemsPerPage)
+  const displayedCreatives = creatives.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   const generationInterval = useRef<NodeJS.Timeout | null>(null)
+
+  // ── Regenerate Dialog State ──
+  const [isRegenDialogOpen, setIsRegenDialogOpen] = useState(false)
+  const [regenPrompt, setRegenPrompt] = useState("")
+  const [previousInputs, setPreviousInputs] = useState<{ prompt: string; timestamp: string }[]>([])
+  const [currentCreativeId, setCurrentCreativeId] = useState<string | null>(null)
+
+  // ── History State ──
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  useEffect(() => { onHistoryChange?.(isHistoryOpen) }, [isHistoryOpen, onHistoryChange])
+  const [historyEntries, setHistoryEntries] = useState<any[]>([])
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false)
+  const [totalHistoryItems, setTotalHistoryItems] = useState(0)
+  const [historySearchQuery, setHistorySearchQuery] = useState("")
+  const [historyPage, setHistoryPage] = useState(1)
+  const historyItemsPerPage = 10
+  const totalHistoryPages = Math.max(1, Math.ceil(totalHistoryItems / historyItemsPerPage))
+  const displayedHistory = historyEntries.slice((historyPage - 1) * historyItemsPerPage, historyPage * historyItemsPerPage)
+  // ── Recent Creatives State ──
+  const [recentCreatives, setRecentCreatives] = useState<any[]>([])
+
+  // ── Save State ──
+  const [isSaving, setIsSaving] = useState(false)
+  const [savedCreativeIds, setSavedCreativeIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetchCreatives()
   }, [])
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [currentPage])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeMainTab])
 
   const fetchCreatives = async () => {
     try {
@@ -103,6 +171,168 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
     }
   }
 
+  // ── Load History items for the preview sidebar ──
+  const loadHistoryForPreview = useCallback(async () => {
+    try {
+      const res = await fetch("/api/history-lite");
+      const data = await res.json();
+      setRecentCreatives(data.history || [])
+    } catch (err) {
+      console.error("Failed to load history for preview", err)
+    }
+  }, [])
+
+  // ── Load History — single fetch, all records ──
+  const loadHistory = useCallback(async (search: string = "") => {
+    setIsHistoryLoading(true)
+    try {
+      const res = await fetch(`/api/history-lite?search=${encodeURIComponent(search)}`);
+      const data = await res.json();
+      setHistoryEntries(data.history || [])
+      setTotalHistoryItems(data.historyLength || 0)
+    } catch (err) {
+      console.error("Failed to load history", err)
+      toast.error("Failed to load creative history")
+    } finally {
+      setIsHistoryLoading(false)
+    }
+  }, [])
+
+  // EFFECT: Handle search query changes
+  useEffect(() => {
+    if (isHistoryOpen) {
+      const timer = setTimeout(() => {
+        loadHistory(historySearchQuery)
+      }, 300) // Debounce search
+      return () => clearTimeout(timer)
+    }
+  }, [historySearchQuery, isHistoryOpen, loadHistory])
+
+  // ── Save to History ──
+  const saveToHistory = useCallback(async (result: any, tab: string, prompt: string, parentId?: string | null, genOptions?: any) => {
+    const creativeId = `creative-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const variants = result.variants || []
+    const primaryVariant = variants.find((v: any) => v.imageUrl) || variants[0]
+    const imageUrl = primaryVariant?.imageUrl || result.imageUrl || null
+
+    setIsSaving(true)
+    try {
+      const res = await fetch("/api/studio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "save-history",
+          creativeId,
+          parentId: parentId || null,
+          childId: null,
+          tab,
+          prompt,
+          generationOptions: genOptions || {},
+          result,
+          imageUrl,
+          previousInputs: previousInputs,
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setCurrentCreativeId(creativeId)
+        setSavedCreativeIds(prev => new Set(prev).add(creativeId))
+        toast.success("Creative saved to history!")
+        loadHistoryForPreview()
+      }
+    } catch (err) {
+      console.error("Failed to save to history", err)
+      toast.error("Failed to save creative")
+    } finally {
+      setIsSaving(false)
+    }
+    return creativeId
+  }, [previousInputs, loadHistoryForPreview])
+
+  // ── Open Regenerate Dialog ──
+  const openRegenDialog = useCallback(() => {
+    const tabState = tabStates[activeMainTab]
+    if (tabState.prompt) {
+      setPreviousInputs(prev => [
+        ...prev,
+        { prompt: tabState.prompt, timestamp: new Date().toISOString() }
+      ])
+    }
+    setRegenPrompt("")
+    setIsRegenDialogOpen(true)
+  }, [activeMainTab, tabStates])
+
+  // ── Handle Regeneration from Dialog ──
+  const handleRegenerate = useCallback(async () => {
+    if (!regenPrompt.trim()) {
+      toast.error("Please enter new requirements")
+      return
+    }
+
+    // Add the new prompt to previous inputs
+    setPreviousInputs(prev => [
+      ...prev,
+      { prompt: regenPrompt, timestamp: new Date().toISOString() }
+    ])
+
+    // Update the tab prompt with the new one
+    updateTabState(activeMainTab, { prompt: regenPrompt })
+    setIsRegenDialogOpen(false)
+
+    // Generate with the new prompt (don't restart, just regenerate)
+    const parentId = currentCreativeId
+    
+    // Trigger generation
+    setTimeout(() => {
+      handleGenerate().then(() => {
+        // After generation, save with parent reference
+        const tabState = tabStates[activeMainTab]
+        if (tabState.result) {
+          saveToHistory(tabState.result, activeMainTab, regenPrompt, parentId, tabState.generationOptions)
+        }
+      })
+    }, 100)
+  }, [regenPrompt, activeMainTab, currentCreativeId, tabStates, saveToHistory])
+
+  // Load history for preview on mount
+  useEffect(() => {
+    loadHistoryForPreview()
+  }, [loadHistoryForPreview])
+
+  // ── Handle clicking a recent creative card ──
+  const handleRecentCreativeClick = useCallback(async (creative: any) => {
+    if (!creative.result) {
+      // Try fetching the full entry
+      try {
+        const res = await fetch(`/api/studio?action=history-detail&creativeId=${creative.creativeId}`)
+        const data = await res.json()
+        if (data.entry?.result) {
+          setSelectedVariantIdx(0)
+          updateTabState(creative.tab || activeMainTab, {
+            result: data.entry.result,
+            mode: 'complete',
+            isGenerating: false,
+            prompt: data.entry.prompt || ''
+          })
+          if (creative.tab && creative.tab !== activeMainTab) {
+            // We can't change tab state externally, so stay on current
+          }
+          setCurrentCreativeId(creative.creativeId)
+        }
+      } catch {
+        toast.error("Failed to load creative details")
+      }
+    } else {
+      setSelectedVariantIdx(0)
+      updateTabState(activeMainTab, {
+        result: creative.result,
+        mode: 'complete',
+        isGenerating: false
+      })
+      setCurrentCreativeId(creative.creativeId)
+    }
+  }, [activeMainTab])
+
   const handleAdCardClick = async (ad: any) => {
     const adId = ad.adId
     setCurrentPreviewId(adId)
@@ -122,6 +352,8 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
           whatWorks: (data.whatWorks || []).map((_: any, i: number) => i),
           scores: Object.keys(data.scores || {}),
           psychology: Object.keys(data.psychology || {}).filter(k => data.psychology[k]?.present),
+          aida: Object.keys(data.aida || {}),
+          recommendations: (data.recommendations || []).map((_: any, i: number) => i)
         }
         setSelectedAspects(prev => ({ ...prev, [adId]: defaults }))
       } catch (err) {
@@ -169,16 +401,32 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
     updateTabState(targetTab, { isGenerating: true, mode: 'loading', progress: 0 })
     if (targetTab === 'top-ads') setTopAdsStep('results')
     
+    // ── Smooth staged progress: increments tied to real processing phases ──
+    // Stage thresholds: 0→20 (Source), 20→45 (Pattern), 45→70 (Brief), 70→92 (Render)
     let cur = 0
+    const stageTargets = [20, 45, 70, 88, 92]
+    let stageIdx = 0
+    let elapsedTicks = 0
+    
     generationInterval.current = setInterval(() => {
-      cur += Math.random() * 8
-      if (cur >= 98) {
-        if (generationInterval.current) clearInterval(generationInterval.current)
-        updateTabState(targetTab, { progress: 98 })
-      } else {
-        updateTabState(targetTab, { progress: cur })
+      elapsedTicks++
+      const target = stageTargets[stageIdx] || 92
+      
+      // Smooth eased increment toward current stage target
+      const remaining = target - cur
+      const increment = Math.max(0.3, remaining * 0.08 + Math.random() * 0.5)
+      cur = Math.min(cur + increment, target)
+      
+      // Advance to next stage every ~25 ticks (roughly 5 seconds per stage)
+      if (cur >= target - 0.5 && stageIdx < stageTargets.length - 1) {
+        if (elapsedTicks > (stageIdx + 1) * 20) {
+          stageIdx++
+          elapsedTicks = 0
+        }
       }
-    }, 150)
+      
+      updateTabState(targetTab, { progress: Math.min(cur, 92) })
+    }, 200)
 
     try {
       let body: any = {}
@@ -205,23 +453,42 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
       const data = await response.json()
       
       if (generationInterval.current) clearInterval(generationInterval.current)
+      
+      // Snappy finish: 92 → 94 → 96 → 98 → 100
+      updateTabState(targetTab, { progress: 94 })
+      await new Promise(r => setTimeout(r, 100))
+      updateTabState(targetTab, { progress: 96 })
+      await new Promise(r => setTimeout(r, 100))
+      updateTabState(targetTab, { progress: 98 })
+      await new Promise(r => setTimeout(r, 100))
       updateTabState(targetTab, { progress: 100 })
       
       setTimeout(() => {
         if (data.creative) {
-          updateTabState(targetTab, { 
-            result: data.creative, 
-            mode: "complete", 
-            isGenerating: false 
-            })
+          setSelectedVariantIdx(0)
+          
+          // Use functional update or grab the latest state for sessionHistory
+          setTabStates(prev => {
+             const prevHistory = prev[targetTab].sessionHistory || [];
+             return {
+               ...prev,
+               [targetTab]: {
+                 ...prev[targetTab],
+                 result: data.creative,
+                 sessionHistory: [...prevHistory, data.creative],
+                 mode: "complete",
+                 isGenerating: false
+               }
+             }
+          });
         } else {
           throw new Error(data.error || "Generation failed")
         }
-      }, 500)
+      }, 200)
 
     } catch (err: any) {
       if (generationInterval.current) clearInterval(generationInterval.current)
-      updateTabState(targetTab, { isGenerating: false, mode: targetTab === 'top-ads' ? 'ad-details' : 'standby' })
+      updateTabState(targetTab, { isGenerating: false, mode: targetTab === 'top-ads' ? 'ad-details' : 'standby', progress: 0 })
       if (targetTab === 'top-ads') setTopAdsStep('generate')
       toast.error(err.message || "Generation failed")
     }
@@ -229,7 +496,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
 
   const cancelProcess = () => {
     if (generationInterval.current) clearInterval(generationInterval.current)
-    updateTabState(activeMainTab, { isGenerating: false, mode: 'standby', progress: 0 })
+    updateTabState(activeMainTab, { isGenerating: false, mode: 'standby', progress: 0, sessionHistory: [] })
     if (activeMainTab === 'top-ads') {
       setTopAdsStep('aspects')
       setSelectedIds([])
@@ -239,7 +506,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-background text-foreground overflow-hidden font-sans select-none" suppressHydrationWarning>
+    <div className="flex flex-col min-h-screen bg-background text-foreground font-sans select-none" suppressHydrationWarning>
       
       {/* Header */}
         <header className="px-3 md:px-5 py-2 md:py-3 border-b border-white/[0.06] bg-background/90 backdrop-blur-xl z-50 shrink-0">
@@ -263,6 +530,12 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
               <button onClick={() => setActiveMainTab("top-ads")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all", activeMainTab === "top-ads" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Top Ads</button>
               <button onClick={() => setActiveMainTab("studio")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all", activeMainTab === "studio" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>AI Studio</button>
             </div>
+            <button
+               onClick={() => { setIsHistoryOpen(true); loadHistory(""); }}
+               className="hidden sm:flex px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-lg transition-all bg-white/[0.04] border border-white/[0.06] text-muted-foreground hover:text-foreground hover:bg-white/[0.08] items-center gap-1.5 shadow-sm"
+            >
+               <History className="w-3.5 h-3.5" /> History
+            </button>
             {onClose && (
               <button onClick={onClose} className="hidden sm:flex w-8 h-8 rounded-full bg-muted items-center justify-center hover:bg-muted/80 transition-colors border border-border shrink-0">
                 <X className="w-4 h-4 text-muted-foreground" />
@@ -273,12 +546,12 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
       </header>
 
       {/* Main Container */}
-        <main className="flex-1 flex flex-col md:flex-row overflow-hidden w-full relative min-h-0">
+        <main className="flex-1 flex flex-col md:flex-row w-full relative">
         
-        {/* Sidebar — Hidden for Top Ads */}
+        {/* Sidebar — Hidden for Top Ads unless in complete mode */}
         <aside className={cn(
-          "w-full md:w-[280px] border-b md:border-b-0 md:border-r border-border flex flex-col bg-card/50 transition-all duration-300 z-40 shrink-0",
-          activeMainTab === 'top-ads' && "hidden"
+          "w-full md:w-[280px] md:min-w-[280px] border-b md:border-b-0 md:border-r border-border md:sticky md:top-0 md:h-screen flex flex-col bg-card/50 transition-all duration-300 z-40 shrink-0",
+          activeMainTab === 'top-ads' && currentTabState.mode !== 'complete' && "hidden"
         )}>
           <div className="p-4 shrink-0 border-b border-white/[0.04]">
             <h2 className="text-[10px] font-semibold text-zinc-500 flex items-center gap-1.5 uppercase tracking-wider">
@@ -360,69 +633,463 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                 />
               </div>
             )}
+
+            {/* PREVIOUS REQUIREMENTS (Visible in complete mode) */}
+            {currentTabState.mode === "complete" && previousInputs.length > 0 && (
+              <div className="space-y-3 pt-6 mt-6 border-t border-white/[0.04] animate-in fade-in pb-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Previous Prompts</h3>
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  {previousInputs.map((input: any, idx: number) => (
+                    <div key={idx} className="p-3 bg-muted/30 border border-border rounded-xl">
+                      <div className="flex justify-between items-center mb-1.5">
+                        <span className="text-[10px] font-bold text-primary">Req {idx + 1}</span>
+                        <span className="text-[9px] text-muted-foreground">{new Date(input.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      <p className="text-[11px] text-foreground/80 leading-relaxed italic border-l-2 border-primary/30 pl-2.5 ml-1">{input.prompt}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SESSION HISTORY (Now in sidebar) */}
+            {currentTabState.mode === "complete" && (
+              <div className="space-y-4 pt-6 mt-6 border-t border-white/[0.04] animate-in fade-in">
+                <div className="flex items-center justify-between">
+                   <h3 className="text-[11px] font-bold text-zinc-500 flex items-center gap-1.5 uppercase tracking-wider">
+                     <Clock className="w-3 h-3" /> Latest Generation
+                   </h3>
+                   {((activeMainTab === 'top-ads' && currentTabState.result?.sourceAdIds) || (currentTabState.sessionHistory && currentTabState.sessionHistory.length > 1)) && (
+                      <div className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1">
+                        <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-[8px] font-bold text-emerald-400 uppercase tracking-widest">
+                          {currentTabState.sessionHistory && currentTabState.sessionHistory.length > 1 
+                            ? `V${currentTabState.sessionHistory.length}` 
+                            : 'V2'}
+                        </span>
+                      </div>
+                   )}
+                </div>
+
+                <div className="space-y-3">
+                  {currentTabState.sessionHistory && currentTabState.sessionHistory.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-1 pb-2">
+                       {currentTabState.sessionHistory.map((hist: any, i: number) => {
+                          const hVariants = hist.variants || [];
+                          const validIdx = selectedVariantIdx < hVariants.length ? selectedVariantIdx : 0;
+                          const imgUrl = (hVariants.length > 0 && hVariants[validIdx].imageUrl) || hist.imageUrl;
+                          const isViewing = currentTabState.result === hist || currentTabState.result?.creativeId === hist.creativeId;
+                          const isLatest = i === currentTabState.sessionHistory.length - 1;
+                          
+                          return (
+                            <button 
+                              key={i} 
+                              className={cn(
+                                "group/h relative aspect-[4/5] rounded-xl overflow-hidden border bg-muted transition-all hover:scale-[1.02] animate-in zoom-in-90 duration-300 text-left",
+                                isViewing ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-emerald-500/50"
+                              )} 
+                              onClick={() => updateTabState(activeMainTab, { result: hist })}
+                            >
+                                {imgUrl ? (
+                                    <img src={imgUrl} className={cn("w-full h-full object-cover transition-opacity", isViewing ? "opacity-100" : "opacity-60 group-hover/h:opacity-100")} alt="" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-zinc-800">
+                                      <ImageIcon className="w-4 h-4 text-muted-foreground/20" />
+                                    </div>
+                                  )}
+                                <div className={cn(
+                                  "absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black text-white uppercase backdrop-blur-md border shadow-sm leading-none",
+                                  isLatest ? "bg-primary/90 border-primary/50" : "bg-black/80 border-white/10"
+                                )}>
+                                  V{i + 1}
+                                </div>
+                                {isLatest && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(59,130,246,0.6)]" />}
+                            </button>
+                          );
+                       })}
+                    </div>
+                  ) : (
+                    activeMainTab === 'top-ads' && currentTabState.result?.sourceAdIds && (
+                      <div className="flex -space-x-1.5 pl-1">
+                        {currentTabState.result.sourceAdIds.slice(0, 3).map((id: string) => (
+                          <div key={id} className="w-10 h-10 rounded-lg overflow-hidden border border-emerald-500/30 shadow-md bg-muted">
+                            <img src={creatives.find(c => c.adId === id)?.thumbnailUrl} className="w-full h-full object-cover" alt="source" />
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  )}
+                </div>
+
+                <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/10 space-y-2">
+                   <div className="flex items-center gap-1.5 text-[9px] font-bold text-blue-400 uppercase tracking-widest">
+                      <Sparkles className="w-3 h-3" /> Neural Context
+                   </div>
+                   <p className="text-[10px] text-blue-400/60 leading-relaxed font-medium">
+                      Select versions to compare visual patterns. Your generation history is preserved throughout this session.
+                   </p>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="p-4 border-t border-white/[0.04] shrink-0">
-            <button 
-              disabled={currentTabState.isGenerating}
-              onClick={() => handleGenerate()}
-              className="w-full h-10 bg-primary text-primary-foreground rounded-lg font-semibold text-[11px] tracking-wide flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-40 hover:opacity-90 shadow-lg"
-            >
-              {currentTabState.isGenerating ? "Processing..." : "Generate"}
-              <Sparkles className="w-4 h-4 text-yellow-400 group-hover:scale-110 transition-transform" />
-            </button>
+          <div className="p-4 border-t border-white/[0.04] shrink-0 space-y-2">
+            {activeMainTab !== "top-ads" && (
+              <button 
+                disabled={currentTabState.isGenerating}
+                onClick={() => handleGenerate()}
+                className="w-full h-10 bg-blue-600/10 text-blue-600 dark:bg-primary dark:text-primary-foreground border border-blue-600/20 dark:border-none rounded-lg font-semibold text-[11px] tracking-wide flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-40 hover:opacity-90 shadow-lg cursor-pointer"
+              >
+                {currentTabState.isGenerating ? "Processing..." : "Generate"}
+                <Sparkles className="w-4 h-4 text-blue-600 dark:text-yellow-400 group-hover:scale-110 transition-transform" />
+              </button>
+            )}
           </div>
         </aside>
 
         {/* Viewport */}
-        <section className="flex-1 bg-background relative flex flex-col min-w-0 min-h-0 overflow-y-auto custom-scrollbar scroll-smooth">
+        <section 
+          ref={scrollRef}
+          className="flex-1 bg-background relative flex flex-col min-w-0"
+        >
           
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.015] pointer-events-none" 
             style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '60px 60px' }} 
           />
 
+          {/* HISTORY MODE */}
+          {isHistoryOpen && (
+            <div className="w-full relative z-[100] bg-background animate-in fade-in duration-300 pb-20">
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-border flex items-center justify-between shrink-0 sticky top-0 bg-background/95 backdrop-blur-xl z-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <BookOpen className="w-4.5 h-4.5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-foreground">Creative History</h2>
+                    <p className="text-[10px] text-muted-foreground">{totalHistoryItems} creatives saved</p>
+                  </div>
+                </div>
+
+                {/* History Search */}
+                <div className="flex-1 max-w-md px-10 hidden md:block">
+                  <div className="relative group">
+                    <History className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                    <input 
+                      type="text"
+                      value={historySearchQuery}
+                      onChange={(e) => setHistorySearchQuery(e.target.value)}
+                      placeholder="Search by Creative ID or Headline..."
+                      className="w-full h-10 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-white/10 rounded-xl pl-10 pr-4 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 focus:bg-white dark:focus:bg-zinc-900/80 transition-all placeholder:text-muted-foreground/50"
+                    />
+                    {historySearchQuery && (
+                      <button 
+                        onClick={() => setHistorySearchQuery("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsHistoryOpen(false)}
+                  className="h-10 px-4 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center gap-2 hover:bg-zinc-200 dark:hover:bg-white/10 transition-all cursor-pointer group"
+                >
+                  <ChevronLeft className="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover:-translate-x-1.5 transition-transform duration-300" />
+                  <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white">Back</span>
+                </button>
+              </div>
+
+              {/* History List */}
+              <div className="flex-1 p-4 md:p-6 relative flex flex-col">
+                {isHistoryLoading && historyEntries.length === 0 ? (
+                  <div className="flex items-center justify-center h-40">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <span className="text-[11px] text-muted-foreground">Loading history...</span>
+                    </div>
+                  </div>
+                ) : historyEntries.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center min-h-[500px] text-center px-4 animate-in fade-in zoom-in duration-700">
+                    <div className="w-28 h-28 mb-8 relative animate-float">
+                      <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping opacity-20" />
+                      <div className="absolute -inset-4 bg-primary/10 rounded-full blur-2xl animate-pulse opacity-20" />
+                      <div className="relative z-10 w-full h-full flex items-center justify-center bg-zinc-900 border border-white/10 rounded-full shadow-2xl overflow-hidden">
+                        <History className="w-12 h-12 text-primary/70" />
+                      </div>
+                    </div>
+                    <h3 className="text-2xl font-black bg-gradient-to-b from-zinc-900 to-zinc-500 dark:from-white dark:to-white/40 bg-clip-text text-transparent mb-4 tracking-tighter uppercase">
+                      {historySearchQuery ? "No Matching Results" : "History Empty"}
+                    </h3>
+                    <p className="text-sm text-zinc-500 max-w-xs leading-relaxed mb-10 font-medium">
+                      {historySearchQuery 
+                        ? <>No neural matches found for <span className="text-primary font-bold italic">"{historySearchQuery}"</span>. Refine your query or check for typos.</>
+                        : "Your creative vault is awaiting its first entry. Start generating to build your library."}
+                    </p>
+                    {historySearchQuery && (
+                      <button 
+                        onClick={() => setHistorySearchQuery("")}
+                        className="h-12 px-8 bg-primary text-primary-foreground rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] transition-all active:scale-95 flex items-center gap-2 group"
+                      >
+                        <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" /> Clear Filters
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col relative">
+                    {isHistoryLoading && (
+                      <div className="absolute inset-0 z-20 bg-background/40 backdrop-blur-[1px] flex items-center justify-center rounded-2xl">
+                        <div className="flex flex-col items-center justify-center gap-3 bg-card/80 p-4 rounded-xl shadow-lg border border-border">
+                          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                          <span className="text-[10px] font-semibold text-muted-foreground">Loading...</span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex-1 flex flex-col max-w-[1600px] mx-auto w-full">
+                      <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+                        <table className="w-full text-left border-collapse min-w-[800px]">
+                          <thead>
+                            <tr className="border-b border-border bg-muted/30">
+                              <th className="px-6 py-3.5 text-[10px] font-black tracking-widest text-muted-foreground uppercase text-center w-16">Preview</th>
+                              <th className="px-6 py-3.5 text-[10px] font-black tracking-widest text-muted-foreground uppercase">Details</th>
+                              <th className="px-6 py-3.5 text-[10px] font-black tracking-widest text-muted-foreground uppercase text-center w-24">Performance</th>
+                              <th className="px-6 py-3.5 text-[10px] font-black tracking-widest text-muted-foreground uppercase w-32">Date Gen</th>
+
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {displayedHistory.map((entry, idx) => (
+                              <tr 
+                                key={entry.creativeId || idx}
+                                className="border-b border-border/50 transition-colors"
+                              >
+                                <td className="px-6 py-4 text-center">
+                                  <div 
+                                    className="w-12 h-12 rounded-xl border border-border overflow-hidden bg-muted/30 mx-auto relative isolate shadow-sm cursor-pointer group/preview"
+                                    onClick={() => {
+                                      const rawUrl = entry.result?.imageUrl || entry.imageUrl || "";
+                                      if (rawUrl) {
+                                        setPreviewImagePopup({ 
+                                          url: rawUrl, 
+                                          title: entry.headline || "Creative Preview" 
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    {entry.result?.imageUrl || entry.imageUrl ? (
+                                      <img 
+                                        src={entry.result?.imageUrl || entry.imageUrl} 
+                                        alt="thumbnail" 
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <ImageIcon className="w-4 h-4 text-muted-foreground/30 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                                    )}
+                                    
+                                    {/* Plus Icon On Hover */}
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition-opacity">
+                                      <Plus className="w-5 h-5 text-white" />
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-black text-foreground uppercase tracking-tight line-clamp-1">
+                                        {entry.headline || 'Direct Response Creative'}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest bg-muted/50 px-1.5 py-0.5 rounded">
+                                        ID: {(entry.creativeId || '').slice(-6)}
+                                      </span>
+                                      <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest bg-blue-500/10 px-2 py-0.5 rounded-full">
+                                        {entry.tab || 'custom'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  {entry.score ? (
+                                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mx-auto">
+                                      <span className="text-[13px] font-black text-emerald-500">{entry.score}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted-foreground/30">-</span>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="text-[11px] text-foreground font-bold tracking-tight">
+                                      {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                    </span>
+                                    <span className="text-[9px] text-muted-foreground uppercase font-mono tracking-tighter">
+                                      {entry.createdAt ? new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                    </span>
+                                  </div>
+                                </td>
+
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Enhanced Pagination */}
+                    {totalHistoryPages > 1 && (
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-12 mb-16 max-w-[1600px] mx-auto w-full px-6">
+                         <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setHistoryPage(p => Math.max(1, p - 1));
+                                if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              disabled={historyPage === 1}
+                              className="h-11 w-11 flex items-center justify-center rounded-2xl border border-border bg-card hover:bg-muted disabled:opacity-20 transition-all active:scale-90"
+                            >
+                              <ChevronLeftIcon className="w-5 h-5" />
+                            </button>
+
+                            <div className="flex items-center gap-1.5 px-2">
+                               {Array.from({ length: totalHistoryPages }, (_, i) => i + 1).map(p => (
+                                 <button
+                                   key={p}
+                                   onClick={() => {
+                                     setHistoryPage(p);
+                                     if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                                   }}
+                                   className={cn(
+                                     "w-11 h-11 rounded-2xl text-[13px] font-black transition-all hover:scale-105 active:scale-95",
+                                     historyPage === p 
+                                       ? "bg-primary text-primary-foreground shadow-[0_10px_20px_-5px_rgba(59,130,246,0.3)]" 
+                                       : "bg-muted/40 text-muted-foreground hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                                   )}
+                                 >
+                                   {p}
+                                 </button>
+                               ))}
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                setHistoryPage(p => Math.min(totalHistoryPages, p + 1));
+                                if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              disabled={historyPage === totalHistoryPages}
+                              className="h-11 w-11 flex items-center justify-center rounded-2xl border border-border bg-card hover:bg-muted disabled:opacity-20 transition-all active:scale-90"
+                            >
+                              <ChevronRightIcon className="w-5 h-5" />
+                            </button>
+                         </div>
+
+                         <div className="h-11 px-6 flex items-center rounded-2xl bg-muted/20 border border-border/10 text-[10px] font-black text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+                            Page {historyPage} of {totalHistoryPages} • {totalHistoryItems} Items Total
+                         </div>
+                      </div>
+                     )}
+
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* STANDBY MODE */}
-          {currentTabState.mode === "standby" && (
+          {!isHistoryOpen && currentTabState.mode === "standby" && (
             <div className="flex-1 flex flex-col min-h-full">
               {activeMainTab === "top-ads" && (
                 <div className="flex-1 flex flex-col">
-                  {/* Library Header */}
                   <div className="px-4 md:px-8 py-5 md:py-8 border-b border-white/[0.04] relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent pointer-events-none" />
-                    <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    
+                    <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                       <div className="space-y-1.5">
-                        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-blue-400 uppercase tracking-widest">
-                          <Database className="w-3 h-3" /> Pattern Repository
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-400 uppercase tracking-widest">
+                          <Database className="size-3" /> Pattern Repository
                         </div>
-                        <h2 className="text-xl md:text-3xl font-black italic text-foreground uppercase tracking-tight leading-none">
+                        <h2 className="text-2xl md:text-3xl font-black italic text-zinc-950 dark:text-white uppercase tracking-tighter leading-none">
                           Winning <span className="text-blue-500">Library</span>
                         </h2>
-                        <p className="text-[11px] text-zinc-500 font-medium max-w-md">
-                          Select creatives to analyze their winning patterns, then generate new variations.
+                        <p className="text-[11px] text-zinc-500 font-medium max-w-sm hidden sm:block">
+                          Select winning patterns to generate high-converting variations.
                         </p>
                       </div>
-                      
-                      {selectedIds.length > 0 && (
-                        <div className="flex items-center gap-3 backdrop-blur-md animate-in fade-in z-20 w-full sm:w-auto mt-3 sm:mt-0">
-                          <span className="text-[11px] font-semibold text-white px-2 hidden lg:block">{selectedIds.length} Selected</span>
+
+                      <div className="flex flex-wrap items-center gap-3 lg:gap-4">
+                        {/* selection & analyze - HIDDEN ON MOBILE HEADER, SHOWN ON DESKTOP */}
+                        <div className={cn(
+                          "hidden lg:flex items-center gap-3 bg-white/[0.03] backdrop-blur-xl px-3 py-2 rounded-2xl border border-white/[0.08] transition-all duration-500 shadow-2xl overflow-hidden",
+                          selectedIds.length > 0 ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
+                        )}>
+                          <div className="flex flex-col items-start px-1">
+                            <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">{selectedIds.length} SELECTED</span>
+                            <div className="flex gap-0.5 mt-0.5">
+                              {Array.from({ length: Math.min(selectedIds.length, 3) }).map((_, i) => (
+                                <div key={i} className="size-1 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] animate-pulse" />
+                              ))}
+                            </div>
+                          </div>
                           <button
                             onClick={() => {
                               const ad = creatives.find(c => c.adId === selectedIds[0])
                               if (ad) handleAdCardClick(ad)
                             }}
-                            className="bg-primary text-primary-foreground w-full sm:w-auto justify-center px-5 py-2.5 rounded-lg font-bold text-[12px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] border border-blue-400/50"
+                            className="bg-blue-600 hover:bg-blue-500 text-white h-9 px-5 rounded-xl font-black text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95 shadow-[0_10px_20px_-5px_rgba(37,99,235,0.4)] border border-blue-400/30 group"
                           >
-                            Analyze Selected <ArrowRight className="w-4 h-4" />
+                            Analyze <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
                           </button>
                         </div>
-                      )}
+
+                        {/* Pagination - HIDDEN ON MOBILE HEADER */}
+                        {totalPages > 1 && (
+                          <div className="hidden lg:flex items-center bg-muted/40 dark:bg-white/[0.03] backdrop-blur-xl p-1.5 rounded-2xl border border-border dark:border-white/[0.08] shadow-2xl h-12">
+                            <button
+                              disabled={currentPage === 1}
+                              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                              className={cn(
+                                "size-9 rounded-xl flex items-center justify-center transition-all",
+                                currentPage === 1 
+                                  ? "text-zinc-300 dark:text-zinc-800 cursor-not-allowed opacity-50" 
+                                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/[0.07] active:scale-90"
+                              )}
+                            >
+                              <ChevronLeftIcon className="size-4" />
+                            </button>
+                            
+                            <div className="px-4 flex items-center justify-center min-w-[60px]">
+                              <span className="text-[11px] font-black text-zinc-950 dark:text-white px-3 py-1.5 bg-blue-600/10 rounded-lg border border-blue-500/20 shadow-[0_0_20px_rgba(37,99,235,0.1)]">
+                                {currentPage < 10 ? `0${currentPage}` : currentPage}
+                              </span>
+                            </div>
+
+                            <button
+                              disabled={currentPage === totalPages}
+                              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                              className={cn(
+                                "size-9 rounded-xl flex items-center justify-center transition-all",
+                                currentPage === totalPages 
+                                  ? "text-zinc-800 cursor-not-allowed opacity-50" 
+                                  : "text-zinc-400 hover:text-white hover:bg-white/[0.07] active:scale-90"
+                              )}
+                            >
+                              <ChevronRightIcon className="size-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Ad Grid */}
+                  {/* Ad Grid - Fixed columns */}
                   <div className="flex-1 p-3 md:p-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 max-w-[1600px] mx-auto pb-16">
-                      {creatives.map((ad, idx) => (
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 max-w-[1600px] mx-auto pb-16">
+                      {displayedCreatives.map((ad, idx) => (
                         <div 
                           key={`lib-${ad.adId || idx}`}
                           onClick={() => toggleAdSelection(ad.adId)}
@@ -468,6 +1135,71 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                         </div>
                       ))}
                     </div>
+
+                    {/* Mobile Only Pagination - Bottom of list as requested */}
+                    {totalPages > 1 && (
+                      <div className="lg:hidden flex justify-center py-6 pb-24">
+                        <div className="flex items-center bg-muted/40 dark:bg-white/[0.03] backdrop-blur-xl p-2 rounded-2xl border border-border dark:border-white/[0.08] shadow-2xl h-14">
+                          <button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            className={cn(
+                              "size-10 rounded-xl flex items-center justify-center transition-all",
+                              currentPage === 1 
+                                ? "text-zinc-300 dark:text-zinc-800 cursor-not-allowed opacity-50" 
+                                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white"
+                            )}
+                          >
+                            <ChevronLeftIcon className="size-5" />
+                          </button>
+                          
+                          <div className="px-5 flex items-center justify-center min-w-[70px]">
+                            <span className="text-[14px] font-black text-zinc-950 dark:text-white px-4 py-2 bg-blue-600/10 rounded-lg border border-blue-500/20 shadow-[0_0_20px_rgba(37,99,235,0.1)]">
+                              {currentPage < 10 ? `0${currentPage}` : currentPage}
+                            </span>
+                          </div>
+
+                          <button
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            className={cn(
+                              "size-10 rounded-xl flex items-center justify-center transition-all",
+                              currentPage === totalPages 
+                                ? "text-zinc-300 dark:text-zinc-800 cursor-not-allowed opacity-50" 
+                                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white"
+                            )}
+                          >
+                            <ChevronRightIcon className="size-5" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mobile Mobile Sticky Bar for Selection & Analyze */}
+                  <div className={cn(
+                    "lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-sm z-[100] transition-all duration-500",
+                    selectedIds.length > 0 ? "translate-y-0 opacity-100" : "translate-y-24 opacity-0 pointer-events-none"
+                  )}>
+                    <div className="bg-zinc-950/90 backdrop-blur-2xl px-4 py-3 rounded-2xl border border-white/[0.1] shadow-2xl flex items-center justify-between gap-4">
+                      <div className="flex flex-col items-start min-w-[100px]">
+                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none">{selectedIds.length} SELECTED</span>
+                        <div className="flex gap-1 mt-1.5">
+                          {Array.from({ length: Math.min(selectedIds.length, 3) }).map((_, i) => (
+                            <div key={i} className="size-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] animate-pulse" />
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const ad = creatives.find(c => c.adId === selectedIds[0])
+                          if (ad) handleAdCardClick(ad)
+                        }}
+                        className="flex-1 bg-blue-600 hover:bg-blue-500 text-white h-11 rounded-xl font-black text-[11px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl border border-blue-400/30"
+                      >
+                        Analyze Now <ArrowRight className="size-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -493,7 +1225,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
 
           {/* AD DETAILS MODE — Clean, compact layout */}
           {currentTabState.mode === "ad-details" && activeMainTab === "top-ads" && (
-            <div className="flex-1 flex flex-col animate-in fade-in duration-300 min-h-full">
+            <div className="animate-in fade-in duration-300 w-full pb-10">
               {/* Step Header */}
                  <div className="px-3 md:px-6 py-2 md:py-3 border-b border-border bg-background/90 backdrop-blur-xl sticky top-0 z-50 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-4">
@@ -525,6 +1257,15 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {/* MOBILE HEADER 'NEXT' BUTTON - Visible immediately on load */}
+                  {topAdsStep === 'aspects' && (
+                    <button
+                      onClick={() => setTopAdsStep('generate')}
+                      className="lg:hidden bg-blue-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-all shadow-lg border border-blue-400/30"
+                    >
+                      Next <ArrowRight className="size-3" />
+                    </button>
+                  )}
                   {selectedIds.length > 1 && (
                     <div className="hidden lg:flex items-center gap-1 mr-2">
                       {selectedIds.map(id => (
@@ -550,7 +1291,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                 </div>
               </div>
 
-              <div className="flex-1 p-3 md:p-6 overflow-y-auto custom-scrollbar">
+              <div className="p-3 md:p-6 w-full relative">
                 {/* ASPECTS STEP */}
                 {topAdsStep === 'aspects' && currentPreviewId && fullData[currentPreviewId] && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-5xl mx-auto w-full space-y-4 pb-4">
@@ -658,18 +1399,36 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                         </TabsContent>
                         
                         <TabsContent value="aida" className="space-y-3 outline-none">
+                          <div className="flex items-center justify-between mb-1 px-1">
+                            <h4 className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider">AIDA Framework</h4>
+                            <span className="text-[10px] text-zinc-600">Click to toggle influence</span>
+                          </div>
                           {Object.entries(fullData[currentPreviewId]?.aida || {}).map(([key, val]: any) => (
-                            <div key={key} className="p-4 rounded-xl bg-muted/20 border border-border space-y-3">
+                            <div 
+                              key={key} 
+                              onClick={() => toggleAspect(currentPreviewId, "aida", key)}
+                              className={cn(
+                                "p-4 rounded-xl border space-y-3 transition-all cursor-pointer",
+                                selectedAspects[currentPreviewId]?.aida?.includes(key)
+                                  ? "bg-blue-500/8 border-blue-500/20 shadow-sm shadow-blue-500/5 ring-1 ring-blue-500/10"
+                                  : "bg-muted/20 border-border text-muted-foreground opacity-60 hover:opacity-100 hover:border-primary/20"
+                              )}
+                            >
                               <div className="flex justify-between items-center">
-                                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{key}</span>
-                                <div className="flex items-center gap-3">
-                                  <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(val.score || 0)*10}%` }} />
+                                <div className="flex items-center gap-2">
+                                  <div className={cn("w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "bg-blue-500 border-blue-500" : "bg-white/5 border-white/[0.08]")}>
+                                    <CheckCircle2 className={cn("w-2.5 h-2.5 text-white", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "block" : "hidden")} />
                                   </div>
-                                  <span className="text-sm font-bold font-mono text-blue-400">{val.score}/10</span>
+                                  <span className={cn("text-[11px] font-semibold uppercase tracking-wider", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "text-blue-400" : "text-zinc-500")}>{key}</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-32 h-1 bg-white/5 rounded-full overflow-hidden">
+                                    <div className={cn("h-full rounded-full transition-all duration-500", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "bg-blue-500" : "bg-zinc-700")} style={{ width: `${(val.score || 0)*10}%` }} />
+                                  </div>
+                                  <span className={cn("text-xs font-bold font-mono", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "text-blue-400" : "text-zinc-600")}>{val.score}/10</span>
                                 </div>
                               </div>
-                              <p className="text-[11px] text-zinc-500 leading-relaxed">{val.analysis || "Analysis pending."}</p>
+                              <p className="text-[11px] leading-relaxed line-clamp-2">{val.analysis || "Analysis pending."}</p>
                             </div>
                           ))}
                         </TabsContent>
@@ -696,14 +1455,34 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                         </TabsContent>
                         
                         <TabsContent value="insights" className="space-y-3 outline-none">
+                          <div className="flex items-center justify-between mb-1 px-1">
+                            <h4 className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">Strategic Recommendations</h4>
+                            <span className="text-[10px] text-zinc-600">Click to toggle inclusion</span>
+                          </div>
                           {(fullData[currentPreviewId]?.recommendations || []).map((rec: string, i: number) => (
-                            <div key={i} className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                                <AlertCircle className="w-4 h-4 text-amber-500" />
+                            <div 
+                              key={i} 
+                              onClick={() => toggleAspect(currentPreviewId, "recommendations", i)}
+                              className={cn(
+                                "p-4 rounded-xl border flex items-start gap-4 transition-all cursor-pointer",
+                                selectedAspects[currentPreviewId]?.recommendations?.includes(i)
+                                  ? "bg-amber-500/8 border-amber-500/20 shadow-sm shadow-amber-500/5 ring-1 ring-amber-500/10"
+                                  : "bg-muted/10 border-border text-muted-foreground opacity-50 hover:opacity-100 hover:border-primary/20"
+                              )}
+                            >
+                              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all shadow-inner", selectedAspects[currentPreviewId]?.recommendations?.includes(i) ? "bg-amber-500/20" : "bg-white/5")}>
+                                {selectedAspects[currentPreviewId]?.recommendations?.includes(i) ? (
+                                  <CheckCircle2 className="w-4 h-4 text-amber-500" />
+                                ) : (
+                                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500/40" />
+                                )}
                               </div>
-                              <div className="space-y-0.5">
-                                <span className="text-[9px] font-semibold text-amber-500/60 uppercase tracking-wider">Recommendation #{i+1}</span>
-                                <p className="text-[12px] leading-relaxed text-zinc-400">{rec}</p>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className={cn("text-[9px] font-black uppercase tracking-[0.15em]", selectedAspects[currentPreviewId]?.recommendations?.includes(i) ? "text-amber-500" : "text-zinc-600 animate-pulse")}>Recommendation #{i+1}</span>
+                                  {selectedAspects[currentPreviewId]?.recommendations?.includes(i) && <Badge className="bg-amber-500/10 text-amber-500 border-none text-[8px] h-3.5 px-1.5">Selected</Badge>}
+                                </div>
+                                <p className={cn("text-[12px] leading-relaxed", selectedAspects[currentPreviewId]?.recommendations?.includes(i) ? "text-zinc-300 font-medium" : "text-zinc-600 line-clamp-1")}>{rec}</p>
                               </div>
                             </div>
                           ))}
@@ -787,12 +1566,14 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                         <h3 className="text-sm font-bold text-foreground">Ready to Generate</h3>
                         <p className="text-[10px] text-muted-foreground mt-0.5">{selectedIds.length} creatives · {Object.keys(selectedAspects).reduce((acc, k) => acc + (selectedAspects[k]?.whatWorks?.length || 0), 0)} aspects active</p>
                       </div>
-                      <button
-                        onClick={() => handleGenerate()}
-                        className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-lg shrink-0"
-                      >
-                        Generate <Sparkles className="w-4 h-4 text-blue-500" />
-                      </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => handleGenerate()}
+                          className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-lg cursor-pointer"
+                        >
+                          Generate <Sparkles className="w-4 h-4 text-blue-500" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -801,14 +1582,14 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
           )}
 
           {/* LOADING MODE — Automation Pipeline Animation */}
-          {currentTabState.mode === "loading" && (() => {
+          {!isHistoryOpen && currentTabState.mode === "loading" && (() => {
             const progress = currentTabState.progress;
 
             const stages = [
               { id: 'input',   label: 'Source Input',       sub: activeMainTab === 'top-ads' ? `${selectedIds.length} creative${selectedIds.length !== 1 ? 's' : ''} selected` : 'Prompt received', color: '#3b82f6', threshold: 0  },
               { id: 'extract', label: 'Pattern Extraction', sub: 'Analyzing winning elements',   color: '#8b5cf6', threshold: 20 },
-              { id: 'brief',   label: 'Brief Generation',   sub: 'Claude AI synthesizing',       color: '#06b6d4', threshold: 45 },
-              { id: 'render',  label: 'Visual Rendering',   sub: 'Gemini generating image',      color: '#10b981', threshold: 70 },
+              { id: 'brief',   label: 'Brief Generation',   sub: 'Neural engine synthesizing',       color: '#06b6d4', threshold: 45 },
+              { id: 'render',  label: 'Visual Rendering',   sub: 'Generating creative assets',      color: '#10b981', threshold: 70 },
               { id: 'output',  label: 'Output Ready',       sub: 'Packaging creative',           color: '#f59e0b', threshold: 92 },
             ];
 
@@ -847,7 +1628,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                       Holaprime Neural Engine · Active
                     </span>
                   </div>
-                  <h2 className="text-sm md:text-xl font-black text-white uppercase tracking-tight">{activeStage.label}</h2>
+                  <h2 className="text-sm md:text-xl font-black text-foreground uppercase tracking-tight">{activeStage.label}</h2>
                   <p className="text-[11px] font-medium transition-all duration-700" style={{ color: `${activeStage.color}aa` }}>{activeStage.sub}</p>
                 </div>
 
@@ -865,7 +1646,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                       const active = i === activeIdx;
                       return (
                         <g key={i}>
-                          <line x1={`${x1}%`} y1={y} x2={`${x2}%`} y2={y} stroke="rgba(255,255,255,0.07)" strokeWidth="1.5" />
+                          <line x1={`${x1}%`} y1={y} x2={`${x2}%`} y2={y} stroke="rgba(150,150,150,0.15)" strokeWidth="1.5" />
                           {done && (
                             <>
                               <defs>
@@ -896,7 +1677,7 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                     {stages.map((stage: any, i: number) => {
                       const isDone   = i < activeIdx;
                       const isActive = i === activeIdx;
-                      const col = isDone || isActive ? stage.color : 'rgba(255,255,255,0.18)';
+                      const col = isDone || isActive ? stage.color : 'rgba(150,150,150,0.3)';
 
                       return (
                         <div key={stage.id} className="flex flex-col items-center gap-1 md:gap-3" style={{ width: '20%' }}>
@@ -910,8 +1691,8 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                               style={{
                                 background: isDone ? `linear-gradient(135deg, ${stage.color}22, ${stage.color}0a)`
                                   : isActive ? `linear-gradient(135deg, ${stage.color}30, ${stage.color}10)`
-                                  : 'rgba(255,255,255,0.025)',
-                                border: `2px solid ${isDone ? stage.color + '80' : isActive ? stage.color : 'rgba(255,255,255,0.1)'}`,
+                                  : 'rgba(150,150,150,0.05)',
+                                border: `2px solid ${isDone ? stage.color + '80' : isActive ? stage.color : 'rgba(150,150,150,0.15)'}`,
                                 boxShadow: isActive ? `0 0 0 3px ${stage.color}18, 0 0 30px ${stage.color}35` : isDone ? `0 0 12px ${stage.color}22` : 'none',
                                 color: col, zIndex: 10,
                               }}>
@@ -935,8 +1716,12 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                           </div>
 
                           <div className="text-center space-y-0.5 max-w-[40px] md:max-w-none">
-                            <p className="text-[6px] md:text-[9px] font-bold uppercase tracking-tight md:tracking-wider leading-tight transition-colors duration-500 break-words"
-                              style={{ color: isDone ? stage.color + 'bb' : isActive ? '#f1f5f9' : 'rgba(255,255,255,0.18)' }}>
+                            <p className={cn(
+                              "text-[6px] md:text-[9px] font-bold uppercase tracking-tight md:tracking-wider leading-tight transition-colors duration-500 break-words",
+                              isActive && "text-foreground",
+                              !isDone && !isActive && "text-muted-foreground/50"
+                            )}
+                              style={{ color: isDone ? stage.color + 'bb' : undefined }}>
                               {stage.label.split(' ')[0]}
                             </p>
                             {isActive && (
@@ -973,18 +1758,17 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
 
                 {/* Progress bar */}
                 <div className="w-full space-y-2.5">
-                  <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(150,150,150,0.15)' }}>
                     <div className="h-full rounded-full relative overflow-hidden transition-all duration-500 ease-out"
                       style={{ width: `${progress}%`, background: `linear-gradient(90deg, #1d4ed8, ${activeStage.color}, #06b6d4)` }}>
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
                         style={{ animation: 'shimmerBar 1.2s ease-in-out infinite' }} />
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.2)' }}>Processing pipeline</span>
+                  <div className="flex items-center justify-between text-muted-foreground/60">
+                    <span className="text-[9px] font-semibold uppercase tracking-widest">Processing pipeline</span>
                     <button onClick={cancelProcess}
-                      className="text-[9px] font-semibold uppercase tracking-widest flex items-center gap-1 transition-colors hover:text-red-400"
-                      style={{ color: 'rgba(255,255,255,0.2)' }}>
+                      className="text-[9px] font-semibold uppercase tracking-widest flex items-center gap-1 transition-colors hover:text-red-400">
                       <X className="w-3 h-3" /> Cancel
                     </button>
                   </div>
@@ -1001,8 +1785,13 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
           })()}
 
           {/* COMPLETE MODE — Image Viewport */}
-          {currentTabState.mode === "complete" && currentTabState.result && (() => {
+          {!isHistoryOpen && currentTabState.mode === "complete" && currentTabState.result && (() => {
             const r = currentTabState.result;
+            const variants = r.variants || [];
+            const hasVariants = variants.length > 1;
+            const activeVariant = hasVariants ? variants[selectedVariantIdx] || variants[0] : null;
+            const displayImageUrl = activeVariant?.imageUrl || r.imageUrl;
+
             // Resolve all possible result shapes from different API paths
             const headline = r.copywriting?.headline?.primary || r.metaAd?.headline || r.creativeConcept?.title || "Creative Generated";
             const bodyText = r.copywriting?.body?.primary 
@@ -1013,8 +1802,14 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
               || "Your Holaprime creative has been generated based on the selected winning patterns and prompt.";
             const ctaText = r.copywriting?.cta?.primary || r.metaAd?.cta || "";
             const hookText = r.copywriting?.hookText || "";
-            const score = r.creativeConcept?.targetScore || r.targetScore || "8.5";
-            const tier = r.creativeConcept?.performanceTier || r.performanceTier || "PREMIUM";
+            const baseScoreVal = activeVariant?.score?.overall || parseFloat((r.creativeConcept?.targetScore || r.targetScore || "8.5").toString().replace('/10',''));
+            const displayScoreNum = typeof baseScoreVal === 'number' && !isNaN(baseScoreVal) ? baseScoreVal : 8.5;
+            const score = displayScoreNum.toFixed(1);
+            
+            let tier = "STANDARD";
+            if (displayScoreNum >= 9.0) tier = "ELITE";
+            else if (displayScoreNum >= 8.0) tier = "PRO";
+            else if (displayScoreNum >= 7.0) tier = "PREMIUM";
             const isImprovement = activeMainTab === 'top-ads' && r.sourceAdIds;
             const improvementSummary = r.creativeConcept?.improvementSummary;
 
@@ -1026,71 +1821,109 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
             };
 
             const handleExport = async () => {
-              if (!r.imageUrl) {
+              const exportUrl = displayImageUrl;
+              if (!exportUrl) {
                 toast.info("No image to export");
                 return;
               }
               try {
-                // Try downloading via fetch (works for data URIs and same-origin)
-                if (r.imageUrl.startsWith('data:')) {
+                if (exportUrl.startsWith('data:')) {
                   const a = document.createElement('a');
-                  a.href = r.imageUrl;
-                  a.download = `holaprime-creative-${Date.now()}.png`;
+                  a.href = exportUrl;
+                  a.download = `holaprime-creative-${activeVariant?.id || 'output'}-${Date.now()}.png`;
                   a.click();
                 } else {
-                  const resp = await fetch(r.imageUrl);
+                  const resp = await fetch(exportUrl);
                   const blob = await resp.blob();
                   const blobUrl = URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = blobUrl;
-                  a.download = `holaprime-creative-${Date.now()}.png`;
+                  a.download = `holaprime-creative-${activeVariant?.id || 'output'}-${Date.now()}.png`;
                   a.click();
                   setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
                 }
                 toast.success("Creative downloaded!");
               } catch {
-                // Fallback: open in new tab
-                window.open(r.imageUrl);
+                window.open(exportUrl);
               }
             };
 
             return (
             <div className="flex-1 flex flex-col animate-in zoom-in-95 duration-700 overflow-hidden min-h-0">
 
-               {/* Image area */}
-               <div className="flex-1 relative group overflow-hidden bg-background flex items-center justify-center min-h-[180px] md:min-h-0">
-                  {r.imageUrl ? (
-                    <img src={r.imageUrl} className="w-full h-full object-contain transition-transform duration-[20s] group-hover:scale-105" alt="Creative" />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center opacity-40 px-4">
-                      <ImageIcon className="w-12 md:w-24 h-12 md:h-24 mb-2 md:mb-4 text-muted-foreground" />
-                      <p className="text-xs font-semibold text-muted-foreground text-center">Image Generation / No Provider</p>
-                    </div>
-                  )}
+               {/* Variant selector bar with scores */}
+               {hasVariants && (
+                 <div className="shrink-0 border-b border-border">
+                   <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto">
+                     {variants.map((v: any, idx: number) => (
+                       <button
+                         key={v.id}
+                         onClick={() => setSelectedVariantIdx(idx)}
+                         className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
+                           idx === selectedVariantIdx
+                             ? 'bg-primary text-primary-foreground shadow-sm'
+                             : 'bg-background text-muted-foreground hover:text-foreground hover:bg-muted border border-border'
+                         }`}
+                       >
+                         <span className={`w-1.5 h-1.5 rounded-full ${v.imageUrl ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                         <span>{v.label || `Variant ${idx + 1}`}</span>
+                         {v.score?.overall && (
+                           <span className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                             v.score.overall >= 8 ? 'bg-emerald-500/20 text-emerald-500' :
+                             v.score.overall >= 6 ? 'bg-amber-500/20 text-amber-500' :
+                             'bg-rose-500/20 text-rose-500'
+                           }`}>{v.score.overall}/10</span>
+                         )}
+                       </button>
+                     ))}
+                   </div>
+                   {/* Score details for active variant */}
+                   {activeVariant?.score && (
+                     <div className="flex items-center gap-3 px-3 py-1.5 bg-muted/30 text-[9px] text-muted-foreground overflow-x-auto">
+                       <span className="flex items-center gap-1">Text <span className="font-bold text-foreground">{activeVariant.score.textAccuracy}/10</span></span>
+                       <span className="flex items-center gap-1">Layout <span className="font-bold text-foreground">{activeVariant.score.layoutQuality}/10</span></span>
+                       <span className="flex items-center gap-1">Psychology <span className="font-bold text-foreground">{activeVariant.score.psychologyScore}/10</span></span>
+                       <span className="flex items-center gap-1">Brand <span className="font-bold text-foreground">{activeVariant.score.brandCompliance}/10</span></span>
+                       {activeVariant.score.predictedCtr && (
+                         <span className="flex items-center gap-1">Est. CTR <span className="font-bold text-emerald-500">{activeVariant.score.predictedCtr}</span></span>
+                       )}
+                       {activeVariant.score.verdict && (
+                         <span className="hidden md:block ml-auto italic truncate max-w-[300px]">{activeVariant.score.verdict}</span>
+                       )}
+                     </div>
+                   )}
+                 </div>
+               )}
+
+               {/* Image area — fixed visibility */}
+               <div className="flex-1 relative group overflow-hidden bg-background flex items-center justify-center min-h-[200px] md:min-h-[300px] max-h-[50vh] md:max-h-[60vh]">
+                  {displayImageUrl ? (
+                    <img 
+                      src={displayImageUrl} 
+                      className="max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-[20s] group-hover:scale-105" 
+                      alt="Creative" 
+                      style={{ display: 'block', minHeight: '200px' }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const placeholder = target.nextElementSibling as HTMLElement;
+                        if (placeholder) placeholder.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className={cn("flex-col items-center justify-center opacity-40 px-4", displayImageUrl ? "hidden" : "flex")}>
+                    <ImageIcon className="w-12 md:w-24 h-12 md:h-24 mb-2 md:mb-4 text-muted-foreground" />
+                    <p className="text-xs font-semibold text-muted-foreground text-center">Image Generation / No Provider</p>
+                  </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60 pointer-events-none" />
 
-                  {/* V2 source badge — md+ only */}
-                  {isImprovement && selectedIds.length > 0 && (
-                    <div className="hidden md:flex absolute top-4 left-4 z-20 items-center gap-2">
-                      <div className="px-2.5 py-1.5 rounded-lg bg-black/70 backdrop-blur-xl border border-emerald-500/30 flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">V2 — Improved from source</span>
-                      </div>
-                      <div className="flex -space-x-2">
-                        {selectedIds.slice(0, 3).map(id => (
-                          <div key={id} className="w-7 h-7 rounded-md overflow-hidden border-2 border-emerald-500/40 shadow-md">
-                            <img src={creatives.find(c => c.adId === id)?.thumbnailUrl} className="w-full h-full object-cover" alt="source" />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+
 
                   {/* Clear button — visible on md+ AND mobile as a floating button */}
                   <div className="absolute top-4 right-4 z-20">
                     <button
                       onClick={() => {
-                        updateTabState(activeMainTab, { result: null, mode: activeMainTab === 'top-ads' ? 'ad-details' : 'standby', progress: 0 });
+                        updateTabState(activeMainTab, { result: null, mode: activeMainTab === 'top-ads' ? 'ad-details' : 'standby', progress: 0, sessionHistory: [] });
                         if (activeMainTab === 'top-ads') setTopAdsStep('generate');
                       }}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-xl border border-white/10 hover:bg-rose-500/25 hover:border-rose-400/50 transition-all shadow-xl"
@@ -1102,26 +1935,37 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                     </button>
                   </div>
 
-                  {/* Headline overlay — md+ only */}
-                  <div className="hidden md:block absolute bottom-6 left-6 max-w-lg space-y-2">
+                </div>
+
+                {/* Desktop action bar - BELOW image */}
+                <div className="hidden md:flex items-end justify-between p-6 bg-background border-b border-border shrink-0">
+                  <div className="max-w-lg space-y-2">
                     <Badge className="bg-primary/10 border-primary/30 text-[9px] font-semibold px-3 py-1 rounded-full backdrop-blur-xl text-primary">
                       {isImprovement ? 'Version 2 — Improvement Based' : 'Generated Creative'}
                     </Badge>
                     <h2 className="text-2xl font-bold text-foreground drop-shadow-xl">{headline}</h2>
                   </div>
-
-                   {/* Action buttons — md+ only overlay */}
-                   <div className="hidden md:flex absolute bottom-6 right-6 items-center gap-3">
+                  <div className="flex items-center gap-2">
                      <button
-                       onClick={() => { if (activeMainTab === 'top-ads') { setTopAdsStep('generate'); updateTabState('top-ads', { mode: 'ad-details' }) } else { handleGenerate() } }}
-                       className="px-5 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 transition-all"
+                       onClick={openRegenDialog}
+                       className="px-4 py-2 bg-blue-600/10 text-blue-600 dark:bg-primary dark:text-primary-foreground border border-blue-600/20 dark:border-none rounded-lg font-semibold text-[11px] flex items-center gap-2 transition-all cursor-pointer hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] shrink-0"
                      >
                        <Zap className="w-3.5 h-3.5" /> Regenerate
                      </button>
-                     <button onClick={handleExport} className="px-5 py-2 bg-muted text-foreground border border-border rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:bg-muted/80 transition-all">
+                     <button
+                       onClick={() => {
+                         const r = currentTabState.result;
+                         if (r) saveToHistory(r, activeMainTab, currentTabState.prompt, currentCreativeId, currentTabState.generationOptions);
+                       }}
+                       disabled={isSaving}
+                       className="px-4 py-2 bg-emerald-500/10 text-emerald-600 dark:bg-emerald-600 dark:text-white border border-emerald-500/20 dark:border-none rounded-lg font-semibold text-[11px] flex items-center gap-2 transition-all cursor-pointer hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 shrink-0"
+                     >
+                       <Save className="w-3.5 h-3.5" /> {isSaving ? 'Saving...' : 'Save'}
+                     </button>
+                     <button onClick={handleExport} className="px-4 py-2 bg-muted text-foreground border border-border rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:bg-muted/80 transition-all cursor-pointer hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] shrink-0">
                        <Download className="w-3.5 h-3.5" /> Export
                      </button>
-                   </div>
+                  </div>
                 </div>
 
                 {/* Mobile action bar - BELOW image */}
@@ -1133,16 +1977,26 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                       </Badge>
                       <h2 className="text-sm font-bold text-foreground truncate">{headline}</h2>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                        <button
-                         onClick={() => { if (activeMainTab === 'top-ads') { setTopAdsStep('generate'); updateTabState('top-ads', { mode: 'ad-details' }) } else { handleGenerate() } }}
-                         className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-[11px] flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                         onClick={openRegenDialog}
+                         className="px-3 py-2 bg-blue-600/10 text-blue-600 dark:bg-primary dark:text-primary-foreground border border-blue-600/20 dark:border-none rounded-lg font-bold text-[10px] flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
                        >
-                         <Zap className="w-3.5 h-3.5" /> Regen
+                         <Zap className="w-3 h-3" /> Regen
+                       </button>
+                       <button
+                         onClick={() => {
+                           const r = currentTabState.result;
+                           if (r) saveToHistory(r, activeMainTab, currentTabState.prompt, currentCreativeId, currentTabState.generationOptions);
+                         }}
+                         disabled={isSaving}
+                         className="w-9 h-9 flex items-center justify-center bg-emerald-500/10 text-emerald-600 dark:bg-emerald-600 dark:text-white border border-emerald-500/20 dark:border-none rounded-lg active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                       >
+                         <Save className="w-4 h-4" />
                        </button>
                        <button 
                          onClick={handleExport} 
-                         className="w-9 h-9 flex items-center justify-center bg-muted text-foreground border border-border rounded-lg active:scale-95 transition-all"
+                         className="w-9 h-9 flex items-center justify-center bg-muted text-foreground border border-border rounded-lg active:scale-95 transition-all cursor-pointer"
                        >
                          <Download className="w-4 h-4" />
                        </button>
@@ -1217,17 +2071,17 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
                    {copiedText ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                  </button>
                </div>
-               <div className="flex flex-col gap-3">
-                  <div className="flex-1 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col justify-center">
-                     <span className="text-[9px] font-semibold text-emerald-500/60 uppercase tracking-wider">Score</span>
-                     <div className="text-2xl font-bold font-mono text-emerald-500">
+               <div className="flex flex-col gap-3 min-w-[200px]">
+                  <div className="flex-1 px-5 py-4 rounded-[14px] bg-[#e6f8ef] dark:bg-emerald-500/10 border border-[#00b87c]/30 dark:border-emerald-500/20 flex flex-col justify-center shadow-sm">
+                     <span className="text-[10px] font-bold text-[#00b87c] dark:text-emerald-400 uppercase tracking-wider">Score</span>
+                     <div className="text-4xl font-black font-sans text-[#00b87c] dark:text-emerald-400 tracking-tight mt-1">
                        {score}
-                       <span className="text-xs opacity-30 ml-1">/10</span>
+                       <span className="text-[14px] opacity-50 font-semibold ml-1 tracking-normal">/10</span>
                      </div>
                   </div>
-                  <div className="flex-1 p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex flex-col justify-center">
-                     <span className="text-[9px] font-semibold text-blue-400/60 uppercase tracking-wider">Tier</span>
-                     <div className="text-lg font-bold text-blue-400 capitalize">
+                  <div className="flex-1 px-5 py-4 rounded-[14px] bg-[#f0f5ff] dark:bg-blue-500/10 border border-[#3b82f6]/30 dark:border-blue-500/20 flex flex-col justify-center shadow-sm">
+                     <span className="text-[10px] font-bold text-[#3b82f6] dark:text-blue-400 uppercase tracking-wider">Tier</span>
+                     <div className="text-2xl font-black font-sans text-[#3b82f6] dark:text-blue-400 tracking-tight uppercase mt-1">
                        {tier}
                      </div>
                   </div>
@@ -1238,13 +2092,363 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
 
         </section>
 
-        {/* Global Image Popup Modal */}
-        {previewImagePopup && (
+        {/* ── REGENERATE DIALOG — Right-side panel ── */}
+        {isRegenDialogOpen && typeof document !== "undefined" && createPortal(
+          <div className="fixed inset-0 z-[200] flex" onClick={() => setIsRegenDialogOpen(false)}>
+            <div className="flex-1 bg-black/40 backdrop-blur-sm" />
+            <div 
+              className="w-full max-w-md h-[100dvh] bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 ml-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-border flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Regenerate Creative</h3>
+                    <p className="text-[10px] text-muted-foreground">Enter new requirements</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsRegenDialogOpen(false)}
+                  className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center hover:bg-destructive/10 hover:border-destructive/30 transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                {/* New Requirements Input — placed at top */}
+                <div className="px-5 py-4 space-y-3">
+                  <h4 className="text-[10px] font-semibold text-foreground/60 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-primary" /> New Requirements
+                  </h4>
+                  <textarea
+                    value={regenPrompt}
+                    onChange={(e) => setRegenPrompt(e.target.value)}
+                    placeholder="Describe what should change in the regenerated creative..."
+                    className="w-full h-32 bg-muted/20 border border-border rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-primary/30 transition-all placeholder:opacity-40 resize-none text-foreground leading-relaxed"
+                    autoFocus
+                  />
+                  <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/10 flex items-start gap-2">
+                    <AlertCircle className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-blue-400/70 leading-relaxed">
+                      The creative will regenerate based on your new input without losing previous context.
+                    </p>
+                  </div>
+
+                  {/* Generate Button — right after input */}
+                  <button
+                    onClick={() => { setIsRegenDialogOpen(false); handleRegenerate(); }}
+                    disabled={!regenPrompt.trim()}
+                    className="w-full h-11 bg-blue-600/10 text-blue-600 dark:bg-blue-600 dark:text-white border border-blue-600/20 dark:border-none rounded-xl font-bold text-[13px] tracking-wide flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-40 hover:opacity-90 shadow-xl cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4 text-blue-600 dark:text-white" /> Generate
+                  </button>
+                </div>
+
+                {/* Previous Inputs — below */}
+                {previousInputs.length > 0 && (
+                  <div className="px-5 py-4 border-t border-border/50 space-y-3">
+                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <Clock className="w-3 h-3" /> Previous Requirements
+                    </h4>
+                    <div className="space-y-2">
+                      {previousInputs.map((input, idx) => (
+                        <div key={idx} className="p-3 rounded-xl bg-muted/30 border border-border/50 space-y-1 hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-semibold text-primary/70 uppercase tracking-wider">Input #{idx + 1}</span>
+                            <span className="text-[9px] text-muted-foreground font-mono">
+                              {new Date(input.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-foreground/80 leading-relaxed">{input.prompt}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+        {/* ── HISTORY PANEL — Full overlay ── */}
+        {isHistoryOpen && (
+          <div id="history-modal" className="fixed inset-0 z-[200] bg-background flex flex-col overflow-hidden animate-in fade-in duration-300">
+            <div className="flex flex-col flex-1 overflow-hidden">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between shrink-0 bg-background z-50 gap-4 sticky top-0">
+              
+              <div className="flex items-center justify-between w-full sm:w-auto">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <BookOpen className="w-4.5 h-4.5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-foreground">Creative History</h2>
+                    <p className="text-[10px] text-muted-foreground">{totalHistoryItems} creatives saved</p>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={() => setIsHistoryOpen(false)}
+                  className="sm:hidden h-9 px-4 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center gap-2 hover:bg-zinc-200 dark:hover:bg-white/10 transition-all cursor-pointer group shadow-sm hover:shadow-md"
+                >
+                  <ChevronLeft className="w-4 h-4 text-zinc-600 dark:text-zinc-400 transition-transform duration-300" />
+                  <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">Back</span>
+                </button>
+              </div>
+
+              {/* History Search Overlay */}
+              <div className="w-full sm:flex-1 max-w-md sm:px-10 order-last sm:order-none">
+                <div className="relative group">
+                  <History className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <input 
+                    type="text"
+                    value={historySearchQuery}
+                    onChange={(e) => setHistorySearchQuery(e.target.value)}
+                    placeholder="Search by Creative ID or Headline..."
+                    className="w-full h-11 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-white/10 rounded-2xl pl-10 pr-4 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 focus:bg-white dark:focus:bg-zinc-900/80 transition-all placeholder:text-muted-foreground/50"
+                  />
+                  {historySearchQuery && (
+                    <button 
+                      onClick={() => setHistorySearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <button 
+                onClick={() => setIsHistoryOpen(false)}
+                className="hidden sm:flex h-9 px-4 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 items-center gap-2 hover:bg-zinc-200 dark:hover:bg-white/10 transition-all cursor-pointer group shadow-sm hover:shadow-md"
+              >
+                <ChevronLeft className="w-4 h-4 text-zinc-600 dark:text-zinc-400 group-hover:-translate-x-1.5 transition-transform duration-300" />
+                <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white">Back</span>
+              </button>
+            </div>
+            
+
+
+            {/* History List */}
+            <div id="history-scroll-container" className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 md:p-6 relative flex flex-col scroll-smooth">
+              {isHistoryLoading && historyEntries.length === 0 ? (
+                <div className="flex items-center justify-center h-40">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-[11px] text-muted-foreground">Loading history...</span>
+                  </div>
+                </div>
+              ) : historyEntries.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center min-h-[600px] text-center px-4 animate-in fade-in zoom-in duration-700">
+                     <div className="w-28 h-28 mb-8 relative animate-float">
+                      <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping opacity-20" />
+                      <div className="absolute -inset-4 bg-primary/10 rounded-full blur-2xl animate-pulse opacity-20" />
+                      <div className="relative z-10 w-full h-full flex items-center justify-center bg-zinc-900 border border-white/10 rounded-full shadow-2xl">
+                        <History className="w-12 h-12 text-primary/70" />
+                      </div>
+                    </div>
+                    <h3 className="text-3xl font-black bg-gradient-to-b from-zinc-900 to-zinc-500 dark:from-white dark:to-white/40 bg-clip-text text-transparent mb-4 tracking-tighter uppercase">
+                      {historySearchQuery ? "No Matching Results" : "History Empty"}
+                    </h3>
+                    <p className="text-sm text-zinc-500 max-w-sm leading-relaxed mb-10 font-medium">
+                      {historySearchQuery 
+                        ? <>No neural matches found for <span className="text-primary font-bold italic">"{historySearchQuery}"</span>. Refine your query or check for typos in the creative ID.</>
+                        : "Your creative vault is awaiting its first entry. Start generating to build your library."}
+                    </p>
+                    {historySearchQuery && (
+                      <button 
+                        onClick={() => setHistorySearchQuery("")}
+                        className="h-12 px-10 bg-primary text-primary-foreground rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] transition-all active:scale-95 flex items-center gap-2 group"
+                      >
+                        <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" /> Reset Search Engine
+                      </button>
+                    )}
+                  </div>
+              ) : (
+                <div className="w-full relative">
+                  {isHistoryLoading && (
+                    <div className="absolute inset-0 z-20 bg-background/40 backdrop-blur-[1px] flex items-center justify-center rounded-2xl">
+                      <div className="flex flex-col items-center justify-center gap-3 bg-card/80 p-4 rounded-xl shadow-lg border border-border">
+                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        <span className="text-[10px] font-semibold text-muted-foreground">Loading...</span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="w-full max-w-[1600px] mx-auto">
+                    <div className="rounded-2xl border border-border bg-card shadow-sm">
+                      <div className="overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left border-collapse min-w-[800px]">
+                          <thead>
+                          <tr className="border-b border-border bg-muted/40">
+                            <th className="px-3 md:px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-16 md:w-28 text-center md:text-left">Preview</th>
+                            <th className="px-3 md:px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground max-w-[200px] md:max-w-[300px]">Creative Detail</th>
+                            <th className="px-3 md:px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden md:table-cell">Requirements</th>
+                            <th className="px-3 md:px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-16 md:w-20 text-center">Score</th>
+                            <th className="px-3 md:px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-24 md:w-32">Date</th>
+
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {displayedHistory.map((entry: any, idx: number) => (
+                            <tr 
+                              key={entry.creativeId || idx}
+                              className="border-b border-border/50 transition-colors"
+                            >
+                              <td className="px-3 md:px-6 py-2.5 md:py-4">
+                                <div 
+                                  className="w-10 h-10 md:w-16 md:h-16 rounded-lg md:rounded-xl overflow-hidden bg-muted/30 relative shrink-0 border border-border/50 cursor-pointer group/preview mx-auto md:mx-0"
+                                  onClick={() => {
+                                    const rawUrl = entry.result?.imageUrl || entry.imageUrl || "";
+                                    if (rawUrl) {
+                                      setPreviewImagePopup({ 
+                                        url: rawUrl, 
+                                        title: entry.headline || "Creative Preview" 
+                                      });
+                                    }
+                                  }}
+                                >
+                                  {(entry.result?.imageUrl || entry.imageUrl) ? (
+                                    <img src={entry.result?.imageUrl || entry.imageUrl} alt="thumbnail" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <ImageIcon className="w-4 h-4 text-muted-foreground/30 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                                  )}
+                                  
+                                  {/* Plus Icon On Hover */}
+                                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition-opacity">
+                                    <Plus className="w-6 h-6 text-white" />
+                                  </div>
+                                  
+                                  {entry.parentId && (
+                                     <div className="absolute top-1 left-1 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-card animate-pulse shadow-sm" title="Refined Version" />
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-3 md:px-6 py-2.5 md:py-4">
+                                <div className="flex flex-col gap-1 md:gap-1.5 max-w-[200px] md:max-w-[280px]">
+                                  <h3 className="text-[13px] font-black leading-tight text-foreground uppercase tracking-tight line-clamp-2">
+                                    {entry.headline || 'Direct Response Creative'}
+                                  </h3>
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-2 py-0.5 rounded-md border border-border text-[9px] font-mono text-muted-foreground flex items-center gap-1 bg-muted/20">
+                                      ID: {(entry.creativeId || '').slice(-6)}
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded-md bg-primary/10 text-[9px] font-black text-primary uppercase tracking-wider">
+                                      {entry.tab || 'custom'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-3 md:px-6 py-2.5 md:py-4 hidden md:table-cell max-w-[400px]">
+                                {entry.prompt ? (
+                                  <p className="text-[11px] text-muted-foreground/80 italic leading-relaxed line-clamp-2">
+                                    "{entry.prompt}"
+                                  </p>
+                                ) : (
+                                  <span className="text-[11px] text-muted-foreground/30">No requirements specified</span>
+                                )}
+                              </td>
+                              <td className="px-3 md:px-6 py-2.5 md:py-4 text-center">
+                                {entry.score ? (
+                                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mx-auto">
+                                    <span className="text-[13px] font-black text-emerald-500">{entry.score}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground/30">-</span>
+                                )}
+                              </td>
+                              <td className="px-3 md:px-6 py-2.5 md:py-4">
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-[11px] text-foreground font-bold tracking-tight">
+                                    {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                  </span>
+                                  <span className="text-[9px] text-muted-foreground uppercase font-mono tracking-tighter">
+                                    {entry.createdAt ? new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                  </span>
+                                </div>
+                              </td>
+
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                  {/* Pagination */}
+                  {totalHistoryPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center sm:justify-end gap-4 sm:gap-6 mt-6 pt-6 pb-6 max-w-[1600px] mx-auto w-full px-4 sm:px-6">
+                       <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setHistoryPage(p => Math.max(1, p - 1));
+                              document.getElementById('history-scroll-container')?.scrollTo({ top: 0, behavior: 'auto' });
+                            }}
+                            disabled={historyPage === 1}
+                            className="h-11 w-11 flex items-center justify-center rounded-2xl border border-border bg-card hover:bg-muted disabled:opacity-20 transition-all active:scale-90"
+                          >
+                            <ChevronLeftIcon className="w-5 h-5" />
+                          </button>
+                          <div className="flex items-center gap-1.5 px-2">
+                             {Array.from({ length: totalHistoryPages }, (_, i) => i + 1).map(p => (
+                               <button
+                                 key={p}
+                                 onClick={() => {
+                                   setHistoryPage(p);
+                                   document.getElementById('history-scroll-container')?.scrollTo({ top: 0, behavior: 'auto' });
+                                 }}
+                                 className={cn(
+                                   "w-11 h-11 rounded-2xl text-[13px] font-black transition-all hover:scale-105 active:scale-95",
+                                   historyPage === p 
+                                     ? "bg-primary text-primary-foreground shadow-[0_10px_20px_-5px_rgba(59,130,246,0.3)]" 
+                                     : "bg-muted/40 text-muted-foreground hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                                 )}
+                               >
+                                 {p}
+                               </button>
+                             ))}
+                          </div>
+                          <button
+                            onClick={() => {
+                              setHistoryPage(p => Math.min(totalHistoryPages, p + 1));
+                              document.getElementById('history-scroll-container')?.scrollTo({ top: 0, behavior: 'auto' });
+                            }}
+                            disabled={historyPage === totalHistoryPages}
+                            className="h-11 w-11 flex items-center justify-center rounded-2xl border border-border bg-card hover:bg-muted disabled:opacity-20 transition-all active:scale-90"
+                          >
+                            <ChevronRightIcon className="w-5 h-5" />
+                          </button>
+                       </div>
+                       <div className="h-11 px-6 flex items-center rounded-2xl bg-muted/20 border border-border/10 text-[10px] font-black text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+                          Page {historyPage} of {totalHistoryPages} • {totalHistoryItems} Items Total
+                       </div>
+                    </div>
+                  )}
+
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* Global Image Popup Modal - Using Portal for viewport stability */}
+        {previewImagePopup && typeof document !== 'undefined' && createPortal(
           <EnlargedImageModal 
             url={previewImagePopup.url}
             title={previewImagePopup.title || "Ad Preview"}
+            id={previewImagePopup.id}
             onClose={() => setPreviewImagePopup(null)}
-          />
+          />,
+          document.body
         )}
       </main>
 
@@ -1261,6 +2465,13 @@ export default function CreativeStudioView({ onClose }: CreativeStudioViewProps)
          }
          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
            background: var(--muted-foreground);
+         }
+         @keyframes float {
+           0%, 100% { transform: translateY(0); }
+           50% { transform: translateY(-12px); }
+         }
+         .animate-float {
+           animation: float 4s ease-in-out infinite;
          }
       `}</style>
     </div>

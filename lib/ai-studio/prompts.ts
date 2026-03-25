@@ -12,6 +12,8 @@ export function buildGenerationPrompt(patterns: any, options: any = {}) {
     offer = '',
     tone = '',
     additionalInstructions = '',
+    _memoryContext = '',
+    _competitorContext = '',
   } = options;
 
   // Merge prompt + targetAudience — user types in 'prompt' field (Target Audience textarea)
@@ -96,37 +98,69 @@ People remember how a creative made them feel. Trigger an emotional reaction —
 
 ---
 
-## 10 MANDATORY CONVERSION RULES — APPLY ALL TO VERSION 2
+## DISCIPLINE PRINCIPLE — MOST IMPORTANT RULE
+DO NOT add elements that are not present in the source creative or explicitly requested by the user. If the source creative has a split-screen comparison layout, the V2 should have a split-screen comparison layout. If the source has 3 bullet points, V2 should have exactly 3 bullet points — not 6. If the source doesn't have a countdown timer, don't add one unless the analysis specifically says "add urgency element."
 
-**RULE 1 — URGENCY & SCARCITY (NON-NEGOTIABLE):**
-Every creative MUST include at least one urgency element. Use countdown timers ("Ends in 03:25:17"), "Only 47 Spots Left!", or "Ends [date]". This is the #1 conversion driver.
+Your job is to UPGRADE the existing creative, not to stuff it with every possible conversion element. A focused, clean creative with 4-5 strong elements will always outperform a cluttered one with 10 mediocre elements competing for attention.
 
-**RULE 2 — PRICE ANCHORING:**
-Show the challenge size ($2K, $25K) as a LARGE, BOLD, prominent hero element — ideally 3D or oversized typography. The dollar amount IS the hero. Make it impossible to scroll past.
+## PROP FIRM CREATIVE AUTHENTICITY
+Hola Prime operates in the funded trading / prop firm space. The creative MUST feel native to this world:
+- Language: Use terms traders actually use — "funded account", "challenge", "profit target", "drawdown", "payout", "profit split", "prop firm". Never generic marketing language like "unlock your potential" or "join now."
+- Imagery: Trading terminals with green/red candles, multiple monitor setups, MT4/MT5 charts, real trading environments. Never generic business stock photos, random people in suits, or unrelated lifestyle imagery.
+- Competitor awareness: Traders compare prop firms on: evaluation rules, profit splits, payout speed, drawdown limits, challenge fees. The creative should speak to these specific concerns.
+- Tone: Confident but not scammy. Traders are skeptical — they've seen dozens of prop firm ads. Credibility > hype.
+- Numbers must be ACCURATE: If the source creative shows "$38 Challenge" or "$25K", use those exact numbers. Don't invent new price points.
 
-**RULE 3 — DISCOUNT PSYCHOLOGY:**
-Always include a specific discount badge ("40% OFF", "TAKEOFF40", slashed prices). Creates immediate perceived value and a reason to act now.
+## CONVERSION TOOLKIT — SELECT WHAT FITS (DO NOT USE ALL)
+These are available techniques. Use ONLY the ones that are already present in the source creative OR that fix a specific weakness identified in the analysis. Using all of them creates clutter.
 
-**RULE 4 — LOW BARRIER MESSAGING:**
-Use friction-reducing phrases: "Lowest Barrier Ever", "Your Easiest Path to Funded Trading", "No Activation Fee", "No Time Limits". Directly overcome the risk objection.
+1. **URGENCY** — Countdown timer or "Only X Spots Left". Use only if source has urgency or analysis says "add urgency."
+2. **PRICE ANCHORING** — Hero dollar amount as large focal point. Use if source features a price prominently.
+3. **DISCOUNT** — "40% OFF" or promo code. Use only if source already has a discount element.
+4. **LOW BARRIER** — "No Activation Fee", "Risk-Free". Use if overcoming risk objection is the source's strategy.
+5. **BULLET BENEFITS** — Clean container with 3-4 bullets. Keep the EXACT same bullets as the source — do not duplicate or add extra ones. Each bullet appears ONCE.
+6. **CTA BUTTON** — Full-width, commanding verb. Always include if source has a CTA.
+7. **DARK THEME** — Dark background, white text, blue accents. Match the source's color scheme.
+8. **SOCIAL PROOF** — Trust badge or trader count. Use only if source has social proof.
+9. **MOBILE-FIRST** — Top 30% hooks instantly. Always apply.
 
-**RULE 5 — BULLET-POINT BENEFIT BLOCK:**
-Include a clean rounded container with 3–4 concise bullets: "• 1-Step Process", "• 5% Profit Target", "• No Time Limits", "• Fast Payouts". Each bullet under 5 words. This outperforms paragraphs every time.
+---
 
-**RULE 6 — CTA DESIGN:**
-Full-width, high-contrast CTA button with a commanding verb: "CLAIM YOUR $2K CHALLENGE NOW", "UNLOCK FUNDED ACCOUNT". Use: Claim, Start, Unlock, Get, Join — never passive language.
+## BEHAVIORAL SCIENCE FRAMEWORK — APPLY TO EVERY CREATIVE DECISION
+Your creative brief must be grounded in these psychological principles. For each element in the brief, identify WHICH principle it exploits and HOW it maps to visual design.
 
-**RULE 7 — COLOR PSYCHOLOGY:**
-Dark navy/black background. White bold text. Electric blue, neon green, or gold accents. Dark theme = trading professionalism and authority.
+### Consumer Psychology
+- **Processing Fluency**: Simpler layouts feel more trustworthy. Reduce cognitive load — fewer elements, clearer hierarchy, more whitespace. If a viewer has to "work" to understand the ad, they'll scroll past it.
+- **Von Restorff Effect (Isolation)**: One element that is dramatically DIFFERENT from everything else will be remembered. Make the hero element (price, visual) visually isolated — different size, color, or treatment than everything around it.
+- **Serial Position Effect**: People remember the FIRST and LAST things they see. Put your strongest hook in the top 20% and your CTA in the bottom 20%. Everything in the middle supports but doesn't compete.
 
-**RULE 8 — VISUAL MOTIFS:**
-Use rockets (growth/momentum), 3D text effects on dollar amounts, gradient glows, subtle chart/grid patterns in background. These are thumb-stop visual hooks that signal trading context instantly.
+### Behavioral Economics (Kahneman, Tversky, Thaler)
+- **Loss Aversion**: Losses are felt ~2x more intensely than equivalent gains. "Don't miss this" > "Get this." Frame the offer around what the viewer LOSES by not acting.
+- **Anchoring Bias**: The first number shown sets the reference point. Show a HIGH anchor (original price) before the actual price. The actual price then feels like a steal regardless of its absolute value.
+- **Scarcity Heuristic**: Limited availability = higher perceived value. "Only 23 spots left" triggers urgency that rational argument cannot.
+- **Endowment Effect**: People value what they feel they already own. Use "YOUR challenge" not "A challenge." Possessive language creates psychological ownership before purchase.
+- **Default Effect**: Make the desired action feel like the obvious, easy default. The CTA should feel like the natural next step, not a decision.
 
-**RULE 9 — SOCIAL PROOF:**
-Include "Trusted by X+ traders", "#WeAreTraders" community hashtag, trader count badge, or trust seals. Credibility signals convert cold audiences.
+### Neuro-Marketing (Visual Neuroscience)
+- **Eye-Tracking Patterns**: F-pattern (text-heavy), Z-pattern (visual-heavy), Gutenberg diagram (balanced). Choose based on content type and design the hierarchy to match how eyes naturally scan.
+- **Color-Emotion Mapping**: Red/Orange → urgency, danger, excitement (amygdala). Blue/Teal → trust, calm, stability (prefrontal cortex). Gold → premium, reward, achievement (nucleus accumbens). Green → success, growth, safety. Use color INTENTIONALLY to trigger specific neural responses.
+- **Contrast-Driven Attention**: The visual cortex responds to CONTRAST, not beauty. High contrast between elements = instant attention. Low contrast = elements blend and get ignored.
+- **Facial Processing**: The fusiform face area processes faces 170ms faster than any other visual element. If using faces, the emotional expression DIRECTLY transfers to the viewer (mirror neurons). Confident face = viewer feels confident. Stressed face = viewer feels the pain point.
 
-**RULE 10 — MOBILE-FIRST:**
-Design for vertical 9:16 or square 1:1. Text readable at small sizes. Top 30% of the creative MUST hook attention — lead with offer, discount badge, or countdown. Every creative must pass the 0.5-second thumb-stop test.
+### Psychological Principles in Advertising (Cialdini, Festinger)
+- **Social Proof**: "100K+ traders" is more persuasive than any feature list. Numbers, community signals, and crowd indicators bypass rational evaluation.
+- **Authority**: Trust badges, brand marks, and institutional aesthetics signal credibility. Premium design quality = subconscious authority signal.
+- **Cognitive Dissonance**: When premium aesthetics meet low prices, the brain resolves the conflict as "incredible deal." Design luxury → price accessibility = conversion.
+- **Reciprocity**: Giving value upfront ("No Activation Fee", "Risk-Free") creates psychological obligation to reciprocate (by signing up).
+- **Commitment & Consistency**: Small initial commitment ("just $38") aligns with the trader's self-image → leads to larger commitments later.
+
+### In Your imageGenerationPrompt
+When writing the image prompt, EXPLICITLY describe how these psychological principles map to visual elements:
+- Which element exploits loss aversion and how?
+- What creates the anchor and where is it placed?
+- How does the color palette trigger the intended emotional sequence?
+- What eye-tracking pattern does the layout follow?
+- Where is the Von Restorff isolation element?
 
 ---
 
@@ -163,7 +197,7 @@ ${(patterns.whatDoesntWork || []).map((w: string) => `• ${w}`).join('\n') || '
 
 ### 📈 Performance Baseline to Beat:
 - Avg CTR: ${patterns.performance?.avgCtr || 0}% | Avg ROAS: ${patterns.performance?.avgRoas || 0}x
-
+${_memoryContext}${_competitorContext}
 ---
 
 ## USER OVERRIDES — HIGHEST PRIORITY 🔥
@@ -238,20 +272,34 @@ Return ONLY a raw JSON object. No markdown, no preamble, no explanation outside 
     "disclaimerText": "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON PERFORMANCE THROUGH HOLA PRIME ACCOUNTS."
   },
   "psychologyBlueprint": {
-    "primaryTrigger": "Main behavioral trigger + implementation method",
-    "secondaryTrigger": "Supporting trigger for dual-punch conversion",
-    "aidaFlow": {
-      "attention": "How top 30% hooks in 0.5s (Rules 10+2)",
-      "interest": "How benefit bullets sustain interest (Rule 5)",
-      "desire": "How price anchor + discount creates desire (Rules 2+3)",
-      "action": "How full-width CTA drives the click (Rule 6)"
+    "primaryTrigger": {
+      "principle": "Name the specific principle (e.g., Loss Aversion, Anchoring Bias, Social Proof)",
+      "implementation": "How it's applied in THIS creative — cite the specific element",
+      "visualMapping": "How this principle maps to a visual design decision (color, size, position, contrast)"
     },
-    "emotionalJourney": "FOMO → Excitement at low barrier → Confidence from social proof → Urgency to act NOW"
+    "secondaryTrigger": {
+      "principle": "Supporting principle for dual-punch conversion",
+      "implementation": "How it reinforces the primary trigger",
+      "visualMapping": "Visual implementation"
+    },
+    "neuroDesign": {
+      "eyeTrackingPattern": "F-pattern | Z-pattern | Gutenberg — explain why this pattern fits this layout",
+      "colorPsychology": "Map each color used to its neurological effect (e.g., 'Red urgency badge → amygdala activation → cortisol → impulse to act')",
+      "contrastStrategy": "Where is the highest visual contrast and what does it draw attention to?",
+      "vonRestorffElement": "Which single element is visually isolated/different from everything else? Why?"
+    },
+    "aidaFlow": {
+      "attention": "What triggers attention in the first 0.5 seconds? Which brain region does it activate?",
+      "interest": "How does the creative sustain interest past the initial hook?",
+      "desire": "What creates want? Map to specific behavioral economics principle.",
+      "action": "How does the CTA leverage the psychological momentum built above?"
+    },
+    "emotionalJourney": "Map the SEQUENCE of emotions from first glance to click — e.g., 'Curiosity (hook) → Fear of loss (scarcity) → Relief (solution) → Confidence (social proof) → Urgency (CTA)'"
   },
   "imageGenerationPrompt": {
-    "detailed": "600+ word comprehensive prompt. Open by describing the source creative's visual DNA (colors, layout, style), then describe exactly how V2 improves it. Embed ALL 10 rules as mandatory visual elements: hero dollar amount in 3D, countdown timer, dark navy with electric blue accents, bullet block, CTA button, Hola Prime branding, discount badge, trust line, rocket/chart motif, legal disclaimer. Ultra-premium, professional aesthetic. No cheap or spammy elements. Must pass 0.5-second thumb-stop test.",
-    "negative": "generic stock photos, white backgrounds, inconsistent style with source, cluttered without hierarchy, blurry, low quality, unrelated subjects",
-    "styleReference": "Dark navy trading-professional creative matching source visual identity, bold typography hierarchy, high-contrast CTA",
+    "detailed": "600+ word prompt describing the EXACT visual output. Structure it as: (1) LAYOUT STRUCTURE: Describe the composition — what goes where, relative sizes, spacing. Include eye-tracking pattern (F/Z/Gutenberg). (2) PSYCHOLOGY-TO-VISUAL MAPPING: For each major element, state which psychological principle it implements and how (e.g., 'Hero $38 in 3D gold at center — anchoring bias, first number seen sets the reference frame'). (3) COLOR-EMOTION SEQUENCE: Describe the color palette and which neural responses each color triggers as the eye moves through the layout. (4) EXACT TEXT CONTENT: List every text string that appears in the image, spelled correctly. Each bullet appears ONCE. Spell 'Withdrawals' 'Challenge' 'Limits' 'Process' 'Fictitious' 'Simulated' 'Performance' correctly. (5) AUTHENTICITY: Prop-firm-authentic visuals only — trading terminals, candlestick charts, MT4/MT5. Never generic stock photos. (6) DISCLAIMER: Copy the exact Hola Prime disclaimer verbatim.",
+    "negative": "generic stock photos, white backgrounds, cluttered layouts, duplicate text, garbled text, misspelled words, random lifestyle imagery, too many competing elements",
+    "styleReference": "Match source creative's visual identity. Prop firm professional aesthetic.",
     "technicalSpecs": {
       "aspectRatio": "1:1 or 9:16",
       "resolution": "1080x1080 or 1080x1920",

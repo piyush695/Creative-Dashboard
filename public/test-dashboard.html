@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creative Studio — API Test Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e0e0e0; padding: 24px; }
+    h1 { font-size: 22px; margin-bottom: 8px; }
+    .subtitle { color: #888; font-size: 13px; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+    .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 16px; }
+    .card h3 { font-size: 14px; margin-bottom: 4px; }
+    .card .tier { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+    .tier-1 { background: #3b1a1a; color: #f09595; }
+    .tier-2 { background: #0f3028; color: #5dcaa5; }
+    .tier-3 { background: #1e1648; color: #afa9ec; }
+    .tier-4 { background: #0c2d53; color: #85b7eb; }
+    .card p { font-size: 12px; color: #888; margin-bottom: 12px; }
+    button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+    button:hover { opacity: 0.85; }
+    .btn-run { background: #3b82f6; color: white; }
+    .btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
+    .result { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 11px; font-family: monospace; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; display: none; }
+    .result.pass { background: #0f2418; border: 1px solid #1d6b3f; color: #5dcaa5; display: block; }
+    .result.fail { background: #2a1010; border: 1px solid #6b1d1d; color: #f09595; display: block; }
+    .result.loading { background: #1a1a2e; border: 1px solid #2a2a4e; color: #85b7eb; display: block; }
+    .result img { max-width: 100%; border-radius: 6px; margin-top: 8px; }
+    .status { font-size: 11px; margin-top: 6px; }
+    input, select, textarea { background: #111; border: 1px solid #333; color: #e0e0e0; padding: 6px 10px; border-radius: 6px; font-size: 12px; width: 100%; margin-bottom: 8px; }
+    textarea { min-height: 60px; resize: vertical; }
+    label { font-size: 11px; color: #888; display: block; margin-bottom: 2px; }
+    .config { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Creative Studio — API Test Dashboard</h1>
+  <p class="subtitle">Click "Run" on any card to test that endpoint. Make sure <code>npm run dev</code> is running on port 3000.</p>
+
+  <div class="grid" id="tests"></div>
+
+  <script>
+    const BASE = 'http://localhost:3000/api/studio';
+
+    const tests = [
+      // GET endpoints
+      {
+        name: 'List Creatives', tier: 1, method: 'GET',
+        desc: 'Fetch all creatives from the library',
+        run: () => get('list'),
+        format: d => `${d.creatives?.length || 0} creatives found\n\nFirst: ${d.creatives?.[0]?.adName || 'N/A'}`
+      },
+      {
+        name: 'List Templates', tier: 2, method: 'GET',
+        desc: 'Fetch all prompt templates (auto-seeds defaults)',
+        run: () => get('templates'),
+        format: d => `${d.templates?.length || 0} templates\n\n${(d.templates || []).map(t => `• ${t.name} (${t.category})`).join('\n')}`
+      },
+      {
+        name: 'List Platforms', tier: 4, method: 'GET',
+        desc: 'Available cross-platform targets',
+        run: () => get('platforms'),
+        format: d => (d.platforms || []).map(p => `• ${p.name} (${p.aspectRatio})`).join('\n')
+      },
+      {
+        name: 'List Personas', tier: 4, method: 'GET',
+        desc: 'Available audience personas for targeting',
+        run: () => get('personas'),
+        format: d => (d.personas || []).map(p => `• ${p.name}\n  ${p.description}`).join('\n\n')
+      },
+
+      // POST - Templates
+      {
+        name: 'Save Template', tier: 2, method: 'POST',
+        desc: 'Save a prompt template to the library',
+        run: () => post({
+          type: 'save-template', name: 'Test Template ' + Date.now(),
+          description: 'Automated test', category: 'custom',
+          prompt: 'Create a dark premium Hola Prime ad', tags: ['test'],
+        }),
+        format: d => `Template saved!\nID: ${d.templateId}`
+      },
+
+      // POST - Refinement
+      {
+        name: 'Iterative Refinement', tier: 2, method: 'POST',
+        desc: 'Refine a creative with targeted feedback (text-only test)',
+        config: [{ id: 'refine_feedback', label: 'Feedback', type: 'textarea', default: 'Make the CTA button larger and change it to green' }],
+        run: (cfg) => post({
+          type: 'refine',
+          feedback: cfg.refine_feedback || 'Make the CTA button larger',
+          refinementType: 'layout',
+          originalBrief: { copywriting: { headline: { primary: '$25K Challenge' }, cta: { primary: 'BUY NOW' } } }
+        }),
+        format: d => `Changes: ${(d.creative?.changes || []).join('\n• ')}\n\nReasoning: ${d.creative?.reasoning || 'N/A'}`
+      },
+
+      // POST - Performance Link
+      {
+        name: 'Link Performance', tier: 2, method: 'POST',
+        desc: 'Link real CTR/ROAS data to a generation (test with fake ID)',
+        run: () => post({
+          type: 'link-performance',
+          generationId: '000000000000000000000000',
+          performance: { ctr: 2.1, roas: 3.5, spend: 100 },
+        }),
+        format: d => `Linked: ${d.linked}\n(Expected false with fake ID — real IDs come from creative_generations collection)`
+      },
+
+      // POST - Competitor Analysis
+      {
+        name: 'Competitor Analysis', tier: 1, method: 'POST',
+        desc: 'Analyze a competitor ad (paste a data URI or URL)',
+        config: [{ id: 'comp_img', label: 'Competitor Image URL or data URI', type: 'textarea', default: '' }],
+        run: (cfg) => {
+          if (!cfg.comp_img) throw new Error('Paste a competitor image URL or data URI first');
+          return post({ type: 'competitor-analysis', competitorImage: cfg.comp_img, competitorName: 'Unknown' });
+        },
+        format: d => {
+          const i = d.insight;
+          return `Competitor: ${i?.competitor}\nThreat: ${i?.threatLevel}\n\nStrengths:\n${(i?.strengths||[]).map(s=>'• '+s).join('\n')}\n\nWeaknesses:\n${(i?.weaknesses||[]).map(w=>'• '+w).join('\n')}\n\nOpportunities:\n${(i?.opportunities||[]).map(o=>'• '+o).join('\n')}`;
+        }
+      },
+
+      // POST - Agentic Pipeline
+      {
+        name: 'Agentic Pipeline', tier: 4, method: 'POST', slow: true,
+        desc: 'Self-correcting: generate → score → fix → retry',
+        config: [
+          { id: 'agent_prompt', label: 'Image prompt', type: 'textarea', default: 'Minimal Hola Prime ad. Dark navy background. Large white "$38" centered. Small blue "Buy Challenge" button. Ultra-clean.' },
+          { id: 'agent_retries', label: 'Max retries', type: 'number', default: '1' },
+        ],
+        run: (cfg) => post({
+          type: 'agentic',
+          imagePrompt: cfg.agent_prompt,
+          maxRetries: parseInt(cfg.agent_retries) || 1,
+          minScore: 5,
+        }),
+        format: d => {
+          const c = d.creative;
+          let out = `Score: ${c?.score?.overall || 'N/A'}/10\nIterations: ${c?.iterations}\nCorrections: ${c?.corrections?.length || 0}`;
+          if (c?.score?.verdict) out += `\nVerdict: ${c.score.verdict}`;
+          if (c?.score?.weaknesses?.length) out += `\n\nWeaknesses:\n${c.score.weaknesses.map(w=>'• '+w).join('\n')}`;
+          return out;
+        },
+        hasImage: d => d.creative?.imageUrl
+      },
+
+      // POST - Cross-Platform
+      {
+        name: 'Cross-Platform Generate', tier: 4, method: 'POST', slow: true,
+        desc: 'One prompt → multiple platform formats',
+        config: [
+          { id: 'cp_prompt', label: 'Image prompt', type: 'textarea', default: 'Hola Prime prop trading ad. Dark navy background, large "$25K" hero text, blue "Buy Challenge" CTA button, bullet benefits.' },
+          { id: 'cp_platforms', label: 'Platforms (comma-sep)', type: 'text', default: 'meta_feed,google_display' },
+        ],
+        run: (cfg) => post({
+          type: 'cross-platform',
+          imagePrompt: cfg.cp_prompt,
+          platformIds: cfg.cp_platforms.split(',').map(s => s.trim()),
+        }),
+        format: d => (d.platforms || []).map(p => `${p.name} (${p.aspectRatio}): ${p.imageUrl ? '✓ Generated' : '✗ Failed'}`).join('\n'),
+        hasImage: d => (d.platforms || []).find(p => p.imageUrl)?.imageUrl
+      },
+
+      // POST - Persona Targeting
+      {
+        name: 'Persona Targeting', tier: 4, method: 'POST', slow: true,
+        desc: 'Same offer → different audience angles',
+        config: [
+          { id: 'pt_offer', label: 'Base offer', type: 'textarea', default: '$25K Funded Trading Challenge for $38. 1-Step. 5% Target. No Time Limits.' },
+          { id: 'pt_personas', label: 'Personas (comma-sep)', type: 'text', default: 'beginner_curious,frustrated_trader' },
+        ],
+        run: (cfg) => post({
+          type: 'persona-targeting',
+          offer: cfg.pt_offer,
+          personaIds: cfg.pt_personas.split(',').map(s => s.trim()),
+        }),
+        format: d => (d.personas || []).map(p => `${p.persona?.name}: ${p.imageUrl ? '✓ Generated' : '✗ Failed'}\n  Hook: ${p.brief?.hookText || 'N/A'}`).join('\n\n'),
+        hasImage: d => (d.personas || []).find(p => p.imageUrl)?.imageUrl
+      },
+
+      // POST - Custom Generation (full pipeline)
+      {
+        name: 'Full Custom Generation', tier: 1, method: 'POST', slow: true,
+        desc: '3 psychology variants + scoring + Cloudinary upload',
+        config: [
+          { id: 'cust_prompt', label: 'Creative prompt', type: 'textarea', default: 'Create a split-screen meme ad. Left: sad Pepe with "Other Firms". Right: happy ape in suit with "Hola Prime". Bottom: "$38 Challenge" and "Buy Challenge" button.' },
+        ],
+        run: (cfg) => post({ type: 'custom', prompt: cfg.cust_prompt }),
+        format: d => {
+          const v = d.creative?.variants || [];
+          return `Variants: ${v.length}\n\n${v.map(va => `${va.label}: ${va.score?.overall || '?'}/10 ${va.imageUrl ? '✓' : '✗'}\n  ${va.score?.verdict || ''}`).join('\n\n')}`;
+        },
+        hasImage: d => d.creative?.imageUrl
+      },
+    ];
+
+    // ── Render ──
+    const container = document.getElementById('tests');
+    tests.forEach((t, idx) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <span class="tier tier-${t.tier}">Tier ${t.tier}</span>
+        <span style="font-size:10px;color:#666;margin-left:6px">${t.method}${t.slow ? ' ⏱ Slow' : ''}</span>
+        <h3>${t.name}</h3>
+        <p>${t.desc}</p>
+        ${(t.config || []).map(c => `
+          <div class="config">
+            <label>${c.label}</label>
+            ${c.type === 'textarea' 
+              ? `<textarea id="cfg-${idx}-${c.id}">${c.default || ''}</textarea>`
+              : `<input type="${c.type || 'text'}" id="cfg-${idx}-${c.id}" value="${c.default || ''}" />`
+            }
+          </div>
+        `).join('')}
+        <button class="btn-run" id="btn-${idx}" onclick="runTest(${idx})">Run Test</button>
+        <div class="result" id="result-${idx}"></div>
+      `;
+      container.appendChild(card);
+    });
+
+    async function get(action) {
+      const res = await fetch(`${BASE}?action=${action}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+
+    async function post(body) {
+      const res = await fetch(BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).substring(0, 200)}`);
+      return res.json();
+    }
+
+    async function runTest(idx) {
+      const t = tests[idx];
+      const btn = document.getElementById(`btn-${idx}`);
+      const result = document.getElementById(`result-${idx}`);
+      
+      // Gather config values
+      const cfg = {};
+      (t.config || []).forEach(c => {
+        const el = document.getElementById(`cfg-${idx}-${c.id}`);
+        cfg[c.id] = el?.value || c.default || '';
+      });
+
+      btn.disabled = true;
+      btn.textContent = 'Running...';
+      result.className = 'result loading';
+      result.textContent = t.slow ? 'Generating... this may take 30-120 seconds ⏱' : 'Running...';
+      result.style.display = 'block';
+
+      const start = Date.now();
+      try {
+        const data = await t.run(cfg);
+        const ms = Date.now() - start;
+        let output = `✓ PASS (${ms}ms)\n\n${t.format(data)}`;
+        
+        result.className = 'result pass';
+        result.innerHTML = output.replace(/\n/g, '<br>');
+        
+        // Show image if available
+        const imgUrl = t.hasImage?.(data);
+        if (imgUrl) {
+          result.innerHTML += `<br><img src="${imgUrl}" alt="Generated" />`;
+        }
+      } catch (err) {
+        const ms = Date.now() - start;
+        result.className = 'result fail';
+        result.textContent = `✗ FAIL (${ms}ms)\n\n${err.message}`;
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Run Again';
+    }
+  </script>
+</body>
+</html>

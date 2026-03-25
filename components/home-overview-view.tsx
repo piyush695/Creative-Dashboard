@@ -69,7 +69,7 @@ export default function HomeOverviewView() {
             </div>
 
             {/* Metrics Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                {[
                   { title: "Active Assets", value: "24,892", change: "+12.5%", icon: Target },
                   { title: "Cross-Platform Spend", value: "$1.2M", change: "+8.2%", icon: Activity },
@@ -111,12 +111,19 @@ export default function HomeOverviewView() {
                   </CardHeader>
                   <CardContent className="p-4 md:p-5 h-[280px]">
                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={lineData}>
+                        <LineChart data={lineData} style={{ outline: 'none' }}>
                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.3} />
                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} domain={[0, 10]} tickFormatter={(v: number) => `${v}x`} />
-                           <Tooltip content={<CustomTooltip />} />
-                           <Line type="monotone" dataKey="roas" stroke="#00D4C8" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#00D4C8', strokeWidth: 0 }} />
+                           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+                           <Line 
+                              type="monotone" 
+                              dataKey="roas" 
+                              stroke="#00D4C8" 
+                              strokeWidth={3} 
+                              dot={false} 
+                              activeDot={{ r: 6, fill: '#00D4C8', strokeWidth: 0, style: { outline: 'none' } }} 
+                           />
                         </LineChart>
                      </ResponsiveContainer>
                   </CardContent>
@@ -147,7 +154,7 @@ export default function HomeOverviewView() {
                      <CardContent className="p-4 h-[120px] flex items-center justify-between">
                         <div className="w-[100px] h-[100px]">
                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
+                              <PieChart style={{ outline: 'none' }}>
                                  <Pie
                                     data={pieData}
                                     cx="50%"
@@ -157,12 +164,13 @@ export default function HomeOverviewView() {
                                     paddingAngle={3}
                                     dataKey="value"
                                     stroke="none"
+                                    activeShape={false}
                                  >
                                     {pieData.map((entry, index) => (
                                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                                     ))}
                                  </Pie>
-                                 <Tooltip content={<CustomTooltip />} />
+                                 <Tooltip content={<CustomTooltip />} wrapperStyle={{ outline: 'none' }} />
                               </PieChart>
                            </ResponsiveContainer>
                         </div>

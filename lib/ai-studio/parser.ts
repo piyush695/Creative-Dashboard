@@ -58,6 +58,31 @@ export function extractAndRepairJson(text: string) {
   cleaned = cleaned.replace(/:\s*,/g, ': "",');
   cleaned = cleaned.replace(/:\s*}/g, ': ""}');
 
+  // Sanitize control characters inside JSON strings (e.g. raw newlines, tabs)
+  // Walk char-by-char: inside quoted strings, replace control chars with their escape sequences
+  let sanitized = '';
+  let inStr = false;
+  let esc = false;
+  for (let i = 0; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (esc) { sanitized += ch; esc = false; continue; }
+    if (ch === '\\') { sanitized += ch; esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; sanitized += ch; continue; }
+    if (inStr) {
+      const code = ch.charCodeAt(0);
+      if (code < 0x20) {
+        // Replace control characters with safe escapes
+        if (ch === '\n') sanitized += '\\n';
+        else if (ch === '\r') sanitized += '\\r';
+        else if (ch === '\t') sanitized += '\\t';
+        else sanitized += ' ';
+        continue;
+      }
+    }
+    sanitized += ch;
+  }
+  cleaned = sanitized;
+
   try {
     return { parsed: JSON.parse(cleaned), wasRepaired };
   } catch (err) {
