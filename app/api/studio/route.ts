@@ -938,6 +938,46 @@ If there's a price/amount, make it the LARGEST element (3D, oversized). Gold + d
       return NextResponse.json({ success: true, creativeId });
     }
 
+    // ── SAVE TO VAULT (SAVED CREATIVE) ──
+    if (type === 'save-creative') {
+      const { creativeId, parentId, childId, tab, prompt: historyPrompt, generationOptions: histOpts, result: histResult, imageUrl: histImageUrl, previousInputs } = body;
+      if (!creativeId) {
+        return NextResponse.json({ error: 'creativeId is required' }, { status: 400 });
+      }
+      
+      const client = await clientPromise;
+      const db = client.db(process.env.MONGODB_DB_NAME || 'reddit_data');
+      const savedCollection = db.collection('saved_creative');
+      
+      const headline = histResult?.copywriting?.headline?.primary || histResult?.creativeConcept?.title || '';
+      const score = histResult?.creativeConcept?.targetScore || histResult?.targetScore || null;
+      
+      // Upsert into saved_creative — keep only unique creatives
+      await savedCollection.updateOne(
+        { creativeId },
+        {
+          $set: {
+            parentId: parentId || null,
+            childId: childId || null,
+            tab: tab || 'custom',
+            prompt: historyPrompt || '',
+            generationOptions: histOpts || {},
+            result: histResult || {},
+            imageUrl: histImageUrl || null,
+            headline,
+            score,
+            previousInputs: previousInputs || [],
+            savedAt: new Date(),
+          }
+        },
+        { upsert: true }
+      );
+      
+      console.log(`[Vault] Creative ${creativeId} saved/updated in saved_creative collection`);
+      return NextResponse.json({ success: true, creativeId });
+    }
+
+
     return NextResponse.json({ error: 'Invalid generation type' }, { status: 400 });
 
   } catch (err: any) {

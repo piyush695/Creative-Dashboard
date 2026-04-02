@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Suspense, useState, useEffect, useMemo, useCallback, useRef, useTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -58,6 +58,7 @@ import {
   Wifi,
   Home,
   ArrowLeft,
+  Bookmark,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -105,6 +106,7 @@ import ScoresSection from "@/components/scores-section";
 import InsightsSection from "@/components/insights-section";
 import SampleAds from "@/components/sample-ads";
 import CreativeStudioView from "@/components/creative-studio-view";
+import SavedCreativesView from "@/components/saved-creatives-view";
 import AnalysisSidebar from "@/components/analysis-sidebar";
 import Footer from "@/components/footer";
 import { AdData, PlatformType } from "@/lib/types";
@@ -179,8 +181,14 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [localSearchQuery, setLocalSearchQuery] = useState("");
+  const [isPendingSearch, startTransition] = useTransition();
+
+  useEffect(() => {
+    setLocalSearchQuery(searchQuery);
+  }, [searchQuery]);
   const [mounted, setMounted] = useState(false);
-  const [activeView, setActiveViewState] = useState<"dashboard" | "ai-studio">("dashboard");
+  const [activeView, setActiveViewState] = useState<"dashboard" | "ai-studio" | "saved-creatives">("dashboard");
   const [isStudioHistoryOpen, setIsStudioHistoryOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -198,7 +206,7 @@ function DashboardContent() {
   const [ads, setAds] = useState<AdData[]>([]);
   const [googleAds, setGoogleAds] = useState<AdData[]>([]);
   const [recentHistory, setRecentHistory] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedPlatform, setSelectedPlatformState] = useState<string>("home");
 
   useEffect(() => {
@@ -212,11 +220,20 @@ function DashboardContent() {
       setSelectedPlatformState(currentPlatform);
 
       // On initial entry/refresh, clear sub-views (library, adId, etc.) but keep platform
-      // This fulfills the 'take me to the platform main view' request
-      const hasOtherParams = Array.from(searchParams.keys()).some(k => k !== "platform" && k !== "loggedIn");
+      // This fulfills the 'take me to the platform main view' request, while preserving top-level views.
+      const viewParam = searchParams.get("view");
+      const isTopLevelView = viewParam === "ai-studio" || viewParam === "saved-creatives";
+      
+      const hasOtherParams = Array.from(searchParams.keys()).some(k => 
+        k !== "platform" && k !== "loggedIn" && !(isTopLevelView && k === "view")
+      );
       
       if (hasOtherParams) {
-        const nextQuery = currentPlatform === "home" ? "" : `?platform=${currentPlatform}`;
+        let nextQuery = currentPlatform === "home" ? "" : `?platform=${currentPlatform}`;
+        if (isTopLevelView) {
+          nextQuery += (nextQuery ? '&' : '?') + `view=${viewParam}`;
+        }
+        
         // Preserve loggedIn if it exists to allow welcome toast
         const loggedIn = searchParams.get("loggedIn");
         const finalUrl = loggedIn ? `${nextQuery}${nextQuery ? '&' : '?'}loggedIn=true` : (nextQuery || "/");
@@ -240,6 +257,9 @@ function DashboardContent() {
     } else if (view === "ai-studio") {
       setIsViewAllAdsOpenState(false);
       setActiveViewState(isInitialVisit ? "dashboard" : "ai-studio");
+    } else if (view === "saved-creatives") {
+      setIsViewAllAdsOpenState(false);
+      setActiveViewState(isInitialVisit ? "dashboard" : "saved-creatives");
     } else {
       setIsViewAllAdsOpenState(false);
       setActiveViewState("dashboard");
@@ -313,16 +333,19 @@ function DashboardContent() {
     [updateUrl],
   );
   const setActiveView = useCallback(
-    (val: ("dashboard" | "ai-studio") | ((prev: "dashboard" | "ai-studio") => "dashboard" | "ai-studio")) => {
-      const current = searchParams.get("view") === "ai-studio" ? "ai-studio" : "dashboard";
+    (val: ("dashboard" | "ai-studio" | "saved-creatives") | ((prev: "dashboard" | "ai-studio" | "saved-creatives") => "dashboard" | "ai-studio" | "saved-creatives")) => {
+      const v = searchParams.get("view");
+      const current = v === "ai-studio" ? "ai-studio" : v === "saved-creatives" ? "saved-creatives" : "dashboard";
       const next = typeof val === "function" ? val(current) : val;
       if (next === "ai-studio") {
         updateUrl({ view: "ai-studio", adId: null });
+      } else if (next === "saved-creatives") {
+        updateUrl({ view: "saved-creatives", adId: null });
       } else {
         updateUrl({ view: null });
       }
     },
-    [updateUrl],
+    [updateUrl, searchParams],
   );
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   const [relativeTime, setRelativeTime] = useState("just now");
@@ -388,7 +411,7 @@ function DashboardContent() {
     platform?: string;
     adId?: string | null;
     account?: string;
-    view?: "library" | "ai-studio" | "dashboard" | null;
+    view?: "library" | "ai-studio" | "saved-creatives" | "dashboard" | null;
     profile?: boolean;
     settings?: boolean;
     guide?: boolean;
@@ -417,6 +440,8 @@ function DashboardContent() {
         urlUpdates.view = "library";
       } else if (updates.view === "ai-studio") {
         urlUpdates.view = "ai-studio";
+      } else if (updates.view === "saved-creatives") {
+        urlUpdates.view = "saved-creatives";
       } else {
         urlUpdates.view = null;
       }
@@ -726,7 +751,7 @@ function DashboardContent() {
 
   useEffect(() => {
     loadData();
-  }, [isLoading]); // Removed interval for manual-only refresh
+  }, []); // Run ONCE on mount to ensure fast loading
 
   const hasShownWelcome = useRef(false);
   // handle login success toast
@@ -1785,6 +1810,7 @@ function DashboardContent() {
 
                 {/* AI Studio Link - ONLY VISIBLE ON HOME per user request */}
                 {selectedPlatform === "home" && (
+                <>
                 <Button
                   variant="ghost"
                   onClick={() => {
@@ -1825,6 +1851,48 @@ function DashboardContent() {
                     <div className="ml-auto w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-white animate-pulse" />
                   )}
                 </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setMultipleStates({
+                      view: "saved-creatives",
+                      adId: null,
+                      guide: false,
+                      profile: false,
+                      settings: false
+                    });
+                    if (isMobile) setIsMobileMenuOpen(false);
+                  }}
+                  className={cn(
+                    "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
+                    activeView === "saved-creatives"
+                      ? "bg-zinc-100 dark:bg-zinc-800/80 text-foreground dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700/50 shadow-sm active:scale-95"
+                      : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent shadow-none",
+                    isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : "",
+                  )}
+                  title="Creative Vault"
+                >
+                  <div
+                    className={cn(
+                      "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
+                      activeView === "saved-creatives"
+                        ? "bg-white dark:bg-zinc-700 shadow-sm border border-zinc-200 dark:border-zinc-600"
+                        : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
+                    )}
+                  >
+                    <Bookmark className={cn("h-4 w-4", activeView === "saved-creatives" ? "text-primary dark:text-blue-400" : "text-muted-foreground")} />
+                  </div>
+                  {!isSidebarCollapsed && (
+                    <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                      Creative Vault
+                    </span>
+                  )}
+                  {!isSidebarCollapsed && activeView === "saved-creatives" && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-white animate-pulse" />
+                  )}
+                </Button>
+                </>
                 )}
 
               </div>
@@ -2201,6 +2269,7 @@ function DashboardContent() {
 
                             {/* AI Studio Link on Mobile - visible when on Home */}
                             {selectedPlatform === "home" && (
+                              <>
                             <Button
                               variant="ghost"
                                onClick={() => {
@@ -2233,6 +2302,40 @@ function DashboardContent() {
                                 AI Studio
                               </span>
                             </Button>
+
+                            <Button
+                              variant="ghost"
+                               onClick={() => {
+                                 setMultipleStates({
+                                   view: "saved-creatives",
+                                   guide: false,
+                                   profile: false,
+                                   settings: false
+                                 });
+                                 setIsMobileMenuOpen(false);
+                               }}
+                              className={cn(
+                                "w-full justify-start gap-3 h-12 px-3 rounded-2xl transition-all relative group/nav overflow-hidden",
+                                activeView === "saved-creatives"
+                                  ? "bg-[#020617] text-white border border-[#007AFF]"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                              )}
+                            >
+                              <div
+                                className={cn(
+                                  "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300",
+                                  activeView === "saved-creatives"
+                                    ? "bg-white/20"
+                                    : "bg-zinc-100 dark:bg-zinc-800",
+                                )}
+                              >
+                                <Bookmark className="h-4 w-4" />
+                              </div>
+                              <span className="text-sm font-black uppercase tracking-widest">
+                                Creative Vault
+                              </span>
+                            </Button>
+                            </>
                             )}
                           </div>
 
@@ -2311,7 +2414,7 @@ function DashboardContent() {
                   Dashboard
                 </span>
                 {((selectedPlatform !== "all" ||
-                  connectedPlatforms.length <= 1) && activeView !== "ai-studio") && (
+                  connectedPlatforms.length <= 1) && activeView !== "ai-studio" && activeView !== "saved-creatives") && (
                     <>
                       <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
                       <span className="text-[11px] text-muted-foreground flex-shrink-0 leading-none whitespace-nowrap uppercase tracking-wider">
@@ -2327,13 +2430,14 @@ function DashboardContent() {
                   isGuideOpen ||
                   isViewAllAdsOpen ||
                   activeView === "ai-studio" ||
+                  activeView === "saved-creatives" ||
                   selectedPlatform === "meta" ||
                   selectedPlatform === "google" ||
                   selectedPlatform === "adroll" ||
                   selectedPlatform === "all") && (
                     <>
                       <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
-                      <span className="text-[11px] text-foreground whitespace-nowrap leading-none truncate min-w-0 uppercase tracking-wider">
+                      <span className="text-[12px] font-medium text-foreground whitespace-nowrap leading-none truncate min-w-0">
                         {isProfileOpen
                           ? "Profile"
                           : isSettingsOpen
@@ -2344,19 +2448,21 @@ function DashboardContent() {
                                 ? "All Ads"
                                 : activeView === "ai-studio"
                                   ? "AI Studio"
-                                  : (selectedPlatform === "meta" || selectedPlatform === "all")
-                                    ? selectedAccountId === "all"
-                                      ? "All Accounts"
-                                      : accounts.find(
-                                        (a) => a.id === selectedAccountId,
-                                      )?.name || "All Accounts"
-                                    : (selectedPlatform === "google" || selectedPlatform === "adroll")
-                                      ? selectedRealtimeCampaign === "all"
-                                        ? "All Campaigns"
-                                        : realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.name ||
-                                        realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.campaignName ||
-                                        "Campaign"
-                                      : ""}
+                                  : activeView === "saved-creatives"
+                                    ? "Creative Vault"
+                                    : (selectedPlatform === "meta" || selectedPlatform === "all")
+                                      ? selectedAccountId === "all"
+                                        ? "All Accounts"
+                                        : accounts.find(
+                                          (a) => a.id === selectedAccountId,
+                                        )?.name || "All Accounts"
+                                      : (selectedPlatform === "google" || selectedPlatform === "adroll")
+                                        ? selectedRealtimeCampaign === "all"
+                                          ? "All Campaigns"
+                                          : realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.name ||
+                                          realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.campaignName ||
+                                          "Campaign"
+                                        : ""}
                       </span>
                     </>
                   )}
@@ -2376,7 +2482,7 @@ function DashboardContent() {
                 <span className="text-foreground">Dashboard</span>
 
                 {((selectedPlatform !== "all" ||
-                  connectedPlatforms.length <= 1) && activeView !== "ai-studio") && (
+                  connectedPlatforms.length <= 1) && activeView !== "ai-studio" && activeView !== "saved-creatives") && (
                     <>
                       <span className="mx-1 text-muted-foreground/40">/</span>
                       <span className="text-foreground uppercase tracking-widest text-[11px] opacity-90">
@@ -2395,13 +2501,14 @@ function DashboardContent() {
                   isGuideOpen ||
                   isViewAllAdsOpen ||
                   activeView === "ai-studio" ||
+                  activeView === "saved-creatives" ||
                   selectedPlatform === "meta" ||
                   selectedPlatform === "google" ||
                   selectedPlatform === "adroll" ||
                   selectedPlatform === "all") && (
                     <>
                       <span className="mx-1 text-muted-foreground/40">/</span>
-                      <span className="truncate max-w-[150px] lg:max-w-none text-foreground opacity-100 text-[11px] uppercase tracking-wider">
+                      <span className="truncate max-w-[150px] lg:max-w-none text-foreground opacity-100 text-[12px] font-medium">
                         {isProfileOpen
                           ? "Profile"
                           : isSettingsOpen
@@ -2412,21 +2519,23 @@ function DashboardContent() {
                                 ? "All Ads"
                                 : activeView === "ai-studio"
                                   ? "AI Studio"
-                                  : selectedAdId
-                                    ? "Analysis"
-                                    : (selectedPlatform === "meta" || selectedPlatform === "all")
-                                      ? selectedAccountId === "all"
-                                        ? "All Accounts"
-                                        : accounts.find(
-                                          (a) => a.id === selectedAccountId,
-                                        )?.name || "All Accounts"
-                                      : (selectedPlatform === "google" || selectedPlatform === "adroll")
-                                        ? selectedRealtimeCampaign === "all"
-                                          ? "All Campaigns"
-                                          : realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.name ||
-                                          realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.campaignName ||
-                                          "Campaign"
-                                        : ""}
+                                  : activeView === "saved-creatives"
+                                    ? "Creative Vault"
+                                    : selectedAdId
+                                      ? "Analysis"
+                                      : (selectedPlatform === "meta" || selectedPlatform === "all")
+                                        ? selectedAccountId === "all"
+                                          ? "All Accounts"
+                                          : accounts.find(
+                                            (a) => a.id === selectedAccountId,
+                                          )?.name || "All Accounts"
+                                        : (selectedPlatform === "google" || selectedPlatform === "adroll")
+                                          ? selectedRealtimeCampaign === "all"
+                                            ? "All Campaigns"
+                                            : realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.name ||
+                                            realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.campaignName ||
+                                            "Campaign"
+                                          : ""}
                       </span>
                     </>
                   )}
@@ -2598,6 +2707,8 @@ function DashboardContent() {
           >
             {activeView === "ai-studio" ? (
               <CreativeStudioView onHistoryChange={setIsStudioHistoryOpen} />
+            ) : activeView === "saved-creatives" ? (
+              <SavedCreativesView />
             ) : isGuideOpen ? (
               <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
                 <div
@@ -3476,29 +3587,33 @@ function DashboardContent() {
                         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                         <Input
                           placeholder="Search ads by ID or Name..."
-                          value={searchQuery}
+                          value={localSearchQuery}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const val = e.target.value;
-                            setSearchQuery(val);
+                            setLocalSearchQuery(val);
                             
-                            if (val.trim() === "") {
-                              setSelectedAdId(null);
-                              setIsSearchDropdownOpen(false);
-                              return;
-                            }
+                            startTransition(() => {
+                                setSearchQuery(val);
+                                
+                                if (val.trim() === "") {
+                                  setSelectedAdId(null);
+                                  setIsSearchDropdownOpen(false);
+                                  return;
+                                }
 
-                            // Immediate navigation on exact Ad ID match
-                            const exactMatch = ads.find(ad => 
-                              (String(ad.adId) === val || String(ad.id) === val) && 
-                              (selectedAccountId === "all" || ad.adAccountId === selectedAccountId)
-                            );
-                            if (exactMatch) {
-                              setSelectedAdId(exactMatch.id);
-                              updateHistory(exactMatch.id);
-                              setIsSearchDropdownOpen(false);
-                            } else {
-                              setIsSearchDropdownOpen(true);
-                            }
+                                // Immediate navigation on exact Ad ID match
+                                const exactMatch = ads.find(ad => 
+                                  (String(ad.adId) === val || String(ad.id) === val) && 
+                                  (selectedAccountId === "all" || ad.adAccountId === selectedAccountId)
+                                );
+                                if (exactMatch) {
+                                  setSelectedAdId(exactMatch.id);
+                                  updateHistory(exactMatch.id);
+                                  setIsSearchDropdownOpen(false);
+                                } else {
+                                  setIsSearchDropdownOpen(true);
+                                }
+                            });
                           }}
 
 

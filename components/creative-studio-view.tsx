@@ -311,6 +311,44 @@ export default function CreativeStudioView({ onClose, onHistoryChange }: Creativ
     return creativeId
   }, [previousInputs, loadHistoryForPreview])
 
+  // ── Manual Save to Saved Creative Table ──
+  const saveToSavedCreative = useCallback(async (result: any, tab: string, prompt: string, creativeIdToSave?: string | null, genOptions?: any) => {
+    const creativeId = creativeIdToSave || `creative-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const variants = result.variants || []
+    const primaryVariant = variants.find((v: any) => v.imageUrl) || variants[0]
+    const imageUrl = primaryVariant?.imageUrl || result.imageUrl || null
+
+    setIsSaving(true)
+    try {
+      const res = await fetch("/api/studio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "save-creative",
+          creativeId,
+          tab,
+          prompt,
+          generationOptions: genOptions || {},
+          result,
+          imageUrl,
+          previousInputs,
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSavedCreativeIds(prev => new Set(prev).add(creativeId))
+        toast.success("Creative saved to vault!")
+      }
+    } catch (err) {
+      console.error("Failed to save to vault", err)
+      toast.error("Failed to save creative to vault")
+    } finally {
+      setIsSaving(false)
+    }
+  }, [previousInputs])
+
+
+
   // ── Open Regenerate Dialog ──
   const openRegenDialog = useCallback(() => {
     const tabState = tabStates[activeMainTab]
@@ -543,12 +581,40 @@ export default function CreativeStudioView({ onClose, onHistoryChange }: Creativ
               }
             }
           });
+
+          // AUTO-SAVE TO HISTORY (No notification)
+          const pId = currentCreativeId;
+          const currentPrompt = currentTabState.prompt;
+          const currentOpts = currentTabState.generationOptions;
+          
+          fetch("/api/studio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "save-history",
+              creativeId: `creative-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              parentId: pId || null,
+              childId: null,
+              tab: targetTab,
+              prompt: currentPrompt,
+              generationOptions: currentOpts || {},
+              result: data.creative,
+              imageUrl: data.creative.imageUrl || null,
+              previousInputs: previousInputs,
+            })
+          }).then(res => res.json()).then(resData => {
+             if (resData.success) {
+               setCurrentCreativeId(resData.creativeId);
+             }
+          });
+
         } else {
           throw new Error(data.error || "Generation failed")
         }
       }, 200)
 
     } catch (err: any) {
+
       if (generationInterval.current) clearInterval(generationInterval.current)
       updateTabState(targetTab, { isGenerating: false, mode: targetTab === 'top-ads' ? 'ad-details' : 'standby', progress: 0 })
       if (targetTab === 'top-ads') setTopAdsStep('generate')
@@ -2008,7 +2074,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange }: Creativ
                     <button
                       onClick={() => {
                         const r = currentTabState.result;
-                        if (r) saveToHistory(r, activeMainTab, currentTabState.prompt, currentCreativeId, currentTabState.generationOptions);
+                        if (r) saveToSavedCreative(r, activeMainTab, currentTabState.prompt, currentCreativeId, currentTabState.generationOptions);
                       }}
                       disabled={isSaving}
                       className="px-4 py-2 bg-emerald-500/10 text-emerald-600 dark:bg-emerald-600 dark:text-white border border-emerald-500/20 dark:border-none rounded-lg font-semibold text-[11px] flex items-center gap-2 transition-all cursor-pointer hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 shrink-0"
@@ -2040,7 +2106,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange }: Creativ
                       <button
                         onClick={() => {
                           const r = currentTabState.result;
-                          if (r) saveToHistory(r, activeMainTab, currentTabState.prompt, currentCreativeId, currentTabState.generationOptions);
+                          if (r) saveToSavedCreative(r, activeMainTab, currentTabState.prompt, currentCreativeId, currentTabState.generationOptions);
                         }}
                         disabled={isSaving}
                         className="w-9 h-9 flex items-center justify-center bg-emerald-500/10 text-emerald-600 dark:bg-emerald-600 dark:text-white border border-emerald-500/20 dark:border-none rounded-lg active:scale-95 transition-all cursor-pointer disabled:opacity-50"
