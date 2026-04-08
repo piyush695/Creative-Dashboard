@@ -59,8 +59,8 @@ You are creating a Version 2 of the source creative(s) shown above. The output M
 1. Be visually derived from the source creative(s) — preserve their color palette, layout structure, and brand aesthetic.
 2. Fix every specific weakness listed in the analysis below.
 3. Keep and amplify every proven winning element.
-4. "Hola Prime" MUST appear in the copy.
-5. Focus strictly on prop trading — no generic crypto content.
+4. Focus strictly on prop trading — no generic crypto content.
+5. NEVER ask the image generator to draw the "Hola Prime" logo or wordmark. The real logo is added as a PNG overlay later.
 
 ---
 
@@ -306,7 +306,7 @@ Return ONLY a raw JSON object. No markdown, no preamble, no explanation outside 
       "Do NOT include elements just because they're 'standard' — include only what makes this concept powerful",
       "Legal disclaimer at bottom"
     ],
-    "brandingPlacement": "#WeAreTraders pill top-right only. Do NOT include HolaPrime logo or wordmark in the image generation prompt — the real logo PNG is composited in post-processing. Leave the top-left corner clear.",
+    "brandingPlacement": "#WeAreTraders pill top-right only. Do NOT include Hola Prime, HolaPrime, or any logo in the image generation prompt. The real logo PNG is composited programmatically on top of the image later. Instruct the image generator to leave the top-left corner absolutely blank/dark so the logo can be placed there.",
     "conceptParadigm": "Name the visual paradigm this concept follows (e.g., Editorial, Cinematic, Data-Native, Poster, Comparison, Storytelling, Minimal, Collage)"
   },
   "copywriting": {
@@ -356,7 +356,7 @@ Return ONLY a raw JSON object. No markdown, no preamble, no explanation outside 
   },
   "imageGenerationPrompt": {
     "detailed": "600+ word prompt describing the EXACT visual output. CRITICAL RULES: (1) Do NOT add translucent circles, iridescent spheres, orbs, bubbles, or glowing circular background decorations UNLESS the user explicitly requested 'brand DNA'. (2) Do NOT default to the same dark-background + centered-big-number + bullets-below + CTA-button layout every time. Each creative concept should have a UNIQUE composition. Structure your prompt as: (A) CREATIVE CONCEPT: Name the visual paradigm (Editorial/Cinematic/Data-Native/Poster/Comparison/Storytelling/Minimal/Collage) and describe WHY this approach works for this specific ad. (B) COMPOSITION: Describe the specific layout for THIS concept — where elements go, relative sizes, how the eye moves. This should be DIFFERENT from a generic template. (C) EXACT TEXT CONTENT: List every text string that appears, spelled correctly. 'Withdrawals' 'Challenge' 'Limits' 'Process' 'Fictitious' 'Simulated' 'Performance'. (D) COLOR-MOOD: How the color palette creates the intended emotional response. (E) ATMOSPHERE: Textures, lighting, depth, background treatment specific to this concept. (F) DISCLAIMER: Copy the exact Hola Prime disclaimer verbatim.",
-    "negative": "generic stock photos, white backgrounds, cluttered layouts, duplicate text, garbled text, misspelled words, random lifestyle imagery, too many competing elements, translucent circles or iridescent spheres unless brand DNA was explicitly requested, hola prime text logo or wordmark drawn inside the image (logo is composited as PNG separately)",
+    "negative": "generic stock photos, white backgrounds, cluttered layouts, duplicate text, garbled text, misspelled words, random lifestyle imagery, too many competing elements, translucent circles or iridescent spheres unless brand DNA was explicitly requested, ANY drawn logo, Hola Prime text, prime logo, hola wordmark in top-left, top-left logo",
     "styleReference": "Match source creative's visual identity. Prop firm professional aesthetic.",
     "technicalSpecs": {
       "aspectRatio": "1:1 or 9:16",

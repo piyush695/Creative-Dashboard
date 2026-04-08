@@ -41,6 +41,9 @@ const ANTHROPIC_MODELS = [
 // System prompt enforces strict JSON output — prevents markdown wrapping and preamble
 const STUDIO_SYSTEM_PROMPT = `You are an elite direct-response creative strategist AI. You MUST respond with ONLY a raw JSON object — no markdown, no code fences, no preamble, no explanation outside the JSON. Your JSON must be complete and valid. Every string value must be properly escaped. Do not truncate your response.`;
 
+// Minimum acceptable quality score — creatives below this threshold are filtered out
+const MIN_SCORE_THRESHOLD = 8.0;
+
 async function generateWithFallback(messages: any[], maxTokens: number = 8192) {
   let lastError: any = null;
   
@@ -412,7 +415,7 @@ ${layout ? `Layout: ${layout}.` : ''}
 Dimensions: ${dimensions}. Deep black background. White text. Neon green glow on prices. Blue pill-shaped CTA button.
 ${hierarchy ? `Visual hierarchy: ${hierarchy}.` : ''}
 ${keyVisuals ? `Key visual elements: ${keyVisuals}.` : ''}
-"hola prime" logo in white top-left. "#WeAreTraders" in white top-right.
+Do NOT draw any "hola prime" logo or brand wordmark text — the real logo PNG is composited in post-processing. Leave the top-left corner completely clear. "#WeAreTraders" in white top-right.
 Headline: "${headline}".
 ${hookText ? `Attention-grabbing first line: "${hookText}".` : ''}
 ${urgencyText ? `Urgency element: "${urgencyText}".` : ''}
@@ -475,9 +478,10 @@ Prices in oversized 3D metallic chrome treatment with neon glow. Fine print disc
         : '';
 
       const textManifest = `=== MANDATORY BRANDING — LOCKED (APPEARS IN EVERY CREATIVE) ===
-TOP-LEFT CORNER — HolaPrime Logo:
-  "hola" on the first line, "prime" on the second line (stacked wordmark), white text, with ™ symbol
-  This is the complete logo — do NOT add any tagline or separator line below it
+TOP-LEFT CORNER — RESERVED FOR LOGO (DO NOT DRAW):
+  The HolaPrime logo is composited as a real PNG in post-processing.
+  Do NOT draw, render, or write any "hola prime", "HolaPrime", "Hola Prime", or brand wordmark text in the image.
+  Leave the top-left corner area COMPLETELY CLEAR — dark background only, no text, no graphics.
 
 TOP-RIGHT CORNER — Hashtag Tagline:
   "#WeAreTraders" inside a thin oval/pill border shape, white text
@@ -522,8 +526,8 @@ ABSOLUTE RULES:
 
 You are generating a PREMIUM advertisement for "Hola Prime", a professional prop trading firm that competes with the world's top fintech brands. This creative must look like it was produced by a top-tier creative agency with a $500K+ budget.
 
-OFFICIAL LOGO — MANDATORY IN EVERY CREATIVE:
-TOP-LEFT CORNER: The HolaPrime wordmark — "hola" on first line, "prime" on second line (two-line stacked lockup), white text, with ™ symbol. Do NOT place any tagline or separator line below the logo.
+LOGO PLACEMENT — CRITICAL:
+TOP-LEFT CORNER: RESERVED — Do NOT draw any logo, wordmark, "hola prime", "HolaPrime", or any brand text here. The authentic HolaPrime logo PNG is composited in post-processing. Leave this area COMPLETELY CLEAR with dark background only — no text, no graphics whatsoever.
 TOP-RIGHT CORNER: "#WeAreTraders" in white text inside a thin oval/pill outline border.
 "We Are Traders" appears ONLY as the "#WeAreTraders" pill in the top-right. NEVER duplicated anywhere else.
 
@@ -885,7 +889,7 @@ Return ONLY valid JSON:
 
 PREMIUM ADVERTISEMENT: Generate a Cannes Lions-quality creative for "Hola Prime" prop trading firm.
 Background: Rich deep black — never white or light.
-TOP-LEFT: "hola prime" logo — "hola" on line 1, "prime" on line 2, white stacked wordmark with ™. No tagline or separator below the logo.
+TOP-LEFT: RESERVED for logo — do NOT draw any "hola prime", "HolaPrime", or brand wordmark text here. The real logo is composited as a PNG in post-processing. Keep this area completely clear with dark background only.
 TOP-RIGHT: "#WeAreTraders" in white text inside a thin oval pill border. This is the only place "We Are Traders" appears.
 Typography: Bold sans-serif headline (30-40% canvas height). Hero price/number OVERSIZED with neon glow or chrome 3D. Blue pill CTA button. Tiny gray disclaimer at bottom.
 Composition: 9:16 vertical. Generous 15%+ dark breathing room. Max 5-6 elements. ONE dominant focal point. Clean grid alignment. Nothing cut off. Nothing overlapping.
@@ -894,7 +898,7 @@ Quality: Must look like a $500K agency production. Cannes Lions standard.
 `;
 
       const customBrandFull = customWantsBrandDNA ? `BRAND SIGNATURE ELEMENTS:
-"hola prime" logo white TOP-LEFT. "#WeAreTraders" white TOP-RIGHT.
+Do NOT draw any "hola prime" logo text — the real logo PNG is composited in post-processing. Leave top-left CLEAR. "#WeAreTraders" white TOP-RIGHT.
 Signature sphere: large iridescent orb (blue-purple-pink gradient, 35-50% opacity) as background glow element, positioned off-center, softly feathering into black background. Never in front of text.
 Neon glow outlines on prices and key numbers. 3D chrome/metallic material on price text. Subtle film grain texture on background.
 ` : `CLEAN VERSION (no decorative spheres or orbs):
@@ -1150,12 +1154,12 @@ All creative power comes from typography mastery, the premium hero visual, and c
         return NextResponse.json({ error: 'imagePrompt is required for agentic pipeline' }, { status: 400 });
       }
       
-      console.log(`[Studio] Starting agentic pipeline (max ${maxRetries || 2} retries, min score ${minScore || 6})...`);
+      console.log(`[Studio] Starting agentic pipeline (max ${maxRetries || 2} retries, min score ${minScore || MIN_SCORE_THRESHOLD})...`);
       const agentResult = await runAgenticPipeline(
         agentPrompt,
         agentBrief || {},
         agentRef,
-        { maxRetries, minScore }
+        { maxRetries, minScore: minScore || MIN_SCORE_THRESHOLD }
       );
 
       return NextResponse.json({

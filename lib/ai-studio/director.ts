@@ -62,8 +62,8 @@ export async function runCreativeDirector(
     const colors = brief?.visualDesign?.colorPalette || {};
     const dimensions = brief?.visualDesign?.dimensions || '1080x1920';
 
-    const textManifest = `MANDATORY BRANDING (LOCKED — ALL 3 CONCEPTS MUST INCLUDE THIS EXACTLY):
-TOP-LEFT CORNER: HolaPrime logo — "hola" on line 1, "prime" on line 2 (white stacked wordmark, with ™ symbol). This is the complete logo. Do NOT add any text, separator line, or tagline below it.
+    const textManifest = `MANDATORY BRANDING (LOCKED — ALL 3 CONCEPTS MUST FOLLOW THIS EXACTLY):
+TOP-LEFT CORNER: RESERVED FOR LOGO — Do NOT draw, render, or write any "hola prime", "HolaPrime", or brand wordmark text. The real HolaPrime logo PNG is composited in post-processing. Leave this corner area COMPLETELY CLEAR (dark background only, no text, no graphics).
 TOP-RIGHT CORNER: "#WeAreTraders" in white text inside a thin oval/pill outline border. This is the ONLY place "We Are Traders" appears in any creative. NEVER add it anywhere else.
 
 TEXT CONTENT (use this exact text in all 3 concepts):
@@ -133,7 +133,8 @@ DO NOT use: smiley faces, emojis, cartoon characters, food items, random unrelat
 
 TEXT IN THE IMAGE:
 The imagePrompt must include ALL text from the text manifest. Describe:
-- "hola prime" logo in white at top-left, "#WeAreTraders" at top-right
+- TOP-LEFT corner left COMPLETELY CLEAR — no logo text (the real logo PNG is composited in post-processing)
+- "#WeAreTraders" in white text inside a thin oval/pill border at top-right
 - Headline rendered large and bold
 - Price rendered oversized with visual treatment (glow, 3D, chrome)
 - CTA as a blue pill-shaped button with white text
@@ -155,10 +156,10 @@ ${brandDirective}
 ---
 
 CRITICAL LOGO REQUIREMENT — READ BEFORE WRITING ANY PROMPT:
-The HolaPrime logo structure is:
-- TOP-LEFT: "hola" on line 1, "prime" on line 2 (stacked white wordmark). NO tagline, NO separator line, NO extra text below it.
+The HolaPrime logo is composited as a REAL PNG file in post-processing. Do NOT draw, render, or include any "hola prime", "HolaPrime", "Hola Prime" text or brand wordmark in the image.
+- TOP-LEFT: Leave this corner COMPLETELY CLEAR — dark background only, no text, no logo, no graphics.
 - TOP-RIGHT: "#WeAreTraders" in white inside a thin oval/pill border.
-"We Are Traders" ONLY appears as "#WeAreTraders" top-right. NEVER add it under the logo or anywhere else.
+"We Are Traders" ONLY appears as "#WeAreTraders" top-right. NEVER add it anywhere else.
 
 ---
 
@@ -173,19 +174,19 @@ Return this exact JSON structure:
       "paradigm": "${paradigms[0]?.name || 'Concept 1'}",
       "visualApproach": "One sentence — what makes this concept visually unique",
       "keyDifference": "How this concept is COMPLETELY DIFFERENT from the other two",
-      "imagePrompt": "600+ word detailed image generation prompt. START with exact logo placement: TOP-LEFT shows 'hola' (line 1) + 'prime' (line 2) stacked white wordmark with ™ — nothing else below it. TOP-RIGHT shows '#WeAreTraders' in white inside a thin oval pill outline. Then describe the ${paradigms[0]?.name || 'first'} paradigm composition in full detail: exact layout, element placement, typography, colors, lighting, atmosphere. Include ALL text from the manifest. This prompt must produce an image that looks NOTHING like the other two concepts."
+      "imagePrompt": "600+ word detailed image generation prompt. IMPORTANT: Do NOT draw any HolaPrime logo or 'hola prime' text — the real logo PNG is composited in post-processing. Leave the top-left corner COMPLETELY CLEAR (dark background only). TOP-RIGHT shows '#WeAreTraders' in white inside a thin oval pill outline. Then describe the ${paradigms[0]?.name || 'first'} paradigm composition in full detail: exact layout, element placement, typography, colors, lighting, atmosphere. Include ALL text from the manifest EXCEPT the logo. This prompt must produce an image that looks NOTHING like the other two concepts."
     },
     {
       "paradigm": "${paradigms[1]?.name || 'Concept 2'}",
       "visualApproach": "One sentence — what makes this concept visually unique",
       "keyDifference": "How this concept is COMPLETELY DIFFERENT from the other two",
-      "imagePrompt": "600+ word prompt. START with logo: TOP-LEFT 'hola'/'prime' stacked wordmark only (no tagline below). TOP-RIGHT '#WeAreTraders' oval pill. Then describe the ${paradigms[1]?.name || 'second'} paradigm — completely different visual from concept 1."
+      "imagePrompt": "600+ word prompt. IMPORTANT: Do NOT draw any HolaPrime logo or brand text — leave top-left corner CLEAR (dark bg only). TOP-RIGHT '#WeAreTraders' oval pill. Then describe the ${paradigms[1]?.name || 'second'} paradigm — completely different visual from concept 1."
     },
     {
       "paradigm": "${paradigms[2]?.name || 'Concept 3'}",
       "visualApproach": "One sentence — what makes this concept visually unique",
       "keyDifference": "How this concept is COMPLETELY DIFFERENT from the other two",
-      "imagePrompt": "600+ word prompt. START with logo: TOP-LEFT 'hola'/'prime' stacked wordmark only (no tagline below). TOP-RIGHT '#WeAreTraders' oval pill. Then describe the ${paradigms[2]?.name || 'third'} paradigm — completely different visual from concepts 1 and 2."
+      "imagePrompt": "600+ word prompt. IMPORTANT: Do NOT draw any HolaPrime logo or brand text — leave top-left corner CLEAR (dark bg only). TOP-RIGHT '#WeAreTraders' oval pill. Then describe the ${paradigms[2]?.name || 'third'} paradigm — completely different visual from concepts 1 and 2."
     }
   ]
 }`

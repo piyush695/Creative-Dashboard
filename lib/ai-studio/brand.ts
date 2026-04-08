@@ -181,9 +181,9 @@ SEPARATOR:
 - Color: bright white or electric blue — cuts through both zones like a blade
 
 TEXT:
-- Top: "hola prime" logo (white, top-left), "#WeAreTraders" (white, top-right)
+- Top: Leave top-left corner COMPLETELY CLEAR (no logo text — the real logo PNG is composited in post-processing). "#WeAreTraders" (white, top-right pill badge only)
 - Left label: "Other Firms" or "Before" — very small, muted
-- Right label: "Hola Prime" or "Start Today" — slightly larger, white
+- Right label: "With Us" or "Start Today" — slightly larger, white
 - Hero price in the RIGHT zone only — large, neon, glowing
 - CTA button in the right zone — blue pill, bottom-right
 

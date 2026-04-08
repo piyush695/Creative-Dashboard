@@ -8,7 +8,12 @@
  * When a referenceUrl is provided (source creative thumbnail), we use Gemini
  * multimodal path so the generated image is visually grounded in the original.
  * Otherwise we try Imagen for pure text-to-image generation.
+ *
+ * LOGO: Every generated image is post-processed with the Hola Prime logo
+ * overlay (see logo-overlay.ts) before being returned.
  */
+
+import { applyLogoOverlay } from './logo-overlay';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -40,7 +45,16 @@ function sanitizePromptForImageGen(prompt: string): string {
   cleaned = cleaned.replace(/\b(VALUE|Value)\s*(ZONE|Zone)\s*[:—–-]\s*/gi, 'The main content area: ');
   cleaned = cleaned.replace(/\b(ACTION|Action)\s*(ZONE|Zone)\s*[:—–-]\s*/gi, 'The call-to-action area: ');
   cleaned = cleaned.replace(/\b(CTA|Cta)\s*(ZONE|Zone)\s*[:—–-]\s*/gi, 'The button area: ');
-  cleaned = cleaned.replace(/\bBRANDING\s*ZONE\s*[:—–-]\s*/gi, 'The logo area: ');
+  cleaned = cleaned.replace(/\bBRANDING\s*ZONE\s*[:—–-]\s*/gi, 'The top-left area which MUST REMAIN COMPLETELY BLACK/EMPTY AND VOID OF ALL TEXT: ');
+
+  // Remove mention of brand name in contexts that trigger logo rendering
+  cleaned = cleaned.replace(/the logo area/gi, 'the empty top-left area');
+  cleaned = cleaned.replace(/brand (wordmark|logo)/gi, 'brand content');
+  cleaned = cleaned.replace(/render "Hola Prime"/gi, 'render the brand name');
+  cleaned = cleaned.replace(/draw "Hola Prime"/gi, 'draw the brand name');
+  cleaned = cleaned.replace(/logo of Hola Prime/gi, 'brand logo');
+  cleaned = cleaned.replace(/Hola[ ]?Prime logo/gi, 'brand logo');
+  cleaned = cleaned.replace(/Hola[ ]?Prime wordmark/gi, 'brand wordmark');
 
   // Remove psychology framework labels that leak into images
   cleaned = cleaned.replace(/\b(PSYCHOLOGY|Psychology)\s*[:—–-]\s*(LOSS AVERSION|SOCIAL PROOF|ANCHORING|SCARCITY|URGENCY|RECIPROCITY|AUTHORITY)/gi, '');
@@ -128,13 +142,15 @@ async function tryGeminiGeneration(prompt: string, referenceImageData: { mimeTyp
   }
 
   parts.push({ text: prompt });
-
   // Quality boosters for Gemini multimodal
   const qualityBoosterSuffix = '\n\nQUALITY DIRECTIVE: Generate this as a world-class advertising creative. Studio photography quality. Premium graphic design. Award-winning composition. Every element must look intentional, polished, and professionally crafted.';
-  const finalPrompt = prompt + qualityBoosterSuffix;
-  parts[parts.length - 1] = { text: finalPrompt };
+  
+  const criticalRules = 'CRITICAL ABSOLUTE RULES: DO NOT draw any brand logo. DO NOT render the words "Hola", "Prime", "HolaPrime" or any wordmark in the top-left corner. You MUST leave the top-left corner COMPLETELY blank and dark. The authentic logo will be programmatically overlaid later.\n\n';
+  
+  const finalPrompt = criticalRules + prompt + qualityBoosterSuffix;
+  parts[parts.length - 1] = { text: finalPrompt }; // Replace the original prompt part with the enhanced one
 
-  const body = {
+  const body: any = {
     contents: [{ role: 'user', parts }],
     generationConfig: {
       // When we have a reference image, we only need IMAGE output — no text commentary
@@ -198,8 +214,12 @@ async function tryImagenGeneration(prompt: string): Promise<string | null> {
     console.log(`[ImageGen] Trying Imagen model: ${modelId}`);
 
     // Quality booster prefix — photography and design terms that guide image generators toward premium outputs
-    const qualityBoosterPrefix = 'Ultra-high quality, professional graphic design, 4K resolution, crisp sharp text, premium advertising creative, award-winning design, studio-grade lighting, perfect composition, Cannes Lions quality, ';
-    const enhancedPrompt = qualityBoosterPrefix + prompt;
+    const qualityBoosterPrefix = 'Ultra-high quality, professional graphic design, 4K resolution, crisp sharp text, premium advertising creative, standard clean typography, professional legible fonts, award-winning design, studio-grade lighting, perfect composition, Cannes Lions quality, ';
+
+    // Absolute strict rules prepended to whatever the prompt was
+    const criticalRules = 'CRITICAL ABSOLUTE RULES: DO NOT draw the "hola prime" logo. DO NOT render the word "PRIME" or "HOLA" anywhere in the entire image. The top-left corner MUST remain completely blank/empty dark space. Use standard, clean, professional sans-serif typography — absolutely NO distorted, messy, or non-standard fonts.\n\n';
+    
+    const enhancedPrompt = criticalRules + qualityBoosterPrefix + prompt;
 
     const body = {
       instances: [{ prompt: enhancedPrompt }],
@@ -301,7 +321,7 @@ export async function generateImage(imageSpec: any, options: any = {}) {
   // IMPORTANT: Do NOT tell the AI to draw the "hola prime" logo text.
   // The exact logo (with authentic bubble/translucent "o") is composited as a PNG by text-overlay.ts.
   // Drawing a text version causes duplicates and an incorrect-looking logo.
-  const brandingInstruction = `\n\nBRANDING: TOP-RIGHT CORNER — place "#WeAreTraders" in white text inside a thin oval/pill border. Do NOT draw the HolaPrime logo or any brand wordmark — the logo is added separately. Leave the top-left area unobstructed for the logo placement.`;
+  const brandingInstruction = `\n\nBRANDING: TOP-RIGHT CORNER — place "#WeAreTraders" in white text inside a thin oval/pill border. DO NOT draw the brand logo. NEVER render "Hola Prime" as a logo in the top-left. The top-left area MUST be left absolutely empty/dark so we can overlay our own PNG logo later.`;
   prompt += brandingInstruction;
 
 
@@ -389,6 +409,15 @@ PREMIUM LAYOUT RULES (non-negotiable):
 
   if (!dataUri) {
     throw new Error('Image generation failed after trying all available models.');
+  }
+
+  // ── LOGO OVERLAY: Composite the authentic Hola Prime logo onto every generated image ──
+  // This guarantees every creative has the brand logo regardless of generation path.
+  // Non-blocking: if overlay fails, the original image is returned.
+  try {
+    dataUri = await applyLogoOverlay(dataUri);
+  } catch (logoErr: any) {
+    console.warn('[ImageGen] Logo overlay failed (non-blocking):', logoErr.message);
   }
 
   return {
