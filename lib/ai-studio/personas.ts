@@ -10,9 +10,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { extractAndRepairJson } from './parser';
 import { generateImage } from './imagegen';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
+let _client: Anthropic | null = null;
+function getClient() { if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); return _client; }
 
 export interface Persona {
   id: string;
@@ -104,7 +103,7 @@ export async function generateForPersona(
 ): Promise<{ persona: Persona; imageUrl: string | null; brief: any; error?: string }> {
   try {
     // Generate persona-specific brief
-    const response = await anthropic.messages.create({
+    const response = await getClient().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
       system: 'You are an elite creative strategist. Generate a persona-targeted ad brief. Respond with ONLY valid JSON.',

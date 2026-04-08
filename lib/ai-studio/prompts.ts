@@ -14,6 +14,7 @@ export function buildGenerationPrompt(patterns: any, options: any = {}) {
     additionalInstructions = '',
     _memoryContext = '',
     _competitorContext = '',
+    _preferenceContext = '',
   } = options;
 
   // Merge prompt + targetAudience — user types in 'prompt' field (Target Audience textarea)
@@ -118,11 +119,56 @@ These are available techniques. Use ONLY the ones that are already present in th
 2. **PRICE ANCHORING** — Hero dollar amount as large focal point. Use if source features a price prominently.
 3. **DISCOUNT** — "40% OFF" or promo code. Use only if source already has a discount element.
 4. **LOW BARRIER** — "No Activation Fee", "Risk-Free". Use if overcoming risk objection is the source's strategy.
-5. **BULLET BENEFITS** — Clean container with 3-4 bullets. Keep the EXACT same bullets as the source — do not duplicate or add extra ones. Each bullet appears ONCE.
-6. **CTA BUTTON** — Full-width, commanding verb. Always include if source has a CTA.
+5. **BULLET BENEFITS** — Benefits can be presented in ANY clean format (bullets, badges, icons, inline text, data rows). Keep the EXACT same content — do not duplicate or add extra ones.
+6. **CTA** — Must be clearly visible but can be ANY shape, size, or position that works with the composition. Does NOT have to be a full-width button.
 7. **DARK THEME** — Dark background, white text, blue accents. Match the source's color scheme.
 8. **SOCIAL PROOF** — Trust badge or trader count. Use only if source has social proof.
 9. **MOBILE-FIRST** — Top 30% hooks instantly. Always apply.
+
+## LAYOUT FREEDOM — CRITICAL
+The layout should serve the CREATIVE CONCEPT. Do NOT force every creative into the same template.
+- An editorial layout will look NOTHING like a data-native layout.
+- A cinematic layout will look NOTHING like a minimal layout.
+- There is NO mandatory "3-zone structure" — innovative layouts are ENCOURAGED.
+- The only non-negotiable elements are: (1) correct text content, (2) correct spelling, (3) brand color palette, (4) premium quality feel.
+- AVOID producing the same dark-background + big-centered-number + bullets-below + CTA-button formula every time.
+
+---
+
+## GRAPHIC DESIGN MASTERY — MANDATORY RULES
+These rules enforce world-class design quality. Every creative must comply.
+
+### Typography System
+- Type Scale: Use a modular scale (1.25 ratio). Hero text 48-72pt equivalent, subhead 24-36pt, body 14-18pt, caption 10-12pt.
+- Font Pairing: Maximum 2 font families. One display/headline font (bold, heavy weight), one body font (clean, readable).
+- Line Height: Headlines 1.1-1.2, body text 1.4-1.6. Never allow text to feel cramped.
+- Letter Spacing: Headlines use tight tracking (-0.02em). Body text uses normal or slightly expanded tracking.
+- Weight Contrast: Hero text must be at least 3x the visual weight of body text through size, weight, or both.
+
+### Grid System
+- 8px Grid: All spacing values must be multiples of 8 (8, 16, 24, 32, 48, 64, 96).
+- Margins: Minimum 32px (4 grid units) on all edges. Nothing touches the frame boundary.
+- Columns: Use a 4-column or 6-column invisible grid for element alignment.
+- Gutters: 16px minimum between adjacent elements.
+- Alignment: Every element must snap to the grid. No randomly floating or misaligned pieces.
+
+### Color Theory Enforcement
+- Maximum 3-4 colors total (primary, secondary, accent, neutral).
+- Color Relationships: Choose ONE: complementary (opposite on wheel), analogous (adjacent), triadic (120° apart), or split-complementary.
+- Contrast Ratio: Text on background must maintain WCAG AA ratio (4.5:1 for body, 3:1 for large text).
+- 60-30-10 Rule: 60% dominant color, 30% secondary, 10% accent. Never equal distribution.
+- Color Psychology: Red/Orange = urgency. Blue/Teal = trust. Gold = premium. Green = success. Use intentionally.
+
+### Visual Hierarchy & Balance
+- ONE focal point commanding 30-40% of visual attention. Everything else supports it.
+- Reading Flow: Z-pattern, F-pattern, L-shaped, diagonal, or any deliberate scan path that fits the concept. Choose the pattern that serves the creative paradigm.
+- Symmetry: Choose formal (centered), informal (rule of thirds), asymmetric, or deliberately broken balance. Different concepts demand different balance approaches.
+- Whitespace: At least 20% of the canvas should be breathing room — but this can be concentrated (editorial) or distributed (grid). Whitespace = premium.
+
+### Imagery & Form
+- Use vector-style graphics, clean illustrations, or high-quality photographic elements.
+- Shapes: Use consistent shape language (all rounded OR all sharp, not mixed).
+- Texture: Subtle gradients or noise for depth. Never flat + busy simultaneously.
 
 ---
 
@@ -192,12 +238,13 @@ ${(patterns.whatDoesntWork || []).map((w: string) => `• ${w}`).join('\n') || '
 - KEEP: ${(patterns.optimizationSynthesis?.keepElements || []).join(' | ') || 'Core visual style and brand identity'}
 - FIX: ${(patterns.optimizationSynthesis?.changeElements || []).join(' | ') || 'Strengthen CTA clarity'}
 - ADD: ${(patterns.optimizationSynthesis?.addElements || []).join(' | ') || 'Social proof and urgency elements'}
+- RECOMMENDATIONS TO APPLY: ${(patterns.optimizationSynthesis?.recommendations || []).map((r: string) => `• ${r}`).join('\n  ') || '• (Apply general best practices)'}
 - Best Hook: ${(patterns.optimizationSynthesis?.hookOptions || [])[0] || 'Power hook from best performing source'}
 - Best CTA: ${(patterns.optimizationSynthesis?.ctaOptions || [])[0] || 'Strong direct-response CTA'}
 
 ### 📈 Performance Baseline to Beat:
 - Avg CTR: ${patterns.performance?.avgCtr || 0}% | Avg ROAS: ${patterns.performance?.avgRoas || 0}x
-${_memoryContext}${_competitorContext}
+${_memoryContext}${_competitorContext}${_preferenceContext}
 ---
 
 ## USER OVERRIDES — HIGHEST PRIORITY 🔥
@@ -211,6 +258,20 @@ ${additionalInstructions ? `- Additional Instructions: ${additionalInstructions}
 
 ---
 
+## MANDATORY QUALITY STANDARD — NON-NEGOTIABLE
+This creative MUST achieve a 9+ score across ALL quality dimensions when evaluated by a professional design auditor:
+- TEXT ACCURACY 9+: Every word spelled correctly, zero duplicates, all text fully visible
+- LAYOUT QUALITY 9+: Premium spacing, clear visual hierarchy, nothing cramped or cut off
+- TYPOGRAPHY 9+: Strong size contrast between hero and body text (minimum 3:1 ratio), max 2 font styles
+- COLOR HARMONY 9+: Cohesive palette, professional dark fintech aesthetic, 60-30-10 color distribution
+- BRAND COMPLIANCE 9+: Unmistakably Hola Prime — dark background, white text, accent glow, premium feel
+- PSYCHOLOGY 9+: Clear emotional trigger that makes a trader feel urgency, aspiration, or trust
+- INNOVATION 8+: Composition that doesn't look like every other prop firm ad — some distinguishing visual choice
+
+Failing any of these dimensions is NOT acceptable. The image generation prompt you produce must be specific enough that a diffusion model will produce a 9+ result.
+
+---
+
 ## OUTPUT FORMAT
 Return ONLY a raw JSON object. No markdown, no preamble, no explanation outside the JSON.
 
@@ -218,8 +279,8 @@ Return ONLY a raw JSON object. No markdown, no preamble, no explanation outside 
   "creativeConcept": {
     "title": "V2: [Core concept name e.g. 'Scarcity + Price Anchor + Trust']",
     "rationale": "Cite specific rules applied, weaknesses fixed, strengths amplified",
-    "targetScore": "9.0+",
-    "performanceTier": "ELITE | PREMIUM | STANDARD",
+    "targetScore": "9.5+",
+    "performanceTier": "ELITE",
     "adType": "",
     "improvementSummary": ["Bullet 1", "Bullet 2", "Bullet 3", "Bullet 4"]
   },
@@ -234,22 +295,19 @@ Return ONLY a raw JSON object. No markdown, no preamble, no explanation outside 
       "text": "#fff"
     },
     "typography": {
-      "headlineFont": "Bold heavy weight — dollar amount as hero (Rule 2)",
+      "headlineFont": "Font choice that serves the creative concept",
       "bodyFont": "Clean, readable at mobile sizes",
-      "ctaFont": "Bold, full-width button",
-      "hierarchy": "Hero dollar amount → Urgency element → Benefit bullets → CTA"
+      "ctaFont": "CTA styling that fits the composition — can be button, text link, badge, or integrated element",
+      "hierarchy": "Describe the specific typographic hierarchy for THIS concept"
     },
     "keyVisualElements": [
-      "Hero dollar amount in 3D/oversized (Rule 2)",
-      "Countdown timer or spots-left badge (Rule 1)",
-      "Discount/promo badge (Rule 3)",
-      "3–4 bullet benefit block in rounded container (Rule 5)",
-      "Full-width CTA button (Rule 6)",
-      "Social proof badge / #WeAreTraders (Rule 9)",
-      "Rocket or chart motif (Rule 8)",
+      "List ONLY elements that serve THIS specific creative concept",
+      "Each element should have a clear role in the composition",
+      "Do NOT include elements just because they're 'standard' — include only what makes this concept powerful",
       "Legal disclaimer at bottom"
     ],
-    "brandingPlacement": "Hola Prime logo top-left, #WeAreTraders top-right — match source layout"
+    "brandingPlacement": "#WeAreTraders pill top-right only. Do NOT include HolaPrime logo or wordmark in the image generation prompt — the real logo PNG is composited in post-processing. Leave the top-left corner clear.",
+    "conceptParadigm": "Name the visual paradigm this concept follows (e.g., Editorial, Cinematic, Data-Native, Poster, Comparison, Storytelling, Minimal, Collage)"
   },
   "copywriting": {
     "headline": {
@@ -264,10 +322,10 @@ Return ONLY a raw JSON object. No markdown, no preamble, no explanation outside 
       "primary": "CLAIM YOUR $[X]K CHALLENGE NOW",
       "variations": ["UNLOCK FUNDED ACCOUNT NOW", "START TRADING RISK-FREE"]
     },
-    "hookText": "Scroll-stopping first line — must pass 0.5s thumb-stop test",
-    "urgencyText": "Countdown timer OR spots left OR end date (Rule 1 — MANDATORY)",
-    "trustText": "Trusted by X+ traders or #WeAreTraders (Rule 9)",
-    "discountText": "40% OFF or promo code TAKEOFF40 (Rule 3)",
+    "attentionGrabber": "Scroll-stopping first line — must pass 0.5s thumb-stop test",
+    "urgencyText": "Countdown timer OR spots left OR end date",
+    "trustText": "Trusted by X+ traders or #WeAreTraders",
+    "discountText": "40% OFF or promo code TAKEOFF40",
     "benefitBullets": ["• 1-Step Process", "• 5% Profit Target", "• No Time Limits", "• Fast Withdrawals"],
     "disclaimerText": "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON PERFORMANCE THROUGH HOLA PRIME ACCOUNTS."
   },
@@ -297,8 +355,8 @@ Return ONLY a raw JSON object. No markdown, no preamble, no explanation outside 
     "emotionalJourney": "Map the SEQUENCE of emotions from first glance to click — e.g., 'Curiosity (hook) → Fear of loss (scarcity) → Relief (solution) → Confidence (social proof) → Urgency (CTA)'"
   },
   "imageGenerationPrompt": {
-    "detailed": "600+ word prompt describing the EXACT visual output. Structure it as: (1) LAYOUT STRUCTURE: Describe the composition — what goes where, relative sizes, spacing. Include eye-tracking pattern (F/Z/Gutenberg). (2) PSYCHOLOGY-TO-VISUAL MAPPING: For each major element, state which psychological principle it implements and how (e.g., 'Hero $38 in 3D gold at center — anchoring bias, first number seen sets the reference frame'). (3) COLOR-EMOTION SEQUENCE: Describe the color palette and which neural responses each color triggers as the eye moves through the layout. (4) EXACT TEXT CONTENT: List every text string that appears in the image, spelled correctly. Each bullet appears ONCE. Spell 'Withdrawals' 'Challenge' 'Limits' 'Process' 'Fictitious' 'Simulated' 'Performance' correctly. (5) AUTHENTICITY: Prop-firm-authentic visuals only — trading terminals, candlestick charts, MT4/MT5. Never generic stock photos. (6) DISCLAIMER: Copy the exact Hola Prime disclaimer verbatim.",
-    "negative": "generic stock photos, white backgrounds, cluttered layouts, duplicate text, garbled text, misspelled words, random lifestyle imagery, too many competing elements",
+    "detailed": "600+ word prompt describing the EXACT visual output. CRITICAL RULES: (1) Do NOT add translucent circles, iridescent spheres, orbs, bubbles, or glowing circular background decorations UNLESS the user explicitly requested 'brand DNA'. (2) Do NOT default to the same dark-background + centered-big-number + bullets-below + CTA-button layout every time. Each creative concept should have a UNIQUE composition. Structure your prompt as: (A) CREATIVE CONCEPT: Name the visual paradigm (Editorial/Cinematic/Data-Native/Poster/Comparison/Storytelling/Minimal/Collage) and describe WHY this approach works for this specific ad. (B) COMPOSITION: Describe the specific layout for THIS concept — where elements go, relative sizes, how the eye moves. This should be DIFFERENT from a generic template. (C) EXACT TEXT CONTENT: List every text string that appears, spelled correctly. 'Withdrawals' 'Challenge' 'Limits' 'Process' 'Fictitious' 'Simulated' 'Performance'. (D) COLOR-MOOD: How the color palette creates the intended emotional response. (E) ATMOSPHERE: Textures, lighting, depth, background treatment specific to this concept. (F) DISCLAIMER: Copy the exact Hola Prime disclaimer verbatim.",
+    "negative": "generic stock photos, white backgrounds, cluttered layouts, duplicate text, garbled text, misspelled words, random lifestyle imagery, too many competing elements, translucent circles or iridescent spheres unless brand DNA was explicitly requested, hola prime text logo or wordmark drawn inside the image (logo is composited as PNG separately)",
     "styleReference": "Match source creative's visual identity. Prop firm professional aesthetic.",
     "technicalSpecs": {
       "aspectRatio": "1:1 or 9:16",

@@ -1245,7 +1245,6 @@ function AnalysisModal({ ad, onClose }: { ad: any, onClose: () => void }) {
                             <p className="text-sm text-zinc-500 mt-2">{error}</p>
                             <div className="flex gap-3 justify-center mt-6">
                                 <Button variant="outline" onClick={runAnalysis}>Retry</Button>
-                                <Button variant="ghost" onClick={onClose}>Close</Button>
                             </div>
                         </div>
                     ) : (

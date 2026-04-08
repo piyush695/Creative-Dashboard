@@ -13,6 +13,63 @@
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
+/**
+ * Sanitize prompts before sending to Gemini/Imagen.
+ * Removes framework terminology, hex codes, section labels, and other
+ * metadata that image generators render as VISIBLE TEXT in the output.
+ */
+function sanitizePromptForImageGen(prompt: string): string {
+  let cleaned = prompt;
+
+  // Remove hex color codes — Gemini renders "#2563EB" as visible text
+  cleaned = cleaned.replace(/#[0-9A-Fa-f]{6}\b/g, (match) => {
+    // Map common hex codes to color names
+    const colorMap: Record<string, string> = {
+      '#000000': 'black', '#0A0A0F': 'very dark black', '#FFFFFF': 'white',
+      '#00E68A': 'neon green', '#00FF88': 'neon green', '#2563EB': 'blue',
+      '#3B82F6': 'blue', '#FF6B35': 'orange-red', '#FF4444': 'red',
+      '#9333EA': 'purple', '#7C3AED': 'purple', '#FFD700': 'gold',
+      '#A0A0A0': 'gray',
+    };
+    return colorMap[match.toUpperCase()] || colorMap[match.toLowerCase()] || 'accent color';
+  });
+
+  // Remove framework section headers that become visible text
+  // Patterns like "HOOK:", "Hook Zone:", "VALUE ZONE:", "ACTION ZONE:", "CTA ZONE:"
+  cleaned = cleaned.replace(/\b(HOOK|Hook)\s*(ZONE|Zone)?\s*[:—–-]\s*/gi, 'The attention-grabbing top section: ');
+  cleaned = cleaned.replace(/\b(VALUE|Value)\s*(ZONE|Zone)\s*[:—–-]\s*/gi, 'The main content area: ');
+  cleaned = cleaned.replace(/\b(ACTION|Action)\s*(ZONE|Zone)\s*[:—–-]\s*/gi, 'The call-to-action area: ');
+  cleaned = cleaned.replace(/\b(CTA|Cta)\s*(ZONE|Zone)\s*[:—–-]\s*/gi, 'The button area: ');
+  cleaned = cleaned.replace(/\bBRANDING\s*ZONE\s*[:—–-]\s*/gi, 'The logo area: ');
+
+  // Remove psychology framework labels that leak into images
+  cleaned = cleaned.replace(/\b(PSYCHOLOGY|Psychology)\s*[:—–-]\s*(LOSS AVERSION|SOCIAL PROOF|ANCHORING|SCARCITY|URGENCY|RECIPROCITY|AUTHORITY)/gi, '');
+  cleaned = cleaned.replace(/\b(ANTI-PATTERNS?|Anti-Patterns?)\s*[:—–-]/gi, 'Avoid:');
+  cleaned = cleaned.replace(/\bVISUAL PARADIGM\s*[:—–-]\s*/gi, 'Visual style: ');
+
+  // Remove "Rule X" or "(Rule 2)" references — Gemini renders these
+  cleaned = cleaned.replace(/\(Rule\s+\d+\)/gi, '');
+  cleaned = cleaned.replace(/\bRule\s+\d+\b/gi, '');
+
+  // Remove weight percentages like "(15%)" or "Weight: High" that appear as text
+  cleaned = cleaned.replace(/\(Weight:\s*\w+(?:[-–]\w+)?\)/gi, '');
+  cleaned = cleaned.replace(/\(\d+%\)/g, '');
+
+  // Remove triple-equals section markers
+  cleaned = cleaned.replace(/===\s*[^=]+\s*===/g, '');
+
+  // Remove markdown headers that image gen renders as text
+  cleaned = cleaned.replace(/^#{1,4}\s+/gm, '');
+
+  // Remove consecutive newlines (clean up after removals)
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+
+  return cleaned.trim();
+}
+
+/** Standard negative prompt additions to prevent metadata leaking into images */
+const ANTI_METADATA_NEGATIVE = 'hex color codes as visible text, color codes like #2563EB or #FF6B35, framework labels like Hook or HOOK or Value Zone or Action Zone, section headers, metadata text, technical annotations, design instruction text rendered in the image, psychology labels like Loss Aversion or Anchoring, rule numbers, weight percentages, markdown formatting symbols';
+
 // Gemini multimodal models that can accept image input AND produce image output
 // These are VERIFIED working models on this API key (tested 2026-03-18)
 const GEMINI_IMAGE_MODELS = [
@@ -72,12 +129,17 @@ async function tryGeminiGeneration(prompt: string, referenceImageData: { mimeTyp
 
   parts.push({ text: prompt });
 
+  // Quality boosters for Gemini multimodal
+  const qualityBoosterSuffix = '\n\nQUALITY DIRECTIVE: Generate this as a world-class advertising creative. Studio photography quality. Premium graphic design. Award-winning composition. Every element must look intentional, polished, and professionally crafted.';
+  const finalPrompt = prompt + qualityBoosterSuffix;
+  parts[parts.length - 1] = { text: finalPrompt };
+
   const body = {
     contents: [{ role: 'user', parts }],
     generationConfig: {
       // When we have a reference image, we only need IMAGE output — no text commentary
       responseModalities: referenceImageData ? ['IMAGE'] : ['TEXT', 'IMAGE'],
-      temperature: 0.7,
+      temperature: 1.0,   // Higher temperature = more creative, distinctive outputs
     },
     safetySettings: [
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
@@ -135,13 +197,19 @@ async function tryImagenGeneration(prompt: string): Promise<string | null> {
     const url = `${BASE_URL}/${modelId}:predict?key=${GEMINI_API_KEY}`;
     console.log(`[ImageGen] Trying Imagen model: ${modelId}`);
 
+    // Quality booster prefix — photography and design terms that guide image generators toward premium outputs
+    const qualityBoosterPrefix = 'Ultra-high quality, professional graphic design, 4K resolution, crisp sharp text, premium advertising creative, award-winning design, studio-grade lighting, perfect composition, Cannes Lions quality, ';
+    const enhancedPrompt = qualityBoosterPrefix + prompt;
+
     const body = {
-      instances: [{ prompt }],
+      instances: [{ prompt: enhancedPrompt }],
       parameters: {
         sampleCount: 1,
         aspectRatio: '9:16',   // Mobile-first vertical ads
         safetyFilterLevel: 'block_few',
         personGeneration: 'allow_adult',
+        enhancePrompt: true,           // Enable Imagen's automatic quality enhancement
+        outputMimeType: 'image/png',   // PNG for maximum quality (no JPEG compression artifacts)
       }
     };
 
@@ -223,9 +291,23 @@ export async function generateImage(imageSpec: any, options: any = {}) {
       prompt += `\n\nAspect ratio: ${technicalSpecs.aspectRatio || '1:1'}, Resolution: ${technicalSpecs.resolution || '1080x1080'}.`;
     }
     if (negative) {
-      prompt += `\n\nDo NOT include: ${negative}`;
+      prompt += `\n\nDo NOT include: ${negative}, ${ANTI_METADATA_NEGATIVE}`;
+    } else {
+      prompt += `\n\nDo NOT include: ${ANTI_METADATA_NEGATIVE}`;
     }
   }
+
+  // ── BRANDING INSTRUCTION: #WeAreTraders only — the HolaPrime logo is a REAL PNG composited in post-processing ──
+  // IMPORTANT: Do NOT tell the AI to draw the "hola prime" logo text.
+  // The exact logo (with authentic bubble/translucent "o") is composited as a PNG by text-overlay.ts.
+  // Drawing a text version causes duplicates and an incorrect-looking logo.
+  const brandingInstruction = `\n\nBRANDING: TOP-RIGHT CORNER — place "#WeAreTraders" in white text inside a thin oval/pill border. Do NOT draw the HolaPrime logo or any brand wordmark — the logo is added separately. Leave the top-left area unobstructed for the logo placement.`;
+  prompt += brandingInstruction;
+
+
+  // ── Sanitize: remove framework terminology that Gemini renders as visible text ──
+  prompt = sanitizePromptForImageGen(prompt);
+
 
   // ── Resolve the primary reference image ──
   // Priority: referenceUrl (user-uploaded or ad thumbnail), then first of sourceCreativeUrls
@@ -259,19 +341,27 @@ export async function generateImage(imageSpec: any, options: any = {}) {
       // Short reference header + Claude's full prompt + layout quality guardrails
       // NOTE: Text accuracy (spelling, no duplicates) is handled by the TEXT MANIFEST
       // injected by the studio route BEFORE this prompt. These rules focus on VISUAL quality.
-      prompt = `You are given a SOURCE AD CREATIVE image. Generate an improved VERSION 2 that is a premium visual upgrade of the source.
+      prompt = `You are given a SOURCE AD CREATIVE image. Generate an improved VERSION 2 that is a premium visual upgrade.
 
 ${trimmedPrompt}
 
-LAYOUT QUALITY RULES (override the above if there's a conflict):
-1. WHITESPACE — at least 15-20% of the image must be empty breathing room. Generous margins on all sides and between elements. Nothing touches the edges of the image.
-2. ALL TEXT MUST FIT — every text element, including the disclaimer at the bottom, must be fully visible within the image boundaries. Nothing gets cut off.
-3. MAXIMUM 5-6 DISTINCT ELEMENTS — logo, hero text, visual/illustration, bullet block, CTA button, disclaimer. If there are more, remove the least important. Less is more.
-4. SINGLE FOCAL POINT — one element (hero dollar amount or key visual) must be dramatically larger than everything else, occupying 30-40% of visual attention.
-5. CLEAR GRID ALIGNMENT — all text blocks and boxes align cleanly on an invisible grid. No randomly floating or misaligned elements.
-6. RENDER ONLY TEXT FROM THE PROMPT — do not add labels, captions, watermarks, or any text not explicitly provided in the prompt above. If a text manifest was provided, follow it exactly.`;
+PREMIUM LAYOUT RULES (non-negotiable):
+0. BRANDING AREA: TOP-LEFT corner should be kept clear/dark (the real HolaPrime logo PNG will be composited on top in post-processing — do NOT draw any logo or wordmark text there). TOP-RIGHT corner = "#WeAreTraders" in white inside a thin oval/pill border, appearing ONLY once.
 
-      console.log(`[ImageGen] Prompt length: ${prompt.length} chars (Claude's original: ${claudePrompt.length} chars)`);
+1. BREATHING ROOM: Minimum 15-20% of the canvas must be empty dark space. Elements never touch edges. Generous margins.
+2. COMPLETE VISIBILITY: Every text element including the disclaimer at the very bottom must be fully within the image frame. Nothing cut off.
+3. ELEMENT DISCIPLINE: Maximum 5-6 distinct design elements. Every element must earn its place. Remove anything that adds clutter without impact.
+4. SINGLE FOCAL POINT: One hero element (dollar amount, headline, or key visual) must visually dominate — making up 30-40% of visual attention. Everything else is supporting.
+5. PERFECT ALIGNMENT: All elements align to a clean invisible grid. No floating or misaligned elements. Consistent margins on both sides.
+6. TYPOGRAPHY HIERARCHY: Exactly 2 font weights (bold + regular). Hero text minimum 3x size of body text. No more than 3 type sizes total.
+7. COLOR DISCIPLINE: Maximum 4 colors (background + text + accent + CTA). Cohesive, purposeful palette. Nothing random.
+8. PREMIUM FINISH: This must look like it cost $50,000 to produce. Studio quality. If it looks cheap or template-like, regenerate.
+9. TEXT ACCURACY: Render ALL text exactly as provided in the prompt. Zero improvisation on text. Spell every word correctly.
+10. PROFESSIONAL PHOTOGRAPHY/RENDER QUALITY: The hero visual (if photographic or 3D) must have realistic lighting, proper shadows, material quality. Not illustrated or cartoon-like.`;
+
+      // Sanitize framework terminology before sending to Gemini
+      prompt = sanitizePromptForImageGen(prompt);
+      console.log(`[ImageGen] Prompt length: ${prompt.length} chars (Claude's original: ${claudePrompt.length} chars, post-sanitize)`);
     }
   }
 

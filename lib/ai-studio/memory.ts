@@ -52,6 +52,9 @@ export interface CreativeMemoryEntry {
   actualCtr?: number;
   actualRoas?: number;
   adSpend?: number;
+
+  // User feedback (filled in when user likes/dislikes)
+  userFeedback?: { variantId: string; feedback: 'like' | 'dislike'; timestamp: Date }[];
 }
 
 /**
@@ -119,33 +122,96 @@ export async function getTopGenerations(
 }
 
 /**
+ * Query generations that were explicitly liked by the user.
+ * These represent user-approved patterns and should be weighted heavily.
+ */
+export async function getTopLikedGenerations(limit: number = 3): Promise<CreativeMemoryEntry[]> {
+  try {
+    const client = await clientPromise;
+    const db = client.db(DB_NAME);
+
+    // Find generations that have like feedback from user_preferences collection
+    const likedEvents = await db.collection('user_preferences')
+      .find({ feedback: 'like' })
+      .sort({ timestamp: -1 })
+      .limit(limit * 2)
+      .project({ generationId: 1 })
+      .toArray();
+
+    if (likedEvents.length === 0) return [];
+
+    const generationIds = [...new Set(likedEvents.map((e: any) => e.generationId).filter(Boolean))];
+    if (generationIds.length === 0) return [];
+
+    const results = await db.collection(COLLECTION)
+      .find({ _id: { $in: generationIds.map(id => { try { const { ObjectId } = require('mongodb'); return new ObjectId(id); } catch { return id; } }) } })
+      .limit(limit)
+      .project({
+        concept: 1, headline: 1, cta: 1, hookText: 1,
+        psychologyPrimary: 1, psychologySecondary: 1,
+        bestScore: 1, bestVariantId: 1, variants: 1, tone: 1,
+      })
+      .toArray();
+
+    console.log(`[Memory] Found ${results.length} user-liked generations`);
+    return results as any[];
+  } catch (err: any) {
+    console.warn('[Memory] Failed to query liked generations:', err.message);
+    return [];
+  }
+}
+
+/**
  * Build a context string from past winners to inject into Claude's prompt.
+ * Now includes both top-scoring AND user-liked generations.
  */
 export async function buildMemoryContext(generationType?: string): Promise<string> {
   const topGens = await getTopGenerations(5, generationType);
-  
-  if (topGens.length === 0) {
+  const likedGens = await getTopLikedGenerations(3);
+
+  if (topGens.length === 0 && likedGens.length === 0) {
     return '';
   }
-  
-  const entries = topGens.map((g, i) => {
-    const bestVariant = g.variants?.find(v => v.id === g.bestVariantId);
-    return `${i + 1}. "${g.concept}" (Score: ${g.bestScore}/10)
+
+  let context = '';
+
+  if (topGens.length > 0) {
+    const entries = topGens.map((g, i) => {
+      const bestVariant = g.variants?.find(v => v.id === g.bestVariantId);
+      return `${i + 1}. "${g.concept}" (Score: ${g.bestScore}/10)
    - Headline: "${g.headline}"
    - CTA: "${g.cta}"
    - Hook: "${g.hookText}"
    - Psychology: ${g.psychologyPrimary}${g.psychologySecondary ? ` + ${g.psychologySecondary}` : ''}
    - Strengths: ${bestVariant?.strengths?.join(', ') || 'N/A'}
    - Weaknesses to avoid: ${bestVariant?.weaknesses?.join(', ') || 'N/A'}${g.actualCtr ? `\n   - ACTUAL CTR: ${g.actualCtr}%` : ''}`;
-  }).join('\n\n');
+    }).join('\n\n');
 
-  return `\n\n## CREATIVE MEMORY — TOP PERFORMING PAST GENERATIONS
+    context += `\n\n## CREATIVE MEMORY — TOP PERFORMING PAST GENERATIONS
 Learn from these high-scoring past creatives. Amplify their strengths and avoid their weaknesses.
 
 ${entries}
 
 Use these patterns as inspiration but do NOT copy them — create something new that builds on what worked.
 `;
+  }
+
+  if (likedGens.length > 0) {
+    const likedEntries = likedGens.map((g: any, i: number) => {
+      return `${i + 1}. "${g.concept}" (Score: ${g.bestScore}/10)
+   - Headline: "${g.headline}"
+   - Psychology: ${g.psychologyPrimary}${g.psychologySecondary ? ` + ${g.psychologySecondary}` : ''}
+   - Tone: ${g.tone || 'N/A'}`;
+    }).join('\n');
+
+    context += `\n\n## USER-APPROVED PATTERNS — HIGHEST PRIORITY
+The user explicitly liked these creatives. These patterns represent confirmed taste preferences. Prioritize these styles, psychology frameworks, and tones in your generation.
+
+${likedEntries}
+`;
+  }
+
+  return context;
 }
 
 /**

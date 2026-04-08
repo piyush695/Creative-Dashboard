@@ -11,9 +11,8 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
+let _client: Anthropic | null = null;
+function getClient() { if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); return _client; }
 
 const ANALYZER_MODEL = 'claude-sonnet-4-20250514';
 
@@ -92,7 +91,7 @@ Return ONLY valid JSON:
 }`
     });
 
-    const response = await anthropic.messages.create({
+    const response = await getClient().messages.create({
       model: ANALYZER_MODEL,
       max_tokens: 2000,
       system: 'You are a competitive intelligence analyst for the prop trading industry. Analyze competitor advertisements ruthlessly and objectively. Respond with ONLY valid JSON.',

@@ -9,9 +9,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { extractAndRepairJson } from './parser';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
+let _client: Anthropic | null = null;
+function getClient() { if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); return _client; }
 
 export interface RefinementRequest {
   imageDataUri: string;         // The current creative image
@@ -77,7 +76,7 @@ Return ONLY valid JSON:
 }`
     });
 
-    const response = await anthropic.messages.create({
+    const response = await getClient().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 3000,
       system: 'You are a creative refinement specialist. Produce targeted improvements to existing ad creatives. Respond with ONLY valid JSON.',

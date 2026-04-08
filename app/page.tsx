@@ -107,6 +107,7 @@ import InsightsSection from "@/components/insights-section";
 import SampleAds from "@/components/sample-ads";
 import CreativeStudioView from "@/components/creative-studio-view";
 import SavedCreativesView from "@/components/saved-creatives-view";
+import CreativeHistoryView from "@/components/creative-history-view";
 import AnalysisSidebar from "@/components/analysis-sidebar";
 import Footer from "@/components/footer";
 import { AdData, PlatformType } from "@/lib/types";
@@ -188,9 +189,11 @@ function DashboardContent() {
     setLocalSearchQuery(searchQuery);
   }, [searchQuery]);
   const [mounted, setMounted] = useState(false);
-  const [activeView, setActiveViewState] = useState<"dashboard" | "ai-studio" | "saved-creatives">("dashboard");
+  const [activeView, setActiveViewState] = useState<"dashboard" | "ai-studio" | "saved-creatives" | "history">("dashboard");
   const [isStudioHistoryOpen, setIsStudioHistoryOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [studioPrompt, setStudioPrompt] = useState<string>("");
+  const [studioResult, setStudioResult] = useState<any>(null);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [activeAnalysis, setActiveAnalysis] = useState<{ type: "score" | "metric"; name: string; } | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -260,6 +263,9 @@ function DashboardContent() {
     } else if (view === "saved-creatives") {
       setIsViewAllAdsOpenState(false);
       setActiveViewState(isInitialVisit ? "dashboard" : "saved-creatives");
+    } else if (view === "history") {
+      setIsViewAllAdsOpenState(false);
+      setActiveViewState(isInitialVisit ? "dashboard" : "history");
     } else {
       setIsViewAllAdsOpenState(false);
       setActiveViewState("dashboard");
@@ -2482,7 +2488,10 @@ function DashboardContent() {
                 <span className="text-foreground">Dashboard</span>
 
                 {((selectedPlatform !== "all" ||
-                  connectedPlatforms.length <= 1) && activeView !== "ai-studio" && activeView !== "saved-creatives") && (
+                  connectedPlatforms.length <= 1) && 
+                  activeView !== "ai-studio" && 
+                  activeView !== "saved-creatives" &&
+                  activeView !== "history") && (
                     <>
                       <span className="mx-1 text-muted-foreground/40">/</span>
                       <span className="text-foreground uppercase tracking-widest text-[11px] opacity-90">
@@ -2502,6 +2511,7 @@ function DashboardContent() {
                   isViewAllAdsOpen ||
                   activeView === "ai-studio" ||
                   activeView === "saved-creatives" ||
+                  activeView === "history" ||
                   selectedPlatform === "meta" ||
                   selectedPlatform === "google" ||
                   selectedPlatform === "adroll" ||
@@ -2521,7 +2531,9 @@ function DashboardContent() {
                                   ? "AI Studio"
                                   : activeView === "saved-creatives"
                                     ? "Creative Vault"
-                                    : selectedAdId
+                                    : activeView === "history"
+                                      ? "Generation History"
+                                      : selectedAdId
                                       ? "Analysis"
                                       : (selectedPlatform === "meta" || selectedPlatform === "all")
                                         ? selectedAccountId === "all"
@@ -2706,9 +2718,22 @@ function DashboardContent() {
             )}
           >
             {activeView === "ai-studio" ? (
-              <CreativeStudioView onHistoryChange={setIsStudioHistoryOpen} />
+              <CreativeStudioView 
+                onHistoryChange={() => updateUrl({ view: "history" })} 
+                initialPrompt={studioPrompt}
+                initialResult={studioResult}
+              />
             ) : activeView === "saved-creatives" ? (
               <SavedCreativesView />
+            ) : activeView === "history" ? (
+              <CreativeHistoryView 
+                onClose={() => updateUrl({ view: "ai-studio" })} 
+                onRegenerate={(prompt, result) => {
+                  setStudioPrompt(prompt);
+                  setStudioResult(result);
+                  updateUrl({ view: "ai-studio" });
+                }}
+              />
             ) : isGuideOpen ? (
               <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
                 <div
