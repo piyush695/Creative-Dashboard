@@ -194,6 +194,8 @@ function DashboardContent() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [studioPrompt, setStudioPrompt] = useState<string>("");
   const [studioResult, setStudioResult] = useState<any>(null);
+  const [studioTab, setStudioTab] = useState<string>("");
+  const [studioGenOptions, setStudioGenOptions] = useState<any>(null);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [activeAnalysis, setActiveAnalysis] = useState<{ type: "score" | "metric"; name: string; } | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -2722,15 +2724,19 @@ function DashboardContent() {
                 onHistoryChange={() => updateUrl({ view: "history" })} 
                 initialPrompt={studioPrompt}
                 initialResult={studioResult}
+                initialTab={studioTab}
+                initialGenOptions={studioGenOptions}
               />
             ) : activeView === "saved-creatives" ? (
               <SavedCreativesView />
             ) : activeView === "history" ? (
               <CreativeHistoryView 
                 onClose={() => updateUrl({ view: "ai-studio" })} 
-                onRegenerate={(prompt, result) => {
+                onRegenerate={(prompt, result, tab, generationOptions) => {
                   setStudioPrompt(prompt);
                   setStudioResult(result);
+                  setStudioTab(tab || '');
+                  setStudioGenOptions(generationOptions || null);
                   updateUrl({ view: "ai-studio" });
                 }}
               />

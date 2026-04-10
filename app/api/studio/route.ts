@@ -401,7 +401,7 @@ export async function POST(request: Request) {
         const discountText = brief.copywriting?.discountText || '';
         const layout = brief.visualDesign?.layout || '';
         const dimensions = brief.visualDesign?.dimensions || '1080x1920';
-        const colorPrimary = brief.visualDesign?.colorPalette?.primary || 'dark navy';
+        const colorPrimary = brief.visualDesign?.colorPalette?.primary || 'deep navy';
         const colorSecondary = brief.visualDesign?.colorPalette?.secondary || 'electric blue';
         const colorAccent = brief.visualDesign?.colorPalette?.accent || 'gold';
         const keyVisuals = (brief.visualDesign?.keyVisualElements || []).slice(0, 6).join(', ');
@@ -409,10 +409,10 @@ export async function POST(request: Request) {
         const concept = brief.creativeConcept?.title || '';
         const bullets = (brief.copywriting?.benefitBullets || []).join(', ');
         
-        rawImagePrompt = `Professional ad creative for Hola Prime prop trading firm. Premium dark fintech aesthetic.
+        rawImagePrompt = `Professional ad creative for Hola Prime prop trading firm. Premium fintech aesthetic.
 ${concept ? `Concept: ${concept}.` : ''}
 ${layout ? `Layout: ${layout}.` : ''}
-Dimensions: ${dimensions}. Deep black background. White text. Neon green glow on prices. Blue pill-shaped CTA button.
+Dimensions: ${dimensions}. Background color: ${colorPrimary}. Text: high contrast against background. Neon green glow on prices. Blue pill-shaped CTA button.
 ${hierarchy ? `Visual hierarchy: ${hierarchy}.` : ''}
 ${keyVisuals ? `Key visual elements: ${keyVisuals}.` : ''}
 Do NOT draw any "hola prime" logo or brand wordmark text — the real logo PNG is composited in post-processing. Leave the top-left corner completely clear. "#WeAreTraders" in white top-right.
@@ -434,6 +434,8 @@ Prices in oversized 3D metallic chrome treatment with neon glow. Fine print disc
       const addElements = (patterns.optimizationSynthesis?.addElements || []).slice(0, 3).join('; ');
       
       const directives = [
+        body.prompt && `User Requirement: ${body.prompt}`,
+        body.additionalInstructions && `Additional Instructions: ${body.additionalInstructions}`,
         keepElements && `Keep: ${keepElements}`,
         changeElements && `Change: ${changeElements}`,
         addElements && `Add: ${addElements}`,
@@ -474,22 +476,14 @@ Prices in oversized 3D metallic chrome treatment with neon glow. Fine print disc
       const priceMatches = allBriefText.match(/\$\d+(?:\.\d{1,2})?/g) || [];
       const criticalNumbers = [...new Set(priceMatches)].slice(0, 3);
       const numberLock = criticalNumbers.length > 0
-        ? `\nCRITICAL NUMBER ACCURACY:\n${criticalNumbers.map(n => `  "${n}" — render EXACTLY these digits: ${n.replace('$', '')} (not ${n.replace('$', '')}0, not ${n.replace('$', '')}00, not 2${n.replace('$', '')}). Character by character: ${n.split('').join('-')}`).join('\n')}\nIf you cannot render the exact number, make it LARGER and more prominent to ensure correct reading.`
+        ? `\nCRITICAL NUMBER & PRICE ACCURACY:\n${criticalNumbers.map(n => `  "${n}" — render EXACTLY these digits: ${n.replace('$', '')} (not 2${n.replace('$', '')}, not ${n.replace('$', '')}0). Character by character: ${n.split('').join('-')}`).join('\n')}\nIf a PRICE IS CROSSED OUT (strikethrough), render both the old and new prices with EXTREME CLARITY. No messy overlaps. Use a clean, sharp horizontal line for the strikethrough.`
         : '';
 
-      const textManifest = `=== MANDATORY BRANDING — LOCKED (APPEARS IN EVERY CREATIVE) ===
-TOP-LEFT CORNER — RESERVED FOR LOGO (DO NOT DRAW):
-  The HolaPrime logo is composited as a real PNG in post-processing.
-  Do NOT draw, render, or write any "hola prime", "HolaPrime", "Hola Prime", or brand wordmark text in the image.
-  Leave the top-left corner area COMPLETELY CLEAR — dark background only, no text, no graphics.
-
-TOP-RIGHT CORNER — Hashtag Tagline:
-  "#WeAreTraders" inside a thin oval/pill border shape, white text
-  This is the ONLY place "We Are Traders" appears in the entire creative
-=== END MANDATORY BRANDING ===
-
-=== TEXT MANIFEST ===
-The image must contain ONLY the text listed below PLUS the mandatory branding above.
+      const textManifest = `=== TEXT MANIFEST ===
+The image must contain ONLY the text listed below PLUS the mandatory branding.
+MANDATORY BRANDING:
+- TOP-LEFT CORNER: Leave COMPLETELY CLEAR and EMPTY (0% text, 0% logos). The real logo is added in post-processing.
+- TOP-RIGHT CORNER: "#WeAreTraders" in white pill badge exactly ONCE.
 ${numberLock}
 ${manifestLines.join('\n')}
 DISCLAIMER (tiny text, bottom edge): "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON THEIR PERFORMANCE THROUGH SUCH DEMO HOLA PRIME ACCOUNTS."
@@ -499,9 +493,9 @@ ABSOLUTE RULES:
 2. Do NOT add discount badges or "% OFF" elements UNLESS listed above.
 3. Do NOT add trust badges or social proof numbers UNLESS listed above.
 4. Do NOT render framework terminology as text — words like "DANGER", "RELIEF", "URGENCY", "ANCHOR" are instructions for you, NOT text to put in the image.
-5. Spell every word exactly as written. "Withdrawals" "Challenge" "Fictitious" "Simulated" "Performance" "Monetary" "Accounts" — copy character by character.
+5. Spell every word exactly as written.
 6. Each bullet appears ONCE. Never duplicate into two columns.
-7. "We Are Traders" and "#WeAreTraders" appear ONLY in the top-right pill badge. NEVER add it anywhere else in the creative.
+7. "#WeAreTraders" appears ONLY in the top-right pill badge exactly ONCE. NEVER add it anywhere else in the creative.
 === END TEXT MANIFEST ===
 
 `;
@@ -531,9 +525,10 @@ TOP-LEFT CORNER: RESERVED — Do NOT draw any logo, wordmark, "hola prime", "Hol
 TOP-RIGHT CORNER: "#WeAreTraders" in white text inside a thin oval/pill outline border.
 "We Are Traders" appears ONLY as the "#WeAreTraders" pill in the top-right. NEVER duplicated anywhere else.
 
-COLOR SYSTEM:
-- Background: Rich deep black (#000000 to #080810) — absolutely never white or light
-- Primary text: Pure white — crisp, sharp, high contrast
+COLOR SYSTEM (STYLE-ADAPTIVE):
+- DEFAULT Background: Rich deep black (#000000 to #080810) — premium fintech aesthetic
+- If the user explicitly requests a light/white/bright theme, use clean white/off-white background with dark text instead
+- Primary text: High contrast against background (white on dark, dark on light)
 - Hero accent: Bright neon green or cyan for the price/key number — creates financial data terminal feel
 - CTA button: Deep blue pill shape with white text — confident, clickable
 - Optional accent: Purple or amber glow for supporting elements
@@ -711,11 +706,18 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
         console.warn('[Studio] Image upload failed (non-blocking, keeping data URIs):', e.message);
       }
 
+      // --- Filter unacceptable quality variants (Score < 8) ---
+      const qualityVariants = scoredVariants.filter((v: any) => v?.imageUrl && (v.score?.overall >= MIN_SCORE_THRESHOLD));
+      
+      // If none passed, take the highest scoring one anyway but log it, 
+      // ensuring we at least show the user the best of the failed batch.
+      const variantsToReturn = qualityVariants.length > 0 ? qualityVariants : scoredVariants;
+      
       // Use the highest-scoring variant as primary
-      const primaryVariant = scoredVariants
+      const primaryVariant = variantsToReturn
         .filter((v: any) => v?.imageUrl)
         .sort((a: any, b: any) => (b.score?.overall || 0) - (a.score?.overall || 0))[0]
-        || scoredVariants[0];
+        || variantsToReturn[0];
 
       // ── CREATIVE MEMORY: Save this generation ──
       try {
@@ -824,7 +826,7 @@ Only include elements the user explicitly asked for or that a reference image co
 - PRICE ANCHOR: hero dollar amount as focal point
 - BULLET BENEFITS: 3-4 max, each appears ONCE, never duplicated
 - CTA: commanding verb — Claim, Start, Unlock, Get
-- DARK THEME: navy/black bg, white text, blue accents
+- STYLE: Follow the user's style preference. Default to dark (navy/black bg, white text, blue accents) unless user specifies light/bright theme.
 
 Return ONLY valid JSON:
 {
@@ -888,11 +890,11 @@ Return ONLY valid JSON:
       const customBrandBase = `WORLD-CLASS AD CREATIVE — HOLA PRIME PROP TRADING
 
 PREMIUM ADVERTISEMENT: Generate a Cannes Lions-quality creative for "Hola Prime" prop trading firm.
-Background: Rich deep black — never white or light.
-TOP-LEFT: RESERVED for logo — do NOT draw any "hola prime", "HolaPrime", or brand wordmark text here. The real logo is composited as a PNG in post-processing. Keep this area completely clear with dark background only.
+Background: Default to rich deep black — switch to light/white only if user explicitly asks for it.
+TOP-LEFT: RESERVED for logo — do NOT draw any "hola prime", "HolaPrime", or brand wordmark text here. The real logo is composited as a PNG in post-processing. Keep this area completely clear.
 TOP-RIGHT: "#WeAreTraders" in white text inside a thin oval pill border. This is the only place "We Are Traders" appears.
-Typography: Bold sans-serif headline (30-40% canvas height). Hero price/number OVERSIZED with neon glow or chrome 3D. Blue pill CTA button. Tiny gray disclaimer at bottom.
-Composition: 9:16 vertical. Generous 15%+ dark breathing room. Max 5-6 elements. ONE dominant focal point. Clean grid alignment. Nothing cut off. Nothing overlapping.
+Typography: Bold sans-serif headline. Hero price/number OVERSIZED with neon glow or chrome 3D. CRITICAL: Never duplicate the hero price. If the price is $38, it MUST appear exactly ONCE. Do NOT generate conflicting or partial numbers like "$8" alongside "$38". Blue pill CTA button.
+Composition: 9:16 vertical. Generous 15%+ breathing room. Max 5-6 elements. ONE dominant focal point. Clean grid alignment. Nothing cut off. Nothing overlapping.
 Hero visual: Choose ONE premium approach — (A) dramatic studio product shot of trading tech with deep shadows; (B) cinematic financial environment (trading room, city skyline); (C) bold 3D typography with chrome/glass material; (D) abstract trading data visualization as light art.
 Quality: Must look like a $500K agency production. Cannes Lions standard.
 `;

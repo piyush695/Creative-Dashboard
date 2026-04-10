@@ -32,7 +32,7 @@ import { useRouter } from "next/navigation"
 
 interface CreativeHistoryViewProps {
    onClose: () => void;
-   onRegenerate: (prompt: string, result?: any) => void;
+   onRegenerate: (prompt: string, result?: any, tab?: string, generationOptions?: any) => void;
 }
 
 // ── Shared image cache for thumbnails ──
@@ -146,6 +146,17 @@ function getEntryDate(entry: any): string | null {
    return entry.savedAt || entry.createdAt || null;
 }
 
+// ── Helper to get display label for the source tab ──
+function getTabLabel(tab: string): string {
+   switch (tab) {
+      case 'top-ads': return 'Top Ads';
+      case 'studio': return 'Studio';
+      case 'custom': return 'Custom';
+      case 'ad-library': return 'Ad Library';
+      default: return tab ? tab.charAt(0).toUpperCase() + tab.slice(1) : 'Custom';
+   }
+}
+
 export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeHistoryViewProps) {
    const [entries, setEntries] = useState<any[]>([])
    const [isLoading, setIsLoading] = useState(true)
@@ -154,7 +165,7 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
    const [page, setPage] = useState(1)
    const [totalItems, setTotalItems] = useState(0)
    const [previewImagePopup, setPreviewImagePopup] = useState<{ url: string; title: string } | null>(null)
-   const [regenerateConfirm, setRegenerateConfirm] = useState<{ prompt: string; result: any } | null>(null)
+   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
    const router = useRouter()
 
    const itemsPerPage = 10
@@ -203,6 +214,15 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
       }
       loadHistoryCreatives()
    }, [loadHistoryCreatives])
+
+   // ── Handle Regenerate: directly navigate, no popup ──
+   const handleRegenerate = (entry: any) => {
+      const tab = entry.tab || 'custom';
+      const prompt = entry.prompt || '';
+      const result = entry.result || null;
+      const generationOptions = entry.generationOptions || {};
+      onRegenerate(prompt, result, tab, generationOptions);
+   }
 
    return (
       <div className="flex-1 flex flex-col h-full animate-in fade-in duration-500 overflow-hidden bg-[#fafafa] dark:bg-[#09090b]">
@@ -309,12 +329,25 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                               </tr>
                            </thead>
                            <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800/40">
-                              {entries.map((entry, idx) => (
-                                 <tr key={entry.creativeId || idx} className="group hover:bg-blue-50/20 dark:hover:bg-blue-500/[0.02] transition-colors duration-200">
+                              {entries.map((entry, idx) => {
+                                 const entryKey = entry.creativeId || `entry-${idx}`;
+                                 const isSelected = selectedEntryId === entryKey;
+                                 return (
+                                 <tr 
+                                    key={entryKey} 
+                                    className={cn(
+                                       "group transition-colors duration-200 cursor-pointer",
+                                       isSelected 
+                                          ? "bg-blue-50/40 dark:bg-blue-500/[0.06] ring-1 ring-inset ring-blue-500/20" 
+                                          : "hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
+                                    )}
+                                    onClick={() => setSelectedEntryId(isSelected ? null : entryKey)}
+                                 >
                                     <td className="px-8 py-6 align-top">
                                        <div
                                           className="w-16 h-16 rounded-2xl overflow-hidden bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800/50 relative group/thumb cursor-pointer shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300"
-                                          onClick={() => {
+                                          onClick={(e) => {
+                                             e.stopPropagation();
                                              const url = entry.result?.imageUrl || entry.imageUrl || "";
                                              if (url) setPreviewImagePopup({ url, title: entry.headline || "Artifact Preview" });
                                           }}
@@ -327,7 +360,10 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                                     </td>
                                     <td className="px-8 py-6 align-top">
                                        <div className="flex flex-col gap-1.5 min-w-0">
-                                          <h4 className="text-[13px] font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate group-hover:text-blue-500 transition-colors">
+                                          <h4 className={cn(
+                                             "text-[13px] font-bold leading-tight truncate transition-colors",
+                                             isSelected ? "text-blue-500" : "text-zinc-900 dark:text-zinc-100"
+                                          )}>
                                              {entry.headline || 'Untitled Generation'}
                                           </h4>
                                           <div className="flex items-center gap-2">
@@ -338,7 +374,7 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                                                 </span>
                                              </div>
                                              <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 rounded">
-                                                {entry.tab || 'Studio'}
+                                                {getTabLabel(entry.tab)}
                                              </span>
                                           </div>
                                        </div>
@@ -363,10 +399,13 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                                                 {getEntryDate(entry) ? new Date(getEntryDate(entry)!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                              </div>
                                           </div>
-                                          {entry.prompt && (
+                                          {isSelected && (
                                              <button
-                                                onClick={() => setRegenerateConfirm({ prompt: entry.prompt, result: entry.result })}
-                                                className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95"
+                                                onClick={(e) => {
+                                                   e.stopPropagation();
+                                                   handleRegenerate(entry);
+                                                }}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 animate-in fade-in slide-in-from-right-2 duration-300"
                                                 title="Regenerate with this prompt"
                                              >
                                                 <Zap className="w-3 h-3" />
@@ -376,7 +415,8 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                                        </div>
                                     </td>
                                  </tr>
-                              ))}
+                                 );
+                              })}
                            </tbody>
                         </table>
                      </div>
@@ -444,43 +484,6 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                title={previewImagePopup.title}
                onClose={() => setPreviewImagePopup(null)}
             />
-         )}
-
-         {regenerateConfirm && (
-            <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
-               <div className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[32px] border border-zinc-200 dark:border-zinc-800 shadow-2xl p-10 animate-in zoom-in-95 duration-400 relative">
-                  <button
-                     onClick={() => setRegenerateConfirm(null)}
-                     className="absolute top-5 right-5 w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all"
-                  >
-                     <X className="w-4 h-4" />
-                  </button>
-                  <div className="w-20 h-20 rounded-[24px] bg-blue-500/10 flex items-center justify-center mb-8 mx-auto">
-                     <RefreshCcw className="w-10 h-10 text-blue-500" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-center text-zinc-900 dark:text-white mb-3">History</h3>
-                  <p className="text-center text-[13px] text-zinc-500 leading-relaxed mb-10 px-2 font-medium">
-                     This will reload the historical prompt and configuration into your AI Workspace. Ready to iterate?
-                  </p>
-                  <div className="flex flex-col gap-3">
-                     <button 
-                        onClick={() => {
-                           onRegenerate(regenerateConfirm.prompt, regenerateConfirm.result);
-                           setRegenerateConfirm(null);
-                        }}
-                        className="w-full h-14 bg-blue-600 text-white rounded-2xl font-bold text-sm tracking-wide hover:bg-blue-700 active:scale-95 transition-all shadow-xl shadow-blue-500/25"
-                     >
-                        Confirm & Launch
-                     </button>
-                     <button 
-                        onClick={() => setRegenerateConfirm(null)}
-                        className="w-full h-14 bg-transparent text-zinc-500 dark:text-zinc-400 rounded-2xl font-bold text-sm tracking-wide hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
-                     >
-                        Back
-                     </button>
-                  </div>
-               </div>
-            </div>
          )}
 
          <style jsx global>{`

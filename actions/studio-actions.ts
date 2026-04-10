@@ -27,7 +27,7 @@ export async function getHistoryList(page: number = 1, limit: number = 10, searc
         .project({
           creativeId: 1, tab: 1, prompt: 1, imageUrl: 1,
           createdAt: 1, headline: 1, score: 1, parentId: 1, childId: 1,
-          'result.imageUrl': 1
+          generationOptions: 1, result: 1
         })
         .toArray(),
       historyCollection.countDocuments(query)

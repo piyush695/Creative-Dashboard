@@ -64,12 +64,14 @@ interface CreativeStudioViewProps {
   onHistoryChange?: (isOpen: boolean) => void
   initialPrompt?: string;
   initialResult?: any;
+  initialTab?: string;
+  initialGenOptions?: any;
 }
 
 type ViewportMode = 'standby' | 'ad-details' | 'loading' | 'complete'
 type TopAdsStep = 'aspects' | 'generate' | 'results'
 
-export default function CreativeStudioView({ onClose, onHistoryChange, initialPrompt, initialResult }: CreativeStudioViewProps) {
+export default function CreativeStudioView({ onClose, onHistoryChange, initialPrompt, initialResult, initialTab, initialGenOptions }: CreativeStudioViewProps) {
   const [activeMainTab, setActiveMainTab] = useState<string>("custom")
   const [studioSubTab, setStudioSubTab] = useState<"image" | "video">("image")
   const [topAdsStep, setTopAdsStep] = useState<TopAdsStep>('aspects')
@@ -87,17 +89,31 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
     'ad-library': { mode: 'standby', isGenerating: false, result: null, progress: 0, prompt: "" }
   })
 
-  // Prepopulate if props provided
+  // Prepopulate if props provided (from History page Regenerate CTA)
+  // Restores the exact tab and state from the original generation
   useEffect(() => {
     if (initialPrompt || initialResult) {
-      updateTabState('custom', { 
+      // Determine the correct tab to restore (default to 'custom' if not specified)
+      const targetTab = initialTab || 'custom';
+      
+      // Switch to the original tab where the creative was generated
+      setActiveMainTab(targetTab);
+      
+      // Restore full state for that tab: prompt, result, mode, and generationOptions
+      updateTabState(targetTab, { 
         prompt: initialPrompt || "", 
         result: initialResult || null,
-        mode: initialResult ? 'complete' : 'standby'
+        mode: initialResult ? 'complete' : 'standby',
+        generationOptions: initialGenOptions || undefined,
       });
       if (initialResult) setSelectedVariantIdx(0);
+
+      // For top-ads tab, jump to results step so user sees the generated creative
+      if (targetTab === 'top-ads' && initialResult) {
+        setTopAdsStep('results');
+      }
     }
-  }, [initialPrompt, initialResult]);
+  }, [initialPrompt, initialResult, initialTab, initialGenOptions]);
 
   const currentTabState = tabStates[activeMainTab]
   

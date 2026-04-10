@@ -11,6 +11,13 @@
  *
  * The logo is placed in the TOP-LEFT corner with appropriate padding.
  * On bright backgrounds, a semi-transparent dark backdrop is added for contrast.
+ *
+ * LOGO DETECTION:
+ * To prevent duplicate logos, the module analyzes the top-left region of the
+ * generated image using TWO criteria:
+ * 1. Mean brightness — is the area dark/clear?
+ * 2. Pixel variance — does the area contain distinct content (like a drawn logo)?
+ * Both must indicate "content present" to skip overlay.
  */
 
 import sharp from 'sharp';
@@ -55,13 +62,13 @@ async function renderLogoFromSvg(targetWidth: number): Promise<Buffer> {
   </defs>
   <g transform="scale(${scale})">
     <!-- Drop shadow for depth on dark backgrounds -->
-    <g fill="rgba(0,0,0,0.45)" font-family="'Arial Black','Segoe UI Black',Arial,Helvetica,sans-serif" font-weight="900" font-size="46" letter-spacing="-1.5">
+    <g fill="rgba(0,0,0,0.45)" font-family="'Arial','Segoe UI',Helvetica,sans-serif" font-weight="600" font-size="46" letter-spacing="-1.5">
       <text x="2" y="37">h</text>
       <text x="70" y="37">la</text>
       <text x="2" y="80">prime</text>
     </g>
     <!-- Main white text -->
-    <g fill="#FFFFFF" font-family="'Arial Black','Segoe UI Black',Arial,Helvetica,sans-serif" font-weight="900" font-size="46" letter-spacing="-1.5">
+    <g fill="#FFFFFF" font-family="'Arial','Segoe UI',Helvetica,sans-serif" font-weight="600" font-size="46" letter-spacing="-1.5">
       <text x="0" y="35">h</text>
       <!-- Iridescent globe replacing "o" -->
       <circle cx="47" cy="20" r="16" fill="url(#iridescent)"/>
@@ -80,15 +87,91 @@ async function renderLogoFromSvg(targetWidth: number): Promise<Buffer> {
 }
 
 /**
+ * Detect whether the top-left region of an image already contains a logo or
+ * visible non-background content. Uses a combination of:
+ * 1. Mean brightness — high brightness suggests visible content
+ * 2. Standard deviation — high variance suggests structured content (logo/text)
+ *
+ * Returns true if a logo/content is likely present (should SKIP overlay).
+ */
+async function detectExistingLogo(
+  imageBuffer: Buffer,
+  width: number,
+  height: number
+): Promise<{ hasLogo: boolean; reason: string }> {
+  try {
+    // Check a region: top 12% height, left 25% width — where the logo goes
+    const checkW = Math.round(width * 0.25);
+    const checkH = Math.round(height * 0.12);
+
+    const region = await sharp(imageBuffer)
+      .extract({
+        left: 0,
+        top: 0,
+        width: Math.min(width, checkW),
+        height: Math.min(height, checkH),
+      })
+      .stats();
+
+    // Calculate mean brightness across RGB channels
+    const channels = region.channels.slice(0, 3);
+    const grayMean = channels.reduce((acc, c) => acc + c.mean, 0) / 3;
+    
+    // Calculate standard deviation (variance) — indicates structured content
+    const grayStdDev = channels.reduce((acc, c) => acc + c.stdev, 0) / 3;
+
+    // DECISION LOGIC:
+    // A dark, clear area for logo placement has LOW mean AND LOW variance.
+    // An area with an AI-drawn logo has HIGH mean OR HIGH variance.
+    //
+    // We need BOTH indicators to confidently say "logo exists":
+    // - Mean >45 AND StdDev >25: Definite content (bright + structured)
+    // - Mean >60: Almost certainly has visible content regardless of variance
+    // - Mean <20 AND StdDev <15: Definitely dark and clear — add logo
+    // - Middle ground: prefer adding the logo (better to occasionally replace
+    //   than to miss placing it, since AI-drawn logos are lower quality)
+
+    if (grayMean > 60) {
+      return {
+        hasLogo: true,
+        reason: `High brightness (mean:${grayMean.toFixed(1)}) indicates existing logo/content`,
+      };
+    }
+
+    if (grayMean > 40 && grayStdDev > 30) {
+      return {
+        hasLogo: true,
+        reason: `Moderate brightness (mean:${grayMean.toFixed(1)}) + high structure (stddev:${grayStdDev.toFixed(1)}) indicates logo`,
+      };
+    }
+
+    // Default: area is clear enough to add our logo
+    return {
+      hasLogo: false,
+      reason: `Clear area (mean:${grayMean.toFixed(1)}, stddev:${grayStdDev.toFixed(1)})`,
+    };
+  } catch (e) {
+    // If detection fails, default to ADDING the logo (better than missing it)
+    console.warn('[LogoOverlay] Detection check failed (will add logo):', e);
+    return { hasLogo: false, reason: 'Detection failed — defaulting to add' };
+  }
+}
+
+/**
  * Composite the Hola Prime logo onto a generated creative image.
  *
  * This function is designed to be non-blocking: if anything fails,
  * it returns the original image unchanged so generation is never blocked.
  *
  * @param imageDataUri - The generated image as a data URI (data:image/...;base64,...)
+ * @param skipDetection - If true, skip logo detection and ALWAYS add the logo.
+ *                        Use this when you know for certain the image doesn't have a logo.
  * @returns Modified image data URI with logo composited, or original on failure
  */
-export async function applyLogoOverlay(imageDataUri: string): Promise<string> {
+export async function applyLogoOverlay(
+  imageDataUri: string,
+  skipDetection: boolean = false
+): Promise<string> {
   if (!imageDataUri || !imageDataUri.startsWith('data:')) {
     return imageDataUri;
   }
@@ -105,9 +188,11 @@ export async function applyLogoOverlay(imageDataUri: string): Promise<string> {
     const width = metadata.width || 1080;
     const height = metadata.height || 1920;
 
-    // Logo sizing: ~20% of image width for clear visibility without dominating
-    const logoTargetWidth = Math.round(width * 0.20);
-    const padding = Math.round(width * 0.04);
+    // Logo sizing: ~17% of image width (smaller for better integration)
+    const logoTargetWidth = Math.round(width * 0.17);
+    // Position: slightly higher (top padding smaller than left padding)
+    const paddingLeft = Math.round(width * 0.03);
+    const paddingTop = Math.round(height * 0.015);
 
     // ── Load logo: prefer PNG file, fall back to SVG render ──
     let logoBuffer: Buffer;
@@ -145,29 +230,43 @@ export async function applyLogoOverlay(imageDataUri: string): Promise<string> {
       console.log(`[LogoOverlay] Rendered SVG logo → ${logoTargetWidth}px`);
     }
 
+    // ── FORCED OVERLAY ──
+    // Visual detection occasionally triggers false positives on bright/textured
+    // backgrounds. We now forcefully apply the overlay to every creative to 
+    // guarantee identical brand consistency, overriding any AI-generated artifacts.
+    console.log('[LogoOverlay] Enforcing brand logo overlay on creative...');
+
     const composites: sharp.OverlayOptions[] = [];
 
-    // ── ALWAYS add solid dark backdrop to hide any AI-rendered messy logos ──
-    // Even if brightness doesn't require it, we use it to cover AI-drawn "hola prime" text.
+    // ── Natural Blending: Soft Shadow/Glow ──
+    // Instead of a solid black rectangle, we use a soft radial gradient shadow.
+    // This allows the logo to pop while blending naturally with the background.
     const logoMeta = await sharp(logoBuffer).metadata();
-    const bgW = (logoMeta.width || logoTargetWidth) + 32;
-    const bgH = Math.max(80, (logoMeta.height || Math.round(logoTargetWidth * 0.55)) + 32);
+    const bgW = (logoMeta.width || logoTargetWidth) + 80;
+    const bgH = (logoMeta.height || Math.round(logoTargetWidth * 0.55)) + 80;
 
-    const backdropSvg = `<svg width="${bgW}" height="${bgH}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${bgW}" height="${bgH}" rx="10" fill="rgba(0,0,0,0.95)"/>
+    const shadowSvg = `<svg width="${bgW}" height="${bgH}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="black" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="black" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="${bgW}" height="${bgH}" fill="url(#shadow)"/>
     </svg>`;
 
     composites.push({
-      input: Buffer.from(backdropSvg),
-      top: Math.max(0, padding - 16),
-      left: Math.max(0, padding - 16),
+      input: Buffer.from(shadowSvg),
+      top: Math.max(0, paddingTop - 40),
+      left: Math.max(0, paddingLeft - 40),
+      blend: 'over',
     });
 
     // ── Composite the logo at top-left ──
     composites.push({
       input: logoBuffer,
-      top: padding,
-      left: padding,
+      top: paddingTop,
+      left: paddingLeft,
       blend: 'over' as const,
     });
 

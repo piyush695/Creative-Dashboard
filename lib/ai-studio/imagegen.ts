@@ -213,13 +213,19 @@ async function tryImagenGeneration(prompt: string): Promise<string | null> {
     const url = `${BASE_URL}/${modelId}:predict?key=${GEMINI_API_KEY}`;
     console.log(`[ImageGen] Trying Imagen model: ${modelId}`);
 
-    // Quality booster prefix — photography and design terms that guide image generators toward premium outputs
     const qualityBoosterPrefix = 'Ultra-high quality, professional graphic design, 4K resolution, crisp sharp text, premium advertising creative, standard clean typography, professional legible fonts, award-winning design, studio-grade lighting, perfect composition, Cannes Lions quality, ';
-
-    // Absolute strict rules prepended to whatever the prompt was
     const criticalRules = 'CRITICAL ABSOLUTE RULES: DO NOT draw the "hola prime" logo. DO NOT render the word "PRIME" or "HOLA" anywhere in the entire image. The top-left corner MUST remain completely blank/empty dark space. Use standard, clean, professional sans-serif typography — absolutely NO distorted, messy, or non-standard fonts.\n\n';
-    
-    const enhancedPrompt = criticalRules + qualityBoosterPrefix + prompt;
+
+    const enhancedPrompt = `WORLD-CLASS ADVERTISING — CANNES LIONS GRAND PRIX QUALITY:
+${criticalRules}
+${qualityBoosterPrefix}
+${prompt}
+
+TECHNICAL EXECUTION RULES:
+- PRICE RENDERING: Prices must be rendered with mathematical precision. If a price is crossed out (strikethrough), the line must be clean and both numbers must be perfectly legible. No digital artifacts or messy overlaps.
+- TEXT DISCIPLINE: "#WeAreTraders" in a pill badge top-right EXACTLY ONCE. No duplication.
+- COMPOSITION: Professional studio product lighting. Deep depth of field. Ultra-sharp focus.
+`;
 
     const body = {
       instances: [{ prompt: enhancedPrompt }],
@@ -318,11 +324,12 @@ export async function generateImage(imageSpec: any, options: any = {}) {
   }
 
   // ── BRANDING INSTRUCTION: #WeAreTraders only — the HolaPrime logo is a REAL PNG composited in post-processing ──
-  // IMPORTANT: Do NOT tell the AI to draw the "hola prime" logo text.
-  // The exact logo (with authentic bubble/translucent "o") is composited as a PNG by text-overlay.ts.
-  // Drawing a text version causes duplicates and an incorrect-looking logo.
-  const brandingInstruction = `\n\nBRANDING: TOP-RIGHT CORNER — place "#WeAreTraders" in white text inside a thin oval/pill border. DO NOT draw the brand logo. NEVER render "Hola Prime" as a logo in the top-left. The top-left area MUST be left absolutely empty/dark so we can overlay our own PNG logo later.`;
-  prompt += brandingInstruction;
+  // Check if the prompt already contains these instructions to avoid redundancy
+  const hasBranding = prompt.includes('#WeAreTraders') || prompt.includes('TOP-LEFT');
+  if (!hasBranding) {
+    const brandingInstruction = `\n\nBRANDING: TOP-RIGHT CORNER — place "#WeAreTraders" in white text inside a thin oval/pill border exactly ONCE. DO NOT draw the brand logo. NEVER render "Hola Prime" as a logo in the top-left. The top-left area MUST be left absolutely empty/clear so we can overlay our own PNG logo later.`;
+    prompt += brandingInstruction;
+  }
 
 
   // ── Sanitize: remove framework terminology that Gemini renders as visible text ──

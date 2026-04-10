@@ -193,7 +193,7 @@ export async function runAgenticPipeline(
           'duplicate text', 'misspelled words', 'garbled text', 'cut-off elements',
           'cluttered layout', 'overlapping elements', 'cramped spacing',
           'meme character', 'cartoon character', 'clipart', 'Pepe frog', 'emoji',
-          'white background', 'light background', 'amateur design', 'pixelated',
+          'amateur design', 'pixelated',
           'We Are Traders appearing twice', 'duplicate logo', 'duplicate tagline',
         ].join(', '),
       }, { tier: 'pro' });

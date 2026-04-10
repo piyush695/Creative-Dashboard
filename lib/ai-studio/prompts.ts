@@ -64,6 +64,14 @@ You are creating a Version 2 of the source creative(s) shown above. The output M
 
 ---
 
+## USER INSTRUCTIONS / REQUIREMENTS
+User Prompt: "${targetAudience}"
+${additionalInstructions ? `Additional Instructions: "${additionalInstructions}"` : ''}
+${tone ? `Tone: "${tone}"` : ''}
+You MUST strictly incorporate these requirements into your V2 generation. If the user asks for a specific text, layout, color, or modification, prioritize it above all else.
+
+---
+
 ## CREATIVE ANALYSIS FRAMEWORK — YOUR STRATEGIC FOUNDATION
 Every design, copy, and layout decision must be anchored to these 10 Core Creative Fundamentals. You must implicitly evaluate the source creative against these fundamentals before generating the Version 2 improvements.
 
@@ -355,8 +363,8 @@ Return ONLY a raw JSON object. No markdown, no preamble, no explanation outside 
     "emotionalJourney": "Map the SEQUENCE of emotions from first glance to click — e.g., 'Curiosity (hook) → Fear of loss (scarcity) → Relief (solution) → Confidence (social proof) → Urgency (CTA)'"
   },
   "imageGenerationPrompt": {
-    "detailed": "600+ word prompt describing the EXACT visual output. CRITICAL RULES: (1) Do NOT add translucent circles, iridescent spheres, orbs, bubbles, or glowing circular background decorations UNLESS the user explicitly requested 'brand DNA'. (2) Do NOT default to the same dark-background + centered-big-number + bullets-below + CTA-button layout every time. Each creative concept should have a UNIQUE composition. Structure your prompt as: (A) CREATIVE CONCEPT: Name the visual paradigm (Editorial/Cinematic/Data-Native/Poster/Comparison/Storytelling/Minimal/Collage) and describe WHY this approach works for this specific ad. (B) COMPOSITION: Describe the specific layout for THIS concept — where elements go, relative sizes, how the eye moves. This should be DIFFERENT from a generic template. (C) EXACT TEXT CONTENT: List every text string that appears, spelled correctly. 'Withdrawals' 'Challenge' 'Limits' 'Process' 'Fictitious' 'Simulated' 'Performance'. (D) COLOR-MOOD: How the color palette creates the intended emotional response. (E) ATMOSPHERE: Textures, lighting, depth, background treatment specific to this concept. (F) DISCLAIMER: Copy the exact Hola Prime disclaimer verbatim.",
-    "negative": "generic stock photos, white backgrounds, cluttered layouts, duplicate text, garbled text, misspelled words, random lifestyle imagery, too many competing elements, translucent circles or iridescent spheres unless brand DNA was explicitly requested, ANY drawn logo, Hola Prime text, prime logo, hola wordmark in top-left, top-left logo",
+    "detailed": "600+ word prompt describing the EXACT visual output. CRITICAL RULES: (1) Do NOT add translucent circles, iridescent spheres, orbs, bubbles, or glowing circular background decorations UNLESS the user explicitly requested 'brand DNA'. (2) Do NOT default to the same layout every time. (3) TEXT STRICTNESS: Never duplicate prices or numbers. If a price is $38, it MUST appear exactly once as the primary focal point. Do not generate conflicting partial numbers (like $8 and $38) in the same image. (4) EXACT TEXT CONTENT: List every text string that appears, spelled correctly. 'Withdrawals' 'Challenge' 'Limits' 'Performance'.",
+    "negative": "generic stock photos, cluttered layouts, duplicate text, garbled text, misspelled words, random lifestyle imagery, too many competing elements, translucent circles or iridescent spheres unless brand DNA was explicitly requested, ANY drawn logo, Hola Prime text, prime logo, hola wordmark in top-left, top-left logo",
     "styleReference": "Match source creative's visual identity. Prop firm professional aesthetic.",
     "technicalSpecs": {
       "aspectRatio": "1:1 or 9:16",
