@@ -314,6 +314,16 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                            ? `No matches found for "${searchQuery}". Try refining your search parameters.`
                            : "Your generation workspace is currently empty. Re-run or Analyze creatives to build your history."}
                      </p>
+                     {searchQuery && (
+                        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                           <button
+                              onClick={() => { setInputValue(""); setSearchQuery(""); }}
+                              className="h-10 px-6 bg-transparent text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-zinc-50 dark:hover:bg-zinc-800 active:scale-95 transition-all shadow-sm"
+                           >
+                              Clear Search
+                           </button>
+                        </div>
+                     )}
                   </div>
                ) : (
                   <div className="flex-1 overflow-hidden flex flex-col">

@@ -111,6 +111,9 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
       // For top-ads tab, jump to results step so user sees the generated creative
       if (targetTab === 'top-ads' && initialResult) {
         setTopAdsStep('results');
+        if (initialResult.sourceAdIds) {
+          setSelectedIds(initialResult.sourceAdIds);
+        }
       }
     }
   }, [initialPrompt, initialResult, initialTab, initialGenOptions]);
@@ -265,6 +268,10 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
         })
       })
       const data = await res.json()
+
+      // Artificial 2-second delay to show "Saving..." with dots
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
       if (data.success) {
         setSavedIds(prev => new Set([...prev, creativeId]))
         toast.success("Creative saved to vault!")
@@ -346,7 +353,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
     })
   }
 
-  const handleGenerate = async (optionsOverride?: any, promptOverride?: string) => {
+  const handleGenerate = async (optionsOverride?: any, promptOverride?: string, referenceOverride?: string) => {
     const targetTab = activeMainTab
 
     if (targetTab === "custom" && !currentTabState.prompt) {
@@ -357,7 +364,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
       toast.error("Provide a reference and instruction")
       return
     }
-    if (targetTab === "top-ads" && selectedIds.length === 0) {
+    if (targetTab === "top-ads" && selectedIds.length === 0 && (!optionsOverride?.adIds || optionsOverride.adIds.length === 0)) {
       toast.error("Select at least one winning creative")
       return
     }
@@ -392,15 +399,16 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
     try {
       let body: any = {}
       if (targetTab === "custom") {
-        body = { prompt: currentTabState.prompt, type: "custom" }
+        body = { prompt: currentTabState.prompt, type: "custom", reference: referenceOverride }
       } else if (targetTab === "studio") {
-        body = { prompt: currentTabState.prompt, reference: base64File || previewUrl, type: studioSubTab }
+        body = { prompt: currentTabState.prompt, reference: referenceOverride || base64File || previewUrl, type: studioSubTab }
       } else {
         body = { 
-          adIds: selectedIds, 
+          adIds: optionsOverride?.adIds || selectedIds, 
           selectedAspects, 
           type: "pattern-based",
           prompt: currentTabState.prompt,
+          reference: referenceOverride,
           ...(optionsOverride || currentTabState.generationOptions || {})
         }
       }
@@ -416,11 +424,29 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
       
       const data = await response.json()
       
-      if (generationInterval.current) clearInterval(generationInterval.current)
-      updateTabState(targetTab, { progress: 100 })
-      
-      setTimeout(() => {
-        if (data.creative) {
+      if (data.creative) {
+        // Evaluate Quality Score
+        const variants = data.creative.variants || [];
+        const maxScore = variants.length > 0 ? Math.max(...variants.map((v: any) => v?.score?.overall || 0)) : 10; // default 10 if variants don't have scores
+        
+        // Auto-Regenerate if below 8
+        if (maxScore < 8 && (optionsOverride?.retryCount || 0) < 3) {
+          toast.info(`Quality score (${maxScore}/10) below threshold. Auto-regenerating to improve clarity, persuasion, and structure...`);
+          
+          if (generationInterval.current) clearInterval(generationInterval.current);
+          
+          // Retry with improved prompt instructions
+          handleGenerate({
+            ...optionsOverride,
+            retryCount: (optionsOverride?.retryCount || 0) + 1
+          }, `${promptOverride || currentTabState.prompt}\n\nCRITICAL FEEDBACK: The previous generation only scored ${maxScore}/10. You MUST improve clarity, persuasion, and structure. Automatically regenerate targeting a minimum score of 8/10. Make the messaging sharper and visuals more engaging.`);
+          return;
+        }
+
+        if (generationInterval.current) clearInterval(generationInterval.current)
+        updateTabState(targetTab, { progress: 100 })
+        
+        setTimeout(() => {
           // Move current creative (if any) to history before showing the new one
           if (currentTabState.result) {
             const oldRes = currentTabState.result;
@@ -446,10 +472,11 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
           })
           // Auto-save to history database
           autoSaveToHistory(targetTab, data.creative)
-        } else {
-          throw new Error(data.error || "Generation failed")
-        }
-      }, 500)
+        }, 500)
+      } else {
+        if (generationInterval.current) clearInterval(generationInterval.current)
+        throw new Error(data.error || "Generation failed")
+      }
 
     } catch (err: any) {
       if (generationInterval.current) clearInterval(generationInterval.current)
@@ -569,7 +596,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
         
         {/* Sidebar — Hidden for Top Ads */}
         <aside className={cn(
-          "w-full md:w-[300px] border-b md:border-b-0 md:border-r border-border flex flex-col bg-card/50 transition-all duration-300 z-40 shrink-0",
+          "w-full md:w-[250px] border-b md:border-b-0 md:border-r border-border flex flex-col bg-card/50 transition-all duration-300 z-40 shrink-0",
           // Only hide automatically for Top Ads if no history
           activeMainTab === 'top-ads' && previousCreatives.length === 0 && "hidden"
         )}>
@@ -655,7 +682,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                       value={currentTabState.prompt}
                       onChange={(e) => updateTabState('studio', { prompt: e.target.value })}
                       placeholder={`Describe how the AI should adapt this ${studioSubTab}...`}
-                      className="w-full h-20 bg-muted/20 border border-border rounded-lg p-3 text-sm outline-none focus:ring-1 focus:ring-primary/30 transition-all placeholder:opacity-30 resize-none text-foreground"
+                      className="w-full h-20 bg-muted/20 border border-border rounded-lg p-3 text-sm outline-none focus:ring-1 focus:ring-primary/30 transition-all placeholder:opacity-30 resize-none text-foreground [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                     />
                 </div>
               </div>
@@ -1497,7 +1524,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                         <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Target Audience</span>
                         <textarea 
                            placeholder="e.g. Failed traders looking for fair prop firm"
-                           className="w-full h-20 bg-muted/20 border border-border rounded-lg p-4 text-[12px] font-medium text-foreground focus:ring-1 focus:ring-primary/30 outline-none transition-all placeholder:opacity-30 resize-none"
+                           className="w-full h-20 bg-muted/20 border border-border rounded-lg p-4 text-[12px] font-medium text-foreground focus:ring-1 focus:ring-primary/30 outline-none transition-all placeholder:opacity-30 resize-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                            onChange={(e) => updateTabState('top-ads', { prompt: e.target.value })}
                            value={currentTabState.prompt}
                         />
@@ -1506,7 +1533,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                         <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Tone / Style Override</span>
                         <textarea 
                            placeholder="e.g. Bold, meme-friendly, trader-culture"
-                           className="w-full h-20 bg-muted/20 border border-border rounded-lg p-4 text-[12px] font-medium text-foreground focus:ring-1 focus:ring-primary/30 outline-none transition-all placeholder:opacity-30 resize-none"
+                           className="w-full h-20 bg-muted/20 border border-border rounded-lg p-4 text-[12px] font-medium text-foreground focus:ring-1 focus:ring-primary/30 outline-none transition-all placeholder:opacity-30 resize-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                            value={currentTabState.generationOptions?.tone || ''}
                            onChange={(e) => updateTabState('top-ads', { generationOptions: { ...currentTabState.generationOptions, tone: e.target.value } })}
                         />
@@ -1556,7 +1583,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
             };
 
             return (
-            <div className="flex-1 flex flex-col items-center justify-center relative p-4 md:p-8 animate-in fade-in duration-500 overflow-hidden bg-background h-full">
+            <div className="flex-1 flex flex-col items-center justify-start pt-12 md:pt-20 relative p-4 md:p-8 animate-in fade-in duration-500 overflow-hidden bg-background h-full">
 
               {/* Ambient background */}
               <div className="absolute inset-0 pointer-events-none">
@@ -1568,7 +1595,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                   style={{ background: activeStage.color, opacity: 0.05 }} />
               </div>
 
-              <div className="relative w-full max-w-3xl flex flex-col items-center gap-5 md:gap-10 animate-in fade-in zoom-in-98 duration-700">
+              <div className="relative w-full max-w-3xl flex flex-col items-center gap-5 md:gap-6 animate-in fade-in zoom-in-98 duration-700">
 
                 {/* Header */}
                 <div className="text-center space-y-2">
@@ -1949,14 +1976,14 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60 pointer-events-none" />
 
-                  {/* V2 source badge — md+ only */}
+                  {/* V2 source badge — 2xl+ only */}
                   {isImprovement && selectedIds.length > 0 && (
-                    <div className="hidden md:flex absolute top-4 left-4 z-20 items-center gap-2">
-                      <div className="px-2.5 py-1.5 rounded-lg bg-black/70 backdrop-blur-xl border border-emerald-500/30 flex items-center gap-1.5">
+                    <div className="hidden 2xl:flex absolute top-4 left-4 z-20 items-center gap-2 max-w-[300px] flex-wrap">
+                      <div className="px-2.5 py-1.5 rounded-lg bg-black/70 backdrop-blur-xl border border-emerald-500/30 flex items-center gap-1.5 shrink-0">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                         <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">V2 — Improved from source</span>
                       </div>
-                      <div className="flex -space-x-2">
+                      <div className="flex -space-x-2 shrink-0">
                         {selectedIds.slice(0, 3).map(id => (
                           <div key={id} className="w-7 h-7 rounded-md overflow-hidden border-2 border-emerald-500/40 shadow-md">
                             <img src={creatives.find(c => c.adId === id)?.thumbnailUrl} className="w-full h-full object-cover" alt="source" />
@@ -1982,67 +2009,77 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                     </button>
                   </div>
 
-                  {/* Headline overlay — md+ only */}
-                  <div className="hidden md:block absolute bottom-6 left-6 max-w-lg space-y-1">
-                    <Badge className="bg-primary/10 border-primary/30 text-[9px] font-semibold px-3 py-1 rounded-full backdrop-blur-xl text-primary">
+                  {/* Headline overlay — 2xl+ only */}
+                  <div className="hidden 2xl:block absolute bottom-6 left-6 max-w-md space-y-1 pointer-events-none z-20">
+                    <Badge className="bg-primary/10 border-primary/30 text-[9px] font-semibold px-3 py-1 rounded-full backdrop-blur-xl text-primary pointer-events-auto">
                       {isImprovement ? 'Version 2 — Improvement Based' : 'Generated Creative'}
                     </Badge>
-                    <h2 className="text-2xl font-bold text-foreground drop-shadow-xl">{headline}</h2>
+                    <h2 className="text-2xl font-bold text-foreground drop-shadow-xl line-clamp-2">{headline}</h2>
                   </div>
 
-                  {/* Action buttons — md+ only overlay */}
-                  <div className="hidden md:flex absolute bottom-6 right-6 items-center gap-3">
+                  {/* Action buttons — 2xl+ only overlay */}
+                  <div className="hidden 2xl:flex absolute bottom-6 right-6 items-center gap-3 z-20">
                     <button
                       onClick={() => handleManualSave(r)}
                       disabled={isSaving || (activeVariant ? savedIds.has(activeVariant.id) : savedIds.has(r.id))}
-                      className="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-50"
+                      className="px-5 py-2 bg-emerald-500 text-white rounded-lg font-semibold text-[11px] flex items-center justify-center min-w-[90px] gap-2 hover:opacity-90 transition-all disabled:opacity-50 shadow-md pointer-events-auto"
                     >
-                      <Save className="w-3.5 h-3.5" /> {(activeVariant ? savedIds.has(activeVariant.id) : savedIds.has(r.id)) ? "Saved" : "Save"}
+                      {isSaving ? (
+                        <div className="flex items-center gap-0.5">Saving<span className="tracking-[0.2em] animate-pulse">...</span></div>
+                      ) : (
+                        <>
+                          <Save className="w-3.5 h-3.5" /> {(activeVariant ? savedIds.has(activeVariant.id) : savedIds.has(r.id)) ? "Saved" : "Save"}
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={() => { 
                         setRegenerateConfirm({ prompt: currentTabState.prompt, result: currentTabState.result, tab: activeMainTab })
                       }}
-                      className="px-5 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 transition-all font-sans"
+                      className="px-5 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 transition-all font-sans shadow-md pointer-events-auto"
                     >
                       <Zap className="w-3.5 h-3.5" /> Regenerate
                     </button>
-                    <button onClick={handleExport} className="px-5 py-2 bg-muted text-foreground border border-border rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:bg-muted/80 transition-all">
+                    <button onClick={handleExport} className="px-5 py-2 bg-muted/80 backdrop-blur-md text-foreground border border-border rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:bg-muted transition-all shadow-md pointer-events-auto">
                       <Download className="w-3.5 h-3.5" /> Export
                     </button>
                   </div>
                 </div>
 
-                {/* Mobile action bar - BELOW image */}
-                <div className="md:hidden flex flex-col gap-3 p-4 bg-background border-b border-border shrink-0">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <Badge className="bg-primary/10 border-primary/30 text-[9px] font-semibold px-2 py-0.5 rounded-full text-primary mb-1">
-                        {isImprovement ? 'V2 · Improved' : 'Generated'}
+                {/* Mobile/Tablet action bar - BELOW image (visible on < 2xl) */}
+                <div className="2xl:hidden flex flex-col gap-2 p-2 md:p-3 bg-background border-b border-border shrink-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1 flex items-center gap-2">
+                      <Badge className="bg-primary/10 border-primary/30 text-[8px] font-semibold px-2 py-0.5 rounded-full text-primary shrink-0">
+                        {isImprovement ? 'V2' : 'Gen'}
                       </Badge>
-                      <h2 className="text-sm font-bold text-foreground truncate">{headline}</h2>
+                      <h2 className="text-xs md:text-sm font-bold text-foreground truncate">{headline}</h2>
                     </div>
                     <div className="flex items-center gap-2">
                        <button
                          onClick={() => handleManualSave(r)}
                          disabled={isSaving || (activeVariant ? savedIds.has(activeVariant.id) : savedIds.has(r.id))}
-                         className="w-9 h-9 flex items-center justify-center bg-blue-600 text-white rounded-lg active:scale-95 transition-all disabled:opacity-50"
+                         className="px-3 md:px-4 py-2 flex items-center justify-center gap-1.5 bg-emerald-500 text-white rounded-lg font-bold text-[11px] shadow-md active:scale-95 transition-all disabled:opacity-50"
                        >
-                         <Save className="w-4 h-4" />
+                         {isSaving ? (
+                           <div className="flex items-center gap-0.5">Saving<span className="tracking-[0.2em] animate-pulse">...</span></div>
+                         ) : (
+                           <><Save className="w-3.5 h-3.5" /> {(activeVariant ? savedIds.has(activeVariant.id) : savedIds.has(r.id)) ? "Saved" : "Save"}</>
+                         )}
                        </button>
                        <button
                          onClick={() => { 
                            setRegenerateConfirm({ prompt: currentTabState.prompt, result: currentTabState.result, tab: activeMainTab })
                          }}
-                         className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-[11px] flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                         className="px-3 md:px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-[11px] flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
                        >
                          <Zap className="w-3.5 h-3.5" /> Regen
                        </button>
                        <button 
                          onClick={handleExport} 
-                         className="w-9 h-9 flex items-center justify-center bg-muted text-foreground border border-border rounded-lg active:scale-95 transition-all"
+                         className="px-3 md:px-4 py-2 flex items-center justify-center gap-1.5 bg-muted text-foreground border border-border rounded-lg font-bold text-[11px] shadow-sm active:scale-95 transition-all"
                        >
-                         <Download className="w-4 h-4" />
+                         <Download className="w-3.5 h-3.5" /> Export
                        </button>
                     </div>
                   </div>
@@ -2085,13 +2122,13 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
             };
 
             return (
-            <div className="shrink-0 p-3 md:p-6 grid grid-cols-1 md:grid-cols-[1fr_200px] gap-3 md:gap-4 bg-background border-t border-border">
-               <div className="bg-muted/30 border border-border rounded-xl p-5 relative flex items-start min-h-[80px]">
-                 <div className="flex-1 pr-10 space-y-2">
+            <div className="shrink-0 p-2 md:p-3 grid grid-cols-1 md:grid-cols-[1fr_200px] gap-2 md:gap-3 bg-background border-t border-border">
+               <div className="bg-muted/30 border border-border rounded-xl p-3 relative flex items-start min-h-[60px]">
+                 <div className="flex-1 pr-10 space-y-1">
                    {hookText && (
-                     <p className="text-xs font-bold text-primary/80 leading-tight">{hookText}</p>
+                     <p className="text-[10px] md:text-xs font-bold text-primary/80 leading-tight">{hookText}</p>
                    )}
-                   <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                   <p className="text-[11px] md:text-sm text-muted-foreground leading-snug line-clamp-2">
                       {bodyText}
                    </p>
                    {ctaText && (
@@ -2119,8 +2156,8 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                    {copiedText ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                  </button>
                </div>
-               <div className="flex flex-col gap-3">
-                  <div className="flex-1 p-4 rounded-xl border flex flex-col justify-center" style={{ backgroundColor: `${scoreColor}10`, borderColor: `${scoreColor}20` }}>
+               <div className="flex flex-col gap-2 md:gap-3">
+                  <div className="flex-1 p-3 rounded-xl border flex flex-col justify-center" style={{ backgroundColor: `${scoreColor}10`, borderColor: `${scoreColor}20` }}>
                      <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: `${scoreColor}99` }}>Score</span>
                      <div className="text-2xl font-bold font-mono" style={{ color: scoreColor }}>
                        {typeof score === 'number' ? score.toFixed(1) : String(score)}
@@ -2224,7 +2261,11 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                     : regenerateConfirm.prompt;
                   
                   updateTabState(regenerateConfirm.tab, { prompt: combinedPrompt })
-                  handleGenerate(undefined, combinedPrompt)
+                  // Do NOT pass the old image as reference — it forces the image generator to
+                  // create a "VERSION 2" of the old creative, ignoring the new requirements.
+                  // Generate completely fresh based on the new prompt.
+                  const overrideOpts = regenerateConfirm.result?.sourceAdIds ? { adIds: regenerateConfirm.result.sourceAdIds } : undefined;
+                  handleGenerate(overrideOpts, combinedPrompt)
                   setRegenerateConfirm(null)
                 }
               }}

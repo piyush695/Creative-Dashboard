@@ -199,9 +199,11 @@ export default function SavedCreativesView() {
    return (
       <div className="flex-1 flex flex-col h-full animate-in fade-in duration-500 overflow-hidden">
          {/* Header Area */}
-         <div className="shrink-0 space-y-4 sm:space-y-4 mb-4 sm:mb-6 mt-2 px-3 sm:px-0">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-4 mr-0 sm:mr-4">
-               <div className="flex-1">
+         <div className="shrink-0 mb-4 sm:mb-8 mt-2 px-3 sm:px-0">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mr-0 sm:mr-4">
+               
+               {/* Brand Group */}
+               <div className="flex flex-col flex-1">
                   <div className="flex items-center gap-3 mb-2">
                      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-zinc-800 border border-transparent dark:border-white/10 flex items-center justify-center shrink-0 shadow-sm">
                         <Bookmark className="w-5 h-5 text-[#007AFF] dark:text-blue-400" />
@@ -210,53 +212,63 @@ export default function SavedCreativesView() {
                         Saved <span className="text-[#007AFF]">Creatives.</span>
                      </h1>
                   </div>
-                  <p className="text-xs text-muted-foreground font-medium max-w-2xl leading-relaxed mt-2">
+                  <p className="text-xs text-muted-foreground font-medium max-w-xl leading-relaxed mt-1">
                      Your curated collection of high-performing assets. Access your explicitly saved generations and historical winners in one neural workspace.
                   </p>
                </div>
 
-               <div className="flex items-center gap-3">
-                  <div className="p-2 sm:p-2.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-white/5 flex items-center gap-3 shadow-sm hover:shadow transition-shadow">
-                     <div className="flex flex-col">
-                        <span className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground mb-0.5">Total Assets</span>
-                        <span className="text-base sm:text-lg font-black text-foreground leading-none">{totalItems}</span>
-                     </div>
-                     <div className="w-px h-6 sm:h-7 bg-zinc-200 dark:bg-white/10" />
-                     <div className="w-8 h-8 rounded-xl bg-[#007AFF]/10 flex items-center justify-center">
-                        <Layers className="w-4 h-4 text-[#007AFF]" />
+               {/* Right Side: Search, Filter, Stats */}
+               <div className="flex flex-col sm:flex-row items-center gap-3 max-w-full justify-end">
+                  
+                  {/* Search Bar */}
+                  <div className="relative group w-full sm:w-[320px] shrink-0">
+                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-[#007AFF] transition-colors" />
+                     <input
+                        type="text"
+                        placeholder="Search vault..."
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        className="w-full h-11 bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-white/5 rounded-xl pl-11 pr-11 text-xs font-medium outline-none focus:ring-2 focus:ring-[#007AFF]/20 focus:border-[#007AFF]/50 transition-all placeholder:text-muted-foreground/50 shadow-sm"
+                     />
+                     {inputValue && !isLoading && (
+                        <button
+                           onClick={() => { setInputValue(""); setSearchQuery(""); }}
+                           className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
+                        >
+                           <X className="w-3 h-3" />
+                        </button>
+                     )}
+                     {isLoading && inputValue && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                           <Loader2 className="w-3.5 h-3.5 animate-spin text-[#007AFF]" />
+                        </div>
+                     )}
+                  </div>
+
+                  {/* Filter Button */}
+                  <button className="h-11 px-5 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all shadow-sm shrink-0 w-full sm:w-auto justify-center">
+                     <Filter className="w-3.5 h-3.5" /> Filter
+                  </button>
+
+                  <div className="hidden sm:block h-8 w-px bg-zinc-200 dark:bg-white/10 mx-1" />
+
+                  {/* Stats */}
+                  <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+                     <div className="p-2.5 w-full sm:w-auto rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-white/5 flex items-center justify-between sm:justify-start gap-4 shadow-sm hover:shadow transition-shadow">
+                        <div className="flex flex-col">
+                           <span className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground mb-0.5">Total Assets</span>
+                           <span className="text-base font-black text-foreground leading-none">{totalItems}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                           <div className="w-px h-6 bg-zinc-200 dark:bg-white/10" />
+                           <div className="w-8 h-8 rounded-lg bg-[#007AFF]/10 flex items-center justify-center shrink-0">
+                              <Layers className="w-4 h-4 text-[#007AFF]" />
+                           </div>
+                        </div>
                      </div>
                   </div>
-               </div>
-            </div>
 
-            {/* Search & Filter Bar */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 mr-0 sm:mr-4">
-               <div className="relative flex-1 w-full group">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-[#007AFF] transition-colors" />
-                  <input
-                     type="text"
-                     placeholder="Search vault by Headline, ID or Requirement..."
-                     value={inputValue}
-                     onChange={(e) => setInputValue(e.target.value)}
-                     className="w-full h-10 sm:h-11 bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-white/5 rounded-xl pl-10 pr-10 text-xs font-medium outline-none focus:ring-2 focus:ring-[#007AFF]/20 focus:border-[#007AFF]/50 transition-all placeholder:text-muted-foreground/50 shadow-sm"
-                  />
-                  {inputValue && !isLoading && (
-                     <button
-                        onClick={() => { setInputValue(""); setSearchQuery(""); }}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
-                     >
-                        <X className="w-3 h-3" />
-                     </button>
-                  )}
-                  {isLoading && inputValue && (
-                     <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#007AFF]" />
-                     </div>
-                  )}
                </div>
-               <button className="h-10 sm:h-11 px-5 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all shadow-sm shrink-0 w-full sm:w-auto justify-center sm:justify-start">
-                  <Filter className="w-3.5 h-3.5" /> Filter
-               </button>
             </div>
          </div>
 
@@ -302,7 +314,7 @@ export default function SavedCreativesView() {
                         </button>
                         {searchQuery && (
                            <button
-                              onClick={() => setSearchQuery("")}
+                              onClick={() => { setInputValue(""); setSearchQuery(""); }}
                               className="h-9 sm:h-10 px-5 sm:px-6 bg-transparent text-foreground border border-zinc-200 dark:border-white/10 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-zinc-50 dark:hover:bg-white/5 active:scale-95 transition-all shadow-sm"
                            >
                               Clear Search

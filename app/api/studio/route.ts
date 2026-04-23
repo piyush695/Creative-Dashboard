@@ -19,7 +19,8 @@ import { runCreativeDirector } from '@/lib/ai-studio/director';
 // import { applyTextOverlay, extractOverlayConfig } from '@/lib/ai-studio/text-overlay';
 import { generateCrossPlatform, getAvailablePlatforms } from '@/lib/ai-studio/crossplatform';
 import { generateForAllPersonas, getAvailablePersonas } from '@/lib/ai-studio/personas';
-import { getCached, setCache } from '@/lib/ai-studio/cache';
+// Cache module available but not used in main generation flows (generation must always be fresh)
+// import { getCached, setCache } from '@/lib/ai-studio/cache';
 import { recordFeedback, buildPreferenceContext, getPreferenceSummary } from '@/lib/ai-studio/preferences';
 import { getFullBrandContext } from '@/lib/ai-studio/adlibrary';
 
@@ -39,14 +40,20 @@ const ANTHROPIC_MODELS = [
 ];
 
 // System prompt enforces strict JSON output — prevents markdown wrapping and preamble
-const STUDIO_SYSTEM_PROMPT = `You are an elite direct-response creative strategist AI. You MUST respond with ONLY a raw JSON object — no markdown, no code fences, no preamble, no explanation outside the JSON. Your JSON must be complete and valid. Every string value must be properly escaped. Do not truncate your response.`;
+const STUDIO_SYSTEM_PROMPT = `You are an advanced AI Creative Generator integrated with an API pipeline.
+
+CORE BEHAVIOR RULES:
+1. STRICT COMPLIANCE: Do NOT ignore, simplify, or "summarize intent" of the user requirements. You must fulfill the exact creative requirement provided. Treat every input as a direct creative brief.
+2. WORLD-CLASS CREATIVE: All generated creatives must be high-quality, marketing-grade copywriting; engaging, conversion-focused, and professional; optimized to global advertising standards.
+3. NO COPY-PASTING: Never echo or copy-paste the raw user instruction as your generated output. You must use your expertise to generate original, premium copywriting and detailed image generation prompts that fulfill the user's requirements.
+4. JSON ENFORCEMENT: You MUST respond with ONLY a raw JSON object — no markdown, no code fences, no preamble, no explanation outside the JSON. Your JSON must be complete and valid. Every string value must be properly escaped. Do not truncate your response.`;
 
 // Minimum acceptable quality score — creatives below this threshold are filtered out
 const MIN_SCORE_THRESHOLD = 8.0;
 
 async function generateWithFallback(messages: any[], maxTokens: number = 8192) {
   let lastError: any = null;
-  
+
   for (const modelId of ANTHROPIC_MODELS) {
     try {
       console.log(`[Studio] Attempting Anthropic generation with model: ${modelId}`);
@@ -56,24 +63,24 @@ async function generateWithFallback(messages: any[], maxTokens: number = 8192) {
         system: STUDIO_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: messages }] as any
       });
-      
+
       // Check if the response was truncated (stop_reason !== 'end_turn')
       if (response.stop_reason === 'max_tokens') {
         console.warn(`[Studio] WARNING: Response from ${modelId} was truncated (hit max_tokens=${maxTokens}). JSON may be incomplete.`);
       }
-      
+
       console.log(`[Studio] ✓ Success with ${modelId} (${response.usage?.output_tokens || '?'} tokens, stop: ${response.stop_reason})`);
       return response;
     } catch (err: any) {
       console.warn(`[Studio] Anthropic model ${modelId} failed:`, err.status, err.message);
       lastError = err;
-      
+
       if (err.status === 401 || err.status === 403) {
         throw new Error(`Anthropic Authentication Error (${err.status}): Check your API key.`);
       }
     }
   }
-  
+
   throw lastError || new Error("All Anthropic models failed to generate content.");
 }
 
@@ -84,9 +91,9 @@ async function fetchImageAsBase64(url: string) {
     const buffer = await response.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
     const mimeType = response.headers.get('content-type') || 'image/jpeg';
-    return { 
-      data: base64, 
-      media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp" 
+    return {
+      data: base64,
+      media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp"
     };
   } catch (err) {
     console.warn(`Failed to fetch image for Anthropic: ${url}`, err);
@@ -107,14 +114,14 @@ export async function GET(request: Request) {
       const creatives = await collection
         .find({})
         .project({
-          adId: 1, adName: 1, adType: 1, thumbnailUrl: 1, 
+          adId: 1, adName: 1, adType: 1, thumbnailUrl: 1,
           compositeRating: 1, ctr: 1, spend: 1, roas: 1,
           performanceLabel: 1
         })
         .sort({ compositeRating: -1 })
         .limit(100)
         .toArray();
-      
+
       console.log(`API Found ${creatives.length} creatives for library`);
       return NextResponse.json({ creatives: creatives || [] });
     }
@@ -268,7 +275,7 @@ export async function POST(request: Request) {
 
       // Auto-create template from liked high-scoring variants
       if (feedback === 'like' && variantMeta?.score && variantMeta.score >= 7.5 && body.brief) {
-        autoCreateTemplate(body.brief, variantMeta.score, variantMeta?.label || variantId).catch(() => {});
+        autoCreateTemplate(body.brief, variantMeta.score, variantMeta?.label || variantId).catch(() => { });
       }
 
       return NextResponse.json({ success: true, message: `Feedback "${feedback}" recorded for variant "${variantId}"` });
@@ -291,10 +298,10 @@ export async function POST(request: Request) {
 
       // ── CREATIVE MEMORY: Query top past generations ──
       const memoryContext = await buildMemoryContext('pattern-based');
-      
+
       // ── PERFORMANCE INSIGHTS: What actually converts based on real ad data ──
       const performanceContext = await buildPerformanceInsights();
-      
+
       // ── COMPETITOR INTELLIGENCE: Analyze if competitor refs provided ──
       let competitorContext = '';
       if (body.competitorImages && Array.isArray(body.competitorImages)) {
@@ -369,7 +376,7 @@ export async function POST(request: Request) {
       } catch (e) {
         console.error("Error parsing AI Text", e);
       }
-      
+
       if (!brief) {
         console.error("AI response could not be parsed as JSON:", aiText);
         throw new Error(`Failed to parse AI response. Raw output: ${aiText.substring(0, 150)}...`);
@@ -385,11 +392,11 @@ export async function POST(request: Request) {
       if (typeof brief.imageGenerationPrompt === 'string') {
         rawImagePrompt = brief.imageGenerationPrompt;
       } else if (brief.imageGenerationPrompt?.detailed) {
-        rawImagePrompt = typeof brief.imageGenerationPrompt.detailed === 'string' 
-          ? brief.imageGenerationPrompt.detailed 
+        rawImagePrompt = typeof brief.imageGenerationPrompt.detailed === 'string'
+          ? brief.imageGenerationPrompt.detailed
           : '';
       }
-      
+
       // If Claude's image prompt is empty/garbled, reconstruct from ALL available brief data
       if (!rawImagePrompt || rawImagePrompt.length < 50) {
         console.warn('[Studio] Image prompt from AI was empty/short, reconstructing from brief data');
@@ -408,7 +415,7 @@ export async function POST(request: Request) {
         const hierarchy = brief.visualDesign?.typography?.hierarchy || '';
         const concept = brief.creativeConcept?.title || '';
         const bullets = (brief.copywriting?.benefitBullets || []).join(', ');
-        
+
         rawImagePrompt = `Professional ad creative for Hola Prime prop trading firm. Premium fintech aesthetic.
 ${concept ? `Concept: ${concept}.` : ''}
 ${layout ? `Layout: ${layout}.` : ''}
@@ -432,24 +439,27 @@ Prices in oversized 3D metallic chrome treatment with neon glow. Fine print disc
       const keepElements = (patterns.optimizationSynthesis?.keepElements || []).slice(0, 3).join('; ');
       const changeElements = (patterns.optimizationSynthesis?.changeElements || []).slice(0, 3).join('; ');
       const addElements = (patterns.optimizationSynthesis?.addElements || []).slice(0, 3).join('; ');
-      
+
+      const recommendations = (patterns.optimizationSynthesis?.recommendations || []).join('; ');
+
       const directives = [
-        body.prompt && `User Requirement: ${body.prompt}`,
+        body.prompt && `Target Audience / User Explicit Requirement: ${body.prompt}`,
         body.additionalInstructions && `Additional Instructions: ${body.additionalInstructions}`,
         keepElements && `Keep: ${keepElements}`,
         changeElements && `Change: ${changeElements}`,
         addElements && `Add: ${addElements}`,
-        body.tone && `Tone: ${body.tone}`,
+        recommendations && `Incorporate Strategic Growth Recommendations: ${recommendations}`,
+        body.tone && `Tone Override: ${body.tone}`,
       ].filter(Boolean).join('. ');
 
       const basePrompt = rawImagePrompt + (directives ? `\n\nImprovements: ${directives}` : '');
       const baseNegative = brief.imageGenerationPrompt?.negative || 'generic stock photos, white backgrounds, cluttered, blurry, low quality, typos, misspellings';
-      const refUrl = patterns.bestCreative?.thumbnailUrl || sourceCreativeUrls[0] || undefined;
+      const refUrl = body.reference || patterns.bestCreative?.thumbnailUrl || sourceCreativeUrls[0] || undefined;
 
-      // ── BUILD TEXT MANIFEST ──
       // Extract ONLY the text Claude's brief actually generated from the user's prompt.
       // If a field is empty, it means the user/source didn't ask for it — DO NOT default.
       const mHeadline = brief.copywriting?.headline?.primary || '';
+      const mBody = brief.copywriting?.body?.primary || '';
       const mCta = brief.copywriting?.cta?.primary || '';
       const mHook = brief.copywriting?.attentionGrabber || brief.copywriting?.hookText || '';
       const mUrgency = brief.copywriting?.urgencyText || '';
@@ -462,6 +472,7 @@ Prices in oversized 3D metallic chrome treatment with neon glow. Fine print disc
       const manifestLines: string[] = [];
       if (mHeadline) manifestLines.push(`HEADLINE: "${mHeadline}"`);
       if (mHook) manifestLines.push(`HOOK TEXT: "${mHook}"`);
+      if (mBody) manifestLines.push(`BODY COPY: "${mBody}"`);
       if (mUrgency) manifestLines.push(`URGENCY ELEMENT: "${mUrgency}"`);
       if (mDiscount) manifestLines.push(`DISCOUNT BADGE: "${mDiscount}"`);
       if (mBullets.length > 0) {
@@ -472,7 +483,7 @@ Prices in oversized 3D metallic chrome treatment with neon glow. Fine print disc
       if (mTrust) manifestLines.push(`TRUST LINE: "${mTrust}"`);
 
       // Detect prices/numbers in the brief to prevent rendering errors (e.g. $23 → $223)
-      const allBriefText = [mHeadline, mHook, mUrgency, mDiscount, mCta].join(' ');
+      const allBriefText = [mHeadline, mBody, mHook, mUrgency, mDiscount, mCta].join(' ');
       const priceMatches = allBriefText.match(/\$\d+(?:\.\d{1,2})?/g) || [];
       const criticalNumbers = [...new Set(priceMatches)].slice(0, 3);
       const numberLock = criticalNumbers.length > 0
@@ -604,11 +615,23 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
 
       console.log(`[Studio] Generating 3 creative variants in parallel...`);
 
+      // ── BUILD USER REQUIREMENTS DIRECTIVE for image gen ──
+      // This ensures the user's prompt, tone, and instructions are injected DIRECTLY
+      // into every image generation call — not just buried inside Claude's brief.
+      const userRequirementsDirective = [
+        body.prompt && `USER REQUIREMENT (HIGHEST PRIORITY): ${body.prompt}`,
+        body.tone && `TONE/STYLE: ${body.tone}`,
+        body.additionalInstructions && `ADDITIONAL INSTRUCTIONS: ${body.additionalInstructions}`,
+      ].filter(Boolean).join('\n');
+      const userRequirementsBlock = userRequirementsDirective
+        ? `\n\n=== USER EXPLICIT REQUIREMENTS (MUST FOLLOW) ===\n${userRequirementsDirective}\nYou MUST incorporate these requirements into the visual design. They override any default assumptions.\n=== END USER REQUIREMENTS ===\n\n`
+        : '';
+
       // ── CREATIVE DIRECTOR: Produce 3 concept-diverse image prompts ──
       let directorConcepts: any[] = [];
       try {
         console.log('[Studio] Running Creative Director for concept-diverse prompts...');
-        const directorResult = await runCreativeDirector(brief, pickedParadigms, brandVisualDirective);
+        const directorResult = await runCreativeDirector(brief, pickedParadigms, brandVisualDirective, body.prompt, body.tone);
         if (directorResult && directorResult.concepts && directorResult.concepts.length >= 3) {
           directorConcepts = directorResult.concepts;
           console.log(`[Studio] ✓ Director produced ${directorConcepts.length} concept-diverse prompts (${directorConcepts.map((c: any) => c.paradigm).join(', ')})`);
@@ -626,8 +649,8 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             const conceptPrompt = directorConcepts[idx]?.imagePrompt;
             const useDirectorPrompt = conceptPrompt && conceptPrompt.length > 200;
             const variantPrompt = useDirectorPrompt
-              ? brandVisualDirective + textManifest + conceptPrompt
-              : brandVisualDirective + textManifest + variant.promptPrefix + basePrompt;
+              ? brandVisualDirective + textManifest + userRequirementsBlock + conceptPrompt
+              : brandVisualDirective + textManifest + userRequirementsBlock + variant.promptPrefix + basePrompt;
             // Premium quality image prompt with anti-cheap-design guardrails
             const premiumNegativePrompt = [
               baseNegative,
@@ -708,11 +731,11 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
 
       // --- Filter unacceptable quality variants (Score < 8) ---
       const qualityVariants = scoredVariants.filter((v: any) => v?.imageUrl && (v.score?.overall >= MIN_SCORE_THRESHOLD));
-      
+
       // If none passed, take the highest scoring one anyway but log it, 
       // ensuring we at least show the user the best of the failed batch.
       const variantsToReturn = qualityVariants.length > 0 ? qualityVariants : scoredVariants;
-      
+
       // Use the highest-scoring variant as primary
       const primaryVariant = variantsToReturn
         .filter((v: any) => v?.imageUrl)
@@ -764,18 +787,18 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
     if (type === 'custom' || type === 'image' || type === 'video') {
       const userContent: any[] = [];
       if (reference) {
-         if (reference.startsWith('data:')) {
-           const [meta, data] = reference.split(',');
-           const mimeType = meta.split(':')[1].split(';')[0];
-           userContent.push({ type: 'image', source: { type: 'base64', media_type: mimeType, data } });
-         } else {
-           const base64Data = await fetchImageAsBase64(reference);
-           if (base64Data) {
-             userContent.push({ type: 'image', source: { type: 'base64', media_type: base64Data.media_type, data: base64Data.data } });
-           }
-         }
+        if (reference.startsWith('data:')) {
+          const [meta, data] = reference.split(',');
+          const mimeType = meta.split(':')[1].split(';')[0];
+          userContent.push({ type: 'image', source: { type: 'base64', media_type: mimeType, data } });
+        } else {
+          const base64Data = await fetchImageAsBase64(reference);
+          if (base64Data) {
+            userContent.push({ type: 'image', source: { type: 'base64', media_type: base64Data.media_type, data: base64Data.data } });
+          }
+        }
       }
-      
+
       const generationPrompt = type === 'custom' ? userPrompt : `Instructions: ${userPrompt}. Reference analysis applied.`;
 
       // ── BRAND DNA: Only inject full brand DNA if user explicitly requests it ──
@@ -826,7 +849,7 @@ Only include elements the user explicitly asked for or that a reference image co
 - PRICE ANCHOR: hero dollar amount as focal point
 - BULLET BENEFITS: 3-4 max, each appears ONCE, never duplicated
 - CTA: commanding verb — Claim, Start, Unlock, Get
-- STYLE: Follow the user's style preference. Default to dark (navy/black bg, white text, blue accents) unless user specifies light/bright theme.
+- DARK THEME: navy/black bg, white text, blue accents
 
 Return ONLY valid JSON:
 {
@@ -868,10 +891,10 @@ Return ONLY valid JSON:
         throw new Error(`Failed to generate creative brief. Raw output: ${aiText.substring(0, 150)}...`);
       }
 
-      let baseImagePrompt = brief?.imageGenerationPrompt?.detailed 
-          || (typeof brief?.imageGenerationPrompt === 'string' ? brief.imageGenerationPrompt : null)
-          || userPrompt
-          || 'Professional prop trading advertisement creative for Hola Prime';
+      let baseImagePrompt = brief?.imageGenerationPrompt?.detailed
+        || (typeof brief?.imageGenerationPrompt === 'string' ? brief.imageGenerationPrompt : null)
+        || userPrompt
+        || 'Professional prop trading advertisement creative for Hola Prime';
 
       const baseNeg = brief?.imageGenerationPrompt?.negative || 'typos, misspellings, blurry, low quality, generic stock photos, white background, overlapping text, cramped layout, cluttered elements';
 
@@ -886,37 +909,72 @@ Return ONLY valid JSON:
         prefix: `${paradigm.imageDirective}\n\nANTI-PATTERNS (avoid these — they would ruin this concept):\n${paradigm.antiPatterns}\n\nDO NOT ADD any elements not in the prompt. The paradigm changes HOW content is presented, not WHAT content is shown.\n\n`,
       }));
 
-      // Build custom brand directive (same quality standard as main path)
-      const customBrandBase = `WORLD-CLASS AD CREATIVE — HOLA PRIME PROP TRADING
+      // Build custom brand directive (same logic: base vs full)
+      const customBrandBase = `=== HOLA PRIME CORE VISUAL RULES ===
+Deep black background (#000000). White text. Blue (#2563EB) pill CTA button. 9:16 vertical. Generous spacing — no boxes or containers — text floats on dark background. NO overlapping. NO bright backgrounds. Premium dark fintech aesthetic.
+=== END ===\n\n`;
 
-PREMIUM ADVERTISEMENT: Generate a Cannes Lions-quality creative for "Hola Prime" prop trading firm.
-Background: Default to rich deep black — switch to light/white only if user explicitly asks for it.
-TOP-LEFT: RESERVED for logo — do NOT draw any "hola prime", "HolaPrime", or brand wordmark text here. The real logo is composited as a PNG in post-processing. Keep this area completely clear.
-TOP-RIGHT: "#WeAreTraders" in white text inside a thin oval pill border. This is the only place "We Are Traders" appears.
-Typography: Bold sans-serif headline. Hero price/number OVERSIZED with neon glow or chrome 3D. CRITICAL: Never duplicate the hero price. If the price is $38, it MUST appear exactly ONCE. Do NOT generate conflicting or partial numbers like "$8" alongside "$38". Blue pill CTA button.
-Composition: 9:16 vertical. Generous 15%+ breathing room. Max 5-6 elements. ONE dominant focal point. Clean grid alignment. Nothing cut off. Nothing overlapping.
-Hero visual: Choose ONE premium approach — (A) dramatic studio product shot of trading tech with deep shadows; (B) cinematic financial environment (trading room, city skyline); (C) bold 3D typography with chrome/glass material; (D) abstract trading data visualization as light art.
-Quality: Must look like a $500K agency production. Cannes Lions standard.
-`;
-
-      const customBrandFull = customWantsBrandDNA ? `BRAND SIGNATURE ELEMENTS:
-Do NOT draw any "hola prime" logo text — the real logo PNG is composited in post-processing. Leave top-left CLEAR. "#WeAreTraders" white TOP-RIGHT.
-Signature sphere: large iridescent orb (blue-purple-pink gradient, 35-50% opacity) as background glow element, positioned off-center, softly feathering into black background. Never in front of text.
-Neon glow outlines on prices and key numbers. 3D chrome/metallic material on price text. Subtle film grain texture on background.
-` : `CLEAN VERSION (no decorative spheres or orbs):
-No translucent circles, spheres, or circular background elements. Background: pure deep black with optional subtle radial gradient only.
-All creative power comes from typography mastery, the premium hero visual, and compositional excellence.
-`;
+      const customBrandFull = customWantsBrandDNA ? `=== BRAND SIGNATURE (USER REQUESTED) ===
+Add: "hola prime" logo white TOP-LEFT. "#WeAreTraders" white TOP-RIGHT. Translucent iridescent sphere (blue-purple-pink, 30-50% opacity) as subtle background glow behind content. Neon glow outlines on prices. 3D metallic chrome on price text.
+=== END ===\n\n` : `=== IMPORTANT: NO BRAND SIGNATURE ELEMENTS ===
+Do NOT add any translucent circles, iridescent spheres, orbs, or glowing circular shapes in the background. Do NOT add any brand logo text. Keep the background CLEAN — pure dark with subtle gradient only. Focus on INNOVATIVE, FRESH design without any signature brand decorations.
+=== END ===\n\n`;
 
       const customBrandPrefix = customBrandBase + customBrandFull;
 
       console.log(`[Studio] Generating 3 custom creative variants in parallel... (Brand DNA: ${customWantsBrandDNA ? 'FULL' : 'BASE'})`);
 
+      // ── BUILD TEXT MANIFEST for Custom Path (Ensures promo codes etc are rendered) ──
+      const cmHeadline = brief.copywriting?.headline?.primary || '';
+      const cmBody = brief.copywriting?.body?.primary || '';
+      const cmCta = brief.copywriting?.cta?.primary || '';
+      const cmHook = brief.copywriting?.attentionGrabber || brief.copywriting?.hookText || '';
+      const cmUrgency = brief.copywriting?.urgencyText || '';
+      const cmDiscount = brief.copywriting?.discountText || '';
+      const cmBullets = (brief.copywriting?.benefitBullets || []).slice(0, 4);
+
+      const customManifestLines: string[] = [];
+      if (cmHeadline) customManifestLines.push(`HEADLINE: "${cmHeadline}"`);
+      if (cmHook) customManifestLines.push(`HOOK TEXT: "${cmHook}"`);
+      if (cmBody) customManifestLines.push(`BODY COPY: "${cmBody}"`);
+      if (cmUrgency) customManifestLines.push(`URGENCY: "${cmUrgency}"`);
+      if (cmDiscount) customManifestLines.push(`DISCOUNT: "${cmDiscount}"`);
+      if (cmBullets.length > 0) {
+        customManifestLines.push(`BULLET POINTS:`);
+        cmBullets.forEach((b: string, i: number) => customManifestLines.push(`  ${i + 1}. "${b}"`));
+      }
+      if (cmCta) customManifestLines.push(`CTA BUTTON: "${cmCta}"`);
+
+      // Price matching for locking
+      const allCustomText = [cmHeadline, cmBody, cmHook, cmCta, cmUrgency, cmDiscount].join(' ');
+      const cPriceMatches = allCustomText.match(/\$\d+(?:\.\d{1,2})?/g) || [];
+      const cCriticalNumbers = [...new Set(cPriceMatches)].slice(0, 3);
+      const cNumberLock = cCriticalNumbers.length > 0
+        ? `\nCRITICAL NUMBER ACCURACY:\n${cCriticalNumbers.map(n => `  "${n}" — render EXACT digits: ${n.replace('$', '')}`).join('\n')}\n`
+        : '';
+
+      const customTextManifest = `=== TEXT MANIFEST (MANDATORY CONTENT) ===
+THIS IMAGE MUST CONTAIN THE FOLLOWING TEXT STRINGS:
+${customManifestLines.join('\n')}
+${cNumberLock}
+DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON THEIR PERFORMANCE THROUGH SUCH DEMO HOLA PRIME ACCOUNTS."
+=== END MANIFEST ===\n\n`;
+
+      // Build User Requirements block for Custom path
+      const customUserReqsDirective = [
+        userPrompt && `USER REQUIREMENT (HIGHEST PRIORITY): ${userPrompt}`,
+        body.tone && `TONE/STYLE: ${body.tone}`,
+      ].filter(Boolean).join('\n');
+      const customUserReqsBlock = customUserReqsDirective
+        ? `\n\n=== USER EXPLICIT REQUIREMENTS (MUST FOLLOW) ===\n${customUserReqsDirective}\nYou MUST incorporate these requirements into the visual design. They override any default assumptions.\n=== END USER REQUIREMENTS ===\n\n`
+        : '';
+
       // ── CREATIVE DIRECTOR for Custom path ──
       let customDirectorConcepts: any[] = [];
       try {
         console.log('[Studio] Running Creative Director for custom concept-diverse prompts...');
-        const customDirectorResult = await runCreativeDirector(brief, customParadigms, customBrandPrefix);
+        // CRITICAL: Ensure user instructions ARE passed to the Director
+        const customDirectorResult = await runCreativeDirector(brief, customParadigms, customBrandPrefix, userPrompt, body.tone);
         if (customDirectorResult && customDirectorResult.concepts && customDirectorResult.concepts.length >= 3) {
           customDirectorConcepts = customDirectorResult.concepts;
           console.log(`[Studio] ✓ Custom Director produced ${customDirectorConcepts.length} concepts (${customDirectorConcepts.map((c: any) => c.paradigm).join(', ')})`);
@@ -931,24 +989,12 @@ All creative power comes from typography mastery, the premium hero visual, and c
             const conceptPrompt = customDirectorConcepts[idx]?.imagePrompt;
             const useDirectorPrompt = conceptPrompt && conceptPrompt.length > 200;
             const variantPrompt = useDirectorPrompt
-              ? customBrandPrefix + conceptPrompt
-              : customBrandPrefix + variant.prefix + baseImagePrompt;
-            const customPremiumNeg = [
-              baseNeg,
-              'duplicate text', 'misspelled words', 'garbled disclaimer', 'text cutoff', 'unreadable text',
-              'meme character', 'meme frog', 'Pepe the frog', 'cartoon character', 'clipart', 'emoji',
-              'stock photo', 'getty images watermark', 'amateur design', 'cheap gradient',
-              'flat design without depth', 'pixelated', 'blurry', 'low resolution',
-              'generic advertisement', 'cookie-cutter layout', 'template design', 'corporate clipart',
-              'cluttered layout', 'overlapping elements', 'cramped composition', 'elements touching edges',
-              'elements cut off', 'busy background', 'white background', 'light background', 'bright background',
-              'countdown timer', 'excessive urgency badges', 'watermark', 'human face',
-              ...(customWantsBrandDNA ? [] : ['translucent circle', 'iridescent sphere', 'glowing orb', 'circular background decoration']),
-            ].join(', ');
+              ? customBrandPrefix + customTextManifest + customUserReqsBlock + conceptPrompt
+              : customBrandPrefix + customTextManifest + customUserReqsBlock + variant.prefix + baseImagePrompt;
             const result = await generateImage({
               detailed: variantPrompt,
               referenceUrl: reference || undefined,
-              negative: customPremiumNeg,
+              negative: baseNeg + (customWantsBrandDNA ? '' : ', translucent circles, iridescent spheres, glowing orbs'),
               technicalSpecs: brief?.imageGenerationPrompt?.technicalSpecs,
             }, { tier: 'pro' });
 
@@ -1055,9 +1101,9 @@ All creative power comes from typography mastery, the premium hero visual, and c
     if (type === 'multi-format') {
       const { imagePrompt, referenceUrl: refUrlParam, formats } = body;
       const targetFormats = formats || ['1:1', '9:16', '4:5'];
-      
+
       console.log(`[Studio] Generating ${targetFormats.length} format variants...`);
-      
+
       const formatResults = await Promise.allSettled(
         targetFormats.map(async (format: string) => {
           const formatPrompt = imagePrompt + `\n\nAspect ratio: ${format}. Adjust composition to fit ${format} format naturally — do not just crop or stretch.`;
@@ -1072,11 +1118,11 @@ All creative power comes from typography mastery, the premium hero visual, and c
           };
         })
       );
-      
+
       const formatVariants = formatResults
         .map(r => r.status === 'fulfilled' ? r.value : null)
         .filter(Boolean);
-      
+
       return NextResponse.json({ formats: formatVariants });
     }
 
@@ -1086,14 +1132,14 @@ All creative power comes from typography mastery, the premium hero visual, and c
       if (!feedback) {
         return NextResponse.json({ error: 'Feedback text is required' }, { status: 400 });
       }
-      
+
       const refinement = await buildRefinement({
         imageDataUri: currentImage || '',
         feedback,
         originalBrief,
         refinementType,
       });
-      
+
       if (!refinement) {
         return NextResponse.json({ error: 'Refinement analysis failed' }, { status: 500 });
       }
@@ -1155,7 +1201,7 @@ All creative power comes from typography mastery, the premium hero visual, and c
       if (!agentPrompt) {
         return NextResponse.json({ error: 'imagePrompt is required for agentic pipeline' }, { status: 400 });
       }
-      
+
       console.log(`[Studio] Starting agentic pipeline (max ${maxRetries || 2} retries, min score ${minScore || MIN_SCORE_THRESHOLD})...`);
       const agentResult = await runAgenticPipeline(
         agentPrompt,
@@ -1180,7 +1226,7 @@ All creative power comes from typography mastery, the premium hero visual, and c
       if (!cpPrompt) {
         return NextResponse.json({ error: 'imagePrompt is required' }, { status: 400 });
       }
-      
+
       const platformResults = await generateCrossPlatform(cpPrompt, platformIds, cpRef);
       return NextResponse.json({ platforms: platformResults });
     }
@@ -1191,7 +1237,7 @@ All creative power comes from typography mastery, the premium hero visual, and c
       if (!offer) {
         return NextResponse.json({ error: 'Base offer text is required' }, { status: 400 });
       }
-      
+
       const personaResults = await generateForAllPersonas(offer, personaIds, ptRef);
       return NextResponse.json({ personas: personaResults });
     }
@@ -1202,14 +1248,14 @@ All creative power comes from typography mastery, the premium hero visual, and c
       if (!creativeId) {
         return NextResponse.json({ error: 'creativeId is required' }, { status: 400 });
       }
-      
+
       const client = await clientPromise;
       const db = client.db(process.env.MONGODB_DB_NAME || 'reddit_data');
       const historyCollection = db.collection('history');
-      
+
       const headline = histResult?.copywriting?.headline?.primary || histResult?.creativeConcept?.title || '';
       const score = histResult?.creativeConcept?.targetScore || histResult?.targetScore || null;
-      
+
       await historyCollection.insertOne({
         creativeId,
         parentId: parentId || null,
@@ -1232,7 +1278,7 @@ All creative power comes from typography mastery, the premium hero visual, and c
           { $set: { childId: creativeId } }
         );
       }
-      
+
       console.log(`[History] Saved creative ${creativeId} (parent: ${parentId || 'none'}) to history`);
       return NextResponse.json({ success: true, creativeId });
     }
@@ -1243,14 +1289,14 @@ All creative power comes from typography mastery, the premium hero visual, and c
       if (!creativeId) {
         return NextResponse.json({ error: 'creativeId is required' }, { status: 400 });
       }
-      
+
       const client = await clientPromise;
       const db = client.db(process.env.MONGODB_DB_NAME || 'reddit_data');
       const savedCollection = db.collection('saved_creative');
-      
+
       const headline = histResult?.copywriting?.headline?.primary || histResult?.creativeConcept?.title || '';
       const score = histResult?.creativeConcept?.targetScore || histResult?.targetScore || null;
-      
+
       await savedCollection.updateOne(
         { creativeId },
         {
@@ -1270,7 +1316,7 @@ All creative power comes from typography mastery, the premium hero visual, and c
         },
         { upsert: true }
       );
-      
+
       console.log(`[Vault] Creative ${creativeId} saved/updated in saved_creative collection`);
       return NextResponse.json({ success: true, creativeId });
     }

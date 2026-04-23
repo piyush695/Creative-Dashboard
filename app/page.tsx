@@ -317,10 +317,13 @@ function DashboardContent() {
         platform: next === "home" ? null : next,
         view: null,
         adId: null,
-        account: "all"
+        account: "all",
+        profile: null,
+        settings: null,
+        guide: null
       });
     },
-    [updateUrl],
+    [updateUrl, searchParams],
   );
 
   const setSelectedAdId = useCallback(
@@ -346,11 +349,11 @@ function DashboardContent() {
       const current = v === "ai-studio" ? "ai-studio" : v === "saved-creatives" ? "saved-creatives" : "dashboard";
       const next = typeof val === "function" ? val(current) : val;
       if (next === "ai-studio") {
-        updateUrl({ view: "ai-studio", adId: null });
+        updateUrl({ view: "ai-studio", adId: null, profile: null, settings: null, guide: null });
       } else if (next === "saved-creatives") {
-        updateUrl({ view: "saved-creatives", adId: null });
+        updateUrl({ view: "saved-creatives", adId: null, profile: null, settings: null, guide: null });
       } else {
-        updateUrl({ view: null });
+        updateUrl({ view: null, profile: null, settings: null, guide: null });
       }
     },
     [updateUrl, searchParams],
@@ -1046,18 +1049,18 @@ function DashboardContent() {
           type="button"
           suppressHydrationWarning
           onClick={() => {
-            // Close all overlay views
-            setIsProfileOpen(false);
-            setIsSettingsOpen(false);
-            setIsGuideOpen(false);
-            setIsViewAllAdsOpen(false);
-            // Reset search & selection — stay on current platform
+            // Close all overlay views and reset selection
+            setMultipleStates({
+              profile: false,
+              settings: false,
+              guide: false,
+              view: null, // "dashboard" is essentially view: null
+              adId: null,
+              account: "all"
+            });
             setSearchQuery("");
-            setSelectedAdId(null);
             setActiveAnalysis(null);
-            setSelectedAccountId("all");
             setIsSearchDropdownOpen(false);
-            setActiveView("dashboard"); // Ensure we are on the dashboard view
           }}
           className="hover:opacity-80 transition-opacity relative z-10"
         >
@@ -1195,10 +1198,12 @@ function DashboardContent() {
                 size="icon"
                 className="rounded-full h-8 w-8 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800/80 active:scale-95 flex-shrink-0 group"
                 onClick={() => {
-                  setIsGuideOpen(true);
-                  setIsProfileOpen(false);
-                  setIsSettingsOpen(false);
-                  setIsViewAllAdsOpen(false);
+                  setMultipleStates({
+                    guide: true,
+                    profile: false,
+                    settings: false,
+                    view: null
+                  });
                 }}
               >
                 <HelpCircle className="h-[1rem] w-[1rem] text-muted-foreground group-hover:text-primary transition-transform" />
@@ -1208,10 +1213,12 @@ function DashboardContent() {
                   suppressHydrationWarning
                   className="flex"
                   onClick={() => {
-                    setIsGuideOpen(true);
-                    setIsProfileOpen(false);
-                    setIsSettingsOpen(false);
-                    setIsViewAllAdsOpen(false);
+                    setMultipleStates({
+                      guide: true,
+                      profile: false,
+                      settings: false,
+                      view: null
+                    });
                   }}
                 >
                   <span suppressHydrationWarning className="px-3 py-1.5 bg-zinc-950 dark:bg-white text-zinc-50 dark:text-zinc-900 text-[10px] font-black rounded-lg shadow-2xl whitespace-nowrap flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all border border-black/10 dark:border-white/10">
@@ -1320,10 +1327,12 @@ function DashboardContent() {
                   <DropdownMenuItem
                     className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/5 group"
                     onClick={() => {
-                      setIsGuideOpen(true);
-                      setIsProfileOpen(false);
-                      setIsSettingsOpen(false);
-                      setIsViewAllAdsOpen(false);
+                      setMultipleStates({
+                        guide: true,
+                        profile: false,
+                        settings: false,
+                        view: null
+                      });
                     }}
                   >
                     <BookOpen className="w-4 h-4 text-[#007AFF]" />
@@ -1390,10 +1399,12 @@ function DashboardContent() {
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => {
-                    setIsProfileOpen(true);
-                    setIsSettingsOpen(false);
-                    setIsViewAllAdsOpen(false);
-                    setIsGuideOpen(false);
+                    setMultipleStates({
+                      profile: true,
+                      settings: false,
+                      view: null,
+                      guide: false
+                    });
                   }}
                 >
                   <User className="mr-2 h-4 w-4" /> Profile
@@ -1401,10 +1412,12 @@ function DashboardContent() {
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => {
-                    setIsSettingsOpen(true);
-                    setIsProfileOpen(false);
-                    setIsViewAllAdsOpen(false);
-                    setIsGuideOpen(false);
+                    setMultipleStates({
+                      settings: true,
+                      profile: false,
+                      view: null,
+                      guide: false
+                    });
                   }}
                 >
                   <Settings className="mr-2 h-4 w-4" /> Settings
@@ -2049,10 +2062,12 @@ function DashboardContent() {
                               <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() => {
-                                  setIsProfileOpen(true);
-                                  setIsSettingsOpen(false);
-                                  setIsViewAllAdsOpen(false);
-                                  setIsGuideOpen(false);
+                                  setMultipleStates({
+                                    profile: true,
+                                    settings: false,
+                                    view: null,
+                                    guide: false
+                                  });
                                   setIsMobileMenuOpen(false);
                                 }}
                               >
@@ -2063,10 +2078,12 @@ function DashboardContent() {
                               <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() => {
-                                  setIsSettingsOpen(true);
-                                  setIsProfileOpen(false);
-                                  setIsViewAllAdsOpen(false);
-                                  setIsGuideOpen(false);
+                                  setMultipleStates({
+                                    settings: true,
+                                    profile: false,
+                                    view: null,
+                                    guide: false
+                                  });
                                   setIsMobileMenuOpen(false);
                                 }}
                               >
@@ -2422,7 +2439,12 @@ function DashboardContent() {
                   Dashboard
                 </span>
                 {((selectedPlatform !== "all" ||
-                  connectedPlatforms.length <= 1) && activeView !== "ai-studio" && activeView !== "saved-creatives") && (
+                  connectedPlatforms.length <= 1) && 
+                  !isProfileOpen &&
+                  !isSettingsOpen &&
+                  !isGuideOpen &&
+                  activeView !== "ai-studio" && 
+                  activeView !== "saved-creatives") && (
                     <>
                       <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
                       <span className="text-[11px] text-muted-foreground flex-shrink-0 leading-none whitespace-nowrap uppercase tracking-wider">
@@ -2491,6 +2513,9 @@ function DashboardContent() {
 
                 {((selectedPlatform !== "all" ||
                   connectedPlatforms.length <= 1) && 
+                  !isProfileOpen &&
+                  !isSettingsOpen &&
+                  !isGuideOpen &&
                   activeView !== "ai-studio" && 
                   activeView !== "saved-creatives" &&
                   activeView !== "history") && (
@@ -3069,8 +3094,7 @@ function DashboardContent() {
                 <ProfileView
                   onOpenPasswordChange={() => setIsPasswordDialogOpen(true)}
                   onBack={() => {
-                    setIsProfileOpen(false);
-                    setIsSettingsOpen(false);
+                    setMultipleStates({ profile: false, settings: false });
                   }}
                 />
               </div>
@@ -3078,8 +3102,7 @@ function DashboardContent() {
               <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-4 md:px-8 max-w-7xl mx-auto w-full">
                 <SettingsView
                   onBack={() => {
-                    setIsProfileOpen(false);
-                    setIsSettingsOpen(false);
+                    setMultipleStates({ profile: false, settings: false });
                   }}
                   onEnabledPlatformsChange={(platforms) => {
                     // Detect newly added platform (one that wasn't in enabledPlatforms before)
@@ -3089,11 +3112,13 @@ function DashboardContent() {
                     setEnabledPlatforms(platforms);
                     if (newlyAdded) {
                       // Switch to the new platform and close all overlay views
-                      setSelectedPlatform(newlyAdded as PlatformType);
-                      setIsSettingsOpen(false);
-                      setIsProfileOpen(false);
-                      setIsGuideOpen(false);
-                      setIsViewAllAdsOpen(false);
+                      setMultipleStates({
+                        platform: newlyAdded as string,
+                        settings: false,
+                        profile: false,
+                        guide: false,
+                        view: null
+                      });
                     } else if (
                       selectedPlatform !== "all" &&
                       selectedPlatform !== "meta" &&

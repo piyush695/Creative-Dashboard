@@ -44,6 +44,8 @@ export async function runCreativeDirector(
   brief: any,
   paradigms: ConceptParadigm[],
   brandDirective: string,
+  userPrompt?: string,
+  userTone?: string,
 ): Promise<DirectorResult | null> {
   try {
     // Extract text content from the brief
@@ -91,7 +93,12 @@ ${p.antiPatterns}
       model: DIRECTOR_MODEL,
       max_tokens: 4000,
       system: `You are a world-class Creative Director at a top advertising agency. You are producing 3 COMPLETELY DIFFERENT ad creatives from the same brief. Each creative uses a fundamentally different visual paradigm — they must look like they came from 3 different agencies.
-
+${userPrompt ? `
+## THE USER'S REQUIREMENT (TOP PRIORITY — MUST BE HONORED IN ALL 3 CONCEPTS)
+The user explicitly asked for: "${userPrompt}"
+${userTone ? `Tone/style: "${userTone}"` : ''}
+Every concept you produce MUST visually reflect and incorporate this requirement. Do NOT ignore it. Do NOT produce generic concepts that ignore what the user asked for. The visual paradigm changes HOW the requirement is expressed, but the requirement itself must be present in ALL 3 concepts.
+` : ''}
 CRITICAL RULES:
 - Each concept must have a DIFFERENT layout structure (asymmetric vs grid vs full-bleed vs centered vs split-screen)
 - Each concept must have a DIFFERENT visual hierarchy and different visual subject matter
@@ -148,6 +155,8 @@ Respond with ONLY valid JSON — no markdown, no preamble, no explanation.`,
 Concept: ${concept}
 Rationale: ${rationale}
 Color palette: primary=${colors.primary}, secondary=${colors.secondary}, accent=${colors.accent}, background=${colors.background}
+${userPrompt ? `\nUSER'S EXPLICIT REQUIREMENT (MUST BE REFLECTED IN ALL 3 CONCEPTS): "${userPrompt}"` : ''}
+${userTone ? `USER'S TONE/STYLE: "${userTone}"` : ''}
 
 ${textManifest}
 
