@@ -1,8 +1,5 @@
 import {
   LayoutDashboard,
-  Facebook,
-  Chrome,
-  Target,
   Sparkles,
   Clock,
   Bookmark,
@@ -10,11 +7,15 @@ import {
   User,
   type LucideIcon,
 } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
+import { MetaLogo, GoogleLogo, AdRollLogo } from "@/components/icons/platforms";
+
+type IconLike = LucideIcon | ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
 
 export type NavItem = {
   label: string;
   href: string;
-  icon: LucideIcon;
+  icon: IconLike;
   badge?: string;
 };
 
@@ -28,9 +29,9 @@ export const PRIMARY_NAV: NavSection[] = [
     label: "Analyze",
     items: [
       { label: "Overview", href: "/", icon: LayoutDashboard },
-      { label: "Meta Ads", href: "/legacy?platform=meta", icon: Facebook },
-      { label: "Google Ads", href: "/legacy?platform=google", icon: Chrome },
-      { label: "AdRoll", href: "/legacy?platform=adroll", icon: Target },
+      { label: "Meta Ads", href: "/legacy?platform=meta", icon: MetaLogo },
+      { label: "Google Ads", href: "/legacy?platform=google", icon: GoogleLogo },
+      { label: "AdRoll", href: "/legacy?platform=adroll", icon: AdRollLogo },
     ],
   },
   {
