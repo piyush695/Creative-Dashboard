@@ -286,7 +286,12 @@ ${summary.commonHookVerbals.map((h) => `  - "${h}"`).join("\n")}
 Dominant colors:
 ${summary.commonColors.map((c) => `  - ${c}`).join("\n")}
 
-USE THESE PATTERNS to inform the new creative. Don't copy them — synthesize. Pick the layout most aligned with the brief, mix 2-3 psychology tactics, and match the established CTA style.
+USAGE RULES — READ CAREFULLY:
+1. STYLE ONLY, NEVER CONTENT. Use the patterns above (layout, palette, CTA style, hook FORM) to inform aesthetic decisions. Do NOT copy headlines, prices, promo codes, or specific offers from the reference ads — those are inputs to learn from, not templates to clone.
+2. GENERATE A FRESH IDEA. The headline, hook, and concept must be NEW. If the references all say "$2K Challenge for $9", you do NOT say that. Invent a different angle — a different offer framing, a different objection-handler, a different cultural hook.
+3. RIDE CURRENT TRENDS. Pull from what's hot in the ad market RIGHT NOW: meme formats, current events, seasonal moments (e.g. World Cup, holiday sales, market volatility news), bold typography trends, AI-era visual cliches done sincerely, retro-futurist callbacks. Don't be afraid to be culturally specific or topical.
+4. MATCH THE CRAFT BAR. The references represent the QUALITY CEILING — sharp typography, premium dark aesthetic, restrained element count (5-7 elements max), strong focal hierarchy. New idea, same craft.
+5. KEEP NON-NEGOTIABLES. HolaPrime logo top-left, #WeAreTraders top-right, "Buy Challenge" or equivalent CTA, dark background, legal disclaimer at bottom.
 === END ${label} ===
 `;
 }
