@@ -540,23 +540,14 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-background text-foreground overflow-hidden font-sans select-none" suppressHydrationWarning>
-      
-      {/* Header */}
-        <header className="px-3 md:px-5 py-2 md:py-3 border-b border-white/[0.06] bg-background/90 backdrop-blur-xl z-50 shrink-0">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/8 border border-blue-500/15 rounded-full shrink-0">
-                <Sparkles className="w-3 h-3 text-blue-400" />
-              </div>
-              <h1 className="text-sm font-bold tracking-tight italic text-foreground/90 truncate">Creative Analyzer</h1>
-            </div>
-            {onClose && (
-              <button onClick={onClose} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors border border-border shrink-0 sm:hidden">
-                <X className="w-4 h-4 text-muted-foreground" />
-              </button>
-            )}
+    <div className="flex flex-col h-full bg-background text-foreground overflow-hidden font-sans" suppressHydrationWarning>
+
+      {/* Studio sub-tabs — AppShell topbar already provides app-level header */}
+        <header className="px-4 md:px-6 py-3 border-b border-border bg-background z-20 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-3">
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <h1 className="text-base font-semibold tracking-tight">Studio</h1>
+            <p className="text-xs text-muted-foreground">Generate on-brand creatives with AI.</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.06] flex w-full sm:w-auto">
@@ -611,7 +602,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                 ) : (
                   <>
                     <LayoutGrid className="w-3 h-3" />
-                    {activeMainTab === "studio" ? "Synthesis Assets" : "Neural Context"}
+                    {activeMainTab === "studio" ? "Source assets" : "Brief"}
                   </>
                 )}
               </h2>
@@ -697,7 +688,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                 <textarea
                   value={currentTabState.prompt}
                   onChange={(e) => updateTabState('custom', { prompt: e.target.value })}
-                  placeholder="Describe your creative vision in natural language..."
+                  placeholder="What should this creative communicate? Audience, offer, tone…"
                   className="w-full flex-1 min-h-[120px] bg-muted/20 border border-border rounded-xl p-4 text-sm outline-none focus:ring-1 focus:ring-primary/30 transition-all leading-relaxed placeholder:opacity-30 custom-scrollbar resize-none text-foreground/80"
                 />
               </div>
@@ -1184,17 +1175,16 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
               )}
 
               {activeMainTab !== "top-ads" && (
-                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-3 animate-in fade-in duration-500 min-h-[400px]">
-                  <div className="relative mb-1">
-                    <div className="absolute inset-0 bg-blue-500/5 blur-[60px] rounded-full animate-pulse scale-150" />
-                    <div className="w-16 h-16 rounded-md bg-muted/30 border border-border flex items-center justify-center relative z-10 text-primary">
-                      {activeMainTab === "custom" ? <Sparkles className="w-8 h-8" /> : <Settings2 className="w-8 h-8" />}
-                    </div>
+                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 min-h-[400px]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                    {activeMainTab === "custom" ? <Sparkles className="h-5 w-5" /> : <Settings2 className="h-5 w-5" />}
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-xl font-bold text-foreground/80">Standby</h3>
-                    <p className="text-[11px] text-muted-foreground font-medium max-w-[280px] mx-auto">
-                      Provide a prompt to begin creative generation.
+                    <h3 className="text-base font-semibold tracking-tight">Ready to generate</h3>
+                    <p className="max-w-[320px] text-sm text-muted-foreground">
+                      {activeMainTab === "custom"
+                        ? "Write a brief on the left and hit Generate."
+                        : "Pick a source ad or template to start."}
                     </p>
                   </div>
                 </div>
