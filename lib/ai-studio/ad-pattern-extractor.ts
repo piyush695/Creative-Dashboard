@@ -14,6 +14,8 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { promises as fs } from "fs";
+import path from "path";
 import { extractAndRepairJson } from "./parser";
 import type { AdPattern, StoredAd } from "./ad-library-db";
 
@@ -45,15 +47,53 @@ const SCHEMA_INSTRUCTION = `Return JSON matching this exact shape:
   "language": "<2-letter ISO code, default 'en'>"
 }`;
 
+type ImageMediaType = "image/jpeg" | "image/png" | "image/webp";
+
+function mediaTypeFromExt(ext: string): ImageMediaType {
+  const lower = ext.toLowerCase();
+  if (lower === ".png") return "image/png";
+  if (lower === ".webp") return "image/webp";
+  return "image/jpeg";
+}
+
+/**
+ * Read a local upload (served from /public/...) directly off disk and return
+ * as base64. Triggered when the image URL starts with `/ad-library-uploads/`
+ * — these are saved by the manual sync and aren't reachable via fetch() in
+ * server-side code without spinning up an HTTP request to ourselves.
+ */
+async function readLocalImageAsBase64(
+  publicUrl: string,
+): Promise<{ data: string; media_type: ImageMediaType } | null> {
+  try {
+    // /ad-library-uploads/<slug>/<filename> → public/ad-library-uploads/...
+    const relativePath = publicUrl.replace(/^\/+/, ""); // strip leading slash
+    const absPath = path.join(process.cwd(), "public", relativePath);
+    const buffer = await fs.readFile(absPath);
+    const data = buffer.toString("base64");
+    return { data, media_type: mediaTypeFromExt(path.extname(absPath)) };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Fetch an ad snapshot URL and return as base64 for Claude Vision.
  * Meta serves these as HTML pages that contain the image — we have to be tolerant
  * about the response shape. If it's not an image, we bail and let pattern extraction
  * skip this ad.
+ *
+ * For local uploads (URLs starting with `/ad-library-uploads/`), reads directly
+ * from disk since fetch() can't resolve relative URLs in server-side code.
  */
 async function fetchSnapshotAsBase64(
   url: string,
-): Promise<{ data: string; media_type: "image/jpeg" | "image/png" | "image/webp" } | null> {
+): Promise<{ data: string; media_type: ImageMediaType } | null> {
+  // Local upload path → filesystem read
+  if (url.startsWith("/ad-library-uploads/")) {
+    return await readLocalImageAsBase64(url);
+  }
+
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (ad-pattern-extractor)" },
@@ -67,13 +107,12 @@ async function fetchSnapshotAsBase64(
 
     const buffer = await res.arrayBuffer();
     const data = Buffer.from(buffer).toString("base64");
-    const mediaType = (
+    const mediaType: ImageMediaType =
       contentType.includes("png")
         ? "image/png"
         : contentType.includes("webp")
         ? "image/webp"
-        : "image/jpeg"
-    ) as "image/jpeg" | "image/png" | "image/webp";
+        : "image/jpeg";
 
     return { data, media_type: mediaType };
   } catch {

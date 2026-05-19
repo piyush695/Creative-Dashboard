@@ -17,6 +17,7 @@ import {
   getAdLibraryStats,
 } from "@/lib/ai-studio/ad-library-db";
 import { syncAdLibrary } from "@/lib/ai-studio/ad-library-sync";
+import { syncLocalAdLibrary } from "@/lib/ai-studio/ad-library-local-sync";
 import { summarizePatterns, buildPatternContext } from "@/lib/ai-studio/ad-pattern-extractor";
 
 /**
@@ -156,6 +157,20 @@ export async function GET(request: Request) {
       const result = await syncAdLibrary({
         countries,
         adsPerBrand,
+        skipPatterns,
+      });
+      return NextResponse.json({ success: true, result });
+    }
+
+    // ─── Local sync (manual fallback — reads from public/ad-library-uploads) ─
+    if (action === "sync-local") {
+      const skipPatterns = searchParams.get("skipPatterns") === "true";
+      const patternBudget = searchParams.get("patternBudget")
+        ? parseInt(searchParams.get("patternBudget")!, 10)
+        : undefined;
+
+      const result = await syncLocalAdLibrary({
+        patternBudget,
         skipPatterns,
       });
       return NextResponse.json({ success: true, result });

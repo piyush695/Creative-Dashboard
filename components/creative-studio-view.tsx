@@ -811,46 +811,84 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                       No ads synced yet. Run a sync to pull HolaPrime + 12 competitors from Meta.
                     </p>
                   )}
-                  <button
-                    disabled={syncRunning}
-                    onClick={async () => {
-                      setSyncRunning(true)
-                      setSyncSummary(null)
-                      try {
-                        const res = await fetch('/api/adlibrary?action=sync-all')
-                        const data = await res.json()
-                        if (data.error) {
-                          toast.error('Sync failed: ' + data.error)
-                        } else {
-                          const r = data.result
-                          setSyncSummary({
-                            totalNewAds: r.totalNewAds,
-                            totalUpdatedAds: r.totalUpdatedAds,
-                            patternsExtracted: r.patternsExtracted,
-                            durationMs: r.durationMs,
-                          })
-                          toast.success(`Sync complete · ${r.totalNewAds} new ads · ${r.patternsExtracted} patterns extracted`)
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      disabled={syncRunning}
+                      onClick={async () => {
+                        setSyncRunning(true)
+                        setSyncSummary(null)
+                        try {
+                          const res = await fetch('/api/adlibrary?action=sync-all')
+                          const data = await res.json()
+                          if (data.error) {
+                            toast.error('Meta sync failed: ' + data.error)
+                          } else {
+                            const r = data.result
+                            setSyncSummary({
+                              totalNewAds: r.totalNewAds,
+                              totalUpdatedAds: r.totalUpdatedAds,
+                              patternsExtracted: r.patternsExtracted,
+                              durationMs: r.durationMs,
+                            })
+                            toast.success(`Meta sync · ${r.totalNewAds} new · ${r.patternsExtracted} patterns`)
+                          }
+                        } catch (err: any) {
+                          toast.error('Meta sync error: ' + err.message)
+                        } finally {
+                          setSyncRunning(false)
                         }
-                      } catch (err: any) {
-                        toast.error('Sync error: ' + err.message)
-                      } finally {
-                        setSyncRunning(false)
-                      }
-                    }}
-                    className="w-full h-8 text-[11px] font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
-                  >
-                    {syncRunning ? (
-                      <>
+                      }}
+                      className="h-8 text-[11px] font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      title="Pull ads from Meta Ad Library API (requires API access approval)"
+                    >
+                      {syncRunning ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
-                        Syncing… this may take several minutes
-                      </>
-                    ) : (
-                      <>
+                      ) : (
                         <RefreshCcw className="h-3 w-3" />
-                        {libraryStats?.totalAds ? 'Sync from Meta Ad Library' : 'Run first sync'}
-                      </>
-                    )}
-                  </button>
+                      )}
+                      From Meta
+                    </button>
+                    <button
+                      disabled={syncRunning}
+                      onClick={async () => {
+                        setSyncRunning(true)
+                        setSyncSummary(null)
+                        try {
+                          const res = await fetch('/api/adlibrary?action=sync-local')
+                          const data = await res.json()
+                          if (data.error) {
+                            toast.error('Local sync failed: ' + data.error)
+                          } else {
+                            const r = data.result
+                            setSyncSummary({
+                              totalNewAds: r.totalNewAds,
+                              totalUpdatedAds: r.totalUpdatedAds,
+                              patternsExtracted: r.patternsExtracted,
+                              durationMs: r.durationMs,
+                            })
+                            if (r.filesFound === 0) {
+                              toast.info('No image files found — drop ads into public/ad-library-uploads/<brand>/')
+                            } else {
+                              toast.success(`Local sync · ${r.filesFound} files · ${r.totalNewAds} new · ${r.patternsExtracted} patterns`)
+                            }
+                          }
+                        } catch (err: any) {
+                          toast.error('Local sync error: ' + err.message)
+                        } finally {
+                          setSyncRunning(false)
+                        }
+                      }}
+                      className="h-8 text-[11px] font-semibold rounded-md border border-border bg-card hover:bg-accent transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      title="Read images from public/ad-library-uploads/<brand>/ — no Meta API needed"
+                    >
+                      {syncRunning ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <RefreshCcw className="h-3 w-3" />
+                      )}
+                      From Uploads
+                    </button>
+                  </div>
                   {syncSummary && (
                     <div className="text-[10px] text-muted-foreground border-t border-border pt-2">
                       Last run: +{syncSummary.totalNewAds} new · {syncSummary.totalUpdatedAds} updated · {syncSummary.patternsExtracted} patterns in {(syncSummary.durationMs / 1000).toFixed(1)}s
