@@ -57,7 +57,7 @@ export default function RootLayout({
       <body className={`font-sans antialiased touch-manipulation`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >

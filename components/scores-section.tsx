@@ -202,8 +202,8 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
             <Card
               key={score.name}
               className={cn(
-                "group cursor-pointer transition-all duration-700 relative overflow-hidden border border-border/40 premium-shadow premium-shadow-hover glass shine-effect rounded-xl md:rounded-2xl",
-                isSelected && "ring-2 ring-primary/50 shadow-md -translate-y-1 bg-primary/[0.02]"
+                "group cursor-pointer transition-colors relative overflow-hidden border border-border bg-card hover:bg-accent rounded-md",
+                isSelected && "ring-1 ring-primary bg-accent"
               )}
               onClick={() => onSelectScore(score.name)}
             >

@@ -76,24 +76,8 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-zinc-950 p-4 md:p-8 selection:bg-blue-500/30">
-            {/* Ambient Background Glows */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full opacity-[0.1] blur-[120px] bg-blue-600" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full opacity-[0.05] blur-[100px] bg-indigo-600" />
-            </div>
-
-            {/* Back Button */}
-            <div className="max-w-4xl mx-auto mb-8 relative z-10">
-                <Link href="/">
-                    <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-white/5 transition-all rounded-xl gap-2">
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to Dashboard
-                    </Button>
-                </Link>
-            </div>
-
-            <div className="max-w-4xl mx-auto space-y-8 relative z-10">
+        <div className="px-6 py-6 selection:bg-blue-500/30">
+            <div className="mx-auto max-w-4xl space-y-8">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-zinc-800 pb-8">
                     <div className="space-y-1">
                         <div className="flex items-center gap-3">

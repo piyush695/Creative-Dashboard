@@ -61,7 +61,7 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
       </div>
 
       {/* Primary Key Insight */}
-      <Card className="relative overflow-hidden border border-border/40 premium-shadow glass transition-all group rounded-[2.5rem]">
+      <Card className="relative overflow-hidden border border-border bg-card transition-colors group rounded-md">
         <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
         <CardHeader className="pb-2 px-8 pt-8">
           <div className="flex gap-4 items-center">
@@ -132,7 +132,7 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
 
       {/* Strategic Elements Action Plan - Refined Tech Aesthetic */}
       {(adData.keepElements || adData.changeElements || adData.addElements) && (
-        <Card className="border border-border shadow-2xl bg-white dark:bg-zinc-900 relative overflow-hidden group rounded-[2.5rem] shine-effect">
+        <Card className="border border-border bg-card relative overflow-hidden group rounded-md">
           <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[150%] bg-primary opacity-[0.05] dark:opacity-[0.1] blur-[100px] pointer-events-none transition-all duration-1000" />
           <CardHeader className="px-8 pt-10 pb-6">
             <CardTitle className="text-xl font-black uppercase tracking-[0.3em] text-primary">Creative Blueprint</CardTitle>
@@ -179,7 +179,7 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
         </h4>
         <div className="space-y-4">
           {recommendations.map((rec, idx) => (
-            <div key={idx} className="flex flex-col gap-4 p-8 rounded-[3rem] bg-white dark:bg-zinc-900 border border-border premium-shadow premium-shadow-hover transition-all group/rec">
+            <div key={idx} className="flex flex-col gap-4 p-6 rounded-md bg-card border border-border hover:bg-accent transition-colors group/rec">
               <div className="flex flex-col md:flex-row gap-8">
                 <div className="flex-shrink-0">
                   <span className="flex items-center justify-center w-12 h-12 rounded-[1.5rem] bg-primary text-white text-lg font-black shadow-xl shadow-primary/30 group-hover/rec:scale-110 transition-all duration-500">

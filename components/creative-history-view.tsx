@@ -31,8 +31,8 @@ import { getHistoryList } from "@/actions/studio-actions"
 import { useRouter } from "next/navigation"
 
 interface CreativeHistoryViewProps {
-   onClose: () => void;
-   onRegenerate: (prompt: string, result?: any, tab?: string, generationOptions?: any) => void;
+   onClose?: () => void;
+   onRegenerate?: (prompt: string, result?: any, tab?: string, generationOptions?: any) => void;
 }
 
 // ── Shared image cache for thumbnails ──
@@ -221,7 +221,7 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
       const prompt = entry.prompt || '';
       const result = entry.result || null;
       const generationOptions = entry.generationOptions || {};
-      onRegenerate(prompt, result, tab, generationOptions);
+      onRegenerate?.(prompt, result, tab, generationOptions);
    }
 
    return (
