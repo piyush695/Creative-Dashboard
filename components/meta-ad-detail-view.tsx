@@ -52,7 +52,7 @@ function SummaryTab({ ad, formatCurrency, benchmark, onSelectMetric, activeAnaly
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-                <Card className="p-3 md:p-5 bg-zinc-950 border-white/5 rounded-2xl shadow-xl relative overflow-hidden flex flex-col min-h-[180px] md:min-h-[250px]">
+                <Card className="p-3 md:p-5 bg-background border-border rounded-md shadow-sm relative overflow-hidden flex flex-col min-h-[180px] md:min-h-[250px]">
                     <div className="absolute top-0 right-0 w-32 md:w-48 h-32 md:h-48 bg-blue-500/10 rounded-full blur-[60px] md:blur-[80px] -mr-16 md:-mr-24 -mt-16 md:-mt-24" />
                     <div className="relative z-10 flex flex-col h-full">
                         <div className="flex items-center gap-2 mb-2 md:mb-3">
@@ -61,12 +61,12 @@ function SummaryTab({ ad, formatCurrency, benchmark, onSelectMetric, activeAnaly
                             </div>
                             <h3 className="font-bold text-sm md:text-base text-white tracking-tight">Executive Summary</h3>
                         </div>
-                        <p className="text-zinc-400 text-[10px] md:text-sm leading-relaxed font-medium italic mb-3 md:mb-4">
+                        <p className="text-muted-foreground text-[10px] md:text-sm leading-relaxed font-medium italic mb-3 md:mb-4">
                             "{ad.topInsight || "No high-level insight available for this creative yet."}"
                         </p>
-                        <div className="mt-auto grid grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4 border-t border-white/10">
+                        <div className="mt-auto grid grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4 border-t border-border">
                             <div>
-                                <p className="text-[7px] md:text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-0.5 md:mb-1">Primary Verdict</p>
+                                <p className="text-[7px] md:text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-0.5 md:mb-1">Primary Verdict</p>
                                 <div className="flex items-center gap-1">
                                     <div className={cn(
                                         "w-1 h-1 md:w-1.5 md:h-1.5 rounded-full animate-pulse",
@@ -78,27 +78,27 @@ function SummaryTab({ ad, formatCurrency, benchmark, onSelectMetric, activeAnaly
                                 </div>
                             </div>
                             <div>
-                                <p className="text-[7px] md:text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-0.5 md:mb-1">Alpha Score</p>
+                                <p className="text-[7px] md:text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-0.5 md:mb-1">Alpha Score</p>
                                 <span className="text-sm md:text-base font-bold text-blue-500 tracking-tight">{ad.scoreOverall || 0}/100</span>
                             </div>
                         </div>
                     </div>
                 </Card>
 
-                <Card className="p-3 md:p-5 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/5 rounded-2xl shadow-sm flex flex-col gap-3 md:gap-4">
+                <Card className="p-3 md:p-5 bg-card border-border rounded-md shadow-sm flex flex-col gap-3 md:gap-4">
                     <div className="flex items-center gap-2">
                         <div className="p-1 rounded-lg bg-amber-500/10 text-amber-500">
                             <Lightbulb className="h-3.5 w-3.5 md:h-4 md:w-4" />
                         </div>
-                        <h4 className="text-[8px] md:text-[9px] font-black text-zinc-500 uppercase tracking-widest">Main Strategy</h4>
+                        <h4 className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase tracking-widest">Main Strategy</h4>
                     </div>
-                    <p className="text-[10px] md:text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-relaxed italic">
+                    <p className="text-[10px] md:text-xs font-bold text-foreground leading-relaxed italic">
                         {ad.primaryRecommendation || "Continue monitoring performance for more granular data points."}
                     </p>
-                    <div className="mt-auto pt-3 md:pt-4 border-t border-zinc-100 dark:border-white/5">
+                    <div className="mt-auto pt-3 md:pt-4 border-t border-zinc-100 dark:border-border">
                         <div className="flex items-center gap-2">
                             <Shield className="h-3 w-3 md:h-3.5 md:w-3.5 text-blue-500" />
-                            <p className="text-[8px] md:text-[9px] font-medium text-zinc-400 leading-tight">
+                            <p className="text-[8px] md:text-[9px] font-medium text-muted-foreground leading-tight">
                                 {ad.actionRationale || "Consistent performance across delivery networks."}
                             </p>
                         </div>
@@ -112,7 +112,7 @@ function SummaryTab({ ad, formatCurrency, benchmark, onSelectMetric, activeAnaly
 function PerformanceTab({ ad, onSelectMetric, activeAnalysis }: { ad: AdData, onSelectMetric?: (l: string) => void, activeAnalysis: any }) {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="bg-zinc-50/30 dark:bg-white/[0.01] p-4 rounded-2xl border border-zinc-100 dark:border-white/5">
+            <div className="bg-zinc-50/30 dark:bg-white/[0.01] p-4 rounded-md border border-zinc-100 dark:border-border">
                 <MetricsGrid
                     adData={ad}
                     onSelectMetric={onSelectMetric || (() => { })}
@@ -153,7 +153,7 @@ function AnalysisTab({ ad, benchmark }: { ad: AdData, benchmark?: any }) {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 pr-2 overflow-x-hidden">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/5 rounded-2xl shadow-lg flex flex-col min-h-[300px]">
+            <Card className="p-5 bg-card border-border rounded-md shadow-lg flex flex-col min-h-[300px]">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <div className="p-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
@@ -169,20 +169,20 @@ function AnalysisTab({ ad, benchmark }: { ad: AdData, benchmark?: any }) {
 
             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
                 {metrics.map((m, i) => (
-                    <Card key={i} className="p-5 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/5 rounded-2xl hover:border-blue-500/40 transition-all group">
+                    <Card key={i} className="p-5 bg-card border-border rounded-md hover:border-blue-500/40 transition-all group">
                         <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3">
                                 <div className={cn("p-2 rounded-lg bg-zinc-100 dark:bg-white/5 transition-all group-hover:scale-110", m.color)}>
                                     <m.icon className="h-4 w-4" />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-sm text-zinc-900 dark:text-white leading-none">{m.label}</h4>
-                                    <p className="text-[8px] text-zinc-500 uppercase font-black tracking-widest mt-1">Attribute</p>
+                                    <h4 className="font-bold text-sm text-foreground leading-none">{m.label}</h4>
+                                    <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest mt-1">Attribute</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <span className="text-lg font-black text-zinc-900 dark:text-white tracking-tighter">{m.score}</span>
-                                <span className="text-[9px] font-black text-zinc-400 ml-0.5">/10</span>
+                                <span className="text-lg font-black text-foreground tracking-tighter">{m.score}</span>
+                                <span className="text-[9px] font-black text-muted-foreground ml-0.5">/10</span>
                             </div>
                         </div>
                         <div className="relative">
@@ -193,7 +193,7 @@ function AnalysisTab({ ad, benchmark }: { ad: AdData, benchmark?: any }) {
                                 />
                             </div>
                         </div>
-                        <p className="text-[10px] md:text-xs font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                        <p className="text-[10px] md:text-xs font-medium text-muted-foreground dark:text-muted-foreground leading-relaxed">
                             {m.justification || "Data synchronization pending for analysis."}
                         </p>
                     </Card>
@@ -205,16 +205,16 @@ function AnalysisTab({ ad, benchmark }: { ad: AdData, benchmark?: any }) {
 
 function PsychBox({ label, present, strength, icon: Icon }: any) {
     return (
-        <Card className="p-3 md:p-4 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/5 rounded-2xl flex items-center gap-2 md:gap-3 transition-all hover:border-blue-500/20">
+        <Card className="p-3 md:p-4 bg-card border-border rounded-md flex items-center gap-2 md:gap-3 transition-all hover:border-blue-500/20">
             <div className={cn(
                 "p-1.5 md:p-2 rounded-xl flex items-center justify-center shrink-0",
-                present ? "bg-emerald-500/10 text-emerald-500" : "bg-zinc-100 dark:bg-white/5 text-zinc-400"
+                present ? "bg-emerald-500/10 text-emerald-500" : "bg-zinc-100 dark:bg-white/5 text-muted-foreground"
             )}>
                 <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </div>
             <div className="min-w-0">
-                <p className="text-[7px] md:text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 truncate">{label}</p>
-                <p className="text-[9px] md:text-[10px] font-bold text-zinc-900 dark:text-zinc-100 italic truncate">
+                <p className="text-[7px] md:text-[8px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-0.5 truncate">{label}</p>
+                <p className="text-[9px] md:text-[10px] font-bold text-foreground italic truncate">
                     {present ? `Detected (${strength})` : "Not Leveraged"}
                 </p>
             </div>
@@ -232,13 +232,13 @@ function AIDATab({ ad }: { ad: AdData }) {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 pr-2 overflow-x-hidden">
-            <div className="bg-zinc-50 dark:bg-white/5 p-4 md:p-6 rounded-3xl border border-zinc-100 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="bg-zinc-50 dark:bg-white/5 p-4 md:p-6 rounded-md border border-zinc-100 dark:border-border flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="space-y-2">
-                    <h3 className="text-lg md:text-xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase italic">Creative Funnel Efficiency</h3>
-                    <p className="text-xs font-medium text-zinc-500">Psychological flow through the AIDA framework</p>
+                    <h3 className="text-lg md:text-xl font-black text-foreground tracking-tighter uppercase italic">Creative Funnel Efficiency</h3>
+                    <p className="text-xs font-medium text-muted-foreground">Psychological flow through the AIDA framework</p>
                 </div>
-                <div className="p-4 bg-white dark:bg-black rounded-2xl border border-zinc-100 dark:border-white/10 shadow-xl min-w-[120px]">
-                    <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-0.5 text-center">Avg Score</p>
+                <div className="p-4 bg-white dark:bg-black rounded-md border border-zinc-100 dark:border-border shadow-sm min-w-[120px]">
+                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-0.5 text-center">Avg Score</p>
                     <p className="text-lg font-black text-blue-600 dark:text-blue-400 text-center tracking-tight">
                         {((ad.aidaAttentionScore || 0) + (ad.aidaInterestScore || 0) + (ad.aidaDesireScore || 0) + (ad.aidaActionScore || 0)) / 4}/10
                     </p>
@@ -251,19 +251,19 @@ function AIDATab({ ad }: { ad: AdData }) {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 md:gap-3">
                                 <span className={cn("text-3xl md:text-5xl font-black opacity-10 italic tracking-tighter", item.color)}>{i + 1}</span>
-                                <h4 className="text-base md:text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter">{item.label}</h4>
+                                <h4 className="text-base md:text-xl font-black text-foreground uppercase tracking-tighter">{item.label}</h4>
                             </div>
                             <span className={cn("text-base md:text-xl font-black tracking-tighter", item.color)}>{item.score}/10</span>
                         </div>
-                        <p className="text-[11px] md:text-sm font-medium text-zinc-600 dark:text-zinc-400 leading-relaxed pl-5 md:pl-6 border-l-2 border-zinc-200 dark:border-white/5 py-0.5">
+                        <p className="text-[11px] md:text-sm font-medium text-muted-foreground dark:text-muted-foreground leading-relaxed pl-5 md:pl-6 border-l-2 border-border py-0.5">
                             {item.analysis || "Funnel stage analysis is currently being computed by the creative engine."}
                         </p>
                     </div>
                 ))}
             </div>
 
-            <div className="mt-6 md:mt-10 pt-6 md:pt-8 border-t border-zinc-200 dark:border-white/10">
-                <h4 className="text-[8px] md:text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-4 md:mb-6 text-center">Psychological Biases</h4>
+            <div className="mt-6 md:mt-10 pt-6 md:pt-8 border-t border-border">
+                <h4 className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-4 md:mb-6 text-center">Psychological Biases</h4>
                 <div className="grid gap-2 md:gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
                     <PsychBox label="Loss Aversion" present={ad.lossAversionPresent} strength={ad.lossAversionStrength} icon={AlertCircle} />
                     <PsychBox label="Scarcity" present={ad.scarcityPresent} strength={ad.scarcityStrength} icon={Activity} />
@@ -280,8 +280,8 @@ function InsightsTab({ ad }: { ad: AdData }) {
             <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
-                        <div className="p-1 px-2 rounded-md bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase tracking-widest">Strengths</div>
-                        <h3 className="text-xs font-bold text-zinc-400">Winning Attributes</h3>
+                        <div className="p-1 px-2 rounded-md bg-emerald-500/10 text-emerald-600 text-[10px] font-medium uppercase tracking-wider">Strengths</div>
+                        <h3 className="text-xs font-bold text-muted-foreground">Winning Attributes</h3>
                     </div>
                     <div className="space-y-2 md:space-y-3">
                         {ad.keyStrengths?.split('\n').filter(s => s.trim()).map((s, i) => (
@@ -295,8 +295,8 @@ function InsightsTab({ ad }: { ad: AdData }) {
 
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
-                        <div className="p-1 px-2 rounded-md bg-rose-500/10 text-rose-600 text-[9px] font-black uppercase tracking-widest">Weaknesses</div>
-                        <h3 className="text-xs font-bold text-zinc-400">Optimization Required</h3>
+                        <div className="p-1 px-2 rounded-md bg-rose-500/10 text-rose-600 text-[10px] font-medium uppercase tracking-wider">Weaknesses</div>
+                        <h3 className="text-xs font-bold text-muted-foreground">Optimization Required</h3>
                     </div>
                     <div className="space-y-2 md:space-y-3">
                         {ad.keyWeaknesses?.split('\n').filter(w => w.trim()).map((w, i) => (
@@ -310,51 +310,51 @@ function InsightsTab({ ad }: { ad: AdData }) {
 
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
-                        <div className="p-1 px-2 rounded-md bg-blue-500/10 text-blue-600 text-[9px] font-black uppercase tracking-widest">Intelligence</div>
-                        <h3 className="text-xs font-bold text-zinc-400">Deep Creative Analysis</h3>
+                        <div className="p-1 px-2 rounded-md bg-blue-500/10 text-blue-600 text-[10px] font-medium uppercase tracking-wider">Intelligence</div>
+                        <h3 className="text-xs font-bold text-muted-foreground">Deep Creative Analysis</h3>
                     </div>
                     <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
                         {ad.psychology_analysis && (
-                            <Card className="p-4 bg-blue-500/5 border-blue-500/10 rounded-2xl">
+                            <Card className="p-4 bg-blue-500/5 border-blue-500/10 rounded-md">
                                 <h4 className="text-[8px] font-black uppercase tracking-widest text-blue-500 mb-2">Psychology</h4>
-                                <p className="text-[10px] md:text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed italic">"{ad.psychology_analysis}"</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed italic">"{ad.psychology_analysis}"</p>
                             </Card>
                         )}
                         {ad.behavioral_economics_analysis && (
-                            <Card className="p-4 bg-indigo-500/5 border-indigo-500/10 rounded-2xl">
+                            <Card className="p-4 bg-indigo-500/5 border-indigo-500/10 rounded-md">
                                 <h4 className="text-[8px] font-black uppercase tracking-widest text-indigo-500 mb-2">Behavioral Economics</h4>
-                                <p className="text-[10px] md:text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed italic">"{ad.behavioral_economics_analysis}"</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed italic">"{ad.behavioral_economics_analysis}"</p>
                             </Card>
                         )}
                         {ad.neuromarketing_analysis && (
-                            <Card className="p-4 bg-purple-500/5 border-purple-500/10 rounded-2xl">
+                            <Card className="p-4 bg-purple-500/5 border-purple-500/10 rounded-md">
                                 <h4 className="text-[8px] font-black uppercase tracking-widest text-purple-500 mb-2">Neuromarketing</h4>
-                                <p className="text-[10px] md:text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed italic">"{ad.neuromarketing_analysis}"</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed italic">"{ad.neuromarketing_analysis}"</p>
                             </Card>
                         )}
                         {ad.google_algorithm_analysis && (
-                            <Card className="p-4 bg-amber-500/5 border-amber-500/10 rounded-2xl">
+                            <Card className="p-4 bg-amber-500/5 border-amber-500/10 rounded-md">
                                 <h4 className="text-[8px] font-black uppercase tracking-widest text-amber-500 mb-2">Algorithm Alignment</h4>
-                                <p className="text-[10px] md:text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed italic">"{ad.google_algorithm_analysis}"</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed italic">"{ad.google_algorithm_analysis}"</p>
                             </Card>
                         )}
                         {ad.competitive_differentiation && (
-                            <Card className="p-4 bg-rose-500/5 border-rose-500/10 rounded-2xl">
+                            <Card className="p-4 bg-rose-500/5 border-rose-500/10 rounded-md">
                                 <h4 className="text-[8px] font-black uppercase tracking-widest text-rose-500 mb-2">Competition</h4>
-                                <p className="text-[10px] md:text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed italic">"{ad.competitive_differentiation}"</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed italic">"{ad.competitive_differentiation}"</p>
                             </Card>
                         )}
                         {ad.predicted_performance_impact && (
-                            <Card className="p-4 bg-emerald-500/5 border-emerald-500/10 rounded-2xl">
+                            <Card className="p-4 bg-emerald-500/5 border-emerald-500/10 rounded-md">
                                 <h4 className="text-[8px] font-black uppercase tracking-widest text-emerald-500 mb-2">Growth Vector</h4>
-                                <p className="text-[10px] md:text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed italic">"{ad.predicted_performance_impact}"</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed italic">"{ad.predicted_performance_impact}"</p>
                             </Card>
                         )}
                     </div>
                 </div>
             </div>
 
-            <Card className="p-6 bg-zinc-950 border-white/5 rounded-2xl relative overflow-hidden">
+            <Card className="p-6 bg-background border-border rounded-md relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
                 <div className="flex flex-col md:flex-row gap-6 md:gap-8">
                     <div className="flex-1 space-y-2 md:space-y-3">
@@ -364,7 +364,7 @@ function InsightsTab({ ad }: { ad: AdData }) {
                             </div>
                             <h4 className="text-sm md:text-base font-bold text-white uppercase tracking-tight">Winning Formula</h4>
                         </div>
-                        <p className="text-[10px] md:text-[11px] text-zinc-400 leading-relaxed font-medium">
+                        <p className="text-[10px] md:text-[11px] text-muted-foreground leading-relaxed font-medium">
                             {ad.whatWorks || "Analysis pending."}
                         </p>
                     </div>
@@ -375,7 +375,7 @@ function InsightsTab({ ad }: { ad: AdData }) {
                             </div>
                             <h4 className="text-sm md:text-base font-bold text-white uppercase tracking-tight">Negative Signals</h4>
                         </div>
-                        <p className="text-[10px] md:text-[11px] text-zinc-400 leading-relaxed font-medium">
+                        <p className="text-[10px] md:text-[11px] text-muted-foreground leading-relaxed font-medium">
                             {ad.whatDoesntWork || "No significant negative signals."}
                         </p>
                     </div>
@@ -396,16 +396,16 @@ function StrategyTab({ ad }: { ad: AdData }) {
         <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500 pr-4 pb-10 overflow-x-hidden">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h3 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-white tracking-tight leading-tight mb-1">Alpha Testing Strategy</h3>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Actionable Scaling Playbook</p>
+                    <h3 className="text-xl md:text-2xl font-bold text-foreground tracking-tight leading-tight mb-1">Alpha Testing Strategy</h3>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Actionable Scaling Playbook</p>
                 </div>
             </div>
 
             <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
                 {recommendations.map((r, i) => (
-                    <Card key={i} className={cn("p-4 md:p-5 rounded-2xl md:rounded-3xl border flex flex-col gap-3 group transition-all hover:shadow-xl hover:bg-white dark:hover:bg-zinc-900", r.color)}>
+                    <Card key={i} className={cn("p-4 md:p-5 rounded-md md:rounded-md border flex flex-col gap-3 group transition-all hover:shadow-sm hover:bg-white dark:hover:bg-card", r.color)}>
                         <div className="flex items-center justify-between gap-3">
-                            <div className="h-6 w-6 rounded-full bg-white dark:bg-zinc-950 flex items-center justify-center font-black text-[8px] shadow-sm shrink-0">
+                            <div className="h-6 w-6 rounded-full bg-white dark:bg-background flex items-center justify-center font-black text-[8px] shadow-sm shrink-0">
                                 0{i + 1}
                             </div>
                             <div className="flex-1">
@@ -417,24 +417,24 @@ function StrategyTab({ ad }: { ad: AdData }) {
                         </div>
 
                         <div className="space-y-2 flex-1">
-                            <p className="text-[11px] md:text-sm font-bold text-zinc-900 dark:text-white leading-relaxed">
+                            <p className="text-[11px] md:text-sm font-bold text-foreground leading-relaxed">
                                 {r.rec}
                             </p>
 
                             {r.impact && (
                                 <div className="mt-2 p-2 rounded-xl bg-blue-500/5 border border-blue-500/10">
                                     <p className="text-[7px] font-black text-blue-600/60 uppercase tracking-widest mb-1">Potential Impact</p>
-                                    <p className="text-[9px] md:text-[10px] font-medium text-zinc-600 dark:text-zinc-400 italic leading-tight">
+                                    <p className="text-[9px] md:text-[10px] font-medium text-muted-foreground dark:text-muted-foreground italic leading-tight">
                                         {r.impact}
                                     </p>
                                 </div>
                             )}
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
+                        <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-border">
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[7px] font-black text-zinc-400 uppercase tracking-widest">Effort:</span>
-                                <span className="text-[8px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">{r.effort}</span>
+                                <span className="text-[7px] font-black text-muted-foreground uppercase tracking-widest">Effort:</span>
+                                <span className="text-[8px] font-black text-foreground uppercase tracking-tight">{r.effort}</span>
                             </div>
                             <div className="h-1.5 w-1.5 rounded-full bg-blue-500/40" />
                         </div>
@@ -443,14 +443,14 @@ function StrategyTab({ ad }: { ad: AdData }) {
             </div>
 
             <div className="grid gap-8 mt-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-                <Card className="p-6 bg-zinc-50 dark:bg-white/2 border border-zinc-200 dark:border-white/5 rounded-3xl">
+                <Card className="p-6 bg-zinc-50 dark:bg-white/2 border border-border rounded-md">
                     <div className="flex items-center gap-2 mb-4">
                         <MessageSquare className="h-5 w-5 text-blue-500" />
-                        <h4 className="text-base font-bold text-zinc-900 dark:text-white uppercase tracking-tight">Variant Hooks</h4>
+                        <h4 className="text-base font-bold text-foreground uppercase tracking-tight">Variant Hooks</h4>
                     </div>
                     <div className="space-y-3">
                         {ad.hookOptions?.split('\n').filter(h => h.trim()).map((h, i) => (
-                            <div key={i} className="flex gap-3 p-3 rounded-xl bg-white dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 text-xs font-medium">
+                            <div key={i} className="flex gap-3 p-3 rounded-xl bg-card/50 border border-zinc-100 dark:border-border text-xs font-medium">
                                 <span className="text-blue-500 font-bold shrink-0">H{i + 1}</span>
                                 <p className="italic leading-relaxed">"{h.replace(/^[-\d.]+\s*/, '')}"</p>
                             </div>
@@ -458,14 +458,14 @@ function StrategyTab({ ad }: { ad: AdData }) {
                     </div>
                 </Card>
 
-                <Card className="p-6 bg-zinc-50 dark:bg-white/2 border border-zinc-200 dark:border-white/5 rounded-3xl">
+                <Card className="p-6 bg-zinc-50 dark:bg-white/2 border border-border rounded-md">
                     <div className="flex items-center gap-2 mb-4">
                         <Target className="h-5 w-5 text-emerald-500" />
-                        <h4 className="text-base font-bold text-zinc-900 dark:text-white uppercase tracking-tight">CTA Variations</h4>
+                        <h4 className="text-base font-bold text-foreground uppercase tracking-tight">CTA Variations</h4>
                     </div>
                     <div className="space-y-3">
                         {ad.ctaOptions?.split('\n').filter(c => c.trim()).map((c, i) => (
-                            <div key={i} className="flex gap-3 p-3 rounded-xl bg-white dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 text-xs font-medium">
+                            <div key={i} className="flex gap-3 p-3 rounded-xl bg-card/50 border border-zinc-100 dark:border-border text-xs font-medium">
                                 <span className="text-emerald-500 font-bold shrink-0">C{i + 1}</span>
                                 <p className="italic leading-relaxed">"{c.replace(/^[-\d.]+\s*/, '')}"</p>
                             </div>
@@ -513,12 +513,12 @@ export default function MetaAdDetailView({
             {/* Unique Vertical Navigation - Meta Specific Sidebar */}
             <div className="hidden lg:flex flex-col w-64 shrink-0 gap-6">
                 <div className="sticky top-0 space-y-6">
-                    <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-white/5">
+                    <div className="px-4 py-3 bg-card/50 rounded-md border border-zinc-100 dark:border-border">
                         <div className="flex items-center gap-2 mb-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-100">Meta Intelligence</h4>
+                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Meta Intelligence</h4>
                         </div>
-                        <p className="text-[9px] font-bold text-zinc-400">Creative Control Center</p>
+                        <p className="text-[9px] font-bold text-muted-foreground">Creative Control Center</p>
                     </div>
 
                     <div className="space-y-1">
@@ -533,20 +533,20 @@ export default function MetaAdDetailView({
                                         onTabChange?.()
                                     }}
                                     className={cn(
-                                        "w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-200 group relative",
+                                        "w-full flex items-center justify-between px-4 py-3.5 rounded-md transition-all duration-200 group relative",
                                         isActive
-                                            ? "bg-white dark:bg-white/5 shadow-xl shadow-blue-500/5 border border-zinc-200 dark:border-white/10"
-                                            : "hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400"
+                                            ? "bg-white dark:bg-white/5 shadow-sm shadow-blue-500/5 border border-border"
+                                            : "hover:bg-zinc-100 dark:hover:bg-white/5 text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400"
                                     )}
                                 >
                                     <div className="flex items-center gap-3 relative z-10 transition-transform duration-200 group-hover:translate-x-1">
                                         <div className={cn(
                                             "p-1.5 rounded-lg transition-all",
-                                            isActive ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400"
+                                            isActive ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "bg-muted text-muted-foreground"
                                         )}>
                                             <Icon className="h-3.5 w-3.5" />
                                         </div>
-                                        <span className={cn("text-[11px] font-black uppercase tracking-tight", isActive ? "text-zinc-900 dark:text-white" : "text-zinc-500")}>
+                                        <span className={cn("text-[11px] font-black uppercase tracking-tight", isActive ? "text-foreground" : "text-muted-foreground")}>
                                             {tab.label}
                                         </span>
                                     </div>
@@ -558,16 +558,16 @@ export default function MetaAdDetailView({
                         })}
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-zinc-950 border border-white/5 shadow-2xl relative overflow-hidden group/ad">
+                    <div className="p-4 rounded-md bg-background border border-border shadow-sm relative overflow-hidden group/ad">
                         <div
-                            className="aspect-square rounded-xl overflow-hidden mb-3 border border-white/10 cursor-pointer shadow-lg transition-transform duration-500 hover:scale-[1.02]"
+                            className="aspect-square rounded-xl overflow-hidden mb-3 border border-border cursor-pointer shadow-lg transition-transform duration-500 hover:scale-[1.02]"
                             onClick={() => onEnlargeImage?.(ad.thumbnailUrl, ad.adName)}
                         >
                             <img src={ad.thumbnailUrl} alt={ad.adName} className="w-full h-full object-cover" />
                         </div>
                         <div className="space-y-1 min-w-0">
                             <h5 className="text-[10px] font-bold text-white truncate leading-tight">{ad.adName}</h5>
-                            <p className="text-[8px] font-mono text-zinc-500 truncate uppercase">ID: {ad.adId.slice(0, 10)}...</p>
+                            <p className="text-[8px] font-mono text-muted-foreground truncate uppercase">ID: {ad.adId.slice(0, 10)}...</p>
                         </div>
                     </div>
 
@@ -577,7 +577,7 @@ export default function MetaAdDetailView({
             {/* Main Content Area */}
             <div className="flex-1 min-w-0 flex flex-col min-h-0">
                 {/* Mobile Tab Switcher (Visible on mobile only) */}
-                <div className="lg:hidden flex items-center gap-2 overflow-x-auto no-scrollbar pb-3 mb-4 border-b border-zinc-100 dark:border-white/5 shrink-0">
+                <div className="lg:hidden flex items-center gap-2 overflow-x-auto no-scrollbar pb-3 mb-4 border-b border-zinc-100 dark:border-border shrink-0">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
@@ -586,10 +586,10 @@ export default function MetaAdDetailView({
                                 onTabChange?.()
                             }}
                             className={cn(
-                                "whitespace-nowrap px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+                                "whitespace-nowrap px-4 py-2 rounded-full text-xs font-medium uppercase tracking-wider transition-all",
                                 activeTab === tab.id
                                     ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400"
+                                    : "bg-muted text-muted-foreground"
                             )}
                         >
                             {tab.label}
@@ -601,26 +601,26 @@ export default function MetaAdDetailView({
                     <div className="space-y-6 pb-10">
                         {/* Global Sticky Header */}
                         <div className="sticky top-0 z-40 pb-3 pt-2 mb-4 lg:mb-6">
-                            <div className="bg-white/90 dark:bg-[#09090b]/95 backdrop-blur-xl border border-zinc-200/50 dark:border-white/5 shadow-sm rounded-[20px] p-3.5 md:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 transition-all duration-300 relative">
+                            <div className="bg-white/90 dark:bg-[#09090b]/95 backdrop-blur-xl border border-border/50 dark:border-border shadow-sm rounded-[20px] p-3.5 md:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 transition-all duration-300 relative">
                                 <div className="flex items-center gap-3 min-w-0 flex-1 pr-10 sm:pr-0">
-                                    <div className={cn("flex flex-shrink-0 items-center justify-center w-9 h-9 md:w-10 md:h-10 border border-zinc-100 dark:border-white/5 rounded-xl shadow-inner", activeTabObj.bgColor)}>
+                                    <div className={cn("flex flex-shrink-0 items-center justify-center w-9 h-9 md:w-10 md:h-10 border border-zinc-100 dark:border-border rounded-xl shadow-inner", activeTabObj.bgColor)}>
                                         <ActiveTabIcon className={cn("h-4 w-4 md:h-5 md:w-5 transition-colors duration-300", activeTabObj.color)} />
                                     </div>
                                     <div className="space-y-0.5 md:space-y-1 min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
                                             <Badge variant="outline" className={cn(
                                                 "text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] border-none px-1.5 py-0.5 flex items-center gap-1 shrink-0 rounded-md",
-                                                ad.performanceLabel === 'TOP_PERFORMER' ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400" : "bg-zinc-100 dark:bg-white/5 text-zinc-600 dark:text-zinc-400"
+                                                ad.performanceLabel === 'TOP_PERFORMER' ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400" : "bg-zinc-100 dark:bg-white/5 text-muted-foreground dark:text-muted-foreground"
                                             )}>
                                                 <div className={cn("w-1 h-1 rounded-full shrink-0", 
                                                     ad.performanceLabel === 'TOP_PERFORMER' ? "bg-emerald-500 animate-pulse" : "bg-zinc-400"
                                                 )} />
                                                 {ad.performanceLabel?.replace(/_/g, ' ') || 'STANDARD'}
                                             </Badge>
-                                            <span className="text-[8px] font-mono text-zinc-400 truncate opacity-60 min-w-0 shrink">ID: {ad.adId}</span>
+                                            <span className="text-[8px] font-mono text-muted-foreground truncate opacity-60 min-w-0 shrink">ID: {ad.adId}</span>
                                         </div>
                                         <h2 
-                                            className="text-xs md:text-sm font-bold text-zinc-900 dark:text-white truncate max-w-full tracking-tight"
+                                            className="text-xs md:text-sm font-bold text-foreground truncate max-w-full tracking-tight"
                                             title={ad.adName}
                                         >
                                             {ad.adName}
@@ -629,10 +629,10 @@ export default function MetaAdDetailView({
                                 </div>
 
                                 <div className="flex items-center gap-2 shrink-0">
-                                    <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-3 bg-zinc-50 dark:bg-white/[0.02] border border-zinc-100 dark:border-white/5 rounded-[14px] px-3.5 py-2 w-full sm:w-auto">
-                                        <div className="flex flex-col border-r border-zinc-200 dark:border-white/10 pr-4 sm:pr-3">
-                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-500 mb-0.5">Total Spend</span>
-                                            <span className="text-[10px] md:text-xs font-bold font-mono tracking-tighter text-zinc-900 dark:text-zinc-100">{formatCurrency(ad.spend)}</span>
+                                    <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-3 bg-zinc-50 dark:bg-white/[0.02] border border-zinc-100 dark:border-border rounded-[14px] px-3.5 py-2 w-full sm:w-auto">
+                                        <div className="flex flex-col border-r border-border pr-4 sm:pr-3">
+                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground dark:text-muted-foreground mb-0.5">Total Spend</span>
+                                            <span className="text-[10px] md:text-xs font-bold font-mono tracking-tighter text-foreground">{formatCurrency(ad.spend)}</span>
                                         </div>
                                         <div className="flex flex-col pl-1">
                                             <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-500 mb-0.5">Efficiency</span>

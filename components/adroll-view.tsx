@@ -316,12 +316,12 @@ export default function AdrollView({
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-20 overflow-hidden max-w-full">
                     {/* Primary Row: High-Level Insights */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <Card className="lg:col-span-4 p-6 md:p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md shadow-2xl rounded-[2.5rem] relative overflow-hidden group">
+                        <Card className="lg:col-span-4 p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-[#E0267D]/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-[#E0267D]/10 transition-all duration-1000" />
                             <div className="flex items-center justify-between mb-8 md:mb-10">
                                 <div>
                                     <h3 className="text-sm md:text-base font-black tracking-tight text-[#E0267D]">Account excellence</h3>
-                                    <p className="text-[10px] md:text-[11px] text-zinc-500 font-bold mt-1">Optimization benchmark</p>
+                                    <p className="text-[10px] md:text-[11px] text-muted-foreground font-bold mt-1">Optimization benchmark</p>
                                 </div>
                                 <div className="h-8 w-8 rounded-full bg-[#E0267D]/10 flex items-center justify-center">
                                     <Sparkles className="h-4 w-4 text-[#E0267D]" />
@@ -353,26 +353,26 @@ export default function AdrollView({
                                         />
                                     </svg>
                                     <div className="absolute flex flex-col items-center">
-                                        <span className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter italic">{avgOptScore.toFixed(0)}</span>
+                                        <span className="text-4xl md:text-5xl font-black text-foreground tracking-tighter italic">{avgOptScore.toFixed(0)}</span>
                                         <span className="text-xs md:text-sm font-black text-[#E0267D] tracking-tight mt-1">Percent</span>
                                     </div>
                                 </div>
                                 <div className="mt-8 md:mt-10 w-full space-y-4">
                                     <div className="flex justify-between items-center px-2">
-                                        <span className="text-[9px] md:text-[10px] font-black text-zinc-400 tracking-tight">Growth potential</span>
+                                        <span className="text-[9px] md:text-[10px] font-black text-muted-foreground tracking-tight">Growth potential</span>
                                         <span className="text-[10px] font-black text-emerald-500">+{(100 - avgOptScore).toFixed(1)}%</span>
                                     </div>
-                                    <Button className="w-full h-11 md:h-12 rounded-2xl bg-[#E0267D] hover:bg-[#1557b0] text-white font-black text-xs md:text-sm tracking-tight shadow-xl transition-all">Review key shifts</Button>
+                                    <Button className="w-full h-11 md:h-12 rounded-md bg-[#E0267D] hover:bg-[#1557b0] text-white font-black text-xs md:text-sm tracking-tight shadow-sm transition-all">Review key shifts</Button>
                                 </div>
                             </div>
                         </Card>
 
                         {/* Performance Trends Chart */}
-                        <Card className="lg:col-span-8 p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md shadow-2xl rounded-[2.5rem] relative overflow-hidden group">
+                        <Card className="lg:col-span-8 p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md relative overflow-hidden group">
                             <div className="flex items-center justify-between mb-8">
                                 <div>
-                                    <h3 className="text-xl font-black tracking-tightest text-zinc-900 dark:text-zinc-100">Performance snapshot</h3>
-                                    <p className="text-xs text-zinc-500 font-bold mt-1">Real-time spend distribution across top assets</p>
+                                    <h3 className="text-xl font-semibold tracking-tight text-foreground">Performance snapshot</h3>
+                                    <p className="text-xs text-muted-foreground font-bold mt-1">Real-time spend distribution across top assets</p>
                                 </div>
                                 <div className="flex gap-2">
                                     <Badge className="bg-[#E0267D]/10 text-[#E0267D] border-none px-3 py-1 font-black text-xs group-hover:scale-105 transition-transform">Active scaling</Badge>
@@ -431,15 +431,15 @@ export default function AdrollView({
                             </div>
 
                             <div className="grid grid-cols-3 gap-2 md:gap-6 mt-8">
-                                <div className="text-center p-2 md:p-4 rounded-[1.5rem] bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 group/stat hover:border-#E0267D/20 transition-all flex flex-col justify-center">
-                                    <p className="text-[7px] md:text-[9px] font-black text-zinc-400 tracking-widest mb-1 group-hover:text-#E0267D transition-colors">Top performer</p>
-                                    <p className="text-xs md:text-sm font-black text-zinc-900 dark:text-zinc-100">${Number(sortedAdsForChart[0]?.spend || 0).toLocaleString()}</p>
+                                <div className="text-center p-2 md:p-4 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group/stat hover:border-#E0267D/20 transition-all flex flex-col justify-center">
+                                    <p className="text-[7px] md:text-[9px] font-black text-muted-foreground tracking-widest mb-1 group-hover:text-#E0267D transition-colors">Top performer</p>
+                                    <p className="text-xs md:text-sm font-black text-foreground">${Number(sortedAdsForChart[0]?.spend || 0).toLocaleString()}</p>
                                 </div>
-                                <div className="text-center p-2 md:p-4 rounded-[1.5rem] bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 group/stat hover:border-#E0267D/20 transition-all flex flex-col justify-center">
-                                    <p className="text-[7px] md:text-[9px] font-black text-zinc-400 tracking-widest mb-1 group-hover:text-#E0267D transition-colors">Avg. efficiency</p>
-                                    <p className="text-xs md:text-sm font-black text-zinc-900 dark:text-zinc-100">{(totalInteractions / (totalImpr || 1) * 100).toFixed(2)}%</p>
+                                <div className="text-center p-2 md:p-4 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group/stat hover:border-#E0267D/20 transition-all flex flex-col justify-center">
+                                    <p className="text-[7px] md:text-[9px] font-black text-muted-foreground tracking-widest mb-1 group-hover:text-#E0267D transition-colors">Avg. efficiency</p>
+                                    <p className="text-xs md:text-sm font-black text-foreground">{(totalInteractions / (totalImpr || 1) * 100).toFixed(2)}%</p>
                                 </div>
-                                <div className="text-center p-2 md:p-4 rounded-[1.5rem] bg-#E0267D/10 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 group/stat hover:bg-blue-100/50 transition-all flex flex-col justify-center">
+                                <div className="text-center p-2 md:p-4 rounded-md bg-#E0267D/10 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 group/stat hover:bg-blue-100/50 transition-all flex flex-col justify-center">
                                     <p className="text-[7px] md:text-[9px] font-black text-[#E0267D] tracking-widest mb-1 group-hover:scale-105 transition-transform">Volatility</p>
                                     <p className="text-xs md:text-sm font-black text-[#E0267D]">Low</p>
                                 </div>
@@ -450,10 +450,10 @@ export default function AdrollView({
                     {/* Secondary Row: Lists & Breakdowns */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Top Campaigns List */}
-                        <Card className="p-6 md:p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md shadow-2xl rounded-[2.5rem] flex flex-col min-h-[450px] lg:h-[520px]">
+                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md flex flex-col min-h-[450px] lg:h-[520px]">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-[11px] font-black tracking-[0.2em] text-zinc-400">Top campaigns</h3>
-                                <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-white/10">
+                                <h3 className="text-[11px] font-black tracking-[0.2em] text-muted-foreground">Top campaigns</h3>
+                                <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-border">
                                     <ArrowUpRight className="h-4 w-4 text-zinc-300" />
                                 </div>
                             </div>
@@ -468,24 +468,24 @@ export default function AdrollView({
                                                     <div className="flex items-center gap-3 mt-1">
                                                         <div className="flex items-center gap-1">
                                                             <div className="h-2 w-2 rounded-full bg-[#E0267D]" />
-                                                            <span className="text-[9px] text-zinc-500 font-black tracking-tight">{camp.ctr.toFixed(2)}% CTR</span>
+                                                            <span className="text-[9px] text-muted-foreground font-black tracking-tight">{camp.ctr.toFixed(2)}% CTR</span>
                                                         </div>
-                                                        <span className="text-[9px] text-zinc-400 font-bold tracking-tight">• {camp.count} assets</span>
+                                                        <span className="text-[9px] text-muted-foreground font-bold tracking-tight">• {camp.count} assets</span>
                                                     </div>
                                                 </div>
                                                 <div className="text-right shrink-0">
-                                                    <span className="text-[13px] font-black text-zinc-900 dark:text-zinc-100 block">${camp.cost.toLocaleString()}</span>
+                                                    <span className="text-[13px] font-black text-foreground block">${camp.cost.toLocaleString()}</span>
                                                     <span className="text-[8px] font-black text-zinc-300 tracking-widest">{percentage.toFixed(1)}% weight</span>
                                                 </div>
                                             </div>
-                                            <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden p-0.5 border border-zinc-200 dark:border-white/5 shadow-inner">
+                                            <div className="w-full bg-muted h-2 rounded-full overflow-hidden p-0.5 border border-border shadow-inner">
                                                 <div className="h-full bg-gradient-to-r from-[#E0267D] to-[#4285f4] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(26,115,232,0.3)]" style={{ width: `${Math.max(percentage, 5)}%` }} />
                                             </div>
                                         </div>
                                     )
                                 }) : (
-                                    <div className="flex flex-col items-center justify-center h-full text-zinc-400 space-y-4">
-                                        <div className="h-16 w-16 rounded-[2rem] bg-zinc-50 dark:bg-white/5 flex items-center justify-center">
+                                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">
+                                        <div className="h-16 w-16 rounded-md bg-zinc-50 dark:bg-white/5 flex items-center justify-center">
                                             <Circle className="h-8 w-8 opacity-20 animate-pulse" />
                                         </div>
                                         <p className="text-[10px] font-black tracking-widest opacity-60">No active data flows</p>
@@ -495,10 +495,10 @@ export default function AdrollView({
                         </Card>
 
                         {/* Ad Type Distribution */}
-                        <Card className="p-6 md:p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md shadow-2xl rounded-[2.5rem] flex flex-col min-h-[450px] lg:h-[520px]">
+                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md flex flex-col min-h-[450px] lg:h-[520px]">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-[11px] font-black tracking-[0.2em] text-zinc-400">Format performance</h3>
-                                <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-white/10">
+                                <h3 className="text-[11px] font-black tracking-[0.2em] text-muted-foreground">Format performance</h3>
+                                <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-border">
                                     <LayoutGrid className="h-4 w-4 text-zinc-300" />
                                 </div>
                             </div>
@@ -538,21 +538,21 @@ export default function AdrollView({
                                 {typeBreakdown.map((item, i) => {
                                     const colors = ["bg-[#E0267D]", "bg-[#34a853]", "bg-[#fbbc05]", "bg-[#ea4335]", "bg-purple-500", "bg-pink-500"]
                                     return (
-                                        <div key={item.type} className="p-3.5 rounded-[1.5rem] bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 group hover:border-[#E0267D]/30 transition-all">
+                                        <div key={item.type} className="p-3.5 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group hover:border-[#E0267D]/30 transition-all">
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0 pr-2">
                                                     <div className={cn("h-3 w-3 rounded-full shadow-sm shrink-0", colors[i % colors.length])} />
-                                                    <span className="text-[9px] md:text-[10px] font-black text-zinc-900 dark:text-zinc-100 tracking-widest truncate">{item.type}</span>
+                                                    <span className="text-[9px] md:text-[10px] font-black text-foreground tracking-widest truncate">{item.type}</span>
                                                 </div>
                                                 <div className="shrink-0 px-2 py-0.5 rounded-full bg-#E0267D/10 text-[#E0267D] text-[9px] font-black">{item.ctr.toFixed(2)}% CTR</div>
                                             </div>
                                             <div className="flex items-end justify-between">
                                                 <div className="space-y-0.5">
-                                                    <p className="text-[9px] font-black text-zinc-400 tracking-widest">Efficiency</p>
-                                                    <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">${item.cost.toLocaleString()}</p>
+                                                    <p className="text-[9px] font-black text-muted-foreground tracking-widest">Efficiency</p>
+                                                    <p className="text-xs font-black text-foreground">${item.cost.toLocaleString()}</p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-xs font-bold text-zinc-600 dark:text-zinc-400">{item.count} assets</p>
+                                                    <p className="text-xs font-bold text-muted-foreground dark:text-muted-foreground">{item.count} assets</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -562,10 +562,10 @@ export default function AdrollView({
                         </Card>
 
                         {/* Top Keywords / Search Terms */}
-                        <Card className="p-6 md:p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md shadow-2xl rounded-[2.5rem] flex flex-col min-h-[450px] lg:h-[520px] overflow-hidden">
+                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md flex flex-col min-h-[450px] lg:h-[520px] overflow-hidden">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-[11px] font-black tracking-[0.2em] text-zinc-400">Search keywords</h3>
-                                <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-white/10">
+                                <h3 className="text-[11px] font-black tracking-[0.2em] text-muted-foreground">Search keywords</h3>
+                                <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-border">
                                     <Search className="h-4 w-4 text-zinc-300" />
                                 </div>
                             </div>
@@ -574,9 +574,9 @@ export default function AdrollView({
                                     <Table>
                                         <TableHeader>
                                             <TableRow className="border-none hover:bg-transparent">
-                                                <TableHead className="h-auto py-2 text-[9px] font-black tracking-widest text-zinc-400 pl-0">Term</TableHead>
-                                                <TableHead className="h-auto py-2 text-[9px] font-black tracking-widest text-zinc-400 text-right">Cost</TableHead>
-                                                <TableHead className="h-auto py-2 text-[9px] font-black tracking-widest text-zinc-400 text-right pr-0">CTR</TableHead>
+                                                <TableHead className="h-auto py-2 text-[9px] font-black tracking-widest text-muted-foreground pl-0">Term</TableHead>
+                                                <TableHead className="h-auto py-2 text-[9px] font-black tracking-widest text-muted-foreground text-right">Cost</TableHead>
+                                                <TableHead className="h-auto py-2 text-[9px] font-black tracking-widest text-muted-foreground text-right pr-0">CTR</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -585,11 +585,11 @@ export default function AdrollView({
                                                     <TableCell className="py-4 pl-0">
                                                         <div className="flex items-center gap-3">
                                                             <div className="h-2 w-2 rounded-full bg-[#E0267D] shadow-[0_0_8px_rgba(26,115,232,0.4)] opacity-20 group-hover/kw:opacity-100 transition-all duration-500" />
-                                                            <span className="text-[11px] font-black text-zinc-700 dark:text-zinc-300 group-hover/kw:text-[#E0267D] transition-colors tracking-tight">{kw.word}</span>
+                                                            <span className="text-[11px] font-black text-foreground/80 dark:text-zinc-300 group-hover/kw:text-[#E0267D] transition-colors tracking-tight">{kw.word}</span>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="py-4 text-right">
-                                                        <span className="text-[11px] font-black text-zinc-900 dark:text-zinc-100">${kw.cost.toLocaleString()}</span>
+                                                        <span className="text-[11px] font-black text-foreground">${kw.cost.toLocaleString()}</span>
                                                     </TableCell>
                                                     <TableCell className="py-4 text-right pr-0">
                                                         <span className="px-2 py-0.5 rounded-full bg-[#E0267D]/10 text-[#E0267D] text-[10px] font-black">{kw.ctr.toFixed(2)}%</span>
@@ -599,11 +599,11 @@ export default function AdrollView({
                                                 <TableRow>
                                                     <TableCell colSpan={3} className="pt-24 text-center border-none">
                                                         <div className="flex flex-col items-center gap-4">
-                                                            <div className="h-12 w-12 rounded-2xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center">
+                                                            <div className="h-12 w-12 rounded-md bg-zinc-50 dark:bg-white/5 flex items-center justify-center">
                                                                 <Search className="h-6 w-6 text-zinc-200" />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <p className="text-[10px] font-black tracking-widest text-zinc-400">No signals detected</p>
+                                                                <p className="text-[10px] font-black tracking-widest text-muted-foreground">No signals detected</p>
                                                                 <p className="text-[8px] font-bold tracking-widest text-zinc-300">Enable tag monitoring</p>
                                                             </div>
                                                         </div>
@@ -620,14 +620,14 @@ export default function AdrollView({
                     {/* Tertiary Row: Creative Intelligence & Analytics */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Psychological Triggers Card */}
-                        <Card className="p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md shadow-2xl rounded-[2.5rem] relative overflow-hidden group">
+                        <Card className="p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md relative overflow-hidden group">
                             <div className="absolute -right-20 -top-20 w-64 h-64 bg-purple-500/5 rounded-full blur-[80px] group-hover:bg-purple-500/10 transition-all duration-1000" />
                             <div className="flex items-center justify-between mb-8 relative z-10">
                                 <div>
-                                    <h3 className="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">Psychological IQ</h3>
-                                    <p className="text-[10px] text-zinc-500 font-bold mt-1">Winning behavioral patterns detected</p>
+                                    <h3 className="text-xl font-black tracking-tight text-foreground">Psychological IQ</h3>
+                                    <p className="text-[10px] text-muted-foreground font-bold mt-1">Winning behavioral patterns detected</p>
                                 </div>
-                                <div className="h-10 w-10 rounded-2xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-inner group-hover:scale-110 transition-transform">
+                                <div className="h-10 w-10 rounded-md bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-inner group-hover:scale-110 transition-transform">
                                     <Brain className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                                 </div>
                             </div>
@@ -641,10 +641,10 @@ export default function AdrollView({
                                     const count = filteredAds.filter((ad: any) => (ad as any)[trigger.key] === "Yes" || (ad as any)[trigger.key + "Present"] === true).length
                                     const percentage = (count / (filteredAds.length || 1)) * 100
                                     return (
-                                        <div key={trigger.label} className="p-5 rounded-[2rem] bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 group/trig hover:border-purple-500/30 transition-all hover:bg-white dark:hover:bg-white/10 shadow-sm hover:shadow-xl">
+                                        <div key={trigger.label} className="p-5 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group/trig hover:border-purple-500/30 transition-all hover:bg-white dark:hover:bg-white/10 shadow-sm hover:shadow-sm">
                                             <div className="flex justify-between items-end mb-3">
-                                                <span className="text-[10px] font-black text-zinc-400 tracking-widest group-hover/trig:text-purple-500 transition-colors">{trigger.label}</span>
-                                                <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">{percentage.toFixed(0)}%</span>
+                                                <span className="text-[10px] font-black text-muted-foreground tracking-widest group-hover/trig:text-purple-500 transition-colors">{trigger.label}</span>
+                                                <span className="text-sm font-black text-foreground">{percentage.toFixed(0)}%</span>
                                             </div>
                                             <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden p-0.5 shadow-inner">
                                                 <div className={cn("h-full rounded-full transition-all duration-[2000ms] bg-gradient-to-r shadow-[0_0_12px_rgba(168,85,247,0.4)]", trigger.color)} style={{ width: `${Math.max(percentage, 5)}%` }} />
@@ -656,14 +656,14 @@ export default function AdrollView({
                         </Card>
 
                         {/* AIDA Model Performance */}
-                        <Card className="p-8 border border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md shadow-2xl rounded-[2.5rem] relative overflow-hidden group">
+                        <Card className="p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md relative overflow-hidden group">
                             <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] group-hover:bg-emerald-500/10 transition-all duration-1000" />
                             <div className="flex items-center justify-between mb-8 relative z-10">
                                 <div>
-                                    <h3 className="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">AIDA funnel flow</h3>
-                                    <p className="text-[10px] text-zinc-500 font-bold mt-1">Creative resonance across user stages</p>
+                                    <h3 className="text-xl font-black tracking-tight text-foreground">AIDA funnel flow</h3>
+                                    <p className="text-[10px] text-muted-foreground font-bold mt-1">Creative resonance across user stages</p>
                                 </div>
-                                <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-inner group-hover:scale-110 transition-transform">
+                                <div className="h-10 w-10 rounded-md bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-inner group-hover:scale-110 transition-transform">
                                     <Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                                 </div>
                             </div>
@@ -678,14 +678,14 @@ export default function AdrollView({
                                         <div className="flex justify-between mb-2 px-1">
                                             <div className="flex items-center gap-2">
                                                 <div className={cn("h-4 w-4 rounded-lg flex items-center justify-center text-[8px] font-black text-white", stage.color)}>{i + 1}</div>
-                                                <span className="text-[10px] font-black text-zinc-500 tracking-widest group-hover/stage:text-emerald-500 transition-colors pr-2">{stage.label}</span>
+                                                <span className="text-[10px] font-black text-muted-foreground tracking-widest group-hover/stage:text-emerald-500 transition-colors pr-2">{stage.label}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">{stage.score.toFixed(1)}</span>
-                                                <span className="text-[9px] font-black text-zinc-400">/10</span>
+                                                <span className="text-sm font-black text-foreground">{stage.score.toFixed(1)}</span>
+                                                <span className="text-[9px] font-black text-muted-foreground">/10</span>
                                             </div>
                                         </div>
-                                        <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-3 rounded-full overflow-hidden p-1 border border-zinc-200 dark:border-white/5 shadow-inner">
+                                        <div className="w-full bg-muted h-3 rounded-full overflow-hidden p-1 border border-border shadow-inner">
                                             <div
                                                 className={cn("h-full rounded-full transition-all duration-[2000ms] shadow-[0_0_10px_rgba(16,185,129,0.3)]", stage.color)}
                                                 style={{ width: `${stage.score * 10}%`, transitionDelay: `${i * 150}ms` }}
@@ -700,7 +700,7 @@ export default function AdrollView({
                     {/* Final Row: Recommendations Hub */}
                     {/* Optimization Hub - Redesigned to Sleek Dark/Glass */}
                     {/* Optimization Hub - Redesigned to Match Performance Snapshot Style */}
-                    <div className="space-y-8 bg-zinc-50/50 dark:bg-[#09090b] p-6 md:p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-xl">
+                    <div className="space-y-8 bg-zinc-50/50 dark:bg-[#09090b] p-6 md:p-8 rounded-md border border-border shadow-sm">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -708,14 +708,14 @@ export default function AdrollView({
                                         Active engine
                                     </Badge>
                                 </div>
-                                <h3 className="text-2xl md:text-3xl font-black tracking-tightest text-zinc-900 dark:text-white leading-none">
+                                <h3 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground leading-none">
                                     Optimization Hub
                                 </h3>
-                                <p className="text-xs font-bold text-zinc-500">
-                                    Neutral engine detected <span className="text-zinc-900 dark:text-white">{recommendations.length} Strategic shifts</span>
+                                <p className="text-xs font-bold text-muted-foreground">
+                                    Neutral engine detected <span className="text-foreground">{recommendations.length} Strategic shifts</span>
                                 </p>
                             </div>
-                            <Button variant="outline" className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#121214] text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-[#18181b] hover:text-zinc-900 dark:hover:text-white rounded-xl h-10 px-4 text-xs font-black">
+                            <Button variant="outline" className="border-border bg-white dark:bg-[#121214] text-muted-foreground dark:text-muted-foreground hover:bg-zinc-50 dark:hover:bg-[#18181b] hover:text-zinc-900 dark:hover:text-white rounded-xl h-10 px-4 text-xs font-black">
                                 Scan complete
                             </Button>
                         </div>
@@ -724,23 +724,23 @@ export default function AdrollView({
 
                         <div className="flex xl:grid xl:grid-cols-3 gap-3 md:gap-4 overflow-x-auto xl:overflow-visible pb-6 md:pb-0 snap-x snap-mandatory -mx-3 px-3 md:mx-0 md:px-0 hide-scrollbar">
                             {recommendations.length > 0 ? recommendations.map((rec: any, i: number) => (
-                                <div key={i} className="min-w-[280px] w-[280px] xl:w-full xl:min-w-0 snap-center flex-shrink-0 xl:flex-shrink-1 p-5 md:p-6 bg-white dark:bg-[#121214] hover:bg-zinc-50 dark:hover:bg-[#18181b] rounded-2xl border border-zinc-200 dark:border-white/5 hover:border-zinc-300 dark:hover:border-white/10 transition-all cursor-pointer group/rec shadow-sm hover:shadow-md hover:-translate-y-1 duration-300 relative overflow-hidden">
+                                <div key={i} className="min-w-[280px] w-[280px] xl:w-full xl:min-w-0 snap-center flex-shrink-0 xl:flex-shrink-1 p-5 md:p-6 bg-white dark:bg-[#121214] hover:bg-zinc-50 dark:hover:bg-[#18181b] rounded-md border border-border hover:border-zinc-300 dark:hover:border-border transition-all cursor-pointer group/rec shadow-sm hover:shadow-md hover:-translate-y-1 duration-300 relative overflow-hidden">
                                     <div className="flex flex-col h-full relative z-10">
                                         <div className="flex items-start justify-between mb-4 md:mb-6">
-                                            <div className="h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center group-hover/rec:bg-[#E0267D] transition-all duration-300">
-                                                <TrendingUp className="h-5 w-5 text-zinc-500 group-hover/rec:text-white" />
+                                            <div className="h-10 w-10 rounded-xl bg-muted/50 flex items-center justify-center group-hover/rec:bg-[#E0267D] transition-all duration-300">
+                                                <TrendingUp className="h-5 w-5 text-muted-foreground group-hover/rec:text-white" />
                                             </div>
                                             {i === 0 && <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[10px] px-2.5 py-1">Top priority</Badge>}
                                         </div>
                                         <div className="space-y-3 md:space-y-4 flex-1">
                                             <div className="space-y-1.5 md:space-y-2">
-                                                <p className="text-[10px] font-black text-zinc-500 leading-tight">Strategy shift</p>
-                                                <h4 className="text-sm md:text-base font-black text-zinc-900 dark:text-zinc-100 leading-tight tracking-tight group-hover/rec:text-[#E0267D] transition-colors line-clamp-2">
+                                                <p className="text-[10px] font-black text-muted-foreground leading-tight">Strategy shift</p>
+                                                <h4 className="text-sm md:text-base font-black text-foreground leading-tight tracking-tight group-hover/rec:text-[#E0267D] transition-colors line-clamp-2">
                                                     {rec.title}
                                                 </h4>
                                             </div>
-                                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed pt-3 md:pt-4 border-t border-zinc-100 dark:border-white/5 line-clamp-3">
-                                                Projected <span className="text-zinc-900 dark:text-zinc-100 font-bold">{rec.impact} uplit</span> by optimizing {rec.category.toLowerCase()} signals.
+                                            <p className="text-[11px] text-muted-foreground dark:text-muted-foreground font-medium leading-relaxed pt-3 md:pt-4 border-t border-zinc-100 dark:border-border line-clamp-3">
+                                                Projected <span className="text-foreground font-bold">{rec.impact} uplit</span> by optimizing {rec.category.toLowerCase()} signals.
                                             </p>
                                         </div>
 
@@ -748,7 +748,7 @@ export default function AdrollView({
                                 </div>
                             )) : (
                                 Array.from({ length: 3 }).map((_, i) => (
-                                    <div key={i} className="min-w-[280px] w-full md:w-auto snap-center flex-shrink-0 h-64 bg-zinc-100 dark:bg-[#121214] rounded-2xl animate-pulse" />
+                                    <div key={i} className="min-w-[280px] w-full md:w-auto snap-center flex-shrink-0 h-64 bg-zinc-100 dark:bg-[#121214] rounded-md animate-pulse" />
                                 ))
                             )}
                         </div>
@@ -758,12 +758,12 @@ export default function AdrollView({
                     <div className="space-y-8 pt-4">
                         <div className="flex items-center justify-between px-2">
                             <div className="space-y-2">
-                                <h3 className="text-2xl md:text-3xl font-black tracking-tightest text-zinc-900 dark:text-white leading-none">Power creatives</h3>
-                                <p className="text-[11px] md:text-xs text-zinc-500 font-black mt-1">Benchmarking highest efficiency neural outputs</p>
+                                <h3 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground leading-none">Power creatives</h3>
+                                <p className="text-[11px] md:text-xs text-muted-foreground font-black mt-1">Benchmarking highest efficiency neural outputs</p>
                             </div>
                             <Button
                                 variant="ghost"
-                                className="hidden md:flex text-xs font-black text-[#E0267D] hover:bg-#E0267D/10 dark:hover:bg-blue-900/10 rounded-2xl h-14 px-8 border border-zinc-200 dark:border-white/5 shadow-xl transition-all hover:scale-105 group"
+                                className="hidden md:flex text-xs font-black text-[#E0267D] hover:bg-#E0267D/10 dark:hover:bg-blue-900/10 rounded-md h-14 px-8 border border-border shadow-sm transition-all hover:scale-105 group"
                                 onClick={() => setActiveTab("ads")}
                             >
                                 View global assets <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -771,7 +771,7 @@ export default function AdrollView({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="md:hidden h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-[#E0267D]"
+                                className="md:hidden h-10 w-10 rounded-xl bg-muted text-[#E0267D]"
                                 onClick={() => setActiveTab("ads")}
                             >
                                 <ChevronRight className="h-5 w-5" />
@@ -781,10 +781,10 @@ export default function AdrollView({
                         {/* Mobile: Horizontal Scroll, Desktop: Grid */}
                         <div className="flex md:grid md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 overflow-x-auto md:overflow-visible pb-8 md:pb-0 snap-x snap-mandatory -mx-3 px-3 md:mx-0 md:px-0 hide-scrollbar pt-2">
                             {filteredAds.slice(0, 4).map((ad: any, i: number) => (
-                                <Card key={ad.id} className="min-w-[280px] md:min-w-0 w-[280px] md:w-full bg-white dark:bg-[#09090b] border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-2xl p-4 flex flex-col gap-4 group shadow-xl transition-all duration-300 snap-center flex-shrink-0 md:flex-shrink-1">
+                                <Card key={ad.id} className="min-w-[280px] md:min-w-0 w-[280px] md:w-full bg-white dark:bg-[#09090b] border border-border hover:border-zinc-300 dark:hover:border-zinc-700 rounded-md p-4 flex flex-col gap-4 group shadow-sm transition-all duration-300 snap-center flex-shrink-0 md:flex-shrink-1">
 
                                     {/* Image Header Section */}
-                                    <div className="relative aspect-[1.5] w-full rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/50">
+                                    <div className="relative aspect-[1.5] w-full rounded-md overflow-hidden bg-zinc-100 dark:bg-card border border-border/50">
                                         <img
                                             src={ad.thumbnailUrl || "/placeholder.svg"}
                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -792,7 +792,7 @@ export default function AdrollView({
                                         />
 
                                         {/* Platform Icon Overlay (Top Left) */}
-                                        <div className="absolute top-3 left-3 h-8 w-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-lg z-10">
+                                        <div className="absolute top-3 left-3 h-8 w-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-border shadow-lg z-10">
                                             <span className="font-black text-white text-[10px]">G</span>
                                         </div>
 
@@ -807,22 +807,22 @@ export default function AdrollView({
 
                                     {/* Title Section */}
                                     <div className="flex items-center justify-between gap-2 px-1">
-                                        <h3 className="text-zinc-900 dark:text-zinc-100 font-bold text-[15px] leading-tight truncate flex-1">{ad.adName}</h3>
+                                        <h3 className="text-foreground font-bold text-[15px] leading-tight truncate flex-1">{ad.adName}</h3>
                                     </div>
 
                                     {/* Stats Grid - MATCHING REFERENCE */}
                                     <div className="grid grid-cols-2 gap-3">
                                         {/* Spend Box */}
-                                        <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-3 border border-zinc-100 dark:border-zinc-800/50 flex flex-col justify-between h-[80px] group/spend transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900">
+                                        <div className="bg-card/50 rounded-md p-3 border border-zinc-100 dark:border-border/50 flex flex-col justify-between h-[80px] group/spend transition-all hover:bg-zinc-100 dark:hover:bg-card">
                                             <div className="flex items-center gap-1.5">
                                                 <div className="w-1 h-1 rounded-full bg-zinc-400 dark:bg-zinc-500 group-hover/spend:bg-zinc-600 dark:group-hover/spend:bg-zinc-300 transition-colors" />
-                                                <p className="text-[10px] text-zinc-500 font-black">Spend</p>
+                                                <p className="text-[10px] text-muted-foreground font-black">Spend</p>
                                             </div>
-                                            <p className="text-[18px] font-black text-zinc-900 dark:text-zinc-100 tracking-tightest">${Number(ad.spend).toLocaleString()}</p>
+                                            <p className="text-[18px] font-black text-foreground tracking-tight">${Number(ad.spend).toLocaleString()}</p>
                                         </div>
 
                                         {/* CTR Box */}
-                                        <div className="bg-#E0267D/10 dark:bg-#E0267D/5 rounded-2xl p-3 border border-blue-100 dark:border-#E0267D/10 flex flex-col justify-between h-[80px] relative overflow-hidden group/ctr transition-all hover:bg-blue-100/50 dark:hover:bg-#E0267D/10">
+                                        <div className="bg-#E0267D/10 dark:bg-#E0267D/5 rounded-md p-3 border border-blue-100 dark:border-#E0267D/10 flex flex-col justify-between h-[80px] relative overflow-hidden group/ctr transition-all hover:bg-blue-100/50 dark:hover:bg-#E0267D/10">
                                             {/* Subtle background glow */}
                                             <div className="absolute top-0 right-0 w-12 h-12 bg-#E0267D/10 blur-xl rounded-full -mr-4 -mt-4 transition-opacity" />
 
@@ -830,15 +830,15 @@ export default function AdrollView({
                                                 <div className="w-1 h-1 rounded-full bg-#E0267D" />
                                                 <p className="text-[10px] text-#E0267D dark:text-#E0267D font-black opacity-80">CTR efficiency</p>
                                             </div>
-                                            <p className="text-[18px] font-black text-#E0267D dark:text-#E0267D tracking-tightest text-right relative z-10">
+                                            <p className="text-[18px] font-black text-#E0267D dark:text-#E0267D tracking-tight text-right relative z-10">
                                                 {Number(ad.ctr).toFixed(2)}%
                                             </p>
                                         </div>
                                     </div>
 
                                     {/* Footer Section: ID & Copy */}
-                                    <div className="mt-auto pt-3 border-t border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-1">
-                                        <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-600 tracking-wider">ID: {ad.id.replace(/\D/g, '').substring(0, 12)}...</span>
+                                    <div className="mt-auto pt-3 border-t border-dashed border-border flex items-center justify-between px-1">
+                                        <span className="text-[10px] font-mono text-muted-foreground dark:text-muted-foreground tracking-wider">ID: {ad.id.replace(/\D/g, '').substring(0, 12)}...</span>
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation()
@@ -846,7 +846,7 @@ export default function AdrollView({
                                                 setCopiedId(ad.id)
                                                 setTimeout(() => setCopiedId(null), 2000)
                                             }}
-                                            className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                            className="text-muted-foreground hover:text-zinc-900 dark:hover:text-white transition-colors p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800"
                                         >
                                             {copiedId === ad.id ? (
                                                 <Check className="h-3.5 w-3.5 text-emerald-500" />
@@ -878,20 +878,20 @@ export default function AdrollView({
 
             return (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
-                    <Card className="rounded-[2rem] border-zinc-200 dark:border-white/10 shadow-2xl overflow-hidden bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl group/table">
+                    <Card className="rounded-md border-border shadow-sm overflow-hidden bg-white/80 dark:bg-card/80 backdrop-blur-xl group/table">
                         <div className="w-full overflow-x-auto">
                             <Table className="min-w-[800px]">
                                 <TableHeader>
-                                    <TableRow className="bg-[#f8f9fa] dark:bg-white/5 hover:bg-[#f8f9fa] dark:hover:bg-white/5 transition-none border-b border-zinc-200 dark:border-white/10">
+                                    <TableRow className="bg-[#f8f9fa] dark:bg-white/5 hover:bg-[#f8f9fa] dark:hover:bg-white/5 transition-none border-b border-border">
                                         <TableHead className="w-[40px] px-6 text-center hidden lg:table-cell">
-                                            <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-white/10 text-[#E0267D]" />
+                                            <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-border text-[#E0267D]" />
                                         </TableHead>
-                                        <TableHead className="min-w-[200px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-6 py-4">Campaign Name</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center px-2">Status</TableHead>
-                                        <TableHead className="w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-2">Ads</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-2">Total Cost</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-2 hidden sm:table-cell">Impr.</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-6">Avg. CTR</TableHead>
+                                        <TableHead className="min-w-[200px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest px-6 py-4">Campaign Name</TableHead>
+                                        <TableHead className="w-[120px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-center px-2">Status</TableHead>
+                                        <TableHead className="w-[100px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-2">Ads</TableHead>
+                                        <TableHead className="w-[120px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-2">Total Cost</TableHead>
+                                        <TableHead className="w-[120px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-2 hidden sm:table-cell">Impr.</TableHead>
+                                        <TableHead className="w-[120px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-6">Avg. CTR</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -900,33 +900,33 @@ export default function AdrollView({
                                             <TableCell colSpan={7} className="h-[400px] text-center border-none">
                                                 <div className="flex flex-col items-center justify-center space-y-4">
                                                     <TrendingUp className="h-12 w-12 text-zinc-200 dark:text-zinc-800" />
-                                                    <p className="text-sm font-black text-zinc-400 uppercase tracking-widest">No campaigns found</p>
+                                                    <p className="text-sm font-black text-muted-foreground uppercase tracking-widest">No campaigns found</p>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         campaignsData.map((camp: any) => (
-                                            <TableRow key={camp.name} className="group/row hover:bg-#E0267D/10/30 dark:hover:bg-blue-900/5 cursor-pointer border-b border-zinc-100 dark:border-white/5 transition-all duration-300">
+                                            <TableRow key={camp.name} className="group/row hover:bg-#E0267D/10/30 dark:hover:bg-blue-900/5 cursor-pointer border-b border-zinc-100 dark:border-border transition-all duration-300">
                                                 <TableCell className="px-6 text-center hidden lg:table-cell">
-                                                    <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-white/10" />
+                                                    <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-border" />
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4">
                                                     <div className="flex flex-col">
-                                                        <span className="text-zinc-900 dark:text-zinc-100 font-black text-[13px] group-hover/row:text-[#E0267D] transition-colors">{camp.name}</span>
-                                                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight mt-0.5">Campaign Analytics</span>
+                                                        <span className="text-foreground font-black text-[13px] group-hover/row:text-[#E0267D] transition-colors">{camp.name}</span>
+                                                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight mt-0.5">Campaign Analytics</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-center">
                                                     <div className="flex items-center justify-center">
                                                         <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20">
                                                             <div className="h-1.5 w-1.5 rounded-full bg-[#34a853]" />
-                                                            <span className="text-[9px] font-black uppercase tracking-widest text-[#1a7e43] dark:text-[#52c41a]">Active</span>
+                                                            <span className="text-[10px] font-medium uppercase tracking-wider text-[#1a7e43] dark:text-[#52c41a]">Active</span>
                                                         </div>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-right font-bold text-[13px] text-zinc-500 dark:text-zinc-400">{camp.count}</TableCell>
-                                                <TableCell className="text-right font-black text-[14px] text-zinc-900 dark:text-zinc-100 px-2">${camp.cost.toLocaleString()}</TableCell>
-                                                <TableCell className="text-right font-bold text-[13px] text-zinc-500 dark:text-zinc-400 px-2 hidden sm:table-cell">{camp.impr.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right font-bold text-[13px] text-muted-foreground dark:text-muted-foreground">{camp.count}</TableCell>
+                                                <TableCell className="text-right font-black text-[14px] text-foreground px-2">${camp.cost.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right font-bold text-[13px] text-muted-foreground dark:text-muted-foreground px-2 hidden sm:table-cell">{camp.impr.toLocaleString()}</TableCell>
                                                 <TableCell className="text-right px-6 font-black text-[15px] text-[#E0267D] bg-#E0267D/10/5 dark:bg-blue-900/5">{camp.ctr.toFixed(2)}%</TableCell>
                                             </TableRow>
                                         ))
@@ -946,19 +946,19 @@ export default function AdrollView({
 
             return (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
-                    <Card className="rounded-[2rem] border-zinc-200 dark:border-white/10 shadow-2xl overflow-hidden bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md group/table">
+                    <Card className="rounded-md border-border shadow-sm overflow-hidden bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md group/table">
                         <div className="w-full overflow-x-auto">
                             <Table className="min-w-[800px]">
                                 <TableHeader>
-                                    <TableRow className="bg-[#f8f9fa] dark:bg-white/5 hover:bg-[#f8f9fa] dark:hover:bg-white/5 transition-none border-b border-zinc-200 dark:border-white/10">
+                                    <TableRow className="bg-[#f8f9fa] dark:bg-white/5 hover:bg-[#f8f9fa] dark:hover:bg-white/5 transition-none border-b border-border">
                                         <TableHead className="w-[40px] px-6 text-center hidden lg:table-cell">
-                                            <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-white/10 text-[#E0267D]" />
+                                            <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-border text-[#E0267D]" />
                                         </TableHead>
-                                        <TableHead className="min-w-[200px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-6 py-4">Search Keyword</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center">Match Type</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right">Spend</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right">Impr.</TableHead>
-                                        <TableHead className="w-[120px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right">Clicks</TableHead>
+                                        <TableHead className="min-w-[200px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest px-6 py-4">Search Keyword</TableHead>
+                                        <TableHead className="w-[120px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-center">Match Type</TableHead>
+                                        <TableHead className="w-[120px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right">Spend</TableHead>
+                                        <TableHead className="w-[120px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right">Impr.</TableHead>
+                                        <TableHead className="w-[120px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right">Clicks</TableHead>
                                         <TableHead className="w-[120px] text-[#E0267D] font-black text-[9px] uppercase tracking-widest text-right px-6">CTR</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -968,23 +968,23 @@ export default function AdrollView({
                                             <TableCell colSpan={7} className="h-[400px] text-center">
                                                 <div className="flex flex-col items-center justify-center space-y-4">
                                                     <Search className="h-12 w-12 text-zinc-200" />
-                                                    <p className="text-sm font-black text-zinc-400 uppercase tracking-widest">No keyword data found</p>
+                                                    <p className="text-sm font-black text-muted-foreground uppercase tracking-widest">No keyword data found</p>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         formattedKeywords.map((kw: any, i: number) => (
-                                            <TableRow key={`${kw.word}-${i}`} className="group/row hover:bg-#E0267D/10/30 dark:hover:bg-blue-900/5 cursor-pointer border-b border-zinc-100 dark:border-white/5 transition-all duration-300">
+                                            <TableRow key={`${kw.word}-${i}`} className="group/row hover:bg-#E0267D/10/30 dark:hover:bg-blue-900/5 cursor-pointer border-b border-zinc-100 dark:border-border transition-all duration-300">
                                                 <TableCell className="px-6 text-center hidden lg:table-cell">
-                                                    <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-white/10" />
+                                                    <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-border" />
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4">
-                                                    <span className="text-zinc-900 dark:text-zinc-100 font-black text-[13px] group-hover/row:text-[#E0267D] transition-colors uppercase tracking-tight">{kw.word}</span>
+                                                    <span className="text-foreground font-black text-[13px] group-hover/row:text-[#E0267D] transition-colors uppercase tracking-tight">{kw.word}</span>
                                                 </TableCell>
-                                                <TableCell className="text-center font-bold text-[10px] text-zinc-400 uppercase tracking-widest">Broad Match</TableCell>
-                                                <TableCell className="text-right font-black text-[13px] text-zinc-900 dark:text-zinc-100">${kw.spend.toLocaleString()}</TableCell>
-                                                <TableCell className="text-right font-bold text-[12px] text-zinc-500 dark:text-zinc-400">{kw.impr.toLocaleString()}</TableCell>
-                                                <TableCell className="text-right font-bold text-[12px] text-zinc-500 dark:text-zinc-400">{kw.clicks.toLocaleString()}</TableCell>
+                                                <TableCell className="text-center font-bold text-[10px] text-muted-foreground uppercase tracking-widest">Broad Match</TableCell>
+                                                <TableCell className="text-right font-black text-[13px] text-foreground">${kw.spend.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right font-bold text-[12px] text-muted-foreground dark:text-muted-foreground">{kw.impr.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right font-bold text-[12px] text-muted-foreground dark:text-muted-foreground">{kw.clicks.toLocaleString()}</TableCell>
                                                 <TableCell className="text-right px-6 font-black text-[14px] text-[#E0267D]">{kw.ctr.toFixed(2)}%</TableCell>
                                             </TableRow>
                                         ))
@@ -1016,29 +1016,29 @@ export default function AdrollView({
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {audiences.length > 0 ? audiences.map((aud: any) => (
-                            <Card key={aud.name} className="p-6 border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 rounded-[2rem] hover:scale-[1.02] transition-transform cursor-pointer group shadow-xl">
+                            <Card key={aud.name} className="p-6 border border-border bg-card rounded-md hover:scale-[1.02] transition-transform cursor-pointer group shadow-sm">
                                 <div className="flex items-center justify-between mb-6">
                                     <div className="h-10 w-10 rounded-xl bg-#E0267D/10 flex items-center justify-center text-[#E0267D]">
                                         <Info className="h-5 w-5" />
                                     </div>
                                     <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[9px] uppercase tracking-widest">{aud.score}% Affinity</Badge>
                                 </div>
-                                <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest mb-2 group-hover:text-[#E0267D] transition-colors">{aud.name}</h3>
-                                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-100 dark:border-white/5">
+                                <h3 className="text-sm font-black text-foreground uppercase tracking-widest mb-2 group-hover:text-[#E0267D] transition-colors">{aud.name}</h3>
+                                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-100 dark:border-border">
                                     <div>
-                                        <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Potential Reach</p>
-                                        <p className="text-[13px] font-black text-zinc-900 dark:text-zinc-100">{aud.reach.toLocaleString()}</p>
+                                        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Potential Reach</p>
+                                        <p className="text-[13px] font-black text-foreground">{aud.reach.toLocaleString()}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Segment Size</p>
-                                        <p className="text-[13px] font-black text-zinc-900 dark:text-zinc-100">{aud.size}</p>
+                                        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Segment Size</p>
+                                        <p className="text-[13px] font-black text-foreground">{aud.size}</p>
                                     </div>
                                 </div>
                             </Card>
                         )) : (
-                            <div className="col-span-full h-[400px] flex flex-col items-center justify-center text-center p-12 bg-zinc-50 dark:bg-white/5 rounded-[2.5rem] border border-zinc-200/50 dark:border-white/10">
+                            <div className="col-span-full h-[400px] flex flex-col items-center justify-center text-center p-12 bg-zinc-50 dark:bg-white/5 rounded-md border border-border/50 dark:border-border">
                                 <Info className="h-12 w-12 text-zinc-200 mb-4" />
-                                <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest">No Audience Data Synchronized</h3>
+                                <h3 className="text-sm font-black text-muted-foreground uppercase tracking-widest">No Audience Data Synchronized</h3>
                             </div>
                         )}
                     </div>
@@ -1049,23 +1049,23 @@ export default function AdrollView({
         // Ads & Assets tab (the main table)
         return (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
-                <Card className="rounded-[2rem] border border-zinc-200 dark:border-white/10 shadow-2xl overflow-hidden bg-white/80 dark:bg-zinc-900/80 md:backdrop-blur-xl backdrop-blur-md group/table">
+                <Card className="rounded-md border border-border shadow-sm overflow-hidden bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md group/table">
                     <div className="overflow-x-auto custom-scrollbar">
                         <div className="min-w-[800px]">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="bg-[#f8f9fa] dark:bg-white/5 hover:bg-[#f8f9fa] dark:hover:bg-white/5 transition-none border-b border-zinc-200 dark:border-white/10">
+                                    <TableRow className="bg-[#f8f9fa] dark:bg-white/5 hover:bg-[#f8f9fa] dark:hover:bg-white/5 transition-none border-b border-border">
                                         <TableHead className="w-[40px] px-4 text-center hidden lg:table-cell">
-                                            <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-white/10 text-[#E0267D] focus:ring-[#E0267D]" />
+                                            <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-border text-[#E0267D] focus:ring-[#E0267D]" />
                                         </TableHead>
-                                        <TableHead className="w-[60px] md:w-[80px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-4">Creative</TableHead>
-                                        <TableHead className="min-w-[150px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest px-4">Details</TableHead>
-                                        <TableHead className="w-[90px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center px-4 hidden md:table-cell">Status</TableHead>
-                                        <TableHead className="w-[80px] md:w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-4">Cost</TableHead>
-                                        <TableHead className="w-[80px] md:w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-4 hidden sm:table-cell">Impr.</TableHead>
-                                        <TableHead className="w-[80px] md:w-[100px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-right px-4 hidden md:table-cell">Int.</TableHead>
+                                        <TableHead className="w-[60px] md:w-[80px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest px-4">Creative</TableHead>
+                                        <TableHead className="min-w-[150px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest px-4">Details</TableHead>
+                                        <TableHead className="w-[90px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-center px-4 hidden md:table-cell">Status</TableHead>
+                                        <TableHead className="w-[80px] md:w-[100px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-4">Cost</TableHead>
+                                        <TableHead className="w-[80px] md:w-[100px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-4 hidden sm:table-cell">Impr.</TableHead>
+                                        <TableHead className="w-[80px] md:w-[100px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-4 hidden md:table-cell">Int.</TableHead>
                                         <TableHead className="w-[100px] md:w-[120px] text-[#E0267D] font-black text-[9px] uppercase tracking-widest text-right px-6 bg-#E0267D/10/10 dark:bg-blue-900/5">Int. Rate</TableHead>
-                                        <TableHead className="w-[120px] md:w-[140px] text-zinc-400 dark:text-zinc-500 font-black text-[9px] uppercase tracking-widest text-center px-4">Action</TableHead>
+                                        <TableHead className="w-[120px] md:w-[140px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-center px-4">Action</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -1075,13 +1075,13 @@ export default function AdrollView({
                                                 <div className="flex flex-col items-center justify-center space-y-6 max-w-sm mx-auto">
                                                     <div className="relative">
                                                         <div className="absolute inset-0 bg-#E0267D/10 blur-3xl rounded-full scale-150 opacity-20" />
-                                                        <div className="relative h-20 w-20 rounded-[2rem] bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 shadow-2xl flex items-center justify-center">
+                                                        <div className="relative h-20 w-20 rounded-md bg-white dark:bg-zinc-800 border border-border shadow-sm flex items-center justify-center">
                                                             <Search className="h-10 w-10 text-[#E0267D]" />
                                                         </div>
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tightest">No Matching Creatives</h3>
-                                                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Adjust filters to see more results</p>
+                                                        <h3 className="text-lg font-black text-foreground uppercase tracking-tight">No Matching Creatives</h3>
+                                                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Adjust filters to see more results</p>
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -1094,11 +1094,11 @@ export default function AdrollView({
                                                 // Removed row onClick to prevent accidental analysis openings
                                                 >
                                                     <TableCell className="px-4 text-center hidden lg:table-cell">
-                                                        <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-white/10 text-[#E0267D] focus:ring-[#E0267D]" onClick={(e) => e.stopPropagation()} />
+                                                        <input type="checkbox" className="w-4 h-4 rounded border-zinc-300 dark:border-border text-[#E0267D] focus:ring-[#E0267D]" onClick={(e) => e.stopPropagation()} />
                                                     </TableCell>
                                                     <TableCell className="px-4">
                                                         <div
-                                                            className="h-12 w-14 bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden border border-zinc-200 dark:border-white/5 shadow-sm group-hover/row:scale-105 transition-transform duration-300 cursor-pointer relative"
+                                                            className="h-12 w-14 bg-muted rounded-xl overflow-hidden border border-border shadow-sm group-hover/row:scale-105 transition-transform duration-300 cursor-pointer relative"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName);
@@ -1112,8 +1112,8 @@ export default function AdrollView({
                                                     </TableCell>
                                                     <TableCell className="px-4">
                                                         <div className="flex flex-col max-w-[200px]">
-                                                            <span className="text-zinc-900 dark:text-zinc-100 font-black text-[13px] truncate leading-tight">{ad.adName || "Unnamed"}</span>
-                                                            <span className="text-[10px] text-zinc-400 font-bold truncate opacity-80">{ad.campaignName}</span>
+                                                            <span className="text-foreground font-black text-[13px] truncate leading-tight">{ad.adName || "Unnamed"}</span>
+                                                            <span className="text-[10px] text-muted-foreground font-bold truncate opacity-80">{ad.campaignName}</span>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="px-4 hidden md:table-cell">
@@ -1124,9 +1124,9 @@ export default function AdrollView({
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-right font-black text-[14px] text-zinc-900 dark:text-zinc-100 px-4">${Number(ad.spend).toLocaleString()}</TableCell>
-                                                    <TableCell className="text-right font-bold text-[13px] text-zinc-500 px-4 hidden sm:table-cell">{Number(ad.impressions).toLocaleString()}</TableCell>
-                                                    <TableCell className="text-right font-bold text-[13px] text-zinc-500 px-4 hidden md:table-cell">{Number(ad.clicks).toLocaleString()}</TableCell>
+                                                    <TableCell className="text-right font-black text-[14px] text-foreground px-4">${Number(ad.spend).toLocaleString()}</TableCell>
+                                                    <TableCell className="text-right font-bold text-[13px] text-muted-foreground px-4 hidden sm:table-cell">{Number(ad.impressions).toLocaleString()}</TableCell>
+                                                    <TableCell className="text-right font-bold text-[13px] text-muted-foreground px-4 hidden md:table-cell">{Number(ad.clicks).toLocaleString()}</TableCell>
                                                     <TableCell className="text-right font-black text-[15px] text-[#E0267D] px-6 bg-#E0267D/10/10 dark:bg-blue-900/5">{(Number(ad.ctr) || 0).toFixed(2)}%</TableCell>
                                                     <TableCell className="px-4">
                                                         <div className="flex items-center justify-center">
@@ -1135,7 +1135,7 @@ export default function AdrollView({
                                                                     e.stopPropagation();
                                                                     onSelectAd(ad);
                                                                 }}
-                                                                className="relative h-9 px-5 bg-zinc-50 dark:bg-zinc-900/50 hover:bg-[#E0267D] border border-zinc-200 dark:border-white/10 hover:border-[#E0267D] text-zinc-600 dark:text-zinc-400 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-sm hover:shadow-[0_0_20px_rgba(26,115,232,0.3)] transition-all duration-300 group overflow-hidden"
+                                                                className="relative h-9 px-5 bg-card/50 hover:bg-[#E0267D] border border-border hover:border-[#E0267D] text-muted-foreground dark:text-muted-foreground hover:text-white text-xs font-medium uppercase tracking-wider rounded-xl shadow-sm hover:shadow-[0_0_20px_rgba(26,115,232,0.3)] transition-all duration-300 group overflow-hidden"
                                                             >
                                                                 <span className="relative z-10 flex items-center">
                                                                     <Sparkles className="h-3.5 w-3.5 mr-2 text-[#E0267D] group-hover:text-white transition-colors" />
@@ -1152,7 +1152,7 @@ export default function AdrollView({
                                                         <Button
                                                             onClick={() => setDisplayLimit(prev => prev + 24)}
                                                             variant="outline"
-                                                            className="h-12 px-8 border-none bg-#E0267D/10 text-[#E0267D] dark:bg-white/5 dark:text-#E0267D text-[11px] font-black uppercase tracking-widest rounded-2xl"
+                                                            className="h-12 px-8 border-none bg-#E0267D/10 text-[#E0267D] dark:bg-white/5 dark:text-#E0267D text-[11px] font-black uppercase tracking-widest rounded-md"
                                                         >
                                                             Show More Creatives
                                                         </Button>
@@ -1175,7 +1175,7 @@ export default function AdrollView({
     return (
         <TooltipProvider>
             {/* ── Header ─────────────────────────────────────────────── */}
-            <div className="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-zinc-200 dark:border-white/5 -mx-4 md:-mx-6">
+            <div className="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-border -mx-4 md:-mx-6">
                 {/* Mobile Header - Professional Approach */}
                 <div className="md:hidden px-4 py-3 flex flex-col gap-4">
                     {/* Top Row: Info & Mode Toggle */}
@@ -1186,19 +1186,19 @@ export default function AdrollView({
                             </div>
                             <div className="flex flex-col min-w-0">
                                 <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#E0267D] opacity-80 leading-tight">AdRoll Platform</span>
-                                <h1 className="text-[13px] font-black tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-1 leading-tight truncate">
+                                <h1 className="text-[13px] font-black tracking-tight text-foreground flex items-center gap-1 leading-tight truncate">
                                     Global Overview
-                                    <ChevronDown className="h-2.5 w-2.5 text-zinc-400 shrink-0" />
+                                    <ChevronDown className="h-2.5 w-2.5 text-muted-foreground shrink-0" />
                                 </h1>
                             </div>
                         </div>
 
                         {/* Search Bar - Mobile Header */}
                         <div className="relative group flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 group-focus-within:text-[#E0267D] transition-colors" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground group-focus-within:text-[#E0267D] transition-colors" />
                             <Input
                                 placeholder="Search ads..."
-                                className="pl-9 h-8 bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-white/10 rounded-lg text-[11px] font-bold focus-visible:ring-1 focus-visible:ring-[#E0267D]/30 transition-all w-full"
+                                className="pl-9 h-8 bg-zinc-50/50 dark:bg-card/50 border-border rounded-lg text-[11px] font-bold focus-visible:ring-1 focus-visible:ring-[#E0267D]/30 transition-all w-full"
                                 value={dataSource === "realtime" ? realtimeSearchQuery : localSearchQuery}
                                 onChange={(e) => dataSource === "realtime" ? setRealtimeSearchQuery(e.target.value) : setLocalSearchQuery(e.target.value)}
                             />
@@ -1206,30 +1206,30 @@ export default function AdrollView({
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="h-8 px-2.5 bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-lg flex items-center gap-2">
+                                <Button variant="outline" className="h-8 px-2.5 bg-zinc-50/50 dark:bg-card/50 border-border rounded-lg flex items-center gap-2">
                                     {dataSource === "database" ? <Database className="h-3 w-3 text-[#E0267D]" /> : <Wifi className="h-3 w-3 text-[#E0267D] animate-pulse" />}
-                                    <span className="text-[10px] font-bold text-zinc-700 dark:text-zinc-300">
+                                    <span className="text-[10px] font-bold text-foreground/80 dark:text-zinc-300">
                                         {dataSource === "database" ? "Historical" : "Live"}
                                     </span>
-                                    <ChevronDown className="h-2.5 w-2.5 text-zinc-400" />
+                                    <ChevronDown className="h-2.5 w-2.5 text-muted-foreground" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-52 rounded-2xl p-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-zinc-200 dark:border-white/10 shadow-2xl z-50">
+                            <DropdownMenuContent align="end" className="w-52 rounded-md p-2 bg-white/95 dark:bg-card/95 backdrop-blur-xl border-border shadow-sm z-50">
                                 <DropdownMenuItem onClick={() => setDataSource("database")} className={cn("rounded-xl py-2.5 cursor-pointer mb-1", dataSource === "database" && "bg-[#E0267D]/5")}>
                                     <div className="flex items-center gap-2.5">
-                                        <Database className={cn("h-4 w-4 shrink-0", dataSource === "database" ? "text-[#E0267D]" : "text-zinc-500")} />
+                                        <Database className={cn("h-4 w-4 shrink-0", dataSource === "database" ? "text-[#E0267D]" : "text-muted-foreground")} />
                                         <div>
-                                            <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Historical Reports</p>
-                                            <p className="text-[10px] text-zinc-400 font-medium">Database analysis cards</p>
+                                            <p className="text-xs font-bold text-foreground">Historical Reports</p>
+                                            <p className="text-[10px] text-muted-foreground font-medium">Database analysis cards</p>
                                         </div>
                                     </div>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setDataSource("realtime")} className={cn("rounded-xl py-2.5 cursor-pointer", dataSource === "realtime" && "bg-[#E0267D]/5")}>
                                     <div className="flex items-center gap-2.5">
-                                        <Wifi className={cn("h-4 w-4 shrink-0", dataSource === "realtime" ? "text-[#E0267D]" : "text-zinc-500")} />
+                                        <Wifi className={cn("h-4 w-4 shrink-0", dataSource === "realtime" ? "text-[#E0267D]" : "text-muted-foreground")} />
                                         <div>
-                                            <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Live Analytics</p>
-                                            <p className="text-[10px] text-zinc-400 font-medium">Campaigns → Ads → Analysis</p>
+                                            <p className="text-xs font-bold text-foreground">Live Analytics</p>
+                                            <p className="text-[10px] text-muted-foreground font-medium">Campaigns → Ads → Analysis</p>
                                         </div>
                                     </div>
                                 </DropdownMenuItem>
@@ -1242,8 +1242,8 @@ export default function AdrollView({
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-none snap-x h-10">
                         {dataSource === "realtime" ? (
                             <Select value={realtimeDateRange} onValueChange={setRealtimeDateRange}>
-                                <SelectTrigger className="w-[130px] h-8 rounded-lg bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-[11px] font-black uppercase tracking-widest snap-start">
-                                    <Calendar className="h-3 w-3 mr-1.5 text-zinc-400" />
+                                <SelectTrigger className="w-[130px] h-8 rounded-lg bg-card border-border text-[11px] font-black uppercase tracking-widest snap-start">
+                                    <Calendar className="h-3 w-3 mr-1.5 text-muted-foreground" />
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1257,8 +1257,8 @@ export default function AdrollView({
                         ) : (
                             <>
                                 <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
-                                    <SelectTrigger className="w-[160px] h-8 shrink-0 rounded-lg bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-[11px] font-black uppercase tracking-widest snap-start">
-                                        <LayoutGrid className="h-3 w-3 mr-1.5 text-zinc-400" />
+                                    <SelectTrigger className="w-[160px] h-8 shrink-0 rounded-lg bg-card border-border text-[11px] font-black uppercase tracking-widest snap-start">
+                                        <LayoutGrid className="h-3 w-3 mr-1.5 text-muted-foreground" />
                                         <SelectValue placeholder="Campaigns" />
                                     </SelectTrigger>
                                     <SelectContent className="w-[200px]">
@@ -1269,8 +1269,8 @@ export default function AdrollView({
                                     </SelectContent>
                                 </Select>
                                 <Select value={selectedType} onValueChange={setSelectedType}>
-                                    <SelectTrigger className="w-[120px] h-8 shrink-0 rounded-lg bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-[11px] font-black uppercase tracking-widest snap-start">
-                                        <Filter className="h-3 w-3 mr-1.5 text-zinc-400" />
+                                    <SelectTrigger className="w-[120px] h-8 shrink-0 rounded-lg bg-card border-border text-[11px] font-black uppercase tracking-widest snap-start">
+                                        <Filter className="h-3 w-3 mr-1.5 text-muted-foreground" />
                                         <SelectValue placeholder="Types" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -1293,9 +1293,9 @@ export default function AdrollView({
                         </div>
                         <div className="flex flex-col min-w-0">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#E0267D] opacity-80">AdRoll Platform</span>
-                            <h1 className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 truncate">
+                            <h1 className="text-sm font-black tracking-tight text-foreground flex items-center gap-1.5 truncate">
                                 Global Overview
-                                <ChevronDown className="h-3 w-3 text-zinc-400 shrink-0" />
+                                <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
                             </h1>
                         </div>
                     </div>
@@ -1305,10 +1305,10 @@ export default function AdrollView({
                         {/* Date range — live mode only */}
                         {dataSource === "realtime" && (
                             <Select value={realtimeDateRange} onValueChange={setRealtimeDateRange}>
-                                <SelectTrigger className="w-36 h-9 rounded-xl bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 text-xs font-medium focus:ring-1 focus:ring-[#E0267D]/50 shadow-sm">
+                                <SelectTrigger className="w-36 h-9 rounded-xl bg-zinc-50 dark:bg-white/5 border-border text-xs font-medium focus:ring-1 focus:ring-[#E0267D]/50 shadow-sm">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="rounded-2xl border-zinc-200 dark:border-white/10">
+                                <SelectContent className="rounded-md border-border">
                                     <SelectItem value="LAST_7_DAYS">Last 7 Days</SelectItem>
                                     <SelectItem value="LAST_14_DAYS">Last 14 Days</SelectItem>
                                     <SelectItem value="LAST_30_DAYS">Last 30 Days</SelectItem>
@@ -1322,10 +1322,10 @@ export default function AdrollView({
                         <div className="flex items-center gap-2">
                             {/* Desktop Search Bar */}
                             <div className="relative group w-[200px] lg:w-[280px]">
-                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 group-focus-within:text-[#E0267D] transition-colors" />
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground group-focus-within:text-[#E0267D] transition-colors" />
                                 <Input
                                     placeholder="Search ads..."
-                                    className="pl-9 h-9 bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 rounded-xl text-xs font-medium focus-visible:ring-1 focus-visible:ring-[#E0267D]/50 shadow-sm transition-all w-full"
+                                    className="pl-9 h-9 bg-zinc-50 dark:bg-white/5 border-border rounded-xl text-xs font-medium focus-visible:ring-1 focus-visible:ring-[#E0267D]/50 shadow-sm transition-all w-full"
                                     value={dataSource === "realtime" ? realtimeSearchQuery : localSearchQuery}
                                     onChange={(e) => dataSource === "realtime" ? setRealtimeSearchQuery(e.target.value) : setLocalSearchQuery(e.target.value)}
                                 />
@@ -1333,32 +1333,32 @@ export default function AdrollView({
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="h-9 px-3 bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 rounded-xl flex items-center gap-2 hover:border-[#E0267D]/30 transition-all shadow-sm">
+                                    <Button variant="outline" className="h-9 px-3 bg-zinc-50 dark:bg-white/5 border-border rounded-xl flex items-center gap-2 hover:border-[#E0267D]/30 transition-all shadow-sm">
                                         {dataSource === "database"
                                             ? <Database className="h-3.5 w-3.5 text-[#E0267D]" />
                                             : <Wifi className="h-3.5 w-3.5 text-[#E0267D] animate-pulse" />}
-                                        <span className="text-xs font-black text-zinc-700 dark:text-zinc-300">
+                                        <span className="text-xs font-black text-foreground/80 dark:text-zinc-300">
                                             {dataSource === "database" ? "Historical Reports" : "Live Analytics"}
                                         </span>
-                                        <ChevronDown className="h-3 w-3 text-zinc-400" />
+                                        <ChevronDown className="h-3 w-3 text-muted-foreground" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-52 rounded-2xl p-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-zinc-200 dark:border-white/10 shadow-2xl z-50">
+                                <DropdownMenuContent align="end" className="w-52 rounded-md p-2 bg-white/95 dark:bg-card/95 backdrop-blur-xl border-border shadow-sm z-50">
                                     <DropdownMenuItem onClick={() => setDataSource("database")} className={cn("rounded-xl py-2.5 cursor-pointer mb-1", dataSource === "database" && "bg-[#E0267D]/5")}>
                                         <div className="flex items-center gap-2.5">
-                                            <Database className={cn("h-4 w-4 shrink-0", dataSource === "database" ? "text-[#E0267D]" : "text-zinc-500")} />
+                                            <Database className={cn("h-4 w-4 shrink-0", dataSource === "database" ? "text-[#E0267D]" : "text-muted-foreground")} />
                                             <div>
                                                 <p className="text-xs font-bold">Historical Reports</p>
-                                                <p className="text-[10px] text-zinc-400">Database analysis cards</p>
+                                                <p className="text-[10px] text-muted-foreground">Database analysis cards</p>
                                             </div>
                                         </div>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setDataSource("realtime")} className={cn("rounded-xl py-2.5 cursor-pointer", dataSource === "realtime" && "bg-[#E0267D]/5")}>
                                         <div className="flex items-center gap-2.5">
-                                            <Wifi className={cn("h-4 w-4 shrink-0", dataSource === "realtime" ? "text-[#E0267D]" : "text-zinc-500")} />
+                                            <Wifi className={cn("h-4 w-4 shrink-0", dataSource === "realtime" ? "text-[#E0267D]" : "text-muted-foreground")} />
                                             <div>
                                                 <p className="text-xs font-bold">Live Analytics</p>
-                                                <p className="text-[10px] text-zinc-400">Campaigns → Ads → Analysis</p>
+                                                <p className="text-[10px] text-muted-foreground">Campaigns → Ads → Analysis</p>
                                             </div>
                                         </div>
                                     </DropdownMenuItem>
@@ -1369,10 +1369,10 @@ export default function AdrollView({
                             {dataSource === "realtime" && (
                                 <button
                                     onClick={() => { setIsRefreshing(true); setRealtimeRefreshKey(k => k + 1); setTimeout(() => setIsRefreshing(false), 1500); }}
-                                    className="h-9 w-9 rounded-xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center justify-center hover:border-[#E0267D]/40 transition-all shadow-sm"
+                                    className="h-9 w-9 rounded-xl bg-zinc-50 dark:bg-white/5 border border-border flex items-center justify-center hover:border-[#E0267D]/40 transition-all shadow-sm"
                                     title="Refresh"
                                 >
-                                    <RefreshCw className={`h-3.5 w-3.5 text-zinc-500 ${isRefreshing ? 'animate-spin text-[#E0267D]' : ''}`} />
+                                    <RefreshCw className={`h-3.5 w-3.5 text-muted-foreground ${isRefreshing ? 'animate-spin text-[#E0267D]' : ''}`} />
                                 </button>
                             )}
                         </div>
@@ -1383,7 +1383,7 @@ export default function AdrollView({
             {/* ── Content ────────────────────────────────────────────── */}
             {dataSource === "realtime" ? (
                 <div className="flex flex-col w-full gap-4 py-6">
-                    <div className="bg-white dark:bg-black relative -mx-4 md:-mx-6 rounded-2xl overflow-hidden" style={{ height: "calc(100vh - 200px)" }}>
+                    <div className="bg-white dark:bg-black relative -mx-4 md:-mx-6 rounded-md overflow-hidden" style={{ height: "calc(100vh - 200px)" }}>
                         <RealtimeNativeView
                             key={realtimeRefreshKey}
                             dateRange={realtimeDateRange}
@@ -1403,11 +1403,11 @@ export default function AdrollView({
                     <div className="flex flex-col md:flex-row flex-wrap items-center gap-3">
 
                         <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
-                            <SelectTrigger className="w-44 h-9 rounded-xl bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 text-xs font-bold">
-                                <LayoutGrid className="h-3 w-3 mr-2 text-zinc-400" />
+                            <SelectTrigger className="w-44 h-9 rounded-xl bg-zinc-50 dark:bg-white/5 border-border text-xs font-bold">
+                                <LayoutGrid className="h-3 w-3 mr-2 text-muted-foreground" />
                                 <SelectValue placeholder="All Campaigns" />
                             </SelectTrigger>
-                            <SelectContent className="rounded-2xl">
+                            <SelectContent className="rounded-md">
                                 <SelectItem value="all" className="rounded-xl font-bold text-xs">All Campaigns</SelectItem>
                                 {uniqueCampaigns.map((camp: any) => (
                                     <SelectItem key={camp} value={camp} className="rounded-xl text-xs">{camp}</SelectItem>
@@ -1416,11 +1416,11 @@ export default function AdrollView({
                         </Select>
 
                         <Select value={selectedType} onValueChange={setSelectedType}>
-                            <SelectTrigger className="w-36 h-9 rounded-xl bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 text-xs font-bold">
-                                <Filter className="h-3 w-3 mr-2 text-zinc-400" />
+                            <SelectTrigger className="w-36 h-9 rounded-xl bg-zinc-50 dark:bg-white/5 border-border text-xs font-bold">
+                                <Filter className="h-3 w-3 mr-2 text-muted-foreground" />
                                 <SelectValue placeholder="All Types" />
                             </SelectTrigger>
-                            <SelectContent className="rounded-2xl">
+                            <SelectContent className="rounded-md">
                                 <SelectItem value="all" className="rounded-xl font-bold text-xs">All Types</SelectItem>
                                 {campaignTypes.map((type: any) => (
                                     <SelectItem key={type} value={type} className="rounded-xl text-xs">{type}</SelectItem>
@@ -1432,11 +1432,11 @@ export default function AdrollView({
                     {/* Empty state */}
                     {filteredAds.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-24 text-center">
-                            <div className="w-16 h-16 rounded-2xl bg-[#E0267D]/10 flex items-center justify-center mb-4 border border-[#E0267D]/20">
+                            <div className="w-16 h-16 rounded-md bg-[#E0267D]/10 flex items-center justify-center mb-4 border border-[#E0267D]/20">
                                 <Database className="h-7 w-7 text-[#E0267D]" />
                             </div>
-                            <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 mb-1">No AdRoll Data</h3>
-                            <p className="text-sm text-zinc-400 max-w-xs">No AdRoll creatives found in the database. Switch to Live Analytics to view campaigns.</p>
+                            <h3 className="text-lg font-black text-foreground mb-1">No AdRoll Data</h3>
+                            <p className="text-sm text-muted-foreground max-w-xs">No AdRoll creatives found in the database. Switch to Live Analytics to view campaigns.</p>
                         </div>
                     ) : (
                         /* Ad Cards Grid - Slider on mobile, Grid on desktop */
@@ -1453,14 +1453,14 @@ export default function AdrollView({
                                         key={ad.id}
                                         className={cn(
                                             "group relative flex flex-col min-w-[85vw] md:min-w-0 w-full rounded-xl transition-all duration-300 overflow-hidden snap-center",
-                                            "bg-white dark:bg-[#09090b] border border-zinc-200 dark:border-white/10",
-                                            "hover:border-cyan-500/30 dark:hover:border-cyan-500/40 hover:shadow-xl dark:hover:shadow-cyan-500/10",
+                                            "bg-white dark:bg-[#09090b] border border-border",
+                                            "hover:border-cyan-500/30 dark:hover:border-cyan-500/40 hover:shadow-sm dark:hover:shadow-cyan-500/10",
                                             "hover:-translate-y-1"
                                         )}
                                     >
                                         {/* Media Section */}
                                         <div
-                                            className="relative aspect-[1.7] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-100 dark:border-white/5"
+                                            className="relative aspect-[1.7] w-full overflow-hidden bg-zinc-100 dark:bg-card border-b border-zinc-100 dark:border-border"
                                             onClick={(e) => {
                                                 e.stopPropagation()
                                                 if (onEnlargeImage && ad.thumbnailUrl) onEnlargeImage(ad.thumbnailUrl, ad.adName || ad.adId)
@@ -1480,7 +1480,7 @@ export default function AdrollView({
                                             )}
 
                                             {/* Top Badges */}
-                                            <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/60 backdrop-blur-md border border-white/10 z-10">
+                                            <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/60 backdrop-blur-md border border-border z-10">
                                                 <div className="w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
                                                 <span className="text-[7px] font-bold uppercase tracking-widest text-white">Live</span>
                                             </div>
@@ -1491,7 +1491,7 @@ export default function AdrollView({
                                             {/* Size Overlay */}
                                             {/* Assuming ad.width and ad.height are available, otherwise this might need adjustment */}
                                             {ad.width && ad.height && (
-                                                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/40 backdrop-blur-sm border border-white/5 text-[7px] font-bold text-zinc-400">
+                                                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/40 backdrop-blur-sm border border-border text-[7px] font-bold text-muted-foreground">
                                                     {ad.width}x{ad.height}
                                                 </div>
                                             )}
@@ -1500,37 +1500,37 @@ export default function AdrollView({
                                         {/* Info Section */}
                                         <div className="p-4 flex flex-col gap-3.5 flex-1">
                                             <div className="space-y-1">
-                                                <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-1 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors uppercase tracking-tight">
+                                                <h3 className="text-xs font-bold text-foreground leading-snug line-clamp-1 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors uppercase tracking-tight">
                                                     {ad.adName || ad.adId || "Untitled Creative"}
                                                 </h3>
-                                                <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em]">ID: {ad.adId?.substring(0, 8)}</p>
+                                                <p className="text-[9px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-[0.15em]">ID: {ad.adId?.substring(0, 8)}</p>
                                             </div>
 
                                             {/* Minimalist Metrics Grid */}
                                             <div className="grid grid-cols-2 gap-2">
-                                                <div className="bg-zinc-50 dark:bg-zinc-900/40 rounded-lg p-2.5 border border-zinc-100 dark:border-white/5 flex flex-col justify-center h-[55px] relative overflow-hidden group/m">
+                                                <div className="bg-card/40 rounded-lg p-2.5 border border-zinc-100 dark:border-border flex flex-col justify-center h-[55px] relative overflow-hidden group/m">
                                                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-cyan-500 opacity-0 group-hover/m:opacity-100 transition-opacity" />
-                                                    <p className="text-[8px] font-black uppercase text-zinc-400 mb-0.5 tracking-wider">Efficiency</p>
-                                                    <p className="text-lg font-black font-mono text-zinc-900 dark:text-white tracking-tighter leading-none">
+                                                    <p className="text-[8px] font-black uppercase text-muted-foreground mb-0.5 tracking-wider">Efficiency</p>
+                                                    <p className="text-lg font-black font-mono text-foreground tracking-tighter leading-none">
                                                         {Number(ad.ctr || 0).toFixed(2)}%
                                                     </p>
                                                 </div>
-                                                <div className="bg-zinc-50 dark:bg-zinc-900/40 rounded-lg p-2.5 border border-zinc-100 dark:border-white/5 flex flex-col justify-center h-[55px] relative overflow-hidden group/m">
+                                                <div className="bg-card/40 rounded-lg p-2.5 border border-zinc-100 dark:border-border flex flex-col justify-center h-[55px] relative overflow-hidden group/m">
                                                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-emerald-500 opacity-0 group-hover/m:opacity-100 transition-opacity" />
-                                                    <p className="text-[8px] font-black uppercase text-zinc-400 mb-0.5 tracking-wider">Spend</p>
-                                                    <p className="text-lg font-black font-mono text-zinc-900 dark:text-white tracking-tighter leading-none">
+                                                    <p className="text-[8px] font-black uppercase text-muted-foreground mb-0.5 tracking-wider">Spend</p>
+                                                    <p className="text-lg font-black font-mono text-foreground tracking-tighter leading-none">
                                                         ${Number(ad.spend || 0).toLocaleString()}
                                                     </p>
                                                 </div>
                                             </div>
 
                                             {/* High-Precision Footer */}
-                                            <div className="mt-auto pt-3 flex items-center justify-end border-t border-zinc-100 dark:border-white/5">
+                                            <div className="mt-auto pt-3 flex items-center justify-end border-t border-zinc-100 dark:border-border">
                                                 <Button
                                                     onClick={(e) => { e.stopPropagation(); onSelectAd(ad); }}
                                                     className={cn(
                                                         "h-8 px-5 font-bold text-[10px] uppercase tracking-widest rounded-md transition-all duration-300 flex items-center gap-2 active:scale-95",
-                                                        "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-teal-600 dark:hover:bg-cyan-500 hover:text-white shadow-lg"
+                                                        "bg-card dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-teal-600 dark:hover:bg-cyan-500 hover:text-white shadow-lg"
                                                     )}
                                                 >
                                                     <Sparkles className="h-3.5 w-3.5" />
@@ -1550,7 +1550,7 @@ export default function AdrollView({
                             <Button
                                 onClick={() => setDisplayLimit(prev => prev + 24)}
                                 variant="outline"
-                                className="h-11 px-8 border-[#E0267D]/30 text-[#E0267D] hover:bg-[#E0267D]/5 rounded-2xl text-xs font-black uppercase tracking-widest"
+                                className="h-11 px-8 border-[#E0267D]/30 text-[#E0267D] hover:bg-[#E0267D]/5 rounded-md text-xs font-black uppercase tracking-widest"
                             >
                                 Show More Creatives
                             </Button>

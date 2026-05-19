@@ -81,7 +81,7 @@ export default function AnalysisSidebar({ activeDetail, onClose, onNavigate, adD
     const DesktopPanel = (
         <div
             className={cn(
-                "fixed top-[104px] -mt-[1px] bottom-0 right-0 bg-white dark:bg-zinc-950/95 backdrop-blur-md border-l border-border shadow-[-20px_0_80px_rgba(0,0,0,0.05)] z-[500] transition-all duration-700 ease-out flex flex-col w-[300px] xl:w-[340px] 2xl:w-[380px] rounded-tl-[2.5rem] rounded-bl-[2.5rem]",
+                "fixed top-[104px] -mt-[1px] bottom-0 right-0 bg-white dark:bg-background/95 backdrop-blur-md border-l border-border shadow-[-20px_0_80px_rgba(0,0,0,0.05)] z-[500] transition-all duration-700 ease-out flex flex-col w-[300px] xl:w-[340px] 2xl:w-[380px] rounded-tl-[2.5rem] rounded-bl-[2.5rem]",
                 isDetailVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 invisible"
             )}
         >
@@ -124,13 +124,13 @@ export default function AnalysisSidebar({ activeDetail, onClose, onNavigate, adD
 
     const MobilePopup = (
         <Sheet open={isMobile && isDetailVisible} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent side="bottom" hideClose={true} className="p-0 h-[85vh] rounded-t-[40px] border-none overflow-hidden bg-background dark:bg-zinc-950">
+            <SheetContent side="bottom" hideClose={true} className="p-0 h-[85vh] rounded-t-[40px] border-none overflow-hidden bg-background dark:bg-background">
                 <SheetHeader className="sr-only">
                     <SheetTitle>{name} Details</SheetTitle>
                     <SheetDescription>In-depth AI analysis of {name}</SheetDescription>
                 </SheetHeader>
                 <div className="absolute top-4 right-4 z-[110] flex items-center gap-3">
-                    <div className="flex items-center bg-card/90 dark:bg-zinc-800/90 backdrop-blur-md rounded-full border border-border shadow-xl">
+                    <div className="flex items-center bg-card/90 dark:bg-zinc-800/90 backdrop-blur-md rounded-full border border-border shadow-sm">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -155,7 +155,7 @@ export default function AnalysisSidebar({ activeDetail, onClose, onNavigate, adD
                         variant="secondary"
                         size="icon"
                         onClick={onClose}
-                        className="h-12 w-12 rounded-full shadow-2xl bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md text-foreground border border-border"
+                        className="h-12 w-12 rounded-full shadow-sm bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md text-foreground border border-border"
                     >
                         <X className="h-6 w-6" />
                     </Button>
@@ -195,12 +195,12 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
     }
 
     return (
-        <div className="flex flex-col h-full bg-background dark:bg-zinc-950 animate-in fade-in duration-300">
+        <div className="flex flex-col h-full bg-background dark:bg-background animate-in fade-in duration-300">
             {/* Header Container */}
             <div className={cn("p-3 md:p-4 pb-4 md:pb-5 relative overflow-hidden shrink-0 rounded-tl-xl", color)}>
                 <div className="relative z-10 space-y-2">
                     {Icon && (
-                        <div className="p-1 w-fit rounded-lg bg-background/80 dark:bg-white/10 shadow-md backdrop-blur-sm border border-white/50 dark:border-white/10">
+                        <div className="p-1 w-fit rounded-lg bg-background/80 dark:bg-white/10 shadow-md backdrop-blur-sm border border-white/50 dark:border-border">
                             <Icon className="h-4 w-4 text-foreground dark:text-zinc-100" />
                         </div>
                     )}
@@ -231,7 +231,7 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
                         <TrendingUp className="h-4 w-4 text-primary" />
                         <h3 className="text-[10px] font-black text-foreground">AI analysis insight</h3>
                     </div>
-                    <div className="bg-primary/5 dark:bg-primary/10 border border-primary/10 rounded-2xl p-4 md:p-5">
+                    <div className="bg-primary/5 dark:bg-primary/10 border border-primary/10 rounded-md p-4 md:p-5">
                         <p className="text-xs md:text-sm text-foreground/80 dark:text-zinc-300 leading-relaxed font-bold">
                             {dynamicInsight}
                         </p>
@@ -244,14 +244,14 @@ function DetailContent({ itemData, adData, isMobile }: { itemData: any, adData: 
                         <Zap className="h-4 w-4 text-amber-500" />
                         <h3 className="text-[10px] font-black text-foreground">Optimization</h3>
                     </div>
-                    <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-4 md:p-5 border border-zinc-100 dark:border-white/5">
+                    <div className="bg-card/50 rounded-md p-4 md:p-5 border border-zinc-100 dark:border-border">
                         <div className="space-y-4">
                             {[1].map((i) => (
                                 <div key={i} className="flex gap-4 items-start group">
-                                    <div className="h-6 w-6 rounded-lg bg-white dark:bg-white/10 flex items-center justify-center shrink-0 text-[10px] font-black text-zinc-400 dark:text-white/50 border border-zinc-200 dark:border-white/5">
+                                    <div className="h-6 w-6 rounded-lg bg-white dark:bg-white/10 flex items-center justify-center shrink-0 text-[10px] font-black text-muted-foreground dark:text-white/50 border border-border">
                                         0{i}
                                     </div>
-                                    <p className="text-xs md:text-sm text-zinc-600 dark:text-white/80 leading-snug">
+                                    <p className="text-xs md:text-sm text-muted-foreground dark:text-white/80 leading-snug">
                                         {isScore ? `Review ${name.toLowerCase()} consistency.` : `Verify legibility across sizes.`}
                                     </p>
                                 </div>

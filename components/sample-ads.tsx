@@ -103,16 +103,16 @@ const AdGridCard = ({
     <div
       onClick={() => onSelect(ad.id)}
       className={cn(
-        "group relative flex flex-col w-[300px] sm:w-auto snap-center rounded-2xl transition-all duration-300 cursor-default overflow-hidden p-3",
-        "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800",
-        "hover:shadow-2xl dark:hover:shadow-black/60 hover:border-zinc-300 dark:hover:border-zinc-700",
+        "group relative flex flex-col w-[300px] sm:w-auto snap-center rounded-md transition-all duration-300 cursor-default overflow-hidden p-3",
+        "bg-card border border-border",
+        "hover:shadow-sm dark:hover:shadow-black/60 hover:border-zinc-300 dark:hover:border-zinc-700",
         "hover:-translate-y-1",
         hasHighlight && "ring-2 ring-primary ring-offset-2 dark:ring-offset-zinc-950 border-transparent"
       )}
     >
       {/* Framed Image Section */}
       <div
-        className="aspect-[1.91/1] w-full relative overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800 shadow-inner cursor-pointer"
+        className="aspect-[1.91/1] w-full relative overflow-hidden rounded-xl bg-muted shadow-inner cursor-pointer"
         onClick={(e) => {
           e.stopPropagation()
           if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName)
@@ -152,7 +152,7 @@ const AdGridCard = ({
         {/* Title & Read More - Single Line */}
         <div className="flex items-center gap-1.5 w-full">
           <h3
-            className="font-medium text-[15px] leading-snug text-zinc-900 dark:text-zinc-100 hover:text-primary transition-colors truncate cursor-text"
+            className="font-medium text-[15px] leading-snug text-foreground hover:text-primary transition-colors truncate cursor-text"
           >
             <span className="select-text">
               {displayName}
@@ -173,9 +173,9 @@ const AdGridCard = ({
         {/* Metrics Grid */}
         <div className="grid grid-cols-3 gap-1.5 mt-auto">
           {/* Spend */}
-          <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-1.5 border border-zinc-100 dark:border-zinc-800/50 group-hover:border-zinc-200 dark:group-hover:border-zinc-700 transition-colors cursor-text select-text">
+          <div className="bg-muted/50 rounded-lg p-1.5 border border-zinc-100 dark:border-border/50 group-hover:border-border dark:group-hover:border-zinc-700 transition-colors cursor-text select-text">
             <p className="text-[8px] font-bold text-muted-foreground mb-0.5">Spend</p>
-            <p className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+            <p className="text-[11px] font-black text-foreground tracking-tight">
               ${Number(ad.spend || 0).toLocaleString()}
             </p>
           </div>
@@ -204,7 +204,7 @@ const AdGridCard = ({
         {/* ID Footer */}
         <div
           onClick={(e) => ad.platform === 'meta' && e.stopPropagation()}
-          className="group/id flex items-center justify-between gap-2 pt-2.5 pb-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 w-[calc(100%+1.5rem)] -mx-3 px-3 cursor-default mt-2"
+          className="group/id flex items-center justify-between gap-2 pt-2.5 pb-2 border-t border-dashed border-border w-[calc(100%+1.5rem)] -mx-3 px-3 cursor-default mt-2"
         >
           <span className="text-[10px] font-mono text-muted-foreground/70 truncate transition-colors group-hover/id:text-primary font-medium select-text">
             ID: {ad.adId}
@@ -278,9 +278,9 @@ const AdListCard = ({
     <div
       onClick={() => onSelect(ad.id)}
       className={cn(
-        "group relative flex flex-col sm:flex-row h-auto sm:h-40 w-full rounded-2xl transition-all duration-300 cursor-default overflow-hidden",
-        "bg-white dark:bg-zinc-900",
-        "border border-zinc-200/60 dark:border-white/5",
+        "group relative flex flex-col sm:flex-row h-auto sm:h-40 w-full rounded-md transition-all duration-300 cursor-default overflow-hidden",
+        "bg-card",
+        "border border-border/60 dark:border-border",
         "hover:border-primary/50 hover:shadow-lg dark:hover:shadow-black/20",
         "hover:-translate-y-0.5",
         hasHighlight && "ring-2 ring-primary ring-offset-2 dark:ring-offset-zinc-950 border-transparent shadow-lg"
@@ -288,7 +288,7 @@ const AdListCard = ({
     >
       {/* Image Section - Stacked on Mobile, Left on Desktop */}
       <div
-        className="w-full sm:w-48 aspect-[1.91/1] sm:aspect-auto relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 sm:m-3 rounded-t-2xl sm:rounded-xl cursor-pointer"
+        className="w-full sm:w-48 aspect-[1.91/1] sm:aspect-auto relative overflow-hidden bg-muted shrink-0 sm:m-3 rounded-t-2xl sm:rounded-xl cursor-pointer"
         onClick={(e) => {
           e.stopPropagation()
           if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName)
@@ -320,7 +320,7 @@ const AdListCard = ({
                     ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
                     : ad.performanceLabel === "AVERAGE"
                       ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20"
-                      : "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
+                      : "bg-zinc-100 text-muted-foreground border-border dark:bg-zinc-800 dark:text-muted-foreground dark:border-zinc-700"
                 )}
               >
                 {ad.performanceLabel === "TOP_PERFORMER" ? "Top performer" : (ad.performanceLabel ? ad.performanceLabel.charAt(0).toUpperCase() + ad.performanceLabel.slice(1).toLowerCase().replace(/_/g, " ") : "Active")}
@@ -346,7 +346,7 @@ const AdListCard = ({
           </div>
 
           <div className="flex items-center gap-1.5 w-full mt-1">
-            <h3 className="font-medium text-sm sm:text-[15px] leading-snug text-zinc-900 dark:text-zinc-100 truncate hover:text-primary transition-colors min-w-0 cursor-text select-text">
+            <h3 className="font-medium text-sm sm:text-[15px] leading-snug text-foreground truncate hover:text-primary transition-colors min-w-0 cursor-text select-text">
               {displayName}
             </h3>
             <button
@@ -361,16 +361,16 @@ const AdListCard = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-6 pt-3 border-t border-zinc-100 dark:border-white/5 mt-auto">
+        <div className="flex items-center gap-4 sm:gap-6 pt-3 border-t border-zinc-100 dark:border-border mt-auto">
           <div>
-            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-tightest mb-0.5 cursor-text">Spend</p>
-            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100 cursor-text tracking-tighter">
+            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-tight mb-0.5 cursor-text">Spend</p>
+            <p className="text-xs font-black text-foreground cursor-text tracking-tighter">
               ${Number(ad.spend || 0).toLocaleString()}
             </p>
           </div>
 
           <div>
-            <p className="text-[9px] text-indigo-500 font-black uppercase tracking-tightest mb-0.5 cursor-text">ROAS</p>
+            <p className="text-[9px] text-indigo-500 font-black uppercase tracking-tight mb-0.5 cursor-text">ROAS</p>
             <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 cursor-text tracking-tighter">
               {(() => {
                   const rev = Number(ad.purchaseValue) || 0;
@@ -381,7 +381,7 @@ const AdListCard = ({
           </div>
 
           <div>
-            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-tightest mb-0.5 cursor-text">CTR</p>
+            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-tight mb-0.5 cursor-text">CTR</p>
             <div className="flex items-center gap-1.5">
               <p className="text-xs font-black text-primary leading-none tabular-nums cursor-text tracking-tighter">
                 {Number(ad.ctr || 0).toFixed(2)}%
@@ -418,7 +418,7 @@ const AdTableRow = ({
   return (
     <TableRow
       onClick={() => onSelect(ad.id)}
-      className={`cursor-pointer transition-colors ${isSelected ? "bg-primary/[0.03] dark:bg-primary/[0.05]" : "hover:bg-secondary dark:hover:bg-zinc-800/50"}`}
+      className={`cursor-pointer transition-colors ${isSelected ? "bg-primary/[0.03] dark:bg-primary/[0.05]" : "hover:bg-secondary dark:hover:bg-muted/60"}`}
     >
       <TableCell>
         <div
@@ -444,7 +444,7 @@ const AdTableRow = ({
           >
             <span className="text-[10px] font-mono opacity-50 select-text">{ad.adId}</span>
             <div
-              className="opacity-0 group-hover/id:opacity-100 font-mono text-zinc-400 hover:text-primary transition-all duration-200 hover:scale-110 cursor-pointer p-0.5 rounded shadow-sm"
+              className="opacity-0 group-hover/id:opacity-100 font-mono text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 cursor-pointer p-0.5 rounded shadow-sm"
               onClick={handleCopyId}
               title="Click to copy ID"
             >
@@ -497,10 +497,10 @@ export default function SampleAds({
           <h3 className="text-base sm:text-lg font-black tracking-tight text-zinc-900 dark:text-zinc-50 whitespace-nowrap uppercase">Your Ads</h3>
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
             <Select value={viewMode} onValueChange={(v: any) => setViewMode(v)}>
-              <SelectTrigger className="w-[120px] sm:w-[150px] h-11 shrink-0 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl border border-border/40 rounded-2xl text-xs font-medium transition-all hover:bg-white hover:shadow-md group">
+              <SelectTrigger className="w-[120px] sm:w-[150px] h-11 shrink-0 bg-white/40 dark:bg-card/40 backdrop-blur-xl border border-border/40 rounded-md text-xs font-medium transition-all hover:bg-white hover:shadow-md group">
               <SelectValue placeholder="Display" />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl">
+            <SelectContent className="bg-card border-border rounded-xl shadow-sm">
               <SelectItem value="grid" className="font-bold cursor-pointer rounded-lg">
                 <div className="flex items-center gap-2">
                   <LayoutGrid className="h-3.5 w-3.5 text-primary" />
@@ -582,9 +582,9 @@ export default function SampleAds({
           )}
 
           {viewMode === "table" && (
-            <div className="rounded-xl border border-border overflow-hidden bg-white dark:bg-zinc-900">
+            <div className="rounded-xl border border-border overflow-hidden bg-card">
               <Table>
-                <TableHeader className="bg-zinc-50 dark:bg-zinc-800/50">
+                <TableHeader className="bg-muted/50">
                   <TableRow>
                     <TableHead className="w-[80px] font-bold text-[10px] uppercase">Preview</TableHead>
                     <TableHead className="font-bold text-[10px] uppercase">Ad Name</TableHead>

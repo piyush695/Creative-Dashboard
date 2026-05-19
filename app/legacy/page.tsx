@@ -1043,7 +1043,7 @@ function DashboardContent() {
       {/* Global Sticky Banner - High-End Premium Header */}
       <div
         suppressHydrationWarning
-        className="flex items-center justify-between px-6 md:px-8 border-b border-border shadow-[0_2px_4px_rgba(0,0,0,0.02)] h-12 md:h-14 z-[70] shrink-0 sticky top-0 bg-white dark:bg-zinc-950 transition-all duration-300 relative"
+        className="flex items-center justify-between px-6 md:px-8 border-b border-border shadow-[0_2px_4px_rgba(0,0,0,0.02)] h-12 md:h-14 z-[70] shrink-0 sticky top-0 bg-white dark:bg-background transition-all duration-300 relative"
       >
         <button
           type="button"
@@ -1069,20 +1069,20 @@ function DashboardContent() {
             className="flex flex-col items-start leading-none cursor-pointer"
           >
             <span suppressHydrationWarning className="flex items-center gap-1.5">
-              <span className="text-xl md:text-2xl font-black tracking-tightest text-foreground dark:text-white">
+              <span className="text-xl md:text-2xl font-semibold tracking-tight text-foreground dark:text-white">
                 hola
-                <span className="text-[#007AFF] dark:text-primary">prime</span>
+                <span className="text-primary dark:text-primary">prime</span>
               </span>
-              <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-[#007AFF] dark:text-primary animate-pulse" />
+              <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-primary dark:text-primary animate-pulse" />
             </span>
-            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-[#007AFF] dark:text-primary opacity-80 mt-1">
+            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-primary dark:text-primary opacity-80 mt-1">
               Creative Analyzer
             </span>
           </span>
         </button>
         <div
           suppressHydrationWarning
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden lg:flex items-center gap-2.5 px-5 py-2 rounded-full bg-white/80 dark:bg-white/10 border border-zinc-200 dark:border-white/10 shadow-[0_2px_10px_rgba(0,0,0,0.05)] group hover:scale-105 transition-all duration-500 cursor-default"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden lg:flex items-center gap-2.5 px-5 py-2 rounded-full bg-white/80 dark:bg-white/10 border border-border shadow-[0_2px_10px_rgba(0,0,0,0.05)] group hover:scale-105 transition-all duration-500 cursor-default"
         >
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_12px_rgba(var(--primary-rgb),0.5)]"></span>
           <span className="text-[10px] font-black uppercase tracking-[0.4em] bg-clip-text text-transparent bg-gradient-to-r from-zinc-900 via-primary to-zinc-900 dark:from-zinc-400 dark:via-white dark:to-zinc-400 bg-[length:200%_auto] animate-gradient">
@@ -1104,7 +1104,7 @@ function DashboardContent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-10 px-5 text-[10px] font-black uppercase tracking-[0.15em] bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border-border hover:border-primary/40 hover:bg-secondary/80 transition-all duration-300 rounded-2xl gap-2.5 group relative shadow-sm hover:shadow-md"
+                      className="h-10 px-5 text-[10px] font-black uppercase tracking-[0.15em] bg-white/80 dark:bg-card/50 backdrop-blur-xl border-border hover:border-primary/40 hover:bg-secondary/80 transition-all duration-300 rounded-md gap-2.5 group relative shadow-sm hover:shadow-md"
                     >
                       <span className="relative flex items-center gap-2">
                         <ListFilter className="w-4 h-4 text-primary transition-transform group-hover:rotate-12" />
@@ -1124,9 +1124,9 @@ function DashboardContent() {
                   <DropdownMenuPortal>
                     <DropdownMenuContent
                       align="end"
-                      className="w-52 z-[1000] p-1.5 rounded-[1.5rem] border-border dark:border-white/10 bg-card/98 dark:bg-zinc-900/98 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.08)] animate-in fade-in zoom-in-95 duration-300"
+                      className="w-52 z-[1000] p-1.5 rounded-md border-border dark:border-border bg-card/98 dark:bg-card/98 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-300"
                     >
-                      <div className="px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-border/50 dark:border-white/5 mb-1.5">
+                      <div className="px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-border/50 dark:border-border mb-1.5">
                         Analysis Lens
                       </div>
 
@@ -1159,7 +1159,7 @@ function DashboardContent() {
                             "flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 mb-0.5",
                             viewFilter === item.id
                               ? `${item.bg} border border-primary/10 text-primary`
-                              : "hover:bg-secondary dark:hover:bg-white/5 text-muted-foreground dark:text-zinc-400 border border-transparent",
+                              : "hover:bg-secondary dark:hover:bg-white/5 text-muted-foreground dark:text-muted-foreground border border-transparent",
                           )}
                           onClick={() => setViewFilter(item.id)}
                         >
@@ -1196,7 +1196,7 @@ function DashboardContent() {
                 suppressHydrationWarning
                 variant="outline"
                 size="icon"
-                className="rounded-full h-8 w-8 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800/80 active:scale-95 flex-shrink-0 group"
+                className="rounded-full h-8 w-8 border border-border bg-card shadow-sm transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800/80 active:scale-95 flex-shrink-0 group"
                 onClick={() => {
                   setMultipleStates({
                     guide: true,
@@ -1221,7 +1221,7 @@ function DashboardContent() {
                     });
                   }}
                 >
-                  <span suppressHydrationWarning className="px-3 py-1.5 bg-zinc-950 dark:bg-white text-zinc-50 dark:text-zinc-900 text-[10px] font-black rounded-lg shadow-2xl whitespace-nowrap flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all border border-black/10 dark:border-white/10">
+                  <span suppressHydrationWarning className="px-3 py-1.5 bg-background dark:bg-white text-zinc-50 dark:text-zinc-900 text-[10px] font-black rounded-lg shadow-sm whitespace-nowrap flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all border border-black/10 dark:border-border">
                     <BookOpen className="w-3.5 h-3.5 text-primary" />
                     Help & Guide
                   </span>
@@ -1252,12 +1252,12 @@ function DashboardContent() {
               <DropdownMenuPortal>
                 <DropdownMenuContent
                   align="end"
-                  className="w-56 z-[1000] p-1.5 rounded-[1.8rem] border-border/60 dark:border-white/10 bg-card/98 dark:bg-zinc-900/98 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] animate-in fade-in slide-in-from-top-4 duration-300"
+                  className="w-56 z-[1000] p-1.5 rounded-[1.8rem] border-border/60 dark:border-border bg-card/98 dark:bg-card/98 backdrop-blur-xl animate-in fade-in slide-in-from-top-4 duration-300"
                 >
                   {(selectedPlatform === "all" ||
                     selectedPlatform === "meta" ||
                     selectedPlatform === "adroll") && (
-                      <div className="px-3 py-2 flex items-center justify-between border-b border-border/50 dark:border-white/5 mb-1.5">
+                      <div className="px-3 py-2 flex items-center justify-between border-b border-border/50 dark:border-border mb-1.5">
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70">
                           Insights
                         </span>
@@ -1297,7 +1297,7 @@ function DashboardContent() {
                               "flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-all mb-0.5 active:scale-[0.98]",
                               viewFilter === item.id
                                 ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
-                                : "hover:bg-secondary dark:hover:bg-white/5 text-muted-foreground dark:text-zinc-400 border border-transparent",
+                                : "hover:bg-secondary dark:hover:bg-white/5 text-muted-foreground dark:text-muted-foreground border border-transparent",
                             )}
                             onClick={() => setViewFilter(item.id)}
                           >
@@ -1335,8 +1335,8 @@ function DashboardContent() {
                       });
                     }}
                   >
-                    <BookOpen className="w-4 h-4 text-[#007AFF]" />
-                    <span className="text-xs font-black text-zinc-700 dark:text-zinc-300">
+                    <BookOpen className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-black text-foreground/80 dark:text-zinc-300">
                       Help & Guide
                     </span>
                     <ChevronDown className="w-3.5 h-3.5 ml-auto opacity-20 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
@@ -1351,7 +1351,7 @@ function DashboardContent() {
       <div className="flex flex-1 overflow-hidden relative">
         {/* Ambient Background Glows - Login Page Style (Enhanced) */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-          <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full opacity-[0.05] dark:opacity-[0.15] blur-[120px] bg-[#007AFF] transition-all duration-1000" />
+          <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full opacity-[0.05] dark:opacity-[0.15] blur-[120px] bg-primary transition-all duration-1000" />
           {/* Visual Accents - Softened for performance */}
           <div className="absolute bottom-[-5%] left-[-10%] w-[40%] h-[40%] rounded-full opacity-[0.02] dark:opacity-[0.05] blur-[40px] md:blur-[80px] bg-indigo-600 pointer-events-none" />
           <div className="absolute top-[30%] left-[10%] w-[30%] h-[30%] rounded-full opacity-[0.01] dark:opacity-[0.03] blur-[30px] md:blur-[60px] bg-purple-600 pointer-events-none" />
@@ -1359,7 +1359,7 @@ function DashboardContent() {
 
         {/* Sidebar - Desktop */}
         <aside
-          className={`${isSidebarCollapsed ? "w-[70px]" : "w-60"} transition-all duration-300 border-r border-border bg-white dark:bg-zinc-950 hidden md:flex flex-col flex-shrink-0 relative z-20`}
+          className={`${isSidebarCollapsed ? "w-[70px]" : "w-60"} transition-all duration-300 border-r border-border bg-white dark:bg-background hidden md:flex flex-col flex-shrink-0 relative z-20`}
         >
           {/* Top: User Profile / Workspace Switcher */}
           <div className="px-2 flex items-center border-b border-border h-16 py-[5px]">
@@ -1383,7 +1383,7 @@ function DashboardContent() {
                     </div>
                   )}
                   {!isSidebarCollapsed && (
-                    <ChevronDown className="h-4 w-4 ml-auto text-zinc-400 transition-transform duration-200 group-data-[state=open]:rotate-180 group-hover:text-zinc-600 dark:group-hover:text-zinc-300" />
+                    <ChevronDown className="h-4 w-4 ml-auto text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 group-hover:text-muted-foreground dark:group-hover:text-zinc-300" />
                   )}
                 </Button>
               </DropdownMenuTrigger>
@@ -1455,21 +1455,21 @@ function DashboardContent() {
                 className={cn(
                   "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
                   selectedPlatform === "home"
-                    ? "bg-zinc-100 dark:bg-zinc-800/80 text-foreground border border-zinc-200 dark:border-zinc-700/50 shadow-sm"
-                    : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent shadow-none",
+                    ? "bg-muted/80 text-foreground border border-border dark:border-zinc-700/50 shadow-sm"
+                    : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-muted/60 border border-transparent shadow-none",
                 )}
               >
                 <div
                   className={cn(
                     "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
                     selectedPlatform === "home"
-                      ? "bg-white dark:bg-zinc-700 shadow-sm border border-zinc-200 dark:border-zinc-600"
+                      ? "bg-white dark:bg-zinc-700 shadow-sm border border-border dark:border-zinc-600"
                       : "bg-transparent group-hover/nav:bg-white dark:group-hover/nav:bg-zinc-700 shadow-sm border border-transparent dark:group-hover/nav:border-zinc-600",
                   )}
                 >
                   <Home className={cn("h-4 w-4", selectedPlatform === "home" ? "text-primary" : "text-muted-foreground")} />
                 </div>
-                <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
                   Home
                 </span>
                 {selectedPlatform === "home" && (
@@ -1522,14 +1522,14 @@ function DashboardContent() {
                       })()}
                     </div>
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-3xl animate-in fade-in zoom-in-95 duration-200">
+                  <SelectContent className="rounded-md border-border dark:bg-card shadow-3xl animate-in fade-in zoom-in-95 duration-200">
                     <SelectItem
                       value="all"
                       disabled
                       className="font-bold text-xs py-3 rounded-xl mx-1 my-1 opacity-60 flex items-center gap-3 cursor-default"
                     >
                       <div className="flex items-center gap-3">
-                        <Globe className="w-4 h-4 text-zinc-400" />
+                        <Globe className="w-4 h-4 text-muted-foreground" />
                         <span>All Platforms</span>
                       </div>
                     </SelectItem>
@@ -1550,10 +1550,10 @@ function DashboardContent() {
                         </SelectItem>
                       ))}
 
-                    <div className="p-2 mt-1 border-t border-zinc-100 dark:border-white/5">
+                    <div className="p-2 mt-1 border-t border-zinc-100 dark:border-border">
                       <Button
                         variant="ghost"
-                        className="w-full justify-start gap-2 h-9 px-2 text-[10px] font-black uppercase tracking-widest text-[#007AFF] hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl"
+                        className="w-full justify-start gap-2 h-9 px-2 text-xs font-medium uppercase tracking-wider text-primary hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl"
                         onClick={() => {
                           setIsAddingPlatform(true);
                         }}
@@ -1584,10 +1584,10 @@ function DashboardContent() {
                         <SelectValue placeholder="Select Account" />
                       </div>
                     </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-3xl z-[2000]">
+                    <SelectContent className="rounded-md border-border dark:bg-card shadow-3xl z-[2000]">
                       <SelectItem value="all" className="font-bold py-3 text-sm">
                         <div className="flex items-center gap-2">
-                          <Globe className="w-4 h-4 text-zinc-400" />
+                          <Globe className="w-4 h-4 text-muted-foreground" />
                           <span>All Accounts</span>
                         </div>
                       </SelectItem>
@@ -1630,7 +1630,7 @@ function DashboardContent() {
                         <SelectValue placeholder="All Campaigns" />
                       </div>
                     </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-border/40 max-h-72">
+                    <SelectContent className="rounded-md border-border/40 max-h-72">
                       <SelectItem
                         value="all"
                         className="rounded-xl py-2.5 font-bold text-xs"
@@ -1679,7 +1679,7 @@ function DashboardContent() {
                   </div>
                   <Input
                     placeholder="Search ads by ID..."
-                    className="bg-white/40 dark:bg-zinc-800/40 border-border/40 focus:border-primary/50 focus:bg-white transition-all rounded-2xl h-11 pl-10 text-xs font-bold"
+                    className="bg-white/40 dark:bg-zinc-800/40 border-border/40 focus:border-primary/50 focus:bg-white transition-all rounded-md h-11 pl-10 text-xs font-bold"
                     value={searchQuery}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const val = e.target.value;
@@ -1721,7 +1721,7 @@ function DashboardContent() {
 
                       }}
 
-                      className="absolute right-3 top-3 h-4 w-4 flex items-center justify-center text-zinc-400 hover:text-red-500 transition-colors"
+                      className="absolute right-3 top-3 h-4 w-4 flex items-center justify-center text-muted-foreground hover:text-red-500 transition-colors"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -1729,7 +1729,7 @@ function DashboardContent() {
 
                   {/* Search Results Animate-in */}
                   {searchQuery.trim().length > 0 && isSearchDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-2 max-h-64 overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl shadow-3xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="absolute top-full left-0 right-0 mt-2 max-h-64 overflow-y-auto bg-card border border-border rounded-md shadow-3xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
                       <div className="py-2 p-1">
                         {searchDropdownResults.length > 0 ? (
                           searchDropdownResults.map((ad) => (
@@ -1749,12 +1749,12 @@ function DashboardContent() {
                               }}
                               className="w-full text-left px-4 py-3 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-xl transition-colors border-none mb-0.5 last:mb-0"
                             >
-                              <span className="font-bold text-zinc-900 dark:text-zinc-100 block truncate mb-0.5">
+                              <span className="font-bold text-foreground block truncate mb-0.5">
                                 {ad.adName}
                               </span>
-                              <span className="flex items-center justify-between text-[10px] text-zinc-500 font-mono tracking-tighter">
+                              <span className="flex items-center justify-between text-[10px] text-muted-foreground font-mono tracking-tighter">
                                 <span>{ad.adId}</span>
-                                <span className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded uppercase font-black">
+                                <span className="bg-muted px-1.5 py-0.5 rounded uppercase font-black">
                                   {PLATFORM_META[ad.platform as any]?.label ||
                                     "AD"}
                                 </span>
@@ -1764,7 +1764,7 @@ function DashboardContent() {
                         ) : (
                           <div className="px-4 py-6 text-center">
                             <Search className="w-8 h-8 text-zinc-200 dark:text-zinc-800 mx-auto mb-2" />
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                               No matches found
                             </p>
                           </div>
@@ -1782,7 +1782,7 @@ function DashboardContent() {
                 className={`px-3 mt-4 space-y-2 ${isSidebarCollapsed ? "flex flex-col items-center" : ""}`}
               >
                 <label
-                  className={`text-[10px] font-black tracking-widest text-zinc-400 uppercase ml-1 ${isSidebarCollapsed ? "hidden" : "block"}`}
+                  className={`text-[10px] font-black tracking-widest text-muted-foreground uppercase ml-1 ${isSidebarCollapsed ? "hidden" : "block"}`}
                 >
                   {selectedPlatform === "home" ? "AI Workspace" : "Navigation"}
                 </label>
@@ -1803,7 +1803,7 @@ function DashboardContent() {
                   className={cn(
                     "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
                     isViewAllAdsOpen && activeView === "dashboard"
-                      ? "bg-[#020617] text-white border border-[#007AFF] active:scale-95"
+                      ? "bg-[#020617] text-white border border-primary active:scale-95"
                       : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-secondary dark:hover:bg-zinc-800 shadow-none",
                     isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : "",
                   )}
@@ -1813,13 +1813,13 @@ function DashboardContent() {
                       "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
                       isViewAllAdsOpen && activeView === "dashboard"
                         ? "bg-white/20"
-                        : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
+                        : "bg-background/80 dark:bg-muted/60 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
                     )}
                   >
                     <LayoutDashboard className="h-4 w-4" />
                   </div>
                   {!isSidebarCollapsed && (
-                    <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
                       Library
                     </span>
                   )}
@@ -1847,8 +1847,8 @@ function DashboardContent() {
                   className={cn(
                     "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
                     activeView === "ai-studio"
-                      ? "bg-zinc-100 dark:bg-zinc-800/80 text-foreground dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700/50 shadow-sm active:scale-95"
-                      : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent shadow-none",
+                      ? "bg-muted/80 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700/50 shadow-sm active:scale-95"
+                      : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-muted/60 border border-transparent shadow-none",
                     isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : "",
                   )}
                   title="AI Studio"
@@ -1857,14 +1857,14 @@ function DashboardContent() {
                     className={cn(
                       "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
                       activeView === "ai-studio"
-                        ? "bg-white dark:bg-zinc-700 shadow-sm border border-zinc-200 dark:border-zinc-600"
-                        : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
+                        ? "bg-white dark:bg-zinc-700 shadow-sm border border-border dark:border-zinc-600"
+                        : "bg-background/80 dark:bg-muted/60 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
                     )}
                   >
                     <Sparkles className={cn("h-4 w-4", activeView === "ai-studio" ? "text-primary dark:text-blue-400" : "text-muted-foreground")} />
                   </div>
                   {!isSidebarCollapsed && (
-                    <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
                       AI Studio
                     </span>
                   )}
@@ -1888,8 +1888,8 @@ function DashboardContent() {
                   className={cn(
                     "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all relative group/nav overflow-hidden",
                     activeView === "saved-creatives"
-                      ? "bg-zinc-100 dark:bg-zinc-800/80 text-foreground dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700/50 shadow-sm active:scale-95"
-                      : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent shadow-none",
+                      ? "bg-muted/80 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700/50 shadow-sm active:scale-95"
+                      : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-muted/60 border border-transparent shadow-none",
                     isSidebarCollapsed ? "w-12 h-12 p-0 justify-center" : "",
                   )}
                   title="Creative Vault"
@@ -1898,14 +1898,14 @@ function DashboardContent() {
                     className={cn(
                       "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500",
                       activeView === "saved-creatives"
-                        ? "bg-white dark:bg-zinc-700 shadow-sm border border-zinc-200 dark:border-zinc-600"
-                        : "bg-background/80 dark:bg-zinc-800/50 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
+                        ? "bg-white dark:bg-zinc-700 shadow-sm border border-border dark:border-zinc-600"
+                        : "bg-background/80 dark:bg-muted/60 group-hover/nav:bg-card dark:group-hover/nav:bg-zinc-700 shadow-sm border border-border/10",
                     )}
                   >
                     <Bookmark className={cn("h-4 w-4", activeView === "saved-creatives" ? "text-primary dark:text-blue-400" : "text-muted-foreground")} />
                   </div>
                   {!isSidebarCollapsed && (
-                    <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
                       Creative Vault
                     </span>
                   )}
@@ -1925,7 +1925,7 @@ function DashboardContent() {
                 className={`px-3 mt-4 ${isSidebarCollapsed ? "hidden" : "block"}`}
               >
                 <div className="flex items-center justify-between px-1 mb-3">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Recent Audits
                   </h3>
                   <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5 ml-4" />
@@ -2022,7 +2022,7 @@ function DashboardContent() {
                 >
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Menu className="h-4.5 w-4.5 text-zinc-700 dark:text-zinc-300" />
+                      <Menu className="h-4.5 w-4.5 text-foreground/80 dark:text-zinc-300" />
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="left" className="p-0 w-72">
@@ -2046,7 +2046,7 @@ function DashboardContent() {
                                 {session?.user?.name?.[0] || "U"}
                               </div>
                               <div className="ml-3 flex flex-col items-start overflow-hidden w-full">
-                                <span className="text-sm font-semibold truncate w-full text-left text-zinc-900 dark:text-zinc-100">
+                                <span className="text-sm font-semibold truncate w-full text-left text-foreground">
                                   {session?.user?.name || "User"}
                                 </span>
                                 <span className="text-xs text-muted-foreground truncate w-full text-left capitalize">
@@ -2054,7 +2054,7 @@ function DashboardContent() {
                                   Plan
                                 </span>
                               </div>
-                              <ChevronDown className="h-4 w-4 ml-auto text-zinc-400 transition-transform duration-200 group-data-[state=open]:rotate-180 group-hover:text-zinc-600 dark:group-hover:text-zinc-300" />
+                              <ChevronDown className="h-4 w-4 ml-auto text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 group-hover:text-muted-foreground dark:group-hover:text-zinc-300" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start" className="w-60">
@@ -2122,12 +2122,12 @@ function DashboardContent() {
                             className={cn(
                               "w-full justify-start gap-3 h-10 px-3 rounded-xl transition-all font-bold mb-4",
                               selectedPlatform === "home"
-                                ? "bg-zinc-100 dark:bg-zinc-800/80 text-foreground border border-zinc-200 dark:border-zinc-700/50 shadow-sm"
-                                : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent shadow-none",
+                                ? "bg-muted/80 text-foreground border border-border dark:border-zinc-700/50 shadow-sm"
+                                : "text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-muted/60 border border-transparent shadow-none",
                             )}
                           >
                             <Home className={cn("h-4 w-4", selectedPlatform === "home" ? "text-primary" : "text-muted-foreground")} />
-                            <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                            <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
                               Home
                             </span>
                           </Button>
@@ -2148,28 +2148,28 @@ function DashboardContent() {
                               }
                             }}
                           >
-                            <SelectTrigger className="w-full h-12 bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 rounded-xl font-bold text-sm">
+                            <SelectTrigger className="w-full h-12 bg-muted/50 border-border dark:border-zinc-700/50 rounded-xl font-bold text-sm">
                               <div className="flex items-center gap-3">
                                 {(() => {
                                   if (selectedPlatform !== "home" && PLATFORM_META[selectedPlatform]?.icon) {
                                     const PlatformIcon = PLATFORM_META[selectedPlatform].icon;
                                     return (
                                       <>
-                                        <PlatformIcon className="w-4 h-4 text-[#007AFF]" />
+                                        <PlatformIcon className="w-4 h-4 text-primary" />
                                         <span>{PLATFORM_META[selectedPlatform].label}</span>
                                       </>
                                     );
                                   }
                                   return (
                                     <>
-                                      <Globe className="w-4 h-4 text-[#007AFF]" />
+                                      <Globe className="w-4 h-4 text-primary" />
                                       <span>Select Platform...</span>
                                     </>
                                   );
                                 })()}
                               </div>
                             </SelectTrigger>
-                            <SelectContent className="rounded-xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-2xl z-[2000]">
+                            <SelectContent className="rounded-xl border-border dark:bg-card shadow-sm z-[2000]">
                               <SelectItem
                                 value="all"
                                 className="font-bold py-3 text-sm"
@@ -2198,10 +2198,10 @@ function DashboardContent() {
                                   </SelectItem>
                                 ))}
 
-                              <div className="p-2 mt-1 border-t border-zinc-100 dark:border-white/5">
+                              <div className="p-2 mt-1 border-t border-zinc-100 dark:border-border">
                                 <Button
                                   variant="ghost"
-                                  className="w-full justify-start gap-2 h-10 px-2 text-xs font-bold text-[#007AFF] hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl"
+                                  className="w-full justify-start gap-2 h-10 px-2 text-xs font-bold text-primary hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl"
                                   onClick={() => {
                                     setIsAddingPlatform(true);
                                     setIsMobileMenuOpen(false);
@@ -2227,16 +2227,16 @@ function DashboardContent() {
                                 setIsMobileMenuOpen(false);
                               }}
                             >
-                              <SelectTrigger className="w-full h-12 bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 rounded-xl font-bold text-sm">
+                              <SelectTrigger className="w-full h-12 bg-muted/50 border-border dark:border-zinc-700/50 rounded-xl font-bold text-sm">
                                 <div className="flex items-center gap-3">
-                                  <Activity className="w-4 h-4 text-[#007AFF]" />
+                                  <Activity className="w-4 h-4 text-primary" />
                                   <SelectValue placeholder="Select Account" />
                                 </div>
                               </SelectTrigger>
-                              <SelectContent className="rounded-xl border-zinc-200 dark:border-white/10 dark:bg-zinc-900 shadow-2xl z-[2000]">
+                              <SelectContent className="rounded-xl border-border dark:bg-card shadow-sm z-[2000]">
                                 <SelectItem value="all" className="font-bold py-3 text-sm">
                                   <div className="flex items-center gap-2">
-                                    <Globe className="w-4 h-4 text-zinc-400" />
+                                    <Globe className="w-4 h-4 text-muted-foreground" />
                                     <span>All Accounts</span>
                                   </div>
                                 </SelectItem>
@@ -2270,9 +2270,9 @@ function DashboardContent() {
                                  setIsMobileMenuOpen(false);
                                }}
                               className={cn(
-                                "w-full justify-start gap-3 h-12 px-3 rounded-2xl transition-all relative group/nav overflow-hidden",
+                                "w-full justify-start gap-3 h-12 px-3 rounded-md transition-all relative group/nav overflow-hidden",
                                 isViewAllAdsOpen
-                                  ? "bg-[#020617] text-white border border-[#007AFF]"
+                                  ? "bg-[#020617] text-white border border-primary"
                                   : "text-muted-foreground hover:text-foreground hover:bg-muted",
                               )}
                             >
@@ -2281,7 +2281,7 @@ function DashboardContent() {
                                   "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300",
                                   isViewAllAdsOpen
                                     ? "bg-white/20"
-                                    : "bg-zinc-100 dark:bg-zinc-800",
+                                    : "bg-muted",
                                 )}
                               >
                                 <LayoutDashboard className="h-4 w-4" />
@@ -2307,9 +2307,9 @@ function DashboardContent() {
                                  setIsMobileMenuOpen(false);
                                }}
                               className={cn(
-                                "w-full justify-start gap-3 h-12 px-3 rounded-2xl transition-all relative group/nav overflow-hidden",
+                                "w-full justify-start gap-3 h-12 px-3 rounded-md transition-all relative group/nav overflow-hidden",
                                 activeView === "ai-studio"
-                                  ? "bg-[#020617] text-white border border-[#007AFF]"
+                                  ? "bg-[#020617] text-white border border-primary"
                                   : "text-muted-foreground hover:text-foreground hover:bg-muted",
                               )}
                             >
@@ -2318,7 +2318,7 @@ function DashboardContent() {
                                   "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300",
                                   activeView === "ai-studio"
                                     ? "bg-white/20"
-                                    : "bg-zinc-100 dark:bg-zinc-800",
+                                    : "bg-muted",
                                 )}
                               >
                                 <Sparkles className="h-4 w-4" />
@@ -2340,9 +2340,9 @@ function DashboardContent() {
                                  setIsMobileMenuOpen(false);
                                }}
                               className={cn(
-                                "w-full justify-start gap-3 h-12 px-3 rounded-2xl transition-all relative group/nav overflow-hidden",
+                                "w-full justify-start gap-3 h-12 px-3 rounded-md transition-all relative group/nav overflow-hidden",
                                 activeView === "saved-creatives"
-                                  ? "bg-[#020617] text-white border border-[#007AFF]"
+                                  ? "bg-[#020617] text-white border border-primary"
                                   : "text-muted-foreground hover:text-foreground hover:bg-muted",
                               )}
                             >
@@ -2351,7 +2351,7 @@ function DashboardContent() {
                                   "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300",
                                   activeView === "saved-creatives"
                                     ? "bg-white/20"
-                                    : "bg-zinc-100 dark:bg-zinc-800",
+                                    : "bg-muted",
                                 )}
                               >
                                 <Bookmark className="h-4 w-4" />
@@ -2367,7 +2367,7 @@ function DashboardContent() {
                           {recentAds.length > 0 && (
                             <div className="space-y-3">
                               <div className="flex items-center justify-between px-1">
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                   Recent History
                                 </h3>
                                 <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-white/5 ml-4" />
@@ -2604,7 +2604,7 @@ function DashboardContent() {
                       dismiss();
                     }, 5000);
                   }}
-                  className="rounded-full hover:bg-red-50 hover:text-red-500 h-9 w-9 border border-zinc-200 dark:border-zinc-800"
+                  className="rounded-full hover:bg-red-50 hover:text-red-500 h-9 w-9 border border-border"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -2618,7 +2618,7 @@ function DashboardContent() {
                       disabled={isSyncing}
                       className={cn(
                         "hidden md:flex group items-center transition-all duration-300 flex-shrink-0 relative h-10 active:scale-[0.96]",
-                        "rounded-2xl bg-white dark:bg-zinc-900 border border-border hover:bg-zinc-50 dark:hover:bg-zinc-800 shadow-sm",
+                        "rounded-md bg-card border border-border hover:bg-zinc-50 dark:hover:bg-zinc-800 shadow-sm",
                         showRefreshText || isSyncing
                           ? "px-4"
                           : "w-10 justify-center",
@@ -2628,7 +2628,7 @@ function DashboardContent() {
                     >
                       <RefreshCcw
                         className={cn(
-                          "h-4 w-4 transition-transform duration-1000 text-zinc-600 dark:text-zinc-400",
+                          "h-4 w-4 transition-transform duration-1000 text-muted-foreground dark:text-muted-foreground",
                           isSyncing && "animate-spin",
                         )}
                       />
@@ -2640,7 +2640,7 @@ function DashboardContent() {
                             : "max-w-0 opacity-0 ml-0",
                         )}
                       >
-                        <span className="text-[12px] font-bold text-zinc-500 whitespace-nowrap uppercase tracking-wider">
+                        <span className="text-[12px] font-bold text-muted-foreground whitespace-nowrap uppercase tracking-wider">
                           {isSyncing ? "Syncing..." : "Updated"}
                         </span>
                       </div>
@@ -2653,7 +2653,7 @@ function DashboardContent() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 rounded-full bg-zinc-100 dark:bg-zinc-800 text-foreground"
+                          className="h-9 w-9 rounded-full bg-muted text-foreground"
                         >
                           <Settings2 className="h-4 w-4" />
                         </Button>
@@ -2712,7 +2712,7 @@ function DashboardContent() {
                             mounted && theme === "system" && "bg-accent",
                           )}
                         >
-                          <Activity className="mr-2 h-4 w-4 text-zinc-500" />
+                          <Activity className="mr-2 h-4 w-4 text-muted-foreground" />
                           <span>System</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -2769,10 +2769,10 @@ function DashboardContent() {
               <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
                 <div
                   className={cn(
-                    "max-w-7xl mx-auto mt-2 md:mt-4 rounded-[12px] border border-zinc-200/50 dark:border-white/10 p-4 md:p-10 shadow-2xl relative overflow-hidden group",
+                    "max-w-7xl mx-auto mt-2 md:mt-4 rounded-[12px] border border-border/50 dark:border-border p-4 md:p-10 shadow-sm relative overflow-hidden group",
                     isGlassmorphismEnabled
-                      ? "bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md"
-                      : "bg-white dark:bg-zinc-900",
+                      ? "bg-white/40 dark:bg-card/40 backdrop-blur-md"
+                      : "bg-card",
                   )}
                 >
                   {/* Decorative Elements */}
@@ -2784,13 +2784,13 @@ function DashboardContent() {
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-blue-200/50 dark:border-blue-500/20">
+                          <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] md:text-xs font-medium uppercase tracking-wider border border-blue-200/50 dark:border-blue-500/20">
                             Support Center
                           </span>
                         </div>
-                        <h2 className="text-2xl md:text-5xl font-black tracking-tightest text-[#007AFF] mb-1 drop-shadow-sm flex items-center gap-2">
+                        <h2 className="text-2xl md:text-5xl font-semibold tracking-tight text-primary mb-1 drop-shadow-sm flex items-center gap-2">
                           Hi,{" "}
-                          <span className="text-zinc-900 dark:text-white capitalize">
+                          <span className="text-foreground capitalize">
                             {session?.user?.name || "User"}!
                           </span>
                         </h2>
@@ -2808,7 +2808,7 @@ function DashboardContent() {
                           <Sparkles className="w-8 h-8 text-blue-500" />
                         </div>
                         <div className="relative z-10">
-                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
+                          <p className="text-[10px] text-muted-foreground dark:text-muted-foreground font-medium leading-relaxed">
                             Need help building a custom strategy? Ask our AI
                             assistant for recommendations.
                           </p>
@@ -2820,7 +2820,7 @@ function DashboardContent() {
                       <section className="space-y-4 group/item">
                         <div className="flex items-start gap-3 md:gap-4">
                           <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-blue-100 dark:border-blue-500/20">
-                            <LayoutDashboard className="w-4 h-4 md:w-5 md:h-5 text-[#007AFF]" />
+                            <LayoutDashboard className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                           </div>
                           <div className="space-y-1">
                             <h3 className="text-[15px] md:text-lg font-bold">
@@ -3043,7 +3043,7 @@ function DashboardContent() {
                       </section>
                     </div>
 
-                    <section className="mt-12 p-6 rounded-2xl bg-amber-500/5 border border-amber-500/10 relative overflow-hidden group/note">
+                    <section className="mt-12 p-6 rounded-md bg-amber-500/5 border border-amber-500/10 relative overflow-hidden group/note">
                       <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover/note:scale-110 transition-transform duration-700">
                         <Shield className="w-24 h-24 text-amber-500" />
                       </div>
@@ -3055,7 +3055,7 @@ function DashboardContent() {
                           <h3 className="text-lg font-black tracking-tight text-amber-600 dark:text-amber-500 uppercase text-[10px] tracking-widest">
                             Important Security Note
                           </h3>
-                          <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                          <p className="text-sm font-bold text-foreground">
                             Profile Management & Authentication Providers
                           </p>
                           <p className="text-xs md:text-sm leading-relaxed text-muted-foreground">
@@ -3077,7 +3077,7 @@ function DashboardContent() {
                       </div>
                     </section>
 
-                    <div className="mt-8 md:mt-12 p-4 md:p-6 bg-zinc-50 dark:bg-zinc-800/30 rounded-[12px] border border-dashed border-zinc-200 dark:border-zinc-700 text-center relative overflow-hidden">
+                    <div className="mt-8 md:mt-12 p-4 md:p-6 bg-muted/30 rounded-[12px] border border-dashed border-border dark:border-zinc-700 text-center relative overflow-hidden">
                       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-50" />
                       <p className="text-[11px] md:text-sm font-medium italic text-muted-foreground leading-relaxed">
                         "Empowering your creative strategy with data-driven
@@ -3136,7 +3136,7 @@ function DashboardContent() {
               <div className="flex-1 animate-in fade-in zoom-in-95 duration-500 pb-10 px-1.5 md:px-6">
                 <div
                   className={cn(
-                    "max-w-7xl mx-auto mt-2 md:mt-4 rounded-[12px] shadow-2xl relative group h-auto flex flex-col mb-10",
+                    "max-w-7xl mx-auto mt-2 md:mt-4 rounded-[12px] shadow-sm relative group h-auto flex flex-col mb-10",
                     "bg-white dark:bg-[#020617]",
                   )}
                 >
@@ -3147,7 +3147,7 @@ function DashboardContent() {
                       {/* Header Section - STRICTLY STACKED to prevent ANY overlap */}
                       <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
                         <div className="flex-shrink-0 md:w-auto">
-                          <h1 className="text-2xl md:text-3xl font-black tracking-tightest text-[#007AFF]">
+                          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-primary">
                             Discovery Hub
                           </h1>
                           <p className="text-[11px] md:text-xs text-muted-foreground mt-1">
@@ -3158,7 +3158,7 @@ function DashboardContent() {
                         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto md:flex-1">
                           {/* Search Box */}
                           <div className="relative flex-1 w-full">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                               placeholder="Search ads by name or ID..."
                               value={discoverySearchQuery}
@@ -3166,12 +3166,12 @@ function DashboardContent() {
                                 setDiscoverySearchQuery(e.target.value);
                                 setDiscoveryCurrentPage(1);
                               }}
-                              className="pl-10 pr-10 h-11 w-full bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 rounded-xl text-xs md:text-sm focus-visible:ring-[#007AFF]/20 shadow-sm transition-all"
+                              className="pl-10 pr-10 h-11 w-full bg-muted/50 border-border dark:border-zinc-700 rounded-xl text-xs md:text-sm focus-visible:ring-primary/20 shadow-sm transition-all"
                             />
                             {discoverySearchQuery && (
                               <button
                                 onClick={() => setDiscoverySearchQuery("")}
-                                className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-muted-foreground dark:hover:text-zinc-200 transition-colors"
                               >
                                 <X className="h-4 w-4" />
                               </button>
@@ -3186,16 +3186,16 @@ function DashboardContent() {
                                 setDiscoveryViewMode(v)
                               }
                             >
-                              <SelectTrigger className="flex-1 md:w-[120px] md:flex-none h-11 bg-white/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-xl text-[10px] md:text-xs font-bold shadow-sm min-w-0">
+                              <SelectTrigger className="flex-1 md:w-[120px] md:flex-none h-11 bg-white/50 dark:bg-card/50 border-border rounded-xl text-[10px] md:text-xs font-bold shadow-sm min-w-0">
                                 <SelectValue placeholder="View" />
                               </SelectTrigger>
-                              <SelectContent className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200/50 dark:border-white/10 rounded-xl shadow-2xl">
+                              <SelectContent className="bg-white/95 dark:bg-card/95 backdrop-blur-md border-border/50 dark:border-border rounded-xl shadow-sm">
                                 <SelectItem
                                   value="grid"
                                   className="font-bold cursor-pointer rounded-lg"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <LayoutGrid className="h-4 w-4 text-zinc-900 dark:text-white" />
+                                    <LayoutGrid className="h-4 w-4 text-foreground" />
                                     <span className="text-xs">Grid</span>
                                   </div>
                                 </SelectItem>
@@ -3224,9 +3224,9 @@ function DashboardContent() {
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="ghost"
-                                  className="flex-1 md:flex-none px-4 py-2 bg-[#007AFF]/10 rounded-xl border border-[#007AFF]/20 hover:bg-[#007AFF]/20 h-11 whitespace-nowrap shadow-sm min-w-0"
+                                  className="flex-1 md:flex-none px-4 py-2 bg-primary/10 rounded-xl border border-primary/20 hover:bg-primary/20 h-11 whitespace-nowrap shadow-sm min-w-0"
                                 >
-                                  <span className="text-[10px] md:text-xs font-bold text-[#007AFF] flex items-center gap-2 w-full justify-between">
+                                  <span className="text-[10px] md:text-xs font-bold text-primary flex items-center gap-2 w-full justify-between">
                                     <span className="truncate">
                                       {discoveryLabel}
                                     </span>
@@ -3236,7 +3236,7 @@ function DashboardContent() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
                                 align="end"
-                                className="w-[220px] md:w-72 p-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200/50 dark:border-white/10 rounded-xl shadow-2xl"
+                                className="w-[220px] md:w-72 p-2 bg-white/95 dark:bg-card/95 backdrop-blur-md border-border/50 dark:border-border rounded-xl shadow-sm"
                               >
                                 <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
                                   Filter by Account
@@ -3268,7 +3268,7 @@ function DashboardContent() {
                                         ).length}
                                     </span>
                                   </DropdownMenuItem>
-                                  <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800" />
+                                  <DropdownMenuSeparator className="bg-muted" />
                                   <div className="max-h-[300px] overflow-y-auto custom-scrollbar space-y-1">
                                     {accountStats.map((stat) => (
                                       <DropdownMenuItem
@@ -3306,13 +3306,13 @@ function DashboardContent() {
                         if (filteredDiscoveryAds.length === 0) {
                           return (
                             <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in-95 duration-300">
-                              <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
-                                <Search className="h-8 w-8 text-zinc-400" />
+                              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                                <Search className="h-8 w-8 text-muted-foreground" />
                               </div>
-                              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-1">
+                              <h3 className="text-lg font-bold text-foreground mb-1">
                                 No results found
                               </h3>
-                              <p className="text-sm text-zinc-500 max-w-xs mx-auto mb-6">
+                              <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-6">
                                 We couldn't find any ads matching "
                                 {discoverySearchQuery}". Try a different search
                                 term.
@@ -3352,10 +3352,10 @@ function DashboardContent() {
                                           setForceShowOverview(false);
                                           updateHistory(ad.id);
                                         }}
-                                      className="bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/60 dark:border-white/5 rounded-2xl overflow-hidden hover:border-[#007AFF]/50 transition-all group cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300"
+                                      className="bg-white/80 dark:bg-card/80 border border-border/60 dark:border-border rounded-md overflow-hidden hover:border-primary/50 transition-all group cursor-pointer shadow-sm hover:shadow-sm hover:-translate-y-1 duration-300"
                                     >
                                       <div 
-                                        className="aspect-[16/9] w-full relative overflow-hidden bg-zinc-100 dark:bg-zinc-800"
+                                        className="aspect-[16/9] w-full relative overflow-hidden bg-muted"
                                       >
                                         <img
                                           src={ad.thumbnailUrl}
@@ -3366,25 +3366,25 @@ function DashboardContent() {
                                               "/placeholder.svg";
                                           }}
                                         />
-                                        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[9px] font-black text-white uppercase tracking-wider border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[9px] font-black text-white uppercase tracking-wider border border-border opacity-0 group-hover:opacity-100 transition-opacity">
                                           {account?.name}
                                         </div>
                                       </div>
                                       <div className="p-4 space-y-3">
                                         <div className="flex justify-between items-start gap-2">
-                                          <h3 className="font-bold text-sm line-clamp-1 group-hover:text-[#007AFF] transition-colors">
+                                          <h3 className="font-bold text-sm line-clamp-1 group-hover:text-primary transition-colors">
                                             {ad.adName}
                                           </h3>
-                                          <span className="text-[10px] font-mono text-zinc-400 shrink-0">
+                                          <span className="text-[10px] font-mono text-muted-foreground shrink-0">
                                             {ad.adId}
                                           </span>
                                         </div>
-                                        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-white/5">
+                                        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-border">
                                           <div className="flex flex-col">
-                                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">
+                                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
                                               Spend
                                             </span>
-                                            <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                                            <span className="text-xs font-bold text-foreground">
                                               $
                                               {Number(
                                                 ad.spend || 0,
@@ -3392,10 +3392,10 @@ function DashboardContent() {
                                             </span>
                                           </div>
                                           <div className="flex flex-col items-end">
-                                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">
+                                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
                                               CTR
                                             </span>
-                                            <span className="text-xs font-black text-[#007AFF]">
+                                            <span className="text-xs font-black text-primary">
                                               {Number(ad.ctr || 0).toFixed(2)}%
                                             </span>
                                           </div>
@@ -3429,10 +3429,10 @@ function DashboardContent() {
                                         setForceShowOverview(false);
                                         updateHistory(ad.id);
                                       }}
-                                      className="flex items-start md:items-center gap-3 md:gap-6 p-3 md:p-4 bg-white/60 dark:bg-zinc-900/60 border border-zinc-100 dark:border-white/5 rounded-2xl hover:border-[#007AFF]/40 hover:bg-white dark:hover:bg-zinc-900 transition-all group cursor-pointer shadow-sm hover:shadow-md"
+                                      className="flex items-start md:items-center gap-3 md:gap-6 p-3 md:p-4 bg-white/60 dark:bg-card/60 border border-zinc-100 dark:border-border rounded-md hover:border-primary/40 hover:bg-white dark:hover:bg-card transition-all group cursor-pointer shadow-sm hover:shadow-md"
                                     >
                                       <div 
-                                        className="w-20 h-20 md:w-32 md:h-20 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border border-border/50"
+                                        className="w-20 h-20 md:w-32 md:h-20 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50"
                                       >
                                         <img
                                           src={ad.thumbnailUrl}
@@ -3445,22 +3445,22 @@ function DashboardContent() {
                                       </div>
                                       <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between gap-y-2">
                                         <div className="space-y-1 flex-1 min-w-0 mr-0 md:mr-4">
-                                          <h3 className="font-bold text-sm md:text-base truncate group-hover:text-[#007AFF] transition-colors">
+                                          <h3 className="font-bold text-sm md:text-base truncate group-hover:text-primary transition-colors">
                                             {ad.adName}
                                           </h3>
                                           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-                                            <span className="text-[10px] font-mono text-zinc-400 truncate max-w-[200px]">
+                                            <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[200px]">
                                               {ad.adId}
                                             </span>
                                             <span className="hidden md:block w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-[#007AFF]/70 truncate max-w-[120px]">
+                                            <span className="text-xs font-medium uppercase tracking-wider text-primary/70 truncate max-w-[120px]">
                                               {account?.name}
                                             </span>
                                           </div>
                                         </div>
-                                        <div className="flex items-center justify-start md:justify-end gap-6 md:gap-8 text-left md:text-right pr-0 md:pr-4 shrink-0 w-full md:w-auto border-t md:border-t-0 border-zinc-100 dark:border-white/5 pt-2 md:pt-0">
+                                        <div className="flex items-center justify-start md:justify-end gap-6 md:gap-8 text-left md:text-right pr-0 md:pr-4 shrink-0 w-full md:w-auto border-t md:border-t-0 border-zinc-100 dark:border-border pt-2 md:pt-0">
                                           <div className="flex flex-col items-start md:items-end gap-0.5 md:gap-0">
-                                            <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none">
+                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest leading-none">
                                               Spend
                                             </p>
                                             <p className="text-sm font-bold leading-tight">
@@ -3471,10 +3471,10 @@ function DashboardContent() {
                                             </p>
                                           </div>
                                           <div className="flex flex-col items-start md:items-end gap-0.5 md:gap-0">
-                                            <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none">
+                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest leading-none">
                                               CTR
                                             </p>
-                                            <p className="text-sm font-black text-[#007AFF] leading-tight">
+                                            <p className="text-sm font-black text-primary leading-tight">
                                               {Number(ad.ctr || 0).toFixed(2)}%
                                             </p>
                                           </div>
@@ -3487,7 +3487,7 @@ function DashboardContent() {
                             )}
 
                             {discoveryViewMode === "table" && (
-                              <div className="bg-white/40 dark:bg-zinc-900/40 border border-zinc-100 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+                              <div className="bg-white/40 dark:bg-card/40 border border-zinc-100 dark:border-border rounded-md overflow-hidden shadow-sm">
                                 <Table>
                                   <TableHeader className="bg-zinc-50/50 dark:bg-white/5">
                                     <TableRow>
@@ -3518,7 +3518,7 @@ function DashboardContent() {
                                       return (
                                         <TableRow
                                           key={ad.id}
-                                          className="cursor-pointer hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors"
+                                          className="cursor-pointer hover:bg-zinc-50/50 dark:hover:bg-muted/60 transition-colors"
                                           onClick={() => {
                                             const platform = ad.platform || "meta";
                                             setMultipleStates({
@@ -3533,7 +3533,7 @@ function DashboardContent() {
                                         >
                                           <TableCell>
                                             <div 
-                                              className="w-16 h-9 rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-border"
+                                              className="w-16 h-9 rounded overflow-hidden bg-muted border border-border"
                                             >
                                               <img
                                                 src={ad.thumbnailUrl}
@@ -3567,7 +3567,7 @@ function DashboardContent() {
                                               ad.spend || 0,
                                             ).toLocaleString()}
                                           </TableCell>
-                                          <TableCell className="text-right font-black text-[#007AFF] text-sm">
+                                          <TableCell className="text-right font-black text-primary text-sm">
                                             {Number(ad.ctr || 0).toFixed(2)}%
                                           </TableCell>
                                         </TableRow>
@@ -3587,18 +3587,18 @@ function DashboardContent() {
                             variant="outline"
                             onClick={() => setDiscoveryCurrentPage(p => Math.max(1, p - 1))}
                             disabled={discoveryCurrentPage === 1}
-                            className="bg-white dark:bg-zinc-900 rounded-full border-zinc-200 dark:border-white/10"
+                            className="bg-card rounded-full border-border"
                           >
                             Previous
                           </Button>
-                          <span className="text-sm font-bold text-zinc-500">
+                          <span className="text-sm font-bold text-muted-foreground">
                             Page {discoveryCurrentPage} of {Math.max(1, Math.ceil(filteredDiscoveryAds.length / discoveryItemsPerPage))}
                           </span>
                           <Button
                             variant="outline"
                             onClick={() => setDiscoveryCurrentPage(p => Math.min(Math.ceil(filteredDiscoveryAds.length / discoveryItemsPerPage), p + 1))}
                             disabled={discoveryCurrentPage >= Math.ceil(filteredDiscoveryAds.length / discoveryItemsPerPage)}
-                            className="bg-white dark:bg-zinc-900 rounded-full border-zinc-200 dark:border-white/10"
+                            className="bg-card rounded-full border-border"
                           >
                             Next
                           </Button>
@@ -3607,7 +3607,7 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  <div className="hidden md:block absolute -top-24 -right-24 w-64 h-64 bg-[#007AFF]/5 rounded-full blur-3xl pointer-events-none" />
+                  <div className="hidden md:block absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
                   <div className="hidden md:block absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
 
                   {/* Contained Popup for Discovery Hub */}
@@ -3679,7 +3679,7 @@ function DashboardContent() {
                             // Slight delay to allow click event on dropdown items to fire
                             setTimeout(() => setIsSearchDropdownOpen(false), 200);
                           }}
-                          className="pl-10 pr-10 h-12 bg-white dark:bg-zinc-900 shadow-sm border-gray-200 dark:border-zinc-800 focus-visible:ring-primary/20 rounded-xl md:text-sm text-base"
+                          className="pl-10 pr-10 h-12 bg-card shadow-sm border-gray-200 dark:border-border focus-visible:ring-primary/20 rounded-xl md:text-sm text-base"
                         />
                         {searchQuery && (
                           <button
@@ -3700,7 +3700,7 @@ function DashboardContent() {
                         {/* Mobile Search Results Dropdown */}
                         {searchQuery.trim().length > 0 &&
                           isSearchDropdownOpen && (
-                            <div className="absolute top-full left-0 right-0 mt-2 max-h-[60vh] overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl z-[70] animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="absolute top-full left-0 right-0 mt-2 max-h-[60vh] overflow-y-auto bg-card border border-border rounded-xl shadow-sm z-[70] animate-in fade-in slide-in-from-top-2 duration-200">
                               <div className="py-2">
                                 {ads.filter(
                                   (ad) =>
@@ -3743,16 +3743,16 @@ function DashboardContent() {
                                           updateHistory(ad.id);
                                           setIsSearchDropdownOpen(false);
                                         }}
-                                        className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex flex-col gap-1 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0"
+                                        className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex flex-col gap-1 border-b border-zinc-100 dark:border-border/50 last:border-0"
                                       >
-                                        <span className="font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                        <span className="font-bold text-foreground truncate">
                                           {ad.adName}
                                         </span>
                                         <span className="flex items-center justify-between text-xs text-muted-foreground">
                                           <span className="font-mono truncate max-w-[150px]">
                                             {ad.adId}
                                           </span>
-                                          <span className="opacity-70 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-[10px]">
+                                          <span className="opacity-70 bg-muted px-1.5 py-0.5 rounded text-[10px]">
                                             {
                                               accounts.find(
                                                 (a) => a.id === ad.adAccountId,
@@ -3921,7 +3921,7 @@ function DashboardContent() {
                   !["home", "all", "meta", "google", "adroll"].includes(
                     selectedPlatform,
                   ) && (
-                    <div className="flex-1 w-full flex flex-col items-center justify-center min-h-[400px] relative overflow-hidden rounded-[20px] md:rounded-[48px] border border-slate-200/80 dark:border-white/5 bg-gradient-to-br from-white via-white to-slate-50/80 dark:from-zinc-950/50 dark:via-zinc-950/50 dark:to-zinc-950/50 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.08)] dark:shadow-2xl transition-all duration-1000 group p-4 md:p-8">
+                    <div className="flex-1 w-full flex flex-col items-center justify-center min-h-[400px] relative overflow-hidden rounded-[20px] md:rounded-[48px] border border-slate-200/80 dark:border-border bg-gradient-to-br from-white via-white to-slate-50/80 dark:from-zinc-950/50 dark:via-zinc-950/50 dark:to-zinc-950/50 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.08)] dark:shadow-sm transition-all duration-1000 group p-4 md:p-8">
                       {/* Dynamic Background Glows - Desktop Only */}
                       <div className="hidden md:block absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-primary/15 dark:bg-primary/20 rounded-full blur-[90px] animate-pulse" />
                       <div className="hidden md:block absolute -bottom-[10%] -left-[5%] w-[40%] h-[40%] bg-indigo-500/10 dark:bg-indigo-500/10 rounded-full blur-[90px] animate-pulse delay-700" />
@@ -3931,7 +3931,7 @@ function DashboardContent() {
                         {/* Floating Icon Container */}
                         <div className="relative mb-6 md:mb-8">
                           <div className="absolute inset-0 bg-primary/10 dark:bg-primary/20 blur-2xl rounded-full animate-pulse scale-150" />
-                          <div className="w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-[32px] bg-white dark:bg-zinc-900 flex items-center justify-center shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-2xl border border-slate-200/50 dark:border-white/10 group-hover:scale-105 group-hover:rotate-2 transition-all duration-700 relative overflow-hidden">
+                          <div className="w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-[32px] bg-card flex items-center justify-center shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-sm border border-slate-200/50 dark:border-border group-hover:scale-105 group-hover:rotate-2 transition-all duration-700 relative overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 dark:from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                             {(() => {
                               const PlatformIcon =
@@ -3958,7 +3958,7 @@ function DashboardContent() {
                               </span>
                               <div className="h-px w-6 md:w-8 bg-primary/30" />
                             </div>
-                            <h2 className="text-2xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tightest leading-tight">
+                            <h2 className="text-2xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
                               Integration{" "}
                               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-indigo-600 to-primary dark:from-primary dark:via-indigo-500 dark:to-primary animate-gradient bg-[length:200%_auto]">
                                 Pending.
@@ -3966,7 +3966,7 @@ function DashboardContent() {
                             </h2>
                           </div>
 
-                          <p className="text-[11px] md:text-base font-medium text-slate-700 dark:text-zinc-400 leading-relaxed max-w-[280px] md:max-w-md mx-auto opacity-90">
+                          <p className="text-[11px] md:text-base font-medium text-slate-700 dark:text-muted-foreground leading-relaxed max-w-[280px] md:max-w-md mx-auto opacity-90">
                             We are currently synchronizing our AI models with
                             the{" "}
                             <span className="text-slate-900 dark:text-white font-black">
@@ -3981,17 +3981,17 @@ function DashboardContent() {
 
                         {/* Progress Status */}
                         <div className="mt-8 md:mt-12 flex flex-col items-center gap-3 w-full">
-                          <div className="flex items-center justify-center gap-3 md:gap-6 px-4 md:px-8 py-2 md:py-3 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 backdrop-blur-sm group/progress shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] w-fit">
+                          <div className="flex items-center justify-center gap-3 md:gap-6 px-4 md:px-8 py-2 md:py-3 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-border backdrop-blur-sm group/progress shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] w-fit">
                             <div className="flex items-center gap-2">
                               <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-primary animate-pulse" />
-                              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-500 transition-colors group-hover/progress:text-primary">
+                              <span className="text-[9px] md:text-xs font-medium uppercase tracking-wider text-slate-500 transition-colors group-hover/progress:text-primary">
                                 Core Syncing
                               </span>
                             </div>
                             <div className="h-3 md:h-4 w-px bg-slate-200 dark:bg-zinc-800" />
                             <div className="flex items-center gap-2">
                               <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-slate-300 dark:bg-zinc-700" />
-                              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">
+                              <span className="text-[9px] md:text-xs font-medium uppercase tracking-wider text-slate-400">
                                 Analysis Live
                               </span>
                             </div>
@@ -4052,13 +4052,13 @@ function DashboardContent() {
         )}
 
         <Dialog open={isAddingPlatform} onOpenChange={setIsAddingPlatform}>
-          <DialogContent className="w-[calc(100%-2rem)] sm:max-w-[460px] p-0 overflow-hidden rounded-[28px] border-border bg-white dark:bg-zinc-950 flex flex-col outline-none z-[130] shadow-3xl fixed top-[calc(50%+20px)] sm:top-[calc(50%+40px)] -translate-y-1/2 left-1/2 -translate-x-1/2 max-h-[75vh] sm:max-h-[85vh] border-opacity-50">
+          <DialogContent className="w-[calc(100%-2rem)] sm:max-w-[460px] p-0 overflow-hidden rounded-[28px] border-border bg-white dark:bg-background flex flex-col outline-none z-[130] shadow-3xl fixed top-[calc(50%+20px)] sm:top-[calc(50%+40px)] -translate-y-1/2 left-1/2 -translate-x-1/2 max-h-[75vh] sm:max-h-[85vh] border-opacity-50">
             <div className="p-5 md:p-7 pb-4 shrink-0 border-b border-border/50 bg-zinc-50/50 dark:bg-white/[0.02] relative">
               <div className="flex flex-col">
                 <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center mb-3 shadow-sm border border-primary/10">
                   <Plus className="w-5 h-5 text-primary" />
                 </div>
-                <DialogTitle className="text-lg md:text-2xl font-black tracking-tightest text-foreground">
+                <DialogTitle className="text-lg md:text-2xl font-semibold tracking-tight text-foreground">
                   Add Platform
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground font-medium text-[11px] md:text-sm mt-1 leading-relaxed max-w-[300px]">
@@ -4079,12 +4079,12 @@ function DashboardContent() {
                       <div
                         key={id}
                         className={cn(
-                          "flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 group",
+                          "flex items-center justify-between p-3 rounded-md border transition-all duration-300 group",
                           isMeta
-                            ? "bg-zinc-50 dark:bg-white/[0.02] border-zinc-200 dark:border-white/10 opacity-80 cursor-default"
+                            ? "bg-zinc-50 dark:bg-white/[0.02] border-border opacity-80 cursor-default"
                             : isEnabled
                               ? "bg-primary/[0.03] border-primary/20 dark:border-primary/30 shadow-sm cursor-pointer"
-                              : "bg-white dark:bg-zinc-900/30 border-border/50 hover:border-primary/40 hover:bg-zinc-50 dark:hover:bg-zinc-900 cursor-pointer",
+                              : "bg-card/30 border-border/50 hover:border-primary/40 hover:bg-zinc-50 dark:hover:bg-card cursor-pointer",
                         )}
                         onClick={() => {
                           if (!isPlatformModalReady || isMeta) return;
@@ -4102,7 +4102,7 @@ function DashboardContent() {
                               "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm",
                               isEnabled
                                 ? "bg-white dark:bg-zinc-800 border border-primary/10"
-                                : "bg-zinc-100 dark:bg-zinc-800/50 border border-border group-hover:scale-105",
+                                : "bg-muted/50 border border-border group-hover:scale-105",
                             )}
                           >
                             <meta.icon
@@ -4138,7 +4138,7 @@ function DashboardContent() {
                         {!isMeta && (
                           <div
                             className={cn(
-                              "text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-xl shadow-sm transition-all",
+                              "text-xs font-medium uppercase tracking-wider px-3.5 py-1.5 rounded-xl shadow-sm transition-all",
                               isEnabled
                                 ? "bg-secondary text-muted-foreground group-hover:text-primary"
                                 : "bg-primary text-white shadow-primary/20 md:opacity-0 md:group-hover:opacity-100 active:scale-95 translate-x-1 group-hover:translate-x-0",

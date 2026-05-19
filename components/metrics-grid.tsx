@@ -57,7 +57,7 @@ export default function MetricsGrid({ adData, selectedMetricLabel, onSelectMetri
   return (
     <div className="space-y-6 w-full relative">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <h3 className="text-xl font-black text-foreground tracking-tightest opacity-80">Performance metrics</h3>
+        <h3 className="text-xl font-black text-foreground tracking-tight opacity-80">Performance metrics</h3>
 
         {/* Desktop Hint Message - Professionally positioned above the grid */}
         {!isClickable && (
@@ -76,7 +76,7 @@ export default function MetricsGrid({ adData, selectedMetricLabel, onSelectMetri
             <Card
               key={metric.label}
               className={cn(
-                "group transition-all duration-300 relative overflow-hidden border border-zinc-200/60 dark:border-white/5 bg-white dark:bg-[#09090b] shadow-sm hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-700 rounded-xl min-w-0",
+                "group transition-all duration-300 relative overflow-hidden border border-border/60 dark:border-border bg-white dark:bg-[#09090b] shadow-sm hover:shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700 rounded-xl min-w-0",
                 isClickable ? "cursor-pointer active:scale-[0.98]" : "cursor-default",
                 isSelected && "ring-2 ring-primary shadow-lg -translate-y-1 bg-primary/[0.01]"
               )}
@@ -94,12 +94,12 @@ export default function MetricsGrid({ adData, selectedMetricLabel, onSelectMetri
                     </div>
                   </div>
                   <div className="flex items-baseline gap-1 flex-wrap">
-                    <span className="text-xl sm:text-2xl font-black text-foreground tracking-tightest leading-none truncate max-w-full">{metric.value}</span>
+                    <span className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none truncate max-w-full">{metric.value}</span>
                     <span className="text-[10px] sm:text-xs font-extrabold text-primary/60">{metric.unit}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 pt-1.5 border-t border-zinc-100 dark:border-white/5 w-full mt-1">
+                  <div className="flex items-center gap-1.5 pt-1.5 border-t border-zinc-100 dark:border-border w-full mt-1">
                     <div className="w-1 h-1 rounded-full bg-primary/40 group-hover:bg-primary transition-colors shrink-0" />
-                    <p className="text-[7px] md:text-[8px] font-bold text-zinc-400/50 tracking-widest truncate">{metric.desc}</p>
+                    <p className="text-[7px] md:text-[8px] font-bold text-muted-foreground/50 tracking-widest truncate">{metric.desc}</p>
                   </div>
                 </div>
               </CardContent>

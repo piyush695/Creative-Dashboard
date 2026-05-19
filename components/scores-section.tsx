@@ -113,11 +113,11 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
     <div className="space-y-8 animate-in fade-in duration-700 w-full">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg md:text-xl font-black text-foreground tracking-tightest italic opacity-80">Creative intelligence summary</h3>
+          <h3 className="text-lg md:text-xl font-black text-foreground tracking-tight italic opacity-80">Creative intelligence summary</h3>
           <p className="text-muted-foreground/60 text-[10px] font-black mt-0.5">Dimensional performance metric hub</p>
         </div>
         {!selectedScoreName && (
-          <div className="hidden md:flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-primary/60 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-xl border border-border shadow-sm transition-all hover:bg-secondary hover:-translate-y-1">
+          <div className="hidden md:flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-primary/60 bg-card px-3 py-1.5 rounded-xl border border-border shadow-sm transition-all hover:bg-secondary hover:-translate-y-1">
             <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
             Select a Dimension for deep analysis
           </div>
@@ -125,7 +125,7 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
       </div>
 
       {/* Overall Score Section - Studio Neutral Hub */}
-      <Card className="relative overflow-hidden border border-border shadow-md bg-white dark:bg-[#0A0A0A] p-0.5 rounded-2xl md:rounded-3xl">
+      <Card className="relative overflow-hidden border border-border shadow-md bg-white dark:bg-[#0A0A0A] p-0.5 rounded-md md:rounded-md">
         <div className="absolute top-0 right-0 w-[40%] h-full bg-primary opacity-[0.03] dark:opacity-[0.08] blur-[60px] pointer-events-none transition-all duration-1000" />
 
         <CardContent className="p-4 md:p-5 relative z-10">
@@ -133,8 +133,8 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
             <div className="flex flex-wrap justify-center gap-3 md:gap-5">
               {/* Creative Score */}
               <div className="text-center group/score">
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-white dark:bg-zinc-900 border border-border dark:border-white/10 flex flex-col items-center justify-center relative shadow-sm transition-all duration-300 group-hover/score:border-primary/50 group-hover/score:scale-105">
-                  <span className="text-2xl md:text-3xl font-black text-foreground dark:text-white tracking-tightest leading-none mb-0.5">{overallScore}</span>
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-card border border-border dark:border-border flex flex-col items-center justify-center relative shadow-sm transition-all duration-300 group-hover/score:border-primary/50 group-hover/score:scale-105">
+                  <span className="text-2xl md:text-3xl font-black text-foreground dark:text-white tracking-tight leading-none mb-0.5">{overallScore}</span>
                   <span className="text-[10px] font-black text-primary">Score</span>
                 </div>
                 <p className="mt-2 text-[9px] font-black text-muted-foreground/60">Intelligence hub</p>
@@ -158,7 +158,7 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
                     <span className="text-xl md:text-2xl font-black text-amber-400">{adData.compositeRating}</span>
                     <span className="text-[7px] font-black text-amber-500 uppercase tracking-tighter">Composite</span>
                   </div>
-                  <p className="mt-2 text-[8px] font-black uppercase tracking-widest text-zinc-500">Final Rating</p>
+                  <p className="mt-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground">Final Rating</p>
                 </div>
               )}
             </div>
@@ -169,23 +169,23 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
                   <Sparkles className="h-3 w-3 text-primary" />
                   <span className="text-xs font-black text-primary">{adData.performanceLabel || "High potential"}</span>
                 </div>
-                <h4 className="text-base md:text-xl font-black tracking-tight text-zinc-900 dark:text-white italic">Intelligence verdict</h4>
-                <p className="text-zinc-400 text-xs md:text-sm leading-relaxed max-w-2xl font-medium">
+                <h4 className="text-base md:text-xl font-black tracking-tight text-foreground italic">Intelligence verdict</h4>
+                <p className="text-muted-foreground text-xs md:text-sm leading-relaxed max-w-2xl font-medium">
                   {adData.keyInsight || adData.topInsight || "Our AI engine has analyzed this creative across 50+ dimensions. The current metrics indicate a strong resonance with target audience psychological triggers."}
                 </p>
               </div>
 
               <div className="flex flex-wrap justify-center lg:justify-start gap-3">
-                <div className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
-                  <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest">Analysis Mode</span>
+                <div className="px-3 py-1.5 rounded-xl bg-card border border-border flex flex-col items-start gap-0.5">
+                  <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Analysis Mode</span>
                   <span className="text-[9px] font-black text-zinc-200">{adData.analysisMode || "VISUAL & METRICS"}</span>
                 </div>
-                <div className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
-                  <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest">Psychology Strength</span>
+                <div className="px-3 py-1.5 rounded-xl bg-card border border-border flex flex-col items-start gap-0.5">
+                  <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Psychology Strength</span>
                   <span className="text-[9px] font-black text-zinc-200">{adData.psychologyStrength || "STRONG"}</span>
                 </div>
-                <div className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col items-start gap-0.5">
-                  <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest">Design Quality</span>
+                <div className="px-3 py-1.5 rounded-xl bg-card border border-border flex flex-col items-start gap-0.5">
+                  <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Design Quality</span>
                   <span className="text-[9px] font-black text-zinc-200">{adData.designQuality || "PROFESSIONAL"}</span>
                 </div>
               </div>
@@ -212,7 +212,7 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
                 <h4 className="font-black text-[10px] text-primary mb-1 transition-all group-hover:translate-x-1">{score.name}</h4>
 
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-lg md:text-xl font-black text-foreground tracking-tightest transition-all group-hover:scale-110 origin-left">{score.score}</span>
+                  <span className="text-lg md:text-xl font-black text-foreground tracking-tight transition-all group-hover:scale-110 origin-left">{score.score}</span>
                   <span className="text-[9px] font-black text-primary/40">Rating</span>
                 </div>
 

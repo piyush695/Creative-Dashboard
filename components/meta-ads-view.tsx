@@ -221,10 +221,10 @@ export default function MetaAdsView({
         if (!active || !payload?.length) return null
         return (
             <div className={cn(
-                "rounded-xl px-3.5 py-2.5 shadow-xl border text-xs font-bold backdrop-blur-md",
+                "rounded-xl px-3.5 py-2.5 shadow-sm border text-xs font-bold backdrop-blur-md",
                 isDark
-                    ? "bg-zinc-900 border-white/10 text-zinc-100"
-                    : "bg-white border-zinc-200 text-zinc-900"
+                    ? "bg-card border-border text-zinc-100"
+                    : "bg-white border-border text-zinc-900"
             )}>
                 {label && <p className="text-[9px] uppercase tracking-widest font-black mb-1.5 opacity-50">{label}</p>}
                 {payload.map((entry: any, i: number) => (
@@ -245,14 +245,14 @@ export default function MetaAdsView({
         const { name, value, fill } = payload[0].payload
         return (
             <div className={cn(
-                "rounded-xl px-3.5 py-2.5 shadow-xl border backdrop-blur-md",
+                "rounded-xl px-3.5 py-2.5 shadow-sm border backdrop-blur-md",
                 isDark
-                    ? "bg-zinc-900 border-white/10"
-                    : "bg-white border-zinc-200"
+                    ? "bg-card border-border"
+                    : "bg-white border-border"
             )}>
                 <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: fill }} />
-                    <span className={cn("text-[10px] font-black uppercase tracking-wider", isDark ? "text-zinc-300" : "text-zinc-600")}>
+                    <span className={cn("text-[10px] font-black uppercase tracking-wider", isDark ? "text-zinc-300" : "text-muted-foreground")}>
                         {name}
                     </span>
                 </div>
@@ -276,10 +276,10 @@ export default function MetaAdsView({
                                     <Activity className="h-3.5 w-3.5" />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-none">
+                                    <h2 className="text-sm font-black text-foreground tracking-tight leading-none">
                                         Performance Overview
                                     </h2>
-                                    <p className="text-[9px] text-zinc-500 font-medium mt-0.5">
+                                    <p className="text-[9px] text-muted-foreground font-medium mt-0.5">
                                         {selectedAccountId === "all"
                                             ? `All Accounts · ${filteredAds.length} ads`
                                             : `${filteredAds[0]?.accountName || "Account"} · ${filteredAds.length} ads`}
@@ -310,8 +310,8 @@ export default function MetaAdsView({
                                         key={h.label} 
                                         style={{ animationDelay: `${i * 100}ms` }}
                                         className={cn(
-                                            "flex flex-col justify-between p-4 rounded-2xl border min-h-[90px] transition-all duration-500", // Removed group and cursor-default
-                                            "hover:-translate-y-1.5 hover:shadow-2xl dark:hover:shadow-black/40",
+                                            "flex flex-col justify-between p-4 rounded-md border min-h-[90px] transition-all duration-500", // Removed group and cursor-default
+                                            "hover:-translate-y-1.5 hover:shadow-sm dark:hover:shadow-black/40",
                                             "animate-in fade-in slide-in-from-bottom-4 fill-mode-both",
                                             c.bg, c.bd,
                                             h.color === "blue"    && "hover:border-blue-500/40 hover:shadow-blue-500/10",
@@ -321,10 +321,10 @@ export default function MetaAdsView({
                                             h.color === "amber"   && "hover:border-amber-500/40 hover:shadow-amber-500/10"
                                         )}
                                     >
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-zinc-500 transition-colors">{h.label}</p>
+                                        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground group-hover:text-muted-foreground transition-colors">{h.label}</p>
                                         <div>
                                             <p className={cn("text-2xl font-black font-mono leading-none mt-2 transition-transform group-hover:scale-105 origin-left", c.val)}>{h.value}</p>
-                                            <p className="text-[9px] text-zinc-400 font-medium mt-1 truncate">{h.sub}</p>
+                                            <p className="text-[9px] text-muted-foreground font-medium mt-1 truncate">{h.sub}</p>
                                         </div>
                                     </div>
                                 )
@@ -334,7 +334,7 @@ export default function MetaAdsView({
                         {/* ── ZONE 2: Secondary stats ── */}
                         <div className={cn(
                             "grid grid-cols-2 md:grid-cols-3 xl:flex items-center gap-0 mb-3 rounded-xl border overflow-hidden",
-                            isDark ? "border-white/5 bg-white/[0.02]" : "border-zinc-200 bg-zinc-50"
+                            isDark ? "border-border bg-white/[0.02]" : "border-border bg-zinc-50"
                         )}>
                             {kpiCards.slice(4).map((k, i) => (
                                 <div key={k.label} 
@@ -344,12 +344,12 @@ export default function MetaAdsView({
                                     "hover:bg-zinc-100 dark:hover:bg-white/5",
                                     "animate-in fade-in slide-in-from-bottom-2 fill-mode-both",
                                     // Borders for grid (mobile/md)
-                                    i % (mounted && window.innerWidth < 1280 ? (window.innerWidth < 768 ? 2 : 3) : 6) !== 0 && (isDark ? "border-l border-white/5" : "border-l border-zinc-100"),
-                                    i >= (mounted && window.innerWidth < 768 ? 2 : (mounted && window.innerWidth < 1280 ? 3 : 0)) && (isDark ? "border-t border-white/5" : "border-t border-zinc-100"),
+                                    i % (mounted && window.innerWidth < 1280 ? (window.innerWidth < 768 ? 2 : 3) : 6) !== 0 && (isDark ? "border-l border-border" : "border-l border-zinc-100"),
+                                    i >= (mounted && window.innerWidth < 768 ? 2 : (mounted && window.innerWidth < 1280 ? 3 : 0)) && (isDark ? "border-t border-border" : "border-t border-zinc-100"),
                                     // Reset side borders for flex (xl and up)
                                     "xl:border-t-0 xl:border-l xl:first:border-l-0"
                                 )}>
-                                    <p className="text-[7px] font-black uppercase tracking-widest text-zinc-400 leading-none mb-1 whitespace-nowrap group-hover:text-zinc-500 transition-colors">{k.label}</p>
+                                    <p className="text-[7px] font-black uppercase tracking-widest text-muted-foreground leading-none mb-1 whitespace-nowrap group-hover:text-muted-foreground transition-colors">{k.label}</p>
                                     <p className="text-xs font-black font-mono leading-none transition-transform group-hover:scale-110" style={{ color: themeColors[k.theme] }}>{k.value}</p>
                                 </div>
                             ))}
@@ -399,12 +399,12 @@ export default function MetaAdsView({
                                 },
                             ].filter(Boolean) as { icon: React.ReactNode; iconBg: string; badge: string; badgeColor: string; name: string; metaLeft: string; metaLeftColor: string; metaRight: string }[]
                             return (
-                                <div className={cn("rounded-2xl border mb-3 overflow-hidden", isDark ? "border-white/5 bg-white/[0.02]" : "border-zinc-200 bg-zinc-50")}>
+                                <div className={cn("rounded-md border mb-3 overflow-hidden", isDark ? "border-border bg-white/[0.02]" : "border-border bg-zinc-50")}>
                                     {rows.map((row, i) => (
                                         <div key={row.badge} className={cn(
                                             "flex items-center gap-3 px-4 py-3.5 transition-all duration-300", // Removed group and cursor-default
                                             "hover:bg-zinc-100/80 dark:hover:bg-white/[0.05]",
-                                            i > 0 && (isDark ? "border-t border-white/5" : "border-t border-zinc-200")
+                                            i > 0 && (isDark ? "border-t border-border" : "border-t border-border")
                                         )}>
                                             <div className={cn("h-9 w-9 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3", row.iconBg)}>
                                                 {row.icon}
@@ -413,13 +413,13 @@ export default function MetaAdsView({
                                                 <div className="flex items-center gap-2 mb-0.5">
                                                     <span className={cn("text-[8px] font-black uppercase tracking-widest transition-opacity group-hover:opacity-100 opacity-80", row.badgeColor)}>{row.badge}</span>
                                                 </div>
-                                                <p className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 truncate leading-tight max-w-[120px] sm:max-w-[240px] transition-all group-hover:translate-x-1 group-hover:text-[#1877F2]">
+                                                <p className="text-[10px] font-bold text-foreground truncate leading-tight max-w-[120px] sm:max-w-[240px] transition-all group-hover:translate-x-1 group-hover:text-[#1877F2]">
                                                     {row.name}
                                                 </p>
                                             </div>
                                             <div className="text-right shrink-0 transition-transform group-hover:scale-105">
                                                 <p className={cn("text-sm font-black font-mono", row.metaLeftColor)}>{row.metaLeft}</p>
-                                                <p className="text-[8px] text-zinc-400 font-bold whitespace-nowrap">{row.metaRight}</p>
+                                                <p className="text-[8px] text-muted-foreground font-bold whitespace-nowrap">{row.metaRight}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -431,7 +431,7 @@ export default function MetaAdsView({
 
                         {/* ── ZONE 4: Tabbed charts ── */}
                         <Tabs defaultValue="spend" className="w-full">
-                            <TabsList className="mb-4 h-auto p-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-xl grid grid-cols-2 lg:grid-cols-4 w-full">
+                            <TabsList className="mb-4 h-auto p-1 bg-zinc-100 dark:bg-card border border-border rounded-xl grid grid-cols-2 lg:grid-cols-4 w-full">
                                 <TabsTrigger value="spend" className="rounded-lg py-2 text-[10px] sm:text-xs font-black uppercase tracking-wide data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-md flex items-center justify-center gap-1.5">
                                     <BarChart2 className="h-3 w-3 shrink-0" /><span className="hidden sm:inline">ROAS Trends</span><span className="sm:hidden">ROAS</span>
                                 </TabsTrigger>
@@ -448,12 +448,12 @@ export default function MetaAdsView({
 
                             {/* ---- TAB 1: Spend & Revenue ---- */}
                             <TabsContent value="spend" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <Card className="border border-zinc-200 dark:border-white/5 bg-white dark:bg-[#0f0f11] rounded-2xl shadow-xl overflow-hidden">
+                                <Card className="border border-border bg-white dark:bg-[#0f0f11] rounded-md shadow-sm overflow-hidden">
                                     <div className="grid grid-cols-1 md:grid-cols-2 min-h-[280px]">
                                         {/* LEFT: Chart */}
-                                        <div className="p-5 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-white/5 transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.01]">
-                                            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-0.5">ROAS Trends</p>
-                                            <p className="text-[9px] text-zinc-400 font-medium mb-4">Top 10 ads by ROAS</p>
+                                        <div className="p-5 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-border transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.01]">
+                                            <p className="text-xs font-black text-foreground mb-0.5">ROAS Trends</p>
+                                            <p className="text-[9px] text-muted-foreground font-medium mb-4">Top 10 ads by ROAS</p>
                                             <div className="h-52">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart data={spendChartData} margin={{ top: 4, right: 4, left: -20, bottom: 50 }} style={{ background: "transparent" }}>
@@ -467,40 +467,40 @@ export default function MetaAdsView({
                                                 </ResponsiveContainer>
                                             </div>
                                             <div className="flex items-center gap-4 mt-3">
-                                                <div className="flex items-center gap-1.5 text-[9px] font-black text-zinc-500"><div className="w-2.5 h-2.5 rounded-sm bg-blue-500" /> Spend</div>
-                                                <div className="flex items-center gap-1.5 text-[9px] font-black text-zinc-500"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Revenue</div>
+                                                <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground"><div className="w-2.5 h-2.5 rounded-sm bg-blue-500" /> Spend</div>
+                                                <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Revenue</div>
                                             </div>
                                         </div>
                                         {/* RIGHT: Stats */}
                                         <div className="p-5 flex flex-col justify-between">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-4">Summary</p>
+                                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-4">Summary</p>
                                             <div className="space-y-3 flex-1">
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300", // Removed group and cursor-default
-                                                    isDark ? "bg-white/[0.03] border-white/5 hover:bg-blue-500/5 hover:border-blue-500/20" : "bg-zinc-50 border-zinc-200 hover:bg-blue-50 hover:border-blue-300"
+                                                    isDark ? "bg-white/[0.03] border-border hover:bg-blue-500/5 hover:border-blue-500/20" : "bg-zinc-50 border-border hover:bg-blue-50 hover:border-blue-300"
                                                 )}>
                                                     <div>
-                                                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-blue-500/70 transition-colors">Total Spend</p>
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-blue-500/70 transition-colors">Total Spend</p>
                                                         <p className="text-lg font-black text-blue-500 font-mono transition-transform group-hover:scale-105 origin-left">${totalSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                                     </div>
                                                     <DollarSign className="h-5 w-5 text-blue-500/30 transition-all group-hover:scale-110 group-hover:rotate-12 group-hover:text-blue-500" />
                                                 </div>
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300", // Removed group and cursor-default
-                                                    isDark ? "bg-white/[0.03] border-white/5 hover:bg-emerald-500/5 hover:border-emerald-500/20" : "bg-zinc-50 border-zinc-200 hover:bg-emerald-50 hover:border-emerald-300"
+                                                    isDark ? "bg-white/[0.03] border-border hover:bg-emerald-500/5 hover:border-emerald-500/20" : "bg-zinc-50 border-border hover:bg-emerald-50 hover:border-emerald-300"
                                                 )}>
                                                     <div>
-                                                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-emerald-500/70 transition-colors">Total Revenue</p>
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-emerald-500/70 transition-colors">Total Revenue</p>
                                                         <p className="text-lg font-black text-emerald-500 font-mono transition-transform group-hover:scale-105 origin-left">${totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                                     </div>
                                                     <TrendingUp className="h-5 w-5 text-emerald-500/30 transition-all group-hover:scale-110 group-hover:-translate-y-0.5 group-hover:text-emerald-500" />
                                                 </div>
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300",
-                                                    isDark ? "bg-white/[0.03] border-white/5 hover:bg-amber-500/5 hover:border-amber-500/20" : "bg-zinc-50 border-zinc-200 hover:bg-amber-50 hover:border-amber-300"
+                                                    isDark ? "bg-white/[0.03] border-border hover:bg-amber-500/5 hover:border-amber-500/20" : "bg-zinc-50 border-border hover:bg-amber-50 hover:border-amber-300"
                                                 )}>
                                                     <div>
-                                                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-amber-500/70 transition-colors">Total Purchases</p>
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-amber-500/70 transition-colors">Total Purchases</p>
                                                         <p className="text-lg font-black text-amber-500 font-mono transition-transform group-hover:scale-105 origin-left">{totalPurchases.toLocaleString()}</p>
                                                     </div>
                                                     <ShoppingCart className="h-5 w-5 text-amber-500/30 transition-all group-hover:scale-110 group-hover:rotate-12 group-hover:text-amber-500" />
@@ -512,17 +512,17 @@ export default function MetaAdsView({
                                                         : (isDark ? "bg-red-900/10 border-red-500/15 hover:bg-red-500/10 hover:border-red-500/30" : "bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-400")
                                                 )}>
                                                     <div>
-                                                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 transition-colors">Net Profit</p>
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground transition-colors">Net Profit</p>
                                                         <p className={cn("text-lg font-black font-mono transition-transform group-hover:scale-105 origin-left", netProfit >= 0 ? "text-emerald-500" : "text-red-500")}>${netProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                                     </div>
                                                     <Zap className={cn("h-5 w-5 transition-all group-hover:scale-110 group-hover:rotate-12", netProfit >= 0 ? "text-emerald-500/30 group-hover:text-emerald-500" : "text-red-500/30 group-hover:text-red-500")} />
                                                 </div>
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300", // Removed group and cursor-default
-                                                    isDark ? "bg-white/[0.03] border-white/5 hover:bg-indigo-500/5 hover:border-indigo-500/20" : "bg-zinc-50 border-zinc-200 hover:bg-indigo-50 hover:border-indigo-300"
+                                                    isDark ? "bg-white/[0.03] border-border hover:bg-indigo-500/5 hover:border-indigo-500/20" : "bg-zinc-50 border-border hover:bg-indigo-50 hover:border-indigo-300"
                                                 )}>
                                                     <div>
-                                                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-indigo-500/70 transition-colors">ROAS</p>
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-indigo-500/70 transition-colors">ROAS</p>
                                                         <p className="text-lg font-black text-indigo-500 font-mono transition-transform group-hover:scale-105 origin-left">{avgRoas.toFixed(2)}x</p>
                                                     </div>
                                                     <Activity className="h-5 w-5 text-indigo-500/30 transition-all group-hover:scale-110 group-hover:text-indigo-500" />
@@ -535,12 +535,12 @@ export default function MetaAdsView({
 
                             {/* ---- TAB 2: CTR Analysis ---- */}
                             <TabsContent value="ctr" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <Card className="border border-zinc-200 dark:border-white/5 bg-white dark:bg-[#0f0f11] rounded-2xl shadow-xl overflow-hidden">
+                                <Card className="border border-border bg-white dark:bg-[#0f0f11] rounded-md shadow-sm overflow-hidden">
                                     <div className="grid grid-cols-1 md:grid-cols-2 min-h-[280px]">
                                         {/* LEFT: Chart */}
-                                        <div className="p-5 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-white/5 transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.01]">
-                                            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-0.5">CTR by Ad</p>
-                                            <p className="text-[9px] text-zinc-400 font-medium mb-4">Top 10 ads by click-through rate</p>
+                                        <div className="p-5 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-border transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.01]">
+                                            <p className="text-xs font-black text-foreground mb-0.5">CTR by Ad</p>
+                                            <p className="text-[9px] text-muted-foreground font-medium mb-4">Top 10 ads by click-through rate</p>
                                             <div className="h-52">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart data={ctrChartData} margin={{ top: 4, right: 4, left: -20, bottom: 50 }} style={{ background: "transparent" }}>
@@ -554,49 +554,49 @@ export default function MetaAdsView({
                                             </div>
                                             <div className="flex items-center gap-1.5 mt-3">
                                                 <div className="w-2.5 h-2.5 rounded-sm bg-violet-500" />
-                                                <span className="text-[9px] font-black text-zinc-500">CTR %</span>
+                                                <span className="text-[9px] font-black text-muted-foreground">CTR %</span>
                                             </div>
                                         </div>
                                         {/* RIGHT: Stats */}
                                         <div className="p-5 flex flex-col justify-between">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-4">CTR Insights</p>
+                                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-4">CTR Insights</p>
                                             <div className="space-y-3 flex-1">
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300", // Removed group and cursor-default
-                                                    isDark ? "bg-white/[0.03] border-white/5 hover:bg-violet-500/5 hover:border-violet-500/20" : "bg-zinc-50 border-zinc-200 hover:bg-violet-50 hover:border-violet-300"
+                                                    isDark ? "bg-white/[0.03] border-border hover:bg-violet-500/5 hover:border-violet-500/20" : "bg-zinc-50 border-border hover:bg-violet-50 hover:border-violet-300"
                                                 )}>
                                                     <div>
-                                                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-violet-500/70 transition-colors">Best CTR</p>
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-violet-500/70 transition-colors">Best CTR</p>
                                                         <p className="text-lg font-black text-violet-500 font-mono transition-transform group-hover:scale-105 origin-left">{(Math.max(...filteredAds.map(a => Number(a.ctr) || 0))).toFixed(2)}%</p>
                                                     </div>
                                                     <Percent className="h-5 w-5 text-violet-500/30 transition-all group-hover:scale-110 group-hover:rotate-12 group-hover:text-violet-500" />
                                                 </div>
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300", // Removed group and cursor-default
-                                                    isDark ? "bg-white/[0.03] border-white/5 hover:bg-violet-500/5 hover:border-violet-500/20" : "bg-zinc-50 border-zinc-200 hover:bg-violet-50 hover:border-violet-300"
+                                                    isDark ? "bg-white/[0.03] border-border hover:bg-violet-500/5 hover:border-violet-500/20" : "bg-zinc-50 border-border hover:bg-violet-50 hover:border-violet-300"
                                                 )}>
                                                     <div>
-                                                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-violet-500/70 transition-colors">Avg CTR</p>
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-violet-500/70 transition-colors">Avg CTR</p>
                                                         <p className="text-lg font-black text-violet-500 font-mono transition-transform group-hover:scale-105 origin-left">{avgCtr.toFixed(2)}%</p>
                                                     </div>
                                                     <Activity className="h-5 w-5 text-violet-500/30 transition-all group-hover:scale-110 group-hover:rotate-12 group-hover:text-violet-500" />
                                                 </div>
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300", // Removed group and cursor-default
-                                                    isDark ? "bg-white/[0.03] border-white/5 hover:bg-violet-500/5 hover:border-violet-500/20" : "bg-zinc-50 border-zinc-200 hover:bg-violet-50 hover:border-violet-300"
+                                                    isDark ? "bg-white/[0.03] border-border hover:bg-violet-500/5 hover:border-violet-500/20" : "bg-zinc-50 border-border hover:bg-violet-50 hover:border-violet-300"
                                                 )}>
                                                     <div>
-                                                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-violet-500/70 transition-colors">Total Clicks</p>
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-violet-500/70 transition-colors">Total Clicks</p>
                                                         <p className="text-lg font-black text-violet-500 font-mono transition-transform group-hover:scale-105 origin-left">{totalClicks.toLocaleString()}</p>
                                                     </div>
                                                     <MousePointer2 className="h-5 w-5 text-violet-500/30 transition-all group-hover:scale-110 group-hover:rotate-12 group-hover:text-violet-500" />
                                                 </div>
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300", // Removed group and cursor-default
-                                                    isDark ? "bg-white/[0.03] border-white/5 hover:bg-amber-500/5 hover:border-amber-500/20" : "bg-zinc-50 border-zinc-200 hover:bg-amber-50 hover:border-amber-300"
+                                                    isDark ? "bg-white/[0.03] border-border hover:bg-amber-500/5 hover:border-amber-500/20" : "bg-zinc-50 border-border hover:bg-amber-50 hover:border-amber-300"
                                                 )}>
                                                     <div>
-                                                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-amber-500/70 transition-colors">Avg CPC</p>
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-amber-500/70 transition-colors">Avg CPC</p>
                                                         <p className="text-lg font-black text-amber-500 font-mono transition-transform group-hover:scale-105 origin-left">${avgCpc.toFixed(2)}</p>
                                                     </div>
                                                     <DollarSign className="h-5 w-5 text-amber-500/30 transition-all group-hover:scale-110 group-hover:rotate-12 group-hover:text-amber-500" />
@@ -609,12 +609,12 @@ export default function MetaAdsView({
 
                             {/* ---- TAB 3: Format Mix ---- */}
                             <TabsContent value="format" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <Card className="border border-zinc-200 dark:border-white/5 bg-white dark:bg-[#0f0f11] rounded-2xl shadow-xl overflow-hidden">
+                                <Card className="border border-border bg-white dark:bg-[#0f0f11] rounded-md shadow-sm overflow-hidden">
                                     <div className="grid grid-cols-1 md:grid-cols-2 min-h-[280px]">
                                         {/* LEFT: Pie Chart */}
-                                        <div className="p-5 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-white/5 transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.01]">
-                                            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-0.5">Format Diversity</p>
-                                            <p className="text-[9px] text-zinc-400 font-medium mb-2">Spend by ad type</p>
+                                        <div className="p-5 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-border transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.01]">
+                                            <p className="text-xs font-black text-foreground mb-0.5">Format Diversity</p>
+                                            <p className="text-[9px] text-muted-foreground font-medium mb-2">Spend by ad type</p>
                                             <div className="h-56">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <PieChart style={{ background: "transparent" }}>
@@ -642,7 +642,7 @@ export default function MetaAdsView({
                                         </div>
                                         {/* RIGHT: Breakdown */}
                                         <div className="p-5">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-4">Spend Breakdown</p>
+                                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-4">Spend Breakdown</p>
                                             <div className="space-y-2.5">
                                                 {formatChartData.map((item, i) => {
                                                     const pct = totalSpend > 0 ? (item.value / totalSpend * 100) : 0
@@ -651,11 +651,11 @@ export default function MetaAdsView({
                                                             <div className="flex items-center justify-between mb-1.5">
                                                                 <div className="flex items-center gap-1.5">
                                                                     <div className="w-2 h-2 rounded-full shrink-0 transition-transform group-hover:scale-125" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
-                                                                    <span className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-wide group-hover:text-[#1877F2] transition-colors">{item.name}</span>
+                                                                    <span className="text-[10px] font-black text-foreground uppercase tracking-wide group-hover:text-[#1877F2] transition-colors">{item.name}</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="text-[9px] font-black transition-transform group-hover:scale-110" style={{ color: PIE_COLORS[i % PIE_COLORS.length] }}>{pct.toFixed(1)}%</span>
-                                                                    <span className="text-[9px] text-zinc-400 font-bold">${item.value.toLocaleString()}</span>
+                                                                    <span className="text-[9px] text-muted-foreground font-bold">${item.value.toLocaleString()}</span>
                                                                 </div>
                                                             </div>
                                                             <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-white/5 overflow-hidden">
@@ -672,11 +672,11 @@ export default function MetaAdsView({
 
                             {/* ---- TAB 4: Top Performers Table ---- */}
                             <TabsContent value="top" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-4 duration-700">
-                            <Card className="p-5 md:p-6 border border-zinc-200 dark:border-white/5 bg-white dark:bg-[#0f0f11] rounded-[2rem] shadow-xl overflow-x-auto">
+                            <Card className="p-5 md:p-6 border border-border bg-white dark:bg-[#0f0f11] rounded-md shadow-sm overflow-x-auto">
                                     <div className="flex items-center justify-between mb-6">
                                         <div>
-                                            <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">Top Performers</h3>
-                                            <p className="text-xs text-zinc-400 font-medium mt-0.5">Top 10 ads ranked by ROAS</p>
+                                            <h3 className="text-lg font-black text-foreground">Top Performers</h3>
+                                            <p className="text-xs text-muted-foreground font-medium mt-0.5">Top 10 ads ranked by ROAS</p>
                                         </div>
                                         <Badge className="bg-blue-500/10 text-blue-500 border-none font-black text-xs px-3 py-1">
                                             {topAdsByRoas.length} Ads
@@ -685,9 +685,9 @@ export default function MetaAdsView({
                                     <div className="overflow-x-auto -mx-5 md:mx-0">
                                         <table className="w-full text-left border-collapse min-w-[600px]">
                                             <thead>
-                                                <tr className="border-b border-zinc-100 dark:border-white/5">
+                                                <tr className="border-b border-zinc-100 dark:border-border">
                                                     {["#", "Ad Name", "Spend", "Revenue", "ROAS", "CTR", "Clicks", "Purchases"].map(h => (
-                                                        <th key={h} className="pb-3 px-4 text-[9px] font-black uppercase tracking-widest text-zinc-400 whitespace-nowrap">{h}</th>
+                                                        <th key={h} className="pb-3 px-4 text-[10px] font-medium uppercase tracking-wider text-muted-foreground whitespace-nowrap">{h}</th>
                                                     ))}
                                                 </tr>
                                             </thead>
@@ -698,12 +698,12 @@ export default function MetaAdsView({
                                                     const adRoas = sp > 0 ? rev / sp : 0
                                                     return (
                                                         <tr key={ad.id}
-                                                            className="border-b border-zinc-50 dark:border-white/5 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors group"
+                                                            className="border-b border-zinc-50 dark:border-border hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors group"
                                                         >
-                                                            <td className="py-3 px-4 text-[10px] font-black text-zinc-400">#{i + 1}</td>
+                                                            <td className="py-3 px-4 text-[10px] font-black text-muted-foreground">#{i + 1}</td>
                                                             <td className="py-3 px-4 max-w-[140px] md:max-w-[200px]">
-                                                                <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate group-hover:text-[#1877F2] transition-colors">{ad.adName}</p>
-                                                                <p className="text-[9px] text-zinc-400 font-medium truncate">{ad.campaignName}</p>
+                                                                <p className="text-xs font-bold text-foreground truncate group-hover:text-[#1877F2] transition-colors">{ad.adName}</p>
+                                                                <p className="text-[9px] text-muted-foreground font-medium truncate">{ad.campaignName}</p>
                                                             </td>
                                                             <td className="py-3 px-4 text-xs font-black text-blue-500 whitespace-nowrap">${sp.toLocaleString()}</td>
                                                             <td className="py-3 px-4 text-xs font-black text-emerald-500 whitespace-nowrap">${rev.toLocaleString()}</td>
@@ -713,8 +713,8 @@ export default function MetaAdsView({
                                                                 </span>
                                                             </td>
                                                             <td className="py-3 px-4 text-xs font-black text-violet-500 whitespace-nowrap">{(Number(ad.ctr) || 0).toFixed(2)}%</td>
-                                                            <td className="py-3 px-4 text-xs font-bold text-zinc-600 dark:text-zinc-400">{(Number(ad.clicks) || 0).toLocaleString()}</td>
-                                                            <td className="py-3 px-4 text-xs font-bold text-zinc-600 dark:text-zinc-400">{(Number(ad.purchases) || 0).toLocaleString()}</td>
+                                                            <td className="py-3 px-4 text-xs font-bold text-muted-foreground dark:text-muted-foreground">{(Number(ad.clicks) || 0).toLocaleString()}</td>
+                                                            <td className="py-3 px-4 text-xs font-bold text-muted-foreground dark:text-muted-foreground">{(Number(ad.purchases) || 0).toLocaleString()}</td>
                                                         </tr>
                                                     )
                                                 })}
@@ -765,14 +765,14 @@ export default function MetaAdsView({
                                  <button
                                      onClick={() => setShowOverview(true)}
                                      className="group flex items-center gap-1.5 h-8 px-3.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-200
-                                         bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm
-                                         border border-zinc-200 dark:border-zinc-700
-                                         text-zinc-700 dark:text-zinc-200
-                                         shadow-sm hover:shadow-md
-                                         hover:bg-blue-50 dark:hover:bg-blue-900/15
-                                         hover:border-blue-300 dark:hover:border-blue-600
-                                         hover:text-blue-600 dark:hover:text-blue-400
-                                         active:opacity-80"
+ bg-white/60 dark:bg-card/60 backdrop-blur-sm
+ border border-border dark:border-zinc-700
+ text-foreground/80 dark:text-zinc-200
+ shadow-sm hover:shadow-md
+ hover:bg-blue-50 dark:hover:bg-blue-900/15
+ hover:border-blue-300 dark:hover:border-blue-600
+ hover:text-blue-600 dark:hover:text-blue-400
+ active:opacity-80"
                                  >
                                      <TrendingUp className="h-3 w-3 shrink-0 text-blue-500 transition-transform group-hover:-translate-y-px" />
                                      <span>OVERVIEW</span>

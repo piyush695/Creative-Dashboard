@@ -171,24 +171,24 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border pb-6">
                 <div className="flex items-center gap-4">
                     {onBack && (
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={onBack}
-                            className="h-10 w-10 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-all shadow-sm border border-zinc-200 dark:border-zinc-800 mb-1"
+                            className="h-10 w-10 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-zinc-900 dark:hover:text-white transition-all shadow-sm border border-border mb-1"
                         >
                             <ChevronDown className="h-5 w-5 rotate-90" />
                         </Button>
                     )}
                     <div className="space-y-1">
-                        <h1 className="text-xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">System Configuration</h1>
-                        <p className="text-zinc-500 text-[10px] md:text-sm uppercase tracking-widest font-bold opacity-60">Fine-tune your analysis environment</p>
+                        <h1 className="text-xl md:text-3xl font-black text-foreground tracking-tight">System Configuration</h1>
+                        <p className="text-muted-foreground text-[10px] md:text-sm uppercase tracking-widest font-bold opacity-60">Fine-tune your analysis environment</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-emerald-500/5 border border-emerald-500/10 px-3 py-1.5 rounded-full text-emerald-600 dark:text-emerald-400">
+                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider bg-emerald-500/5 border border-emerald-500/10 px-3 py-1.5 rounded-full text-emerald-600 dark:text-emerald-400">
                     <Shield className="h-3 w-3" />
                     Secure Preferences
                 </div>
@@ -197,28 +197,28 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Left: Core Preferences */}
                 <div className="lg:col-span-8 space-y-6">
-                    <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 backdrop-blur-2xl shadow-xl overflow-hidden group">
+                    <Card className="border-border bg-card/40 backdrop-blur-2xl shadow-sm overflow-hidden group">
                         <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <CardHeader className="p-6 md:p-8 pb-4">
-                            <CardTitle className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-3">
+                            <CardTitle className="text-lg font-bold text-foreground flex items-center gap-3">
                                 <Sun className="h-5 w-5 text-amber-500" />
                                 Interface & Style
                             </CardTitle>
-                            <CardDescription className="text-xs text-zinc-500">
+                            <CardDescription className="text-xs text-muted-foreground">
                                 Personalize the visual appearance of your dashboard
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-6 md:p-8 pt-2 space-y-6">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 gap-4">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-zinc-50 dark:bg-white/5 rounded-md border border-zinc-100 dark:border-border gap-4">
                                 <div className="space-y-0.5">
                                     <Label className="text-sm font-bold text-zinc-900 dark:text-zinc-200">Visual Theme</Label>
-                                    <p className="text-[11px] text-zinc-500 font-medium">Switch dashboard lighting environment</p>
+                                    <p className="text-[11px] text-muted-foreground font-medium">Switch dashboard lighting environment</p>
                                 </div>
-                                <div className="grid grid-cols-3 bg-white/80 dark:bg-zinc-950 p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-inner w-full sm:w-auto gap-1">
+                                <div className="grid grid-cols-3 bg-white/80 dark:bg-background p-1.5 rounded-xl border border-border shadow-inner w-full sm:w-auto gap-1">
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className={`h-8 px-2 sm:px-4 gap-1 sm:gap-2 rounded-lg transition-all ${theme === 'light' ? 'bg-primary text-white shadow-md hover:bg-primary' : 'text-zinc-500 hover:text-primary hover:bg-zinc-100 dark:hover:bg-zinc-900'}`}
+                                        className={`h-8 px-2 sm:px-4 gap-1 sm:gap-2 rounded-lg transition-all ${theme === 'light' ? 'bg-primary text-white shadow-md hover:bg-primary' : 'text-muted-foreground hover:text-primary hover:bg-zinc-100 dark:hover:bg-card'}`}
                                         onClick={() => setTheme('light')}
                                     >
                                         <Sun className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${theme === 'light' ? 'text-white' : ''}`} />
@@ -227,7 +227,7 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className={`h-8 px-2 sm:px-4 gap-1 sm:gap-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-zinc-800 text-white shadow-md border border-zinc-700' : 'text-zinc-500 hover:text-[#007AFF] hover:bg-zinc-100 dark:hover:bg-zinc-900'}`}
+                                        className={`h-8 px-2 sm:px-4 gap-1 sm:gap-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-zinc-800 text-white shadow-md border border-zinc-700' : 'text-muted-foreground hover:text-primary hover:bg-zinc-100 dark:hover:bg-card'}`}
                                         onClick={() => setTheme('dark')}
                                     >
                                         <Moon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
@@ -236,7 +236,7 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className={`h-8 px-2 sm:px-4 gap-1 sm:gap-2 rounded-lg transition-all ${theme === 'system' ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-md border border-zinc-300 dark:border-zinc-700' : 'text-zinc-500 hover:text-[#007AFF] hover:bg-zinc-100 dark:hover:bg-zinc-900'}`}
+                                        className={`h-8 px-2 sm:px-4 gap-1 sm:gap-2 rounded-lg transition-all ${theme === 'system' ? 'bg-zinc-200 dark:bg-zinc-800 text-foreground shadow-md border border-zinc-300 dark:border-zinc-700' : 'text-muted-foreground hover:text-primary hover:bg-zinc-100 dark:hover:bg-card'}`}
                                         onClick={() => setTheme('system')}
                                     >
                                         <Monitor className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
@@ -246,32 +246,32 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 transition-all hover:bg-zinc-100 dark:hover:bg-white/[0.08]">
+                                <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-white/5 rounded-md border border-zinc-100 dark:border-border transition-all hover:bg-zinc-100 dark:hover:bg-white/[0.08]">
                                     <div className="space-y-0.5">
                                         <Label className="text-sm font-bold text-zinc-900 dark:text-zinc-200">Glassmorphism</Label>
-                                        <p className="text-[10px] text-zinc-500 font-medium">Dynamic blurs</p>
+                                        <p className="text-[10px] text-muted-foreground font-medium">Dynamic blurs</p>
                                     </div>
                                     <Switch
                                         checked={dashboardSettings.glassmorphism}
                                         onCheckedChange={(val) => setDashboardSettings({ ...dashboardSettings, glassmorphism: val })}
-                                        className="data-[state=checked]:bg-[#007AFF]"
+                                        className="data-[state=checked]:bg-primary"
                                     />
                                 </div>
-                                <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 transition-all hover:bg-zinc-100 dark:hover:bg-white/[0.08]">
+                                <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-white/5 rounded-md border border-zinc-100 dark:border-border transition-all hover:bg-zinc-100 dark:hover:bg-white/[0.08]">
                                     <div className="space-y-0.5">
                                         <Label className="text-sm font-bold text-zinc-900 dark:text-zinc-200">Compact Density</Label>
-                                        <p className="text-[10px] text-zinc-500 font-medium">Data-rich layout</p>
+                                        <p className="text-[10px] text-muted-foreground font-medium">Data-rich layout</p>
                                     </div>
                                     <Switch
                                         checked={dashboardSettings.compactMode}
                                         onCheckedChange={(val) => setDashboardSettings({ ...dashboardSettings, compactMode: val })}
-                                        className="data-[state=checked]:bg-[#007AFF]"
+                                        className="data-[state=checked]:bg-primary"
                                     />
                                 </div>
-                                <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-white/5 rounded-2xl border border-zinc-100 dark:border-white/5 transition-all hover:bg-zinc-100 dark:hover:bg-white/[0.08]">
+                                <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-white/5 rounded-md border border-zinc-100 dark:border-border transition-all hover:bg-zinc-100 dark:hover:bg-white/[0.08]">
                                     <div className="space-y-0.5">
                                         <Label className="text-sm font-bold text-zinc-900 dark:text-zinc-200">Reduced Motion</Label>
-                                        <p className="text-[10px] text-zinc-500 font-medium">Simplify transitions</p>
+                                        <p className="text-[10px] text-muted-foreground font-medium">Simplify transitions</p>
                                     </div>
                                     <Switch
                                         checked={dashboardSettings.reducedMotion}
@@ -281,8 +281,8 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
-                                <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Default Landing View</Label>
+                            <div className="pt-4 border-t border-zinc-100 dark:border-border space-y-4">
+                                <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Default Landing View</Label>
                                 <RadioGroup
                                     value={dashboardSettings.defaultView}
                                     onValueChange={(val) => setDashboardSettings({ ...dashboardSettings, defaultView: val })}
@@ -296,22 +296,22 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                                             key={view.id}
                                             htmlFor={view.id}
                                             className={cn(
-                                                "relative flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer",
+                                                "relative flex items-center justify-between p-4 rounded-md border transition-all cursor-pointer",
                                                 dashboardSettings.defaultView === view.id
                                                     ? "bg-blue-500/5 border-blue-500/30 ring-1 ring-blue-500/30"
-                                                    : "bg-zinc-50 dark:bg-zinc-950 border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+                                                    : "bg-zinc-50 dark:bg-background border-zinc-100 dark:border-border hover:border-zinc-300 dark:hover:border-zinc-700"
                                             )}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className={cn(
                                                     "p-2 rounded-xl border",
-                                                    dashboardSettings.defaultView === view.id ? "bg-blue-500 text-white border-blue-400" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border-zinc-200 dark:border-zinc-700"
+                                                    dashboardSettings.defaultView === view.id ? "bg-blue-500 text-white border-blue-400" : "bg-muted text-muted-foreground border-border dark:border-zinc-700"
                                                 )}>
                                                     <view.icon className="h-4 w-4" />
                                                 </div>
                                                 <div className="space-y-0.5 text-left">
                                                     <p className="text-sm font-bold text-zinc-900 dark:text-zinc-200">{view.label}</p>
-                                                    <p className="text-[10px] text-zinc-500 font-medium">{view.desc}</p>
+                                                    <p className="text-[10px] text-muted-foreground font-medium">{view.desc}</p>
                                                 </div>
                                             </div>
                                             <RadioGroupItem value={view.id} id={view.id} className="sr-only" />
@@ -327,22 +327,22 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                         </CardContent>
                     </Card>
 
-                    <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 backdrop-blur-2xl shadow-xl overflow-hidden group">
+                    <Card className="border-border bg-card/40 backdrop-blur-2xl shadow-sm overflow-hidden group">
                         <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <CardHeader className="p-6 md:p-8 pb-4">
-                            <CardTitle className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-3">
+                            <CardTitle className="text-lg font-bold text-foreground flex items-center gap-3">
                                 <Globe className="h-5 w-5 text-primary" />
                                 Platform Management
                             </CardTitle>
-                            <CardDescription className="text-xs text-zinc-500">
+                            <CardDescription className="text-xs text-muted-foreground">
                                 View and manage active platform connections in your dashboard
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-6 md:p-8 pt-2">
                             {isLoadingPlatforms ? (
                                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                                    <Loader2 className="w-8 h-8 animate-spin text-[#007AFF] opacity-50" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Loading Platforms...</p>
+                                    <Loader2 className="w-8 h-8 animate-spin text-primary opacity-50" />
+                                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Loading Platforms...</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -350,11 +350,11 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                                         { id: 'google', label: 'Google Ads', icon: Play, color: 'text-red-500' },
                                         { id: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
                                         { id: 'meta', label: 'Meta', icon: Facebook, color: 'text-blue-600', isCore: true },
-                                        { id: 'tiktok', label: 'TikTok', icon: Smartphone, color: 'text-zinc-900 dark:text-white' },
+                                        { id: 'tiktok', label: 'TikTok', icon: Smartphone, color: 'text-foreground' },
                                         { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
                                         { id: 'shopify', label: 'Shopify', icon: ShoppingBag, color: 'text-emerald-600' },
                                         { id: 'pinterest', label: 'Pinterest', icon: Pinterest, color: 'text-red-700' },
-                                        { id: 'x', label: 'X (Twitter)', icon: Twitter, color: 'text-zinc-600 dark:text-zinc-400' },
+                                        { id: 'x', label: 'X (Twitter)', icon: Twitter, color: 'text-muted-foreground dark:text-muted-foreground' },
                                         { id: 'taboola', label: 'Taboola', icon: Newspaper, color: 'text-[#285d9a]' },
                                         { id: 'bing', label: 'Bing', icon: Search, color: 'text-[#00A4EF]' },
                                         { id: 'adroll', label: 'AdRoll', icon: Target, color: 'text-[#E0267D]' }
@@ -362,25 +362,25 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                                         <div
                                             key={platform.id}
                                             className={cn(
-                                                "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
+                                                "flex items-center justify-between p-4 rounded-md border transition-all duration-300",
                                                 enabledPlatforms.includes(platform.id)
                                                     ? "bg-blue-500/5 border-blue-500/20"
-                                                    : "bg-zinc-50 dark:bg-white/5 border-zinc-100 dark:border-white/5 opacity-60"
+                                                    : "bg-zinc-50 dark:bg-white/5 border-zinc-100 dark:border-border opacity-60"
                                             )}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className={cn(
                                                     "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                                                    enabledPlatforms.includes(platform.id) ? "bg-white dark:bg-zinc-800 shadow-sm" : "bg-zinc-100 dark:bg-zinc-900"
+                                                    enabledPlatforms.includes(platform.id) ? "bg-white dark:bg-zinc-800 shadow-sm" : "bg-zinc-100 dark:bg-card"
                                                 )}>
                                                     <platform.icon className={cn("w-5 h-5", platform.color)} />
                                                 </div>
                                                 <div className="space-y-0.5">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-black uppercase tracking-tight text-zinc-900 dark:text-zinc-100">{platform.label}</span>
+                                                        <span className="text-xs font-black uppercase tracking-tight text-foreground">{platform.label}</span>
                                                         {'isCore' in platform && <span className="text-[8px] font-black uppercase tracking-widest bg-primary/10 text-primary px-1.5 py-0.5 rounded-md">Core</span>}
                                                     </div>
-                                                    <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">
+                                                    <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">
                                                         {'isCore' in platform ? 'Core Platform' : enabledPlatforms.includes(platform.id) ? 'Active' : 'Inactive'}
                                                     </p>
                                                 </div>
@@ -397,7 +397,7 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                                                     }
                                                     setEnabledPlatforms(nextPlatforms)
                                                 }}
-                                                className="data-[state=checked]:bg-[#007AFF]"
+                                                className="data-[state=checked]:bg-primary"
                                             />
                                         </div>
                                     ))}
@@ -407,14 +407,14 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                     </Card>
 
 
-                    <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 backdrop-blur-2xl shadow-xl overflow-hidden group">
+                    <Card className="border-border bg-card/40 backdrop-blur-2xl shadow-sm overflow-hidden group">
                         <div className="absolute top-0 left-0 w-1 h-full bg-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <CardHeader className="p-6 md:p-8 pb-4">
-                            <CardTitle className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-3">
+                            <CardTitle className="text-lg font-bold text-foreground flex items-center gap-3">
                                 <Eye className="h-5 w-5 text-indigo-400" />
                                 Behavioral Logic
                             </CardTitle>
-                            <CardDescription className="text-xs text-zinc-500">
+                            <CardDescription className="text-xs text-muted-foreground">
                                 Configure analyzer synchronization and processing
                             </CardDescription>
                         </CardHeader>
@@ -423,16 +423,16 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
                                         <RefreshCw className="h-3.5 w-3.5 text-blue-500" />
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Sync Polling</Label>
+                                        <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Sync Polling</Label>
                                     </div>
                                     <Select
                                         value={dashboardSettings.refreshInterval}
                                         onValueChange={(val) => setDashboardSettings({ ...dashboardSettings, refreshInterval: val })}
                                     >
-                                        <SelectTrigger className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 h-10 rounded-xl focus:ring-[#007AFF]/20 text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                                        <SelectTrigger className="bg-white dark:bg-background border-border h-10 rounded-xl focus:ring-primary/20 text-xs font-bold text-foreground/80 dark:text-zinc-300">
                                             <SelectValue placeholder="Interval" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl">
+                                        <SelectContent className="bg-card border-border rounded-xl shadow-sm">
                                             <SelectItem value="manual" className="font-medium text-xs">Manual Request</SelectItem>
                                             <SelectItem value="30s" className="font-medium text-xs">30s Interval</SelectItem>
                                             <SelectItem value="60s" className="font-medium text-xs">1m Dynamic</SelectItem>
@@ -443,16 +443,16 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
                                         <Globe className="h-3.5 w-3.5 text-emerald-500" />
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Regionality</Label>
+                                        <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Regionality</Label>
                                     </div>
                                     <Select
                                         value={dashboardSettings.language}
                                         onValueChange={(val) => setDashboardSettings({ ...dashboardSettings, language: val })}
                                     >
-                                        <SelectTrigger className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 h-10 rounded-xl focus:ring-[#007AFF]/20 text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                                        <SelectTrigger className="bg-white dark:bg-background border-border h-10 rounded-xl focus:ring-primary/20 text-xs font-bold text-foreground/80 dark:text-zinc-300">
                                             <SelectValue placeholder="Language" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl">
+                                        <SelectContent className="bg-card border-border rounded-xl shadow-sm">
                                             <SelectItem value="en" className="font-medium text-xs">English (US)</SelectItem>
                                             <SelectItem value="es" className="font-medium text-xs">Español</SelectItem>
                                         </SelectContent>
@@ -460,37 +460,37 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                                 </div>
                             </div>
 
-                            <div className="space-y-4 pt-6 border-t border-zinc-100 dark:border-zinc-800">
+                            <div className="space-y-4 pt-6 border-t border-zinc-100 dark:border-border">
                                 <div className="flex items-center justify-between transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.02] -mx-2 px-2 py-1 rounded-lg">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-                                            <Bell className="h-4 w-4 text-zinc-400" />
+                                        <div className="p-2 bg-muted rounded-lg">
+                                            <Bell className="h-4 w-4 text-muted-foreground" />
                                         </div>
                                         <div className="space-y-0.5">
                                             <Label className="text-sm font-bold text-zinc-900 dark:text-zinc-200">Alert System</Label>
-                                            <p className="text-[10px] text-zinc-500">Analyzer completion pings</p>
+                                            <p className="text-[10px] text-muted-foreground">Analyzer completion pings</p>
                                         </div>
                                     </div>
                                     <Switch
                                         checked={dashboardSettings.alertSystem}
                                         onCheckedChange={(val) => setDashboardSettings({ ...dashboardSettings, alertSystem: val })}
-                                        className="data-[state=checked]:bg-[#007AFF]"
+                                        className="data-[state=checked]:bg-primary"
                                     />
                                 </div>
                                 <div className="flex items-center justify-between transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.02] -mx-2 px-2 py-1 rounded-lg">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-                                            <Search className="h-4 w-4 text-zinc-400" />
+                                        <div className="p-2 bg-muted rounded-lg">
+                                            <Search className="h-4 w-4 text-muted-foreground" />
                                         </div>
                                         <div className="space-y-0.5">
                                             <Label className="text-sm font-bold text-zinc-900 dark:text-zinc-200">Omni Search</Label>
-                                            <p className="text-[10px] text-zinc-500">Live search across indices</p>
+                                            <p className="text-[10px] text-muted-foreground">Live search across indices</p>
                                         </div>
                                     </div>
                                     <Switch
                                         checked={dashboardSettings.omniSearch}
                                         onCheckedChange={(val) => setDashboardSettings({ ...dashboardSettings, omniSearch: val })}
-                                        className="data-[state=checked]:bg-[#007AFF]"
+                                        className="data-[state=checked]:bg-primary"
                                     />
                                 </div>
                             </div>
@@ -503,7 +503,7 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
                     <Card className="border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl shadow-lg p-6">
                         <div className="flex items-center gap-2 mb-4">
                             <Zap className="h-4 w-4 text-emerald-500 animate-pulse" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Service Integrity</span>
+                            <span className="text-xs font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Service Integrity</span>
                         </div>
                         <div className="h-1.5 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden mb-3">
                             <div className="h-full w-[94%] bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
@@ -513,27 +513,27 @@ export default function SettingsView({ onBack, onEnabledPlatformsChange, current
 
                     <div className="space-y-3">
                         <Button
-                            className="w-full bg-primary hover:bg-primary/90 text-white font-black text-[11px] uppercase tracking-widest h-12 transition-all rounded-2xl shadow-xl shadow-primary/20 border-t border-white/20"
+                            className="w-full bg-primary hover:bg-primary/90 text-white font-black text-[11px] uppercase tracking-widest h-12 transition-all rounded-md shadow-sm shadow-primary/20 border-t border-white/20"
                             onClick={handleSaveSettings}
                         >
                             Commit Preferences
                         </Button>
                         <Button
                             variant="ghost"
-                            className="w-full text-zinc-400 hover:text-zinc-900 dark:hover:text-white h-10 transition-all rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                            className="w-full text-muted-foreground hover:text-zinc-900 dark:hover:text-white h-10 transition-all rounded-md text-xs font-medium uppercase tracking-wider"
                             onClick={resetToDefault}
                         >
                             Reset to Default
                         </Button>
                     </div>
 
-                    <div className="p-6 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-3xl space-y-4">
+                    <div className="p-6 bg-card/50 border border-border rounded-md space-y-4">
                         <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-zinc-400" />
-                            <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">Env Signature</span>
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground">Env Signature</span>
                         </div>
-                        <div className="space-y-2 text-[10px] font-mono text-zinc-500">
-                            <div className="flex justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
+                        <div className="space-y-2 text-[10px] font-mono text-muted-foreground">
+                            <div className="flex justify-between border-b border-border pb-2">
                                 <span>Platform</span>
                                 <span className="text-zinc-900 dark:text-zinc-300 font-bold">Vercel/Web</span>
                             </div>
