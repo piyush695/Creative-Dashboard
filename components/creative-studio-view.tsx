@@ -153,6 +153,18 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   const [brandDNA, setBrandDNA] = useState<any>(null)
   const [brandDNALoading, setBrandDNALoading] = useState(false)
   const [knownCompetitors, setKnownCompetitors] = useState<{ name: string; pageId?: string }[]>([])
+  // ── Library sync state (Phase 1: Meta Ad Library -> MongoDB) ──
+  const [libraryStats, setLibraryStats] = useState<{
+    totalAds: number
+    activeAds: number
+    ownAds: number
+    competitorAds: number
+    patternsExtracted: number
+    lastSyncAt: string | null
+    brandBreakdown: { brand: string; total: number; active: number }[]
+  } | null>(null)
+  const [syncRunning, setSyncRunning] = useState(false)
+  const [syncSummary, setSyncSummary] = useState<{ totalNewAds: number; totalUpdatedAds: number; patternsExtracted: number; durationMs: number } | null>(null)
 
   const [creatives, setCreatives] = useState<any[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -186,6 +198,19 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   useEffect(() => {
     setCurrentPage(1)
   }, [activeMainTab])
+
+  // Load library stats whenever the Ad Library tab opens
+  useEffect(() => {
+    if (activeMainTab !== "ad-library") return
+    let cancelled = false
+    fetch("/api/adlibrary?action=stats")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data && !data.error) setLibraryStats(data)
+      })
+      .catch(() => { /* non-blocking */ })
+    return () => { cancelled = true }
+  }, [activeMainTab, syncSummary])
 
   const fetchCreatives = async () => {
     try {
@@ -753,6 +778,103 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
             {/* ── Ad Library Tab ── */}
             {activeMainTab === "ad-library" && (
               <div className="flex-1 space-y-3 animate-in slide-in-from-bottom-2 flex flex-col h-full min-h-0 overflow-y-auto custom-scrollbar">
+                {/* ── Library Sync Panel ─────────────────────────────── */}
+                <div className="shrink-0 rounded-md border border-border bg-card p-3 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Database className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs font-semibold">Meta Ad Library</span>
+                    </div>
+                    {libraryStats?.lastSyncAt && (
+                      <span className="text-[10px] text-muted-foreground">
+                        Synced {new Date(libraryStats.lastSyncAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
+                  </div>
+                  {libraryStats && libraryStats.totalAds > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded border border-border bg-muted/40 p-2">
+                        <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Stored</div>
+                        <div className="text-sm font-semibold tabular-nums">{libraryStats.totalAds}</div>
+                      </div>
+                      <div className="rounded border border-border bg-muted/40 p-2">
+                        <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Active</div>
+                        <div className="text-sm font-semibold tabular-nums text-emerald-500">{libraryStats.activeAds}</div>
+                      </div>
+                      <div className="rounded border border-border bg-muted/40 p-2">
+                        <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Patterns</div>
+                        <div className="text-sm font-semibold tabular-nums text-primary">{libraryStats.patternsExtracted}</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground">
+                      No ads synced yet. Run a sync to pull HolaPrime + 12 competitors from Meta.
+                    </p>
+                  )}
+                  <button
+                    disabled={syncRunning}
+                    onClick={async () => {
+                      setSyncRunning(true)
+                      setSyncSummary(null)
+                      try {
+                        const res = await fetch('/api/adlibrary?action=sync-all')
+                        const data = await res.json()
+                        if (data.error) {
+                          toast.error('Sync failed: ' + data.error)
+                        } else {
+                          const r = data.result
+                          setSyncSummary({
+                            totalNewAds: r.totalNewAds,
+                            totalUpdatedAds: r.totalUpdatedAds,
+                            patternsExtracted: r.patternsExtracted,
+                            durationMs: r.durationMs,
+                          })
+                          toast.success(`Sync complete · ${r.totalNewAds} new ads · ${r.patternsExtracted} patterns extracted`)
+                        }
+                      } catch (err: any) {
+                        toast.error('Sync error: ' + err.message)
+                      } finally {
+                        setSyncRunning(false)
+                      }
+                    }}
+                    className="w-full h-8 text-[11px] font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {syncRunning ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Syncing… this may take several minutes
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCcw className="h-3 w-3" />
+                        {libraryStats?.totalAds ? 'Sync from Meta Ad Library' : 'Run first sync'}
+                      </>
+                    )}
+                  </button>
+                  {syncSummary && (
+                    <div className="text-[10px] text-muted-foreground border-t border-border pt-2">
+                      Last run: +{syncSummary.totalNewAds} new · {syncSummary.totalUpdatedAds} updated · {syncSummary.patternsExtracted} patterns in {(syncSummary.durationMs / 1000).toFixed(1)}s
+                    </div>
+                  )}
+                  {libraryStats?.brandBreakdown && libraryStats.brandBreakdown.length > 0 && (
+                    <details className="text-[10px] text-muted-foreground">
+                      <summary className="cursor-pointer hover:text-foreground">
+                        Brand breakdown ({libraryStats.brandBreakdown.length} brands)
+                      </summary>
+                      <div className="mt-2 space-y-0.5 max-h-32 overflow-y-auto pr-1">
+                        {libraryStats.brandBreakdown.map((b) => (
+                          <div key={b.brand} className="flex items-center justify-between">
+                            <span className="truncate">{b.brand}</span>
+                            <span className="tabular-nums text-foreground">
+                              {b.active}/{b.total}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                </div>
+
                 {/* Source Toggle */}
                 <div className="flex items-center gap-2 shrink-0">
                   <button

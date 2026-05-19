@@ -23,6 +23,7 @@ import { generateForAllPersonas, getAvailablePersonas } from '@/lib/ai-studio/pe
 // import { getCached, setCache } from '@/lib/ai-studio/cache';
 import { recordFeedback, buildPreferenceContext, getPreferenceSummary } from '@/lib/ai-studio/preferences';
 import { getFullBrandContext } from '@/lib/ai-studio/adlibrary';
+import { getStoredAdContext } from '@/lib/ai-studio/ad-library-db';
 
 // Lazy singleton — ensures env vars are loaded before SDK reads them
 let _anthropicClient: Anthropic | null = null;
@@ -302,6 +303,22 @@ export async function POST(request: Request) {
       // ── PERFORMANCE INSIGHTS: What actually converts based on real ad data ──
       const performanceContext = await buildPerformanceInsights();
 
+      // ── STORED AD LIBRARY: Patterns from synced Meta Ad Library ──
+      // If the user has run /api/adlibrary?action=sync-all, this injects
+      // aggregated insights from top-performing real ads (own + competitor).
+      let storedAdContext = '';
+      let storedAdImageUrls: string[] = [];
+      try {
+        const stored = await getStoredAdContext({ limit: 12 });
+        storedAdContext = stored.context;
+        storedAdImageUrls = stored.sourceImageUrls;
+        if (storedAdContext) {
+          console.log(`[Studio] Injecting stored-ad patterns from ${stored.sourceAds.length} ads (${storedAdImageUrls.length} reference images)`);
+        }
+      } catch (e: any) {
+        console.warn('[Studio] Stored ad context fetch failed (non-blocking):', e.message);
+      }
+
       // ── COMPETITOR INTELLIGENCE: Analyze if competitor refs provided ──
       let competitorContext = '';
       if (body.competitorImages && Array.isArray(body.competitorImages)) {
@@ -337,12 +354,15 @@ export async function POST(request: Request) {
         console.log('[Studio] Top Ads mode: No full brand DNA (focus on score improvement)');
       }
 
-      // Inject all intelligence contexts into the prompt builder
+      // Inject all intelligence contexts into the prompt builder.
+      // Stored ad context goes at the end so it can override stale memory/
+      // performance signals with fresh real-world ad patterns.
       const enrichedBody = {
         ...body,
-        _memoryContext: memoryContext + performanceContext + brandContext,
+        _memoryContext: memoryContext + performanceContext + brandContext + storedAdContext,
         _competitorContext: competitorContext,
         _preferenceContext: preferenceContext,
+        _storedAdImageUrls: storedAdImageUrls,
       };
 
       const promptData = buildGenerationPrompt(patterns, enrichedBody);
@@ -383,9 +403,13 @@ export async function POST(request: Request) {
       }
 
       // --- Pass source creative thumbnails as reference for visual-grounded generation ---
-      const sourceCreativeUrls = patterns.sourceCreatives
-        .map((c: any) => c.thumbnailUrl)
-        .filter(Boolean) as string[];
+      // Combine user-selected source creative thumbnails with the top stored
+      // ads from the synced Meta Ad Library. The image generator uses these
+      // as visual references for grounded output.
+      const sourceCreativeUrls = [
+        ...patterns.sourceCreatives.map((c: any) => c.thumbnailUrl),
+        ...storedAdImageUrls,
+      ].filter(Boolean) as string[];
 
       // Extract the image prompt from Claude's brief — with robust fallback
       let rawImagePrompt = '';
@@ -818,6 +842,18 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
         console.log('[Studio] Custom mode: Base brand only (user did not request brand DNA)');
       }
 
+      // ── STORED AD LIBRARY: Inject patterns from synced Meta ads ──
+      let customStoredAdContext = '';
+      try {
+        const stored = await getStoredAdContext({ limit: 12 });
+        customStoredAdContext = stored.context;
+        if (customStoredAdContext) {
+          console.log(`[Studio] Custom mode: injecting stored-ad patterns (${stored.sourceAds.length} ads)`);
+        }
+      } catch (e: any) {
+        console.warn('[Studio] Stored ad context fetch failed for custom (non-blocking):', e.message);
+      }
+
       const noBrandDNARule = customWantsBrandDNA ? '' : `
 ## CRITICAL: NO BRAND SIGNATURE ELEMENTS
 The user did NOT request brand DNA. Your imageGenerationPrompt MUST NOT include:
@@ -833,7 +869,7 @@ Keep the background CLEAN — pure dark black with at most a subtle corner gradi
 
 BRAND: Hola Prime (#WeAreTraders). Product: funded trading challenges $2K\u2013$25K+. USPs: 1-step process, 5% profit target, no time limits, fast withdrawals (10 min), no activation fees, high profit splits.
 DISCLAIMER (use verbatim): "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON THEIR PERFORMANCE THROUGH SUCH DEMO HOLA PRIME ACCOUNTS."
-${customBrandContext}${noBrandDNARule}
+${customBrandContext}${customStoredAdContext}${noBrandDNARule}
 USER INSTRUCTION: "${generationPrompt}"
 
 ## DISCIPLINE RULE (MOST IMPORTANT)
