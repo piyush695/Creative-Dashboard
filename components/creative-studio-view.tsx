@@ -454,12 +454,14 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
         const variants = data.creative.variants || [];
         const maxScore = variants.length > 0 ? Math.max(...variants.map((v: any) => v?.score?.overall || 0)) : 10; // default 10 if variants don't have scores
         
-        // Auto-Regenerate if below 8
-        if (maxScore < 8 && (optionsOverride?.retryCount || 0) < 3) {
-          toast.info(`Quality score (${maxScore}/10) below threshold. Auto-regenerating to improve clarity, persuasion, and structure...`);
-          
+        // Auto-Regenerate if below 7.5 — capped at 1 retry (2 total attempts) to
+        // avoid the frustrating 4-attempt cycle. The hardened prompts make
+        // first-shot quality high enough that more retries are wasted compute.
+        if (maxScore < 7.5 && (optionsOverride?.retryCount || 0) < 1) {
+          toast.info(`Quality score (${maxScore}/10) below 7.5. Auto-regenerating once with sharper directives…`);
+
           if (generationInterval.current) clearInterval(generationInterval.current);
-          
+
           // Retry with improved prompt instructions
           handleGenerate({
             ...optionsOverride,
