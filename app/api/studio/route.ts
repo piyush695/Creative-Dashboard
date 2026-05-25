@@ -405,15 +405,22 @@ export async function POST(request: Request) {
       // aggregated insights from top-performing real ads (own + competitor).
       let storedAdContext = '';
       let storedAdImageUrls: string[] = [];
-      try {
-        const stored = await getStoredAdContext({ limit: 12 });
-        storedAdContext = stored.context;
-        storedAdImageUrls = stored.sourceImageUrls;
-        if (storedAdContext) {
-          console.log(`[Studio] Injecting stored-ad patterns from ${stored.sourceAds.length} ads (${storedAdImageUrls.length} reference images)`);
+      // A/B-testable: when body.useStoredAds === false, skip references entirely
+      // so we can measure whether the library is helping or constraining output.
+      const useStoredAds = body.useStoredAds !== false;
+      if (useStoredAds) {
+        try {
+          const stored = await getStoredAdContext({ limit: 12 });
+          storedAdContext = stored.context;
+          storedAdImageUrls = stored.sourceImageUrls;
+          if (storedAdContext) {
+            console.log(`[Studio] Injecting stored-ad patterns from ${stored.sourceAds.length} ads (${storedAdImageUrls.length} reference images)`);
+          }
+        } catch (e: any) {
+          console.warn('[Studio] Stored ad context fetch failed (non-blocking):', e.message);
         }
-      } catch (e: any) {
-        console.warn('[Studio] Stored ad context fetch failed (non-blocking):', e.message);
+      } else {
+        console.log('[Studio] useStoredAds=false — skipping reference library injection (A/B test)');
       }
 
       // ── COMPETITOR INTELLIGENCE: Analyze if competitor refs provided ──
@@ -953,15 +960,22 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
       }
 
       // ── STORED AD LIBRARY: Inject patterns from synced Meta ads ──
+      // A/B-testable via body.useStoredAds. When false, skip the reference
+      // library to test whether it helps or constrains the output.
       let customStoredAdContext = '';
-      try {
-        const stored = await getStoredAdContext({ limit: 12 });
-        customStoredAdContext = stored.context;
-        if (customStoredAdContext) {
-          console.log(`[Studio] Custom mode: injecting stored-ad patterns (${stored.sourceAds.length} ads)`);
+      const customUseStoredAds = body.useStoredAds !== false;
+      if (customUseStoredAds) {
+        try {
+          const stored = await getStoredAdContext({ limit: 12 });
+          customStoredAdContext = stored.context;
+          if (customStoredAdContext) {
+            console.log(`[Studio] Custom mode: injecting stored-ad patterns (${stored.sourceAds.length} ads)`);
+          }
+        } catch (e: any) {
+          console.warn('[Studio] Stored ad context fetch failed for custom (non-blocking):', e.message);
         }
-      } catch (e: any) {
-        console.warn('[Studio] Stored ad context fetch failed for custom (non-blocking):', e.message);
+      } else {
+        console.log('[Studio] Custom mode: useStoredAds=false — skipping reference library (A/B test)');
       }
 
       const noBrandDNARule = customWantsBrandDNA ? '' : `

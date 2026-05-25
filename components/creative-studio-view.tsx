@@ -153,6 +153,9 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   const [brandDNA, setBrandDNA] = useState<any>(null)
   const [brandDNALoading, setBrandDNALoading] = useState(false)
   const [knownCompetitors, setKnownCompetitors] = useState<{ name: string; pageId?: string }[]>([])
+  // ── A/B test toggle: use stored ad library as reference for generation ──
+  // Default ON. Flip OFF to test whether the library is helping or constraining.
+  const [useStoredAds, setUseStoredAds] = useState<boolean>(true)
   // ── Library sync state (Phase 1: Meta Ad Library -> MongoDB) ──
   const [libraryStats, setLibraryStats] = useState<{
     totalAds: number
@@ -424,16 +427,17 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
     try {
       let body: any = {}
       if (targetTab === "custom") {
-        body = { prompt: currentTabState.prompt, type: "custom", reference: referenceOverride }
+        body = { prompt: currentTabState.prompt, type: "custom", reference: referenceOverride, useStoredAds }
       } else if (targetTab === "studio") {
         body = { prompt: currentTabState.prompt, reference: referenceOverride || base64File || previewUrl, type: studioSubTab }
       } else {
-        body = { 
-          adIds: optionsOverride?.adIds || selectedIds, 
-          selectedAspects, 
+        body = {
+          adIds: optionsOverride?.adIds || selectedIds,
+          selectedAspects,
           type: "pattern-based",
           prompt: currentTabState.prompt,
           reference: referenceOverride,
+          useStoredAds,
           ...(optionsOverride || currentTabState.generationOptions || {})
         }
       }
@@ -718,6 +722,27 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                   placeholder="What should this creative communicate? Audience, offer, tone…"
                   className="w-full flex-1 min-h-[120px] bg-muted/20 border border-border rounded-xl p-4 text-sm outline-none focus:ring-1 focus:ring-primary/30 transition-all leading-relaxed placeholder:opacity-30 custom-scrollbar resize-none text-foreground/80"
                 />
+                {/* A/B toggle: stored ad library as reference */}
+                <div className="shrink-0 rounded-md border border-border bg-card/60 p-2.5">
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useStoredAds}
+                      onChange={(e) => setUseStoredAds(e.target.checked)}
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] font-medium text-foreground leading-tight">
+                        Use stored ads as reference
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                        {useStoredAds
+                          ? "ON — AI consults your uploaded ad library for style + patterns."
+                          : "OFF — AI generates freely without library constraints (A/B test mode)."}
+                      </div>
+                    </div>
+                  </label>
+                </div>
               </div>
             )}
 
