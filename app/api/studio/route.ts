@@ -990,7 +990,13 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             { status: 400 },
           );
         }
-        console.log(`[Studio] Direct mode — pure passthrough to gpt-image-1 (${rawPrompt.length} chars, verbatim)`);
+        console.log('═══════════════════════════════════════════════════════════════');
+        console.log('[Studio Direct Mode] VERBATIM PROMPT SENT TO openai.images.generate():');
+        console.log('───────────────────────────────────────────────────────────────');
+        console.log(rawPrompt);
+        console.log('───────────────────────────────────────────────────────────────');
+        console.log(`[Studio Direct Mode] Length: ${rawPrompt.length} chars. NOTHING is appended, prepended, or modified before this hits OpenAI.`);
+        console.log('═══════════════════════════════════════════════════════════════');
 
         try {
           // Call the OpenAI client directly. No wrapper, no overlay, no sanitizer.
