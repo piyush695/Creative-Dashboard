@@ -490,13 +490,26 @@ PREMIUM LAYOUT RULES (non-negotiable):
     throw new Error('Image generation failed after trying all available models (OpenAI, Ideogram, Gemini, Imagen).');
   }
 
+  // ── Logo overlay control ──
+  // When the caller passes options.skipLogo=true, we skip the logo overlay here.
+  // This is the case when the studio route is in TEXT_OVERLAY_ENABLED mode — the
+  // text-overlay step that runs after this draws its own logo, so applying it
+  // twice would cause overlap/duplication.
+  const skipLogo = options?.skipLogo === true;
+
   // ── LOGO OVERLAY: Composite the authentic Hola Prime logo onto every generated image ──
   // This guarantees every creative has the brand logo regardless of generation path.
   // Non-blocking: if overlay fails, the original image is returned.
-  try {
-    dataUri = await applyLogoOverlay(dataUri);
-  } catch (logoErr: any) {
-    console.warn('[ImageGen] Logo overlay failed (non-blocking):', logoErr.message);
+  // Skipped when caller is using the text-overlay compositor — text-overlay draws its
+  // own logo, so running both would cause overlap.
+  if (!skipLogo) {
+    try {
+      dataUri = await applyLogoOverlay(dataUri);
+    } catch (logoErr: any) {
+      console.warn('[ImageGen] Logo overlay failed (non-blocking):', logoErr.message);
+    }
+  } else {
+    console.log('[ImageGen] Skipping logo overlay (caller will composite logo + text together)');
   }
 
   return {

@@ -15,8 +15,9 @@ import { linkPerformance, buildPerformanceInsights } from '@/lib/ai-studio/perfo
 import { runAgenticPipeline } from '@/lib/ai-studio/agent';
 import { pickDiverseParadigms, type ConceptParadigm } from '@/lib/ai-studio/brand';
 import { runCreativeDirector } from '@/lib/ai-studio/director';
-// text-overlay disabled — Gemini renders text directly in the image for better quality
-// import { applyTextOverlay, extractOverlayConfig } from '@/lib/ai-studio/text-overlay';
+// text-overlay RE-ENABLED — image model generates visual base only, all text composited
+// in code with real fonts. Eliminates Gemini/OpenAI text rendering errors entirely.
+import { applyTextOverlay, extractOverlayConfig } from '@/lib/ai-studio/text-overlay';
 import { generateCrossPlatform, getAvailablePlatforms } from '@/lib/ai-studio/crossplatform';
 import { generateForAllPersonas, getAvailablePersonas } from '@/lib/ai-studio/personas';
 // Cache module available but not used in main generation flows (generation must always be fresh)
@@ -55,6 +56,23 @@ function buildTextFidelityBlock(texts: Array<{ label: string; value: string }>):
 // it toward "agency-grade" by anchoring on specific real-world references.
 
 const PREMIUM_CRAFT_DIRECTIVE = `\n=== PREMIUM CRAFT BAR ===\nThis ad must look like work from a top-tier agency (Wieden+Kennedy, Apple in-house, Linear / Stripe brand team). Not "AI-generated 2024". Concretely:\n\n- Typography: Sharp Inter/Helvetica-grade sans-serif. Hero number at 30-40% canvas height. Body text at 14-18pt equivalent. NEVER cramped, NEVER overlapping.\n- Composition: Strong center axis OR deliberate asymmetry — never "just placed it somewhere". 15-20% breathing room on all sides.\n- Single dominant focal point. Everything else SUPPORTS, not competes.\n- Materials: When using 3D — chrome should look like real chrome (high contrast, accurate reflections). When using glow — should be subtle volumetric light, not flat gradient.\n- Color: Restrained 3-4 color palette. Black background + ONE accent color (cyan, neon green, blue, or amber). Avoid rainbow gradients.\n- Detail: Subtle texture/grain on dark backgrounds for premium depth. Crisp edges on text. No fuzzy mid-tones.\n- What this is NOT: a stock-photo collage, a generic corporate template, a "modern" SaaS landing page screenshot, a Canva-tier composition.\n\nReference quality: A real ad you'd see in Times Square, in Bloomberg's print edition, or in a top fintech brand campaign. If a Times Square pedestrian would barely glance at the rendered output, the brief has FAILED.\n=== END PREMIUM CRAFT BAR ===\n\n`;
+
+// ─── TEXT OVERLAY MODE ───
+// When true: image model generates VISUAL ONLY (no text). All text is composited
+// in code via lib/ai-studio/text-overlay.ts using SVG + sharp + real fonts. This
+// completely eliminates the text-rendering errors that image models produce
+// ("acont size", "sstep", "WITHRAWN", garbled multi-line disclaimers).
+//
+// The image model's job becomes pure visual generation: backgrounds, hero objects,
+// lighting, atmosphere, composition. Whatever it's actually good at.
+//
+// Toggle via env var TEXT_OVERLAY=off to revert to inline-text generation.
+const TEXT_OVERLAY_ENABLED = process.env.TEXT_OVERLAY !== 'off';
+
+// Directive replaces the text manifest when overlay mode is on. Tells the image
+// model emphatically to leave room for text we'll composite later — no actual
+// text rendering in the image itself.
+const VISUAL_ONLY_DIRECTIVE = `\n=== VISUAL-ONLY MODE ===\nThis image will have ALL TEXT composited on top in post-processing using real fonts. Your job is to generate the VISUAL BASE only.\n\nABSOLUTE RULES:\n1. DO NOT RENDER ANY READABLE TEXT in the image. No headlines, no prices, no body copy, no CTA buttons with text, no #WeAreTraders, no disclaimer.\n2. Generate the visual atmosphere: lighting, materials, mood, hero objects (phones, terminals, receipts, charts, abstract shapes, etc.), background gradients, particle effects.\n3. LEAVE NEGATIVE SPACE for text to be added later. Specifically:\n   - Top 10% of canvas: clear (logo + tagline will be composited here)\n   - Middle ~45-65% of canvas: hero visual area — this is where your image content lives\n   - Bottom 30%: clear (headline, body, CTA, disclaimer composited here)\n4. If the brief calls for a specific format (phone notification, receipt photograph, terminal screen), render the OBJECT itself but with placeholder/illegible text inside it — we'll overlay readable text later if needed.\n5. If your concept inherently has text (like a "receipt aesthetic"), use blurred / illegible / placeholder Lorem-ipsum style filler inside the object. Do NOT try to render the actual offer text — it WILL be garbled and we WILL overlay correct text later.\n\nThink of this as generating a "magazine ad background plate" — the visual, lit, beautiful base. Text comes in post.\n=== END VISUAL-ONLY MODE ===\n\n`;
 
 
 // Lazy singleton — ensures env vars are loaded before SDK reads them
@@ -789,9 +807,16 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             // Use Director's concept-specific prompt if available, otherwise fall back to paradigm prefix + base
             const conceptPrompt = directorConcepts[idx]?.imagePrompt;
             const useDirectorPrompt = conceptPrompt && conceptPrompt.length > 200;
-            const variantPrompt = useDirectorPrompt
-              ? brandVisualDirective + textManifest + patternTextFidelity + userRequirementsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
-              : brandVisualDirective + textManifest + patternTextFidelity + userRequirementsBlock + variant.promptPrefix + basePrompt + PREMIUM_CRAFT_DIRECTIVE;
+            // When text-overlay mode is on, we ask the image model for VISUAL ONLY.
+            // The text manifest + per-string fidelity block become irrelevant — text is
+            // composited in code with real fonts after generation.
+            const variantPrompt = TEXT_OVERLAY_ENABLED
+              ? (useDirectorPrompt
+                  ? brandVisualDirective + VISUAL_ONLY_DIRECTIVE + userRequirementsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
+                  : brandVisualDirective + VISUAL_ONLY_DIRECTIVE + userRequirementsBlock + variant.promptPrefix + basePrompt + PREMIUM_CRAFT_DIRECTIVE)
+              : (useDirectorPrompt
+                  ? brandVisualDirective + textManifest + patternTextFidelity + userRequirementsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
+                  : brandVisualDirective + textManifest + patternTextFidelity + userRequirementsBlock + variant.promptPrefix + basePrompt + PREMIUM_CRAFT_DIRECTIVE);
             // Premium quality image prompt with anti-cheap-design guardrails
             const premiumNegativePrompt = [
               baseNegative,
@@ -817,9 +842,21 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
               sourceCreativeUrls,
               referenceUrl: refUrl,
               technicalSpecs: brief.imageGenerationPrompt?.technicalSpecs,
-            }, { tier: 'pro' });
+            }, { tier: 'pro', skipLogo: TEXT_OVERLAY_ENABLED });
 
-            const finalImageUrl = result?.url || result?.dataUri || null;
+            let finalImageUrl = result?.url || result?.dataUri || null;
+
+            // ── TEXT OVERLAY: composite all text with real fonts (eliminates typos) ──
+            if (TEXT_OVERLAY_ENABLED && finalImageUrl) {
+              try {
+                const overlayConfig = extractOverlayConfig(brief, variant.id);
+                finalImageUrl = await applyTextOverlay(finalImageUrl, overlayConfig);
+                console.log(`[Studio] ✓ Variant "${variant.id}" — text overlay applied (zero-typo composition)`);
+              } catch (overlayErr: any) {
+                console.warn(`[Studio] Text overlay failed for variant "${variant.id}" (non-blocking):`, overlayErr.message);
+              }
+            }
+
             console.log(`[Studio] ✓ Variant "${variant.id}" generated (${useDirectorPrompt ? 'Director prompt' : 'paradigm prefix'})`);
 
             return {
@@ -1234,18 +1271,37 @@ DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULAT
           try {
             const conceptPrompt = customDirectorConcepts[idx]?.imagePrompt;
             const useDirectorPrompt = conceptPrompt && conceptPrompt.length > 200;
-            const variantPrompt = useDirectorPrompt
-              ? customBrandPrefix + customTextManifest + customTextFidelity + customUserReqsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
-              : customBrandPrefix + customTextManifest + customTextFidelity + customUserReqsBlock + variant.prefix + baseImagePrompt + PREMIUM_CRAFT_DIRECTIVE;
+            // When text-overlay mode is on, swap text manifest + fidelity blocks
+            // for the visual-only directive — image model generates background plate,
+            // text gets composited in code with real fonts post-generation.
+            const variantPrompt = TEXT_OVERLAY_ENABLED
+              ? (useDirectorPrompt
+                  ? customBrandPrefix + VISUAL_ONLY_DIRECTIVE + customUserReqsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
+                  : customBrandPrefix + VISUAL_ONLY_DIRECTIVE + customUserReqsBlock + variant.prefix + baseImagePrompt + PREMIUM_CRAFT_DIRECTIVE)
+              : (useDirectorPrompt
+                  ? customBrandPrefix + customTextManifest + customTextFidelity + customUserReqsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
+                  : customBrandPrefix + customTextManifest + customTextFidelity + customUserReqsBlock + variant.prefix + baseImagePrompt + PREMIUM_CRAFT_DIRECTIVE);
             const result = await generateImage({
               detailed: variantPrompt,
               referenceUrl: reference || undefined,
               negative: baseNeg + (customWantsBrandDNA ? '' : ', translucent circles, iridescent spheres, glowing orbs'),
               technicalSpecs: brief?.imageGenerationPrompt?.technicalSpecs,
-            }, { tier: 'pro' });
+            }, { tier: 'pro', skipLogo: TEXT_OVERLAY_ENABLED });
 
 
-            const finalImageUrl = result?.url || result?.dataUri || null;
+            let finalImageUrl = result?.url || result?.dataUri || null;
+
+            // ── TEXT OVERLAY: composite all text with real fonts (eliminates typos) ──
+            if (TEXT_OVERLAY_ENABLED && finalImageUrl) {
+              try {
+                const overlayConfig = extractOverlayConfig(brief, variant.id);
+                finalImageUrl = await applyTextOverlay(finalImageUrl, overlayConfig);
+                console.log(`[Studio] ✓ Custom variant "${variant.id}" — text overlay applied (zero-typo composition)`);
+              } catch (overlayErr: any) {
+                console.warn(`[Studio] Text overlay failed for custom variant "${variant.id}" (non-blocking):`, overlayErr.message);
+              }
+            }
+
             console.log(`[Studio] ✓ Custom variant "${variant.id}" generated (${useDirectorPrompt ? 'Director' : 'paradigm'})`);
 
             return {
@@ -1253,7 +1309,7 @@ DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULAT
               label: customDirectorConcepts[idx]?.paradigm || variant.label,
               description: customDirectorConcepts[idx]?.visualApproach || variant.description,
               paradigm: customDirectorConcepts[idx]?.paradigm || variant.label,
-              imageUrl: result?.url || result?.dataUri || null,
+              imageUrl: finalImageUrl,
             };
           } catch (e: any) {
             console.warn(`[Studio] ✗ Custom variant "${variant.id}" failed:`, e.message);
