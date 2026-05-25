@@ -1032,6 +1032,42 @@ What is actually hitting in trader/fintech ads RIGHT NOW (mid-2026):
 
 PICK ONE trend hook. Execute it well. Do not try to use all of them.
 
+# CONCEPT ORIGINALITY MANDATE (READ TWICE — most generations fail here)
+
+Picking a trend hook is step 1. COMMITTING TO IT 100% is step 2 — and most briefs fail step 2 by softening the hook into the safest possible interpretation. Don't.
+
+WHEN YOU PICK A TREND, GO ALL IN:
+
+- RECEIPT AESTHETIC = a real paper receipt, photographed. White thermal-printer paper with the offer printed in dot-matrix or monospace, lying on a dark surface under directional studio lighting. NOT a phone screenshot of a banking app showing "receipt-like content". A literal receipt. The whole ad IS the receipt.
+
+- FORMAT INNOVATION: phone notification UI = the ENTIRE creative is one notification card, no other elements except disclaimer. NOT a phone mockup containing a notification — the notification IS the ad, full-bleed, no phone frame.
+
+- FORMAT INNOVATION: Bloomberg terminal aesthetic = an actual photographed CRT/LCD terminal screen at slight off-axis perspective. Visible scanlines or pixel grain. NOT a generic dark UI with monospace fonts on flat black.
+
+- FORMAT INNOVATION: leaked Slack/Discord screenshot = a literal screenshot of a chat message with the offer, complete with realistic UI chrome (avatar, timestamp, channel name). NOT a "chat-inspired design".
+
+- COUNTER-AESTHETIC = if the category uses chrome+glow, go BRUTALIST (raw Helvetica, harsh contrast, almost ugly). If the category uses minimalism, go MAXIMALIST (early-2000s web aesthetic, jpeg compression artifacts, deliberate visual chaos). Real opposition, not "clean version of the same thing".
+
+The rule: imagine the trend hook as a physical object or specific medium. Then PHOTOGRAPH or RENDER that specific thing. Don't translate it into a generic "design with text on dark bg" because that's where it always collapses.
+
+# BANNED OVERUSED PATTERNS (instant failure)
+
+Every prop firm has shipped these. Yours can't. If your concept resembles ANY of these, regenerate:
+
+- "Phone mockup showing a trading app/notification with hero number floating beside it"
+- "Centered text-on-dark-gradient with big $XX as headline"
+- "Hero price in chrome with green/cyan glow on plain black background"
+- "Bloomberg-style stats arranged in a 2x2 or 3-column grid"
+- "Comparison table: us vs them with checkmarks/X marks side by side"
+- "Diagonal line going up-right behind text"
+- "Generic 'modern fintech' card on dark gradient"
+
+These are 90% of prop firm ads. They are COMPETENT and FORGETTABLE. The bar is UNMISTAKABLE.
+
+# THE COMMIT TEST
+
+Before finalizing, ask: "Could this concept appear in 5+ competitor prop firm ads with minimal changes?" If YES → the brief has failed. Regenerate with a weirder, more physical, more specific interpretation. The goal isn't "good for an AI ad" — it's "couldn't have been made by anyone but us".
+
 # BRAND
 
 Brand: Hola Prime (#WeAreTraders). Funded challenges \$2K to \$100K. USPs: 1-step process, 5% profit target, no time limits, fast withdrawals, no activation fees, high profit splits.
