@@ -156,6 +156,9 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   // ── A/B test toggle: use stored ad library as reference for generation ──
   // Default ON. Flip OFF to test whether the library is helping or constraining.
   const [useStoredAds, setUseStoredAds] = useState<boolean>(true)
+  // ── Direct mode: bypass brief generation + text overlay, send prompt straight to image model ──
+  // Default ON for the Custom tab — gives the user full control over what the image model sees.
+  const [directMode, setDirectMode] = useState<boolean>(true)
   // ── Library sync state (Phase 1: Meta Ad Library -> MongoDB) ──
   const [libraryStats, setLibraryStats] = useState<{
     totalAds: number
@@ -427,7 +430,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
     try {
       let body: any = {}
       if (targetTab === "custom") {
-        body = { prompt: currentTabState.prompt, type: "custom", reference: referenceOverride, useStoredAds }
+        body = { prompt: currentTabState.prompt, type: "custom", reference: referenceOverride, useStoredAds, directMode }
       } else if (targetTab === "studio") {
         body = { prompt: currentTabState.prompt, reference: referenceOverride || base64File || previewUrl, type: studioSubTab }
       } else {
@@ -722,27 +725,50 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                   placeholder="What should this creative communicate? Audience, offer, tone…"
                   className="w-full flex-1 min-h-[120px] bg-muted/20 border border-border rounded-xl p-4 text-sm outline-none focus:ring-1 focus:ring-primary/30 transition-all leading-relaxed placeholder:opacity-30 custom-scrollbar resize-none text-foreground/80"
                 />
-                {/* A/B toggle: stored ad library as reference */}
-                <div className="shrink-0 rounded-md border border-border bg-card/60 p-2.5">
+                {/* Direct mode: bypass pipeline, send prompt straight to image model */}
+                <div className="shrink-0 rounded-md border border-primary/40 bg-primary/5 p-2.5">
                   <label className="flex items-start gap-2.5 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={useStoredAds}
-                      onChange={(e) => setUseStoredAds(e.target.checked)}
+                      checked={directMode}
+                      onChange={(e) => setDirectMode(e.target.checked)}
                       className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="text-[11px] font-medium text-foreground leading-tight">
-                        Use stored ads as reference
+                        Direct mode (recommended)
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
-                        {useStoredAds
-                          ? "ON — AI consults your uploaded ad library for style + patterns."
-                          : "OFF — AI generates freely without library constraints (A/B test mode)."}
+                        {directMode
+                          ? "ON — your prompt goes straight to the image model. No brief generation, no text overlay. One generation, full control."
+                          : "OFF — full pipeline: Claude brief → 3 variants → text overlay. More processing, more chances for noise."}
                       </div>
                     </div>
                   </label>
                 </div>
+                {/* A/B toggle: stored ad library as reference (only relevant when NOT in direct mode) */}
+                {!directMode && (
+                  <div className="shrink-0 rounded-md border border-border bg-card/60 p-2.5">
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={useStoredAds}
+                        onChange={(e) => setUseStoredAds(e.target.checked)}
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] font-medium text-foreground leading-tight">
+                          Use stored ads as reference
+                        </div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                          {useStoredAds
+                            ? "ON — AI consults your uploaded ad library for style + patterns."
+                            : "OFF — AI generates freely without library constraints."}
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                )}
               </div>
             )}
 

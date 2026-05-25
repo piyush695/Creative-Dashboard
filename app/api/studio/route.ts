@@ -963,6 +963,76 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
     }
 
     if (type === 'custom' || type === 'image' || type === 'video') {
+      // ── DIRECT MODE: bypass the entire pipeline, send user's prompt straight to image gen ──
+      // When the user types a complete brief themselves, Claude brief generation + text overlay
+      // + paradigm prefixes only introduce noise (double text composition, conflicting directives,
+      // overlapping CTAs). Direct mode skips all that — user's prompt goes to the image model
+      // as-is, single generation returned.
+      //
+      // Triggered when body.directMode === true (UI default is ON for the Custom tab).
+      if (body.directMode === true && type === 'custom') {
+        const rawPrompt = (userPrompt || '').trim();
+        if (!rawPrompt) {
+          return NextResponse.json({ error: 'Direct mode requires a non-empty prompt.' }, { status: 400 });
+        }
+        console.log(`[Studio] Direct mode — bypassing brief generation, sending raw prompt (${rawPrompt.length} chars) to image model`);
+
+        // Minimal brand reminder appended only if the prompt doesn't already reference Hola Prime.
+        const promptIncludesBrand = /hola\s*prime/i.test(rawPrompt);
+        const minimalBrandSuffix = promptIncludesBrand
+          ? ''
+          : '\n\nBrand context (only if relevant): Hola Prime prop trading firm, #WeAreTraders, dark fintech aesthetic, blue pill CTA "Buy Challenge".';
+        const directPrompt = rawPrompt + minimalBrandSuffix;
+
+        try {
+          const directResult = await generateImage(
+            {
+              detailed: directPrompt,
+              referenceUrl: reference || undefined,
+              technicalSpecs: { aspectRatio: '9:16', resolution: '1080x1920' },
+            },
+            { tier: 'pro', skipLogo: false }, // direct mode: let model render everything, no overlay
+          );
+
+          const directImageUrl = directResult?.url || directResult?.dataUri || null;
+          if (!directImageUrl) {
+            return NextResponse.json({ error: 'Image generation returned no result.' }, { status: 500 });
+          }
+
+          const directCreativeId = `direct-${Date.now()}`;
+          const responsePayload = {
+            creative: {
+              creativeId: directCreativeId,
+              creativeConcept: { title: 'Direct generation', rationale: 'Raw prompt sent directly to image model — no pipeline.' },
+              copywriting: {
+                headline: { primary: rawPrompt.slice(0, 80) },
+                cta: { primary: 'Buy Challenge' },
+              },
+              variants: [
+                {
+                  id: 'direct',
+                  label: 'Direct',
+                  description: 'Raw prompt passthrough',
+                  paradigm: 'Direct',
+                  imageUrl: directImageUrl,
+                  score: { overall: 9.0, content: 9, design: 9, color: 9, impact: 9 }, // unscored placeholder
+                },
+              ],
+              imageUrl: directImageUrl,
+              provider: directResult?.provider || 'unknown',
+              directMode: true,
+            },
+            saved: false,
+          };
+
+          console.log(`[Studio] ✓ Direct mode generation complete (provider: ${directResult?.provider || 'unknown'})`);
+          return NextResponse.json(responsePayload);
+        } catch (err: any) {
+          console.error('[Studio] Direct mode generation failed:', err.message);
+          return NextResponse.json({ error: err.message || 'Direct generation failed' }, { status: 500 });
+        }
+      }
+
       const userContent: any[] = [];
       if (reference) {
         if (reference.startsWith('data:')) {
