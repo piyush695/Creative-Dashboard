@@ -14,8 +14,10 @@
  */
 
 import { applyLogoOverlay } from './logo-overlay';
+import { generateImageIdeogram, normalizeAspectRatio } from './imagegen-ideogram';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+const IDEOGRAM_API_KEY = process.env.IDEOGRAM_API_KEY || '';
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 /**
@@ -287,7 +289,12 @@ TECHNICAL EXECUTION RULES:
  *   - tier: 'pro' | 'standard'
  */
 export async function generateImage(imageSpec: any, options: any = {}) {
-  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured. Add it to your .env file.');
+  // At least ONE provider must be configured. Ideogram is primary, Gemini is fallback.
+  if (!GEMINI_API_KEY && !IDEOGRAM_API_KEY) {
+    throw new Error(
+      'No image generation provider configured. Add either IDEOGRAM_API_KEY or GEMINI_API_KEY to your .env file.',
+    );
+  }
 
   // ── Build the prompt text ──
   let prompt: string;
@@ -393,29 +400,65 @@ PREMIUM LAYOUT RULES (non-negotiable):
   }
 
   // ── Generation strategy ──
-  // If we have a reference image → use Gemini multimodal (can take image input)
-  // Otherwise → try Imagen (better quality for text-to-image)
+  // PRIMARY: Ideogram V_3 (best in-image text rendering, ad-creative aesthetic).
+  // FALLBACK: Gemini/Imagen if Ideogram is not configured, fails, or has no credits.
   let dataUri: string | null = null;
+  let providerUsed: 'ideogram' | 'gemini' = 'gemini';
 
-  if (referenceImageData) {
-    // Path 1: Reference-grounded generation using Gemini multimodal
-    dataUri = await tryGeminiGeneration(prompt, referenceImageData);
-    // Fallback: try without reference but with Imagen
-    if (!dataUri) {
-      console.log('[ImageGen] Gemini multimodal failed, falling back to Imagen (no reference)...');
-      dataUri = await tryImagenGeneration(prompt);
+  // ── Try Ideogram first if configured ──
+  if (IDEOGRAM_API_KEY) {
+    const aspectHint =
+      (typeof imageSpec === 'object' && imageSpec?.technicalSpecs?.aspectRatio) ||
+      undefined;
+    const negativeHint =
+      (typeof imageSpec === 'object' && imageSpec?.negative) || undefined;
+
+    try {
+      const ideogramResult = await generateImageIdeogram({
+        prompt,
+        aspect_ratio: normalizeAspectRatio(aspectHint),
+        style_type: 'DESIGN', // ad-creative aesthetic
+        magic_prompt_option: 'OFF', // we control the prompt fully
+        negative_prompt: negativeHint,
+      });
+      if (ideogramResult) {
+        dataUri = ideogramResult.dataUri;
+        providerUsed = 'ideogram';
+        console.log(`[ImageGen] ✓ Primary path succeeded: Ideogram V_3 (seed: ${ideogramResult.seed})`);
+      } else {
+        console.log('[ImageGen] Ideogram returned null — falling back to Gemini pipeline');
+      }
+    } catch (err: any) {
+      console.warn('[ImageGen] Ideogram threw, falling back to Gemini:', err.message);
     }
-  } else {
-    // Path 2: Pure text-to-image — try Imagen first, then Gemini
-    dataUri = await tryImagenGeneration(prompt);
-    if (!dataUri) {
-      console.log('[ImageGen] Imagen failed, falling back to Gemini...');
-      dataUri = await tryGeminiGeneration(prompt, null);
+  }
+
+  // ── Fall back to Gemini/Imagen if Ideogram didn't deliver ──
+  if (!dataUri) {
+    if (!GEMINI_API_KEY) {
+      throw new Error(
+        'Ideogram failed and no GEMINI_API_KEY configured as fallback. Either set IDEOGRAM_API_KEY (with credits) or GEMINI_API_KEY in .env.',
+      );
+    }
+    if (referenceImageData) {
+      // Reference-grounded generation using Gemini multimodal
+      dataUri = await tryGeminiGeneration(prompt, referenceImageData);
+      if (!dataUri) {
+        console.log('[ImageGen] Gemini multimodal failed, falling back to Imagen (no reference)...');
+        dataUri = await tryImagenGeneration(prompt);
+      }
+    } else {
+      // Pure text-to-image — try Imagen first, then Gemini
+      dataUri = await tryImagenGeneration(prompt);
+      if (!dataUri) {
+        console.log('[ImageGen] Imagen failed, falling back to Gemini...');
+        dataUri = await tryGeminiGeneration(prompt, null);
+      }
     }
   }
 
   if (!dataUri) {
-    throw new Error('Image generation failed after trying all available models.');
+    throw new Error('Image generation failed after trying all available models (Ideogram, Gemini, Imagen).');
   }
 
   // ── LOGO OVERLAY: Composite the authentic Hola Prime logo onto every generated image ──
@@ -428,7 +471,7 @@ PREMIUM LAYOUT RULES (non-negotiable):
   }
 
   return {
-    provider: 'gemini',
+    provider: providerUsed,
     url: dataUri,
     dataUri,
   };
