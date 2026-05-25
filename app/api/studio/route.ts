@@ -1105,6 +1105,30 @@ These are 90% of prop firm ads. They are COMPETENT and FORGETTABLE. The bar is U
 
 Before finalizing, ask: "Could this concept appear in 5+ competitor prop firm ads with minimal changes?" If YES → the brief has failed. Regenerate with a weirder, more physical, more specific interpretation. The goal isn't "good for an AI ad" — it's "couldn't have been made by anyone but us".
 
+# THE BAR — A CONCRETE EXAMPLE OF SUCCESS
+
+A previously-shipped Hola Prime ad that nailed the brief looked like this (study its DNA):
+
+> A photographed paper receipt or printed terminal slip, dark surface, soft drop shadow under it suggesting it's physically on a table. The receipt itself is near-black with cream/light gray edge. A small blue folder-tab sticky note peeks from behind the top-left edge — one accent color, used once. Inside the receipt:
+>  - Hero "$99 Challenge entry" — heavy Helvetica/Inter Bold, 3 lines stacked, MASSIVE, dominates upper third
+>  - Secondary "Unlock: $25k trading capital" — clean medium weight
+>  - Dotted divider line
+>  - Right-aligned itemized list: "No consistency rule | 5% profit target | 90% profit split" each on its own line, like receipt line items
+>  - Dotted divider
+>  - "Payouts ÷10 min" with division symbol used cleverly
+>  - Footer: "BUILT BY TRADERS, FOR TRADERS" in tiny small caps
+>  - "Hola Prime®" wordmark at the bottom, small, restrained
+> Zero decorative noise. Zero gradients. Zero glow. Brutalist Helvetica + paper texture + ONE accent color do all the work. Looks like it could be printed on real thermal paper.
+
+DNA traits to internalize from this example:
+- **Single physical object dominates the entire canvas** (the receipt). Not "a design containing receipt-like elements".
+- **Heavy sans-serif typography carries the weight.** No script fonts, no fancy effects, no chrome. Just bold + restrained.
+- **Right-aligned numbers, dotted dividers, "BUILT BY..." footer.** These specific receipt-authentic details signal commitment to the format.
+- **Restraint > ornament.** ONE accent color (the blue tab). Nothing decorative.
+- **Photographic depth.** Soft shadow under the object, slight curl at the top — it looks photographed, not designed in Figma.
+
+When generating a brief for an offer/promo angle, this is the CRAFT BAR. Match it OR exceed it with a different physical-object concept (terminal screen, Bloomberg printout, leaked Slack screenshot, candlestick chart photographed off a CRT, etc.) — but never settle for "centered text on dark gradient".
+
 # BRAND
 
 Brand: Hola Prime (#WeAreTraders). Funded challenges \$2K to \$100K. USPs: 1-step process, 5% profit target, no time limits, fast withdrawals, no activation fees, high profit splits.
