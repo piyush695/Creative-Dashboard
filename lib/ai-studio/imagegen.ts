@@ -15,9 +15,11 @@
 
 import { applyLogoOverlay } from './logo-overlay';
 import { generateImageIdeogram, normalizeAspectRatio } from './imagegen-ideogram';
+import { generateImageOpenAI, normalizeOpenAISize } from './imagegen-openai';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const IDEOGRAM_API_KEY = process.env.IDEOGRAM_API_KEY || '';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 /**
@@ -289,10 +291,11 @@ TECHNICAL EXECUTION RULES:
  *   - tier: 'pro' | 'standard'
  */
 export async function generateImage(imageSpec: any, options: any = {}) {
-  // At least ONE provider must be configured. Ideogram is primary, Gemini is fallback.
-  if (!GEMINI_API_KEY && !IDEOGRAM_API_KEY) {
+  // At least ONE provider must be configured.
+  // Priority chain: OpenAI gpt-image-1 → Ideogram V_3 → Gemini/Imagen.
+  if (!GEMINI_API_KEY && !IDEOGRAM_API_KEY && !OPENAI_API_KEY) {
     throw new Error(
-      'No image generation provider configured. Add either IDEOGRAM_API_KEY or GEMINI_API_KEY to your .env file.',
+      'No image generation provider configured. Add one of OPENAI_API_KEY, IDEOGRAM_API_KEY, or GEMINI_API_KEY to your .env file.',
     );
   }
 
@@ -399,56 +402,82 @@ PREMIUM LAYOUT RULES (non-negotiable):
     }
   }
 
-  // ── Generation strategy ──
-  // PRIMARY: Ideogram V_3 (best in-image text rendering, ad-creative aesthetic).
-  // FALLBACK: Gemini/Imagen if Ideogram is not configured, fails, or has no credits.
+  // ── Generation strategy — 3-tier fallback chain ──
+  // PRIMARY:    OpenAI gpt-image-1 (best aesthetic + composition)
+  // SECONDARY:  Ideogram V_3      (best in-image text fidelity)
+  // FINAL:      Gemini/Imagen     (already-paid fallback)
+  // Each tier is tried only if the upstream provider's API key is set AND
+  // the upstream provider failed. User can disable any tier by removing
+  // its API key from .env.
   let dataUri: string | null = null;
-  let providerUsed: 'ideogram' | 'gemini' = 'gemini';
+  let providerUsed: 'openai' | 'ideogram' | 'gemini' = 'gemini';
 
-  // ── Try Ideogram first if configured ──
-  if (IDEOGRAM_API_KEY) {
-    const aspectHint =
-      (typeof imageSpec === 'object' && imageSpec?.technicalSpecs?.aspectRatio) ||
-      undefined;
-    const negativeHint =
-      (typeof imageSpec === 'object' && imageSpec?.negative) || undefined;
+  const aspectHint =
+    (typeof imageSpec === 'object' && imageSpec?.technicalSpecs?.aspectRatio) ||
+    undefined;
+  const negativeHint =
+    (typeof imageSpec === 'object' && imageSpec?.negative) || undefined;
 
+  // ── TIER 1: Try OpenAI gpt-image-1 first if configured ──
+  if (OPENAI_API_KEY) {
+    try {
+      const openaiResult = await generateImageOpenAI({
+        prompt,
+        size: normalizeOpenAISize(aspectHint),
+        quality: 'high', // premium tier — best for ad creatives
+        output_format: 'png', // lossless for text rendering
+      });
+      if (openaiResult) {
+        dataUri = openaiResult.dataUri;
+        providerUsed = 'openai';
+        console.log(`[ImageGen] ✓ Primary path succeeded: OpenAI gpt-image-1 (${openaiResult.size}, ${openaiResult.quality})`);
+      } else {
+        console.log('[ImageGen] OpenAI returned null — falling through to Ideogram');
+      }
+    } catch (err: any) {
+      console.warn('[ImageGen] OpenAI threw, falling through to Ideogram:', err.message);
+    }
+  }
+
+  // ── TIER 2: Try Ideogram V_3 if OpenAI didn't deliver ──
+  if (!dataUri && IDEOGRAM_API_KEY) {
     try {
       const ideogramResult = await generateImageIdeogram({
         prompt,
         aspect_ratio: normalizeAspectRatio(aspectHint),
-        style_type: 'DESIGN', // ad-creative aesthetic
-        magic_prompt_option: 'OFF', // we control the prompt fully
+        style_type: 'DESIGN',
+        magic_prompt_option: 'OFF',
         negative_prompt: negativeHint,
       });
       if (ideogramResult) {
         dataUri = ideogramResult.dataUri;
         providerUsed = 'ideogram';
-        console.log(`[ImageGen] ✓ Primary path succeeded: Ideogram V_3 (seed: ${ideogramResult.seed})`);
+        console.log(`[ImageGen] ✓ Secondary path succeeded: Ideogram V_3 (seed: ${ideogramResult.seed})`);
       } else {
-        console.log('[ImageGen] Ideogram returned null — falling back to Gemini pipeline');
+        console.log('[ImageGen] Ideogram returned null — falling through to Gemini');
       }
     } catch (err: any) {
-      console.warn('[ImageGen] Ideogram threw, falling back to Gemini:', err.message);
+      console.warn('[ImageGen] Ideogram threw, falling through to Gemini:', err.message);
     }
   }
 
-  // ── Fall back to Gemini/Imagen if Ideogram didn't deliver ──
+  // ── TIER 3: Fall back to Gemini/Imagen ──
   if (!dataUri) {
     if (!GEMINI_API_KEY) {
+      const tried: string[] = [];
+      if (OPENAI_API_KEY) tried.push('OpenAI');
+      if (IDEOGRAM_API_KEY) tried.push('Ideogram');
       throw new Error(
-        'Ideogram failed and no GEMINI_API_KEY configured as fallback. Either set IDEOGRAM_API_KEY (with credits) or GEMINI_API_KEY in .env.',
+        `All configured image providers failed (${tried.join(', ')}) and no GEMINI_API_KEY set as final fallback. Check API keys and credit balances.`,
       );
     }
     if (referenceImageData) {
-      // Reference-grounded generation using Gemini multimodal
       dataUri = await tryGeminiGeneration(prompt, referenceImageData);
       if (!dataUri) {
         console.log('[ImageGen] Gemini multimodal failed, falling back to Imagen (no reference)...');
         dataUri = await tryImagenGeneration(prompt);
       }
     } else {
-      // Pure text-to-image — try Imagen first, then Gemini
       dataUri = await tryImagenGeneration(prompt);
       if (!dataUri) {
         console.log('[ImageGen] Imagen failed, falling back to Gemini...');
@@ -458,7 +487,7 @@ PREMIUM LAYOUT RULES (non-negotiable):
   }
 
   if (!dataUri) {
-    throw new Error('Image generation failed after trying all available models (Ideogram, Gemini, Imagen).');
+    throw new Error('Image generation failed after trying all available models (OpenAI, Ideogram, Gemini, Imagen).');
   }
 
   // ── LOGO OVERLAY: Composite the authentic Hola Prime logo onto every generated image ──
