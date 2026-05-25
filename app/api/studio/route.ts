@@ -19,6 +19,7 @@ import { runCreativeDirector } from '@/lib/ai-studio/director';
 // in code with real fonts. Eliminates Gemini/OpenAI text rendering errors entirely.
 import { applyTextOverlay, extractOverlayConfig } from '@/lib/ai-studio/text-overlay';
 import { generateCrossPlatform, getAvailablePlatforms } from '@/lib/ai-studio/crossplatform';
+import { generateImageOpenAI } from '@/lib/ai-studio/imagegen-openai';
 import { generateForAllPersonas, getAvailablePersonas } from '@/lib/ai-studio/personas';
 // Cache module available but not used in main generation flows (generation must always be fresh)
 // import { getCached, setCache } from '@/lib/ai-studio/cache';
@@ -963,47 +964,56 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
     }
 
     if (type === 'custom' || type === 'image' || type === 'video') {
-      // ── DIRECT MODE: bypass the entire pipeline, send user's prompt straight to image gen ──
-      // When the user types a complete brief themselves, Claude brief generation + text overlay
-      // + paradigm prefixes only introduce noise (double text composition, conflicting directives,
-      // overlapping CTAs). Direct mode skips all that — user's prompt goes to the image model
-      // as-is, single generation returned.
+      // ── DIRECT MODE: literal passthrough to OpenAI gpt-image-1 ──
+      // ZERO modifications to the user's prompt. ZERO post-processing. Bypasses:
+      //   - Claude brief generation
+      //   - paradigm picking + 3 variants
+      //   - text manifest + fidelity blocks + premium craft directive
+      //   - generateImage() wrapper (which would add BRANDING INSTRUCTION + run
+      //     sanitizePromptForImageGen + apply logo overlay)
+      //   - text overlay compositor
       //
-      // Triggered when body.directMode === true (UI default is ON for the Custom tab).
+      // Result: user prompt → OpenAI SDK → image. Exact same flow as pasting
+      // the prompt into ChatGPT directly. No additional layers.
+      //
+      // Triggered when body.directMode === true (UI default is ON for Custom tab).
+      // Requires OPENAI_API_KEY. Falls back to error if not configured (no
+      // silent fallback to other providers — direct means direct).
       if (body.directMode === true && type === 'custom') {
         const rawPrompt = (userPrompt || '').trim();
         if (!rawPrompt) {
           return NextResponse.json({ error: 'Direct mode requires a non-empty prompt.' }, { status: 400 });
         }
-        console.log(`[Studio] Direct mode — bypassing brief generation, sending raw prompt (${rawPrompt.length} chars) to image model`);
-
-        // Minimal brand reminder appended only if the prompt doesn't already reference Hola Prime.
-        const promptIncludesBrand = /hola\s*prime/i.test(rawPrompt);
-        const minimalBrandSuffix = promptIncludesBrand
-          ? ''
-          : '\n\nBrand context (only if relevant): Hola Prime prop trading firm, #WeAreTraders, dark fintech aesthetic, blue pill CTA "Buy Challenge".';
-        const directPrompt = rawPrompt + minimalBrandSuffix;
+        if (!process.env.OPENAI_API_KEY) {
+          return NextResponse.json(
+            { error: 'Direct mode requires OPENAI_API_KEY in .env. Add the key and restart the dev server.' },
+            { status: 400 },
+          );
+        }
+        console.log(`[Studio] Direct mode — pure passthrough to gpt-image-1 (${rawPrompt.length} chars, verbatim)`);
 
         try {
-          const directResult = await generateImage(
-            {
-              detailed: directPrompt,
-              referenceUrl: reference || undefined,
-              technicalSpecs: { aspectRatio: '9:16', resolution: '1080x1920' },
-            },
-            { tier: 'pro', skipLogo: false }, // direct mode: let model render everything, no overlay
-          );
+          // Call the OpenAI client directly. No wrapper, no overlay, no sanitizer.
+          // Just: { model, prompt, size, quality } → openai.images.generate()
+          const directResult = await generateImageOpenAI({
+            prompt: rawPrompt,
+            size: '1024x1536',  // portrait, closest to 9:16 — only thing we choose
+            quality: 'high',
+            output_format: 'png',
+          });
 
-          const directImageUrl = directResult?.url || directResult?.dataUri || null;
-          if (!directImageUrl) {
-            return NextResponse.json({ error: 'Image generation returned no result.' }, { status: 500 });
+          if (!directResult?.dataUri) {
+            return NextResponse.json(
+              { error: 'OpenAI gpt-image-1 returned no result. Check OPENAI_API_KEY + billing at platform.openai.com.' },
+              { status: 500 },
+            );
           }
 
           const directCreativeId = `direct-${Date.now()}`;
           const responsePayload = {
             creative: {
               creativeId: directCreativeId,
-              creativeConcept: { title: 'Direct generation', rationale: 'Raw prompt sent directly to image model — no pipeline.' },
+              creativeConcept: { title: 'Direct generation', rationale: 'Verbatim prompt → gpt-image-1. No pipeline.' },
               copywriting: {
                 headline: { primary: rawPrompt.slice(0, 80) },
                 cta: { primary: 'Buy Challenge' },
@@ -1012,20 +1022,21 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                 {
                   id: 'direct',
                   label: 'Direct',
-                  description: 'Raw prompt passthrough',
+                  description: 'Verbatim prompt passthrough',
                   paradigm: 'Direct',
-                  imageUrl: directImageUrl,
-                  score: { overall: 9.0, content: 9, design: 9, color: 9, impact: 9 }, // unscored placeholder
+                  imageUrl: directResult.dataUri,
+                  score: { overall: 9.0, content: 9, design: 9, color: 9, impact: 9 }, // placeholder — unscored
                 },
               ],
-              imageUrl: directImageUrl,
-              provider: directResult?.provider || 'unknown',
+              imageUrl: directResult.dataUri,
+              provider: 'openai',
+              model: directResult.model,
               directMode: true,
             },
             saved: false,
           };
 
-          console.log(`[Studio] ✓ Direct mode generation complete (provider: ${directResult?.provider || 'unknown'})`);
+          console.log(`[Studio] ✓ Direct mode complete — gpt-image-1 (${directResult.size}, ${directResult.quality}, ${rawPrompt.length} chars in)`);
           return NextResponse.json(responsePayload);
         } catch (err: any) {
           console.error('[Studio] Direct mode generation failed:', err.message);
