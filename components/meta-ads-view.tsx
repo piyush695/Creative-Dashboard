@@ -197,17 +197,17 @@ export default function MetaAdsView({
     ]
 
     const themeColors: Record<string, string> = {
-        blue:    "#3b82f6", emerald: "#10b981", green:  "#10b981",
-        red:     "#ef4444", indigo:  "#6366f1",  violet: "#8b5cf6",
+        blue:    "#007aff", emerald: "#10b981", green:  "#10b981",
+        red:     "#ef4444", indigo:  "#007aff",  violet: "#8b5cf6",
         amber:   "#f59e0b", sky:     "#0ea5e9",  pink:   "#ec4899",
         teal:    "#14b8a6", orange:  "#f97316",
     }
     const bgThemeMap: Record<string, string> = {
-        blue:    "bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400",
+        blue:    "bg-sky-50 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20 text-sky-600 dark:text-sky-400",
         emerald: "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400",
         green:   "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400",
         red:     "bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-400",
-        indigo:  "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400",
+        indigo:  "bg-sky-50 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20 text-sky-600 dark:text-sky-400",
         violet:  "bg-violet-50 dark:bg-violet-500/10 border-violet-100 dark:border-violet-500/20 text-violet-600 dark:text-violet-400",
         amber:   "bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20 text-amber-600 dark:text-amber-400",
         sky:     "bg-sky-50 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20 text-sky-600 dark:text-sky-400",
@@ -270,16 +270,16 @@ export default function MetaAdsView({
                     /* ========== OVERVIEW PANEL ========== */
                     <div className="animate-in fade-in zoom-in-95 duration-500">
                         {/* Header */}
-                        <div className="flex items-center justify-between mb-4 px-1">
-                            <div className="flex items-center gap-2">
-                                <div className="p-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-500">
-                                    <Activity className="h-3.5 w-3.5" />
+                        <div className="flex items-center justify-between mb-5 px-1">
+                            <div className="flex items-center gap-2.5">
+                                <div className="p-2 rounded-lg bg-gradient-primary text-white shadow-sm">
+                                    <Activity className="h-4 w-4" />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-black text-foreground tracking-tight leading-none">
+                                    <h2 className="text-base font-black text-foreground tracking-tight leading-none">
                                         Performance Overview
                                     </h2>
-                                    <p className="text-[9px] text-muted-foreground font-medium mt-0.5">
+                                    <p className="text-[11px] text-muted-foreground font-medium mt-1">
                                         {selectedAccountId === "all"
                                             ? `All Accounts · ${filteredAds.length} ads`
                                             : `${filteredAds[0]?.accountName || "Account"} · ${filteredAds.length} ads`}
@@ -298,10 +298,10 @@ export default function MetaAdsView({
                                 { label: "ROAS",          value: `${avgRoas.toFixed(2)}x`,                                                 sub: "on ad spend", color: "indigo" },
                             ].map((h, i) => {
                                 const cm: Record<string, { val: string; bg: string; bd: string }> = {
-                                    blue:    { val: "text-blue-500",    bg: isDark ? "bg-blue-500/10"    : "bg-blue-50",    bd: isDark ? "border-blue-500/20"    : "border-blue-200" },
+                                    blue:    { val: "text-sky-500",    bg: isDark ? "bg-sky-500/10"    : "bg-sky-50",    bd: isDark ? "border-sky-500/20"    : "border-sky-200" },
                                     emerald: { val: "text-emerald-500", bg: isDark ? "bg-emerald-500/10" : "bg-emerald-50", bd: isDark ? "border-emerald-500/20" : "border-emerald-200" },
                                     red:     { val: "text-red-500",     bg: isDark ? "bg-red-500/10"     : "bg-red-50",     bd: isDark ? "border-red-500/20"     : "border-red-200" },
-                                    indigo:  { val: "text-indigo-500",  bg: isDark ? "bg-indigo-500/10"  : "bg-indigo-50",  bd: isDark ? "border-indigo-500/20"  : "border-indigo-200" },
+                                    indigo:  { val: "text-sky-500",  bg: isDark ? "bg-sky-500/10"  : "bg-sky-50",  bd: isDark ? "border-sky-500/20"  : "border-sky-200" },
                                     amber:   { val: "text-amber-500",   bg: isDark ? "bg-amber-500/10"   : "bg-amber-50",   bd: isDark ? "border-amber-500/20"   : "border-amber-200" },
                                 }
                                 const c = cm[h.color]
@@ -310,21 +310,21 @@ export default function MetaAdsView({
                                         key={h.label} 
                                         style={{ animationDelay: `${i * 100}ms` }}
                                         className={cn(
-                                            "flex flex-col justify-between p-4 rounded-md border min-h-[90px] transition-all duration-500", // Removed group and cursor-default
+                                            "flex flex-col justify-between p-4 rounded-xl border min-h-[90px] transition-all duration-500", // Removed group and cursor-default
                                             "hover:-translate-y-1.5 hover:shadow-sm dark:hover:shadow-black/40",
                                             "animate-in fade-in slide-in-from-bottom-4 fill-mode-both",
                                             c.bg, c.bd,
-                                            h.color === "blue"    && "hover:border-blue-500/40 hover:shadow-blue-500/10",
+                                            h.color === "blue"    && "hover:border-sky-500/40 hover:shadow-sky-500/10",
                                             h.color === "emerald" && "hover:border-emerald-500/40 hover:shadow-emerald-500/10",
                                             h.color === "red"     && "hover:border-red-500/40 hover:shadow-red-500/10",
-                                            h.color === "indigo"  && "hover:border-indigo-500/40 hover:shadow-indigo-500/10",
+                                            h.color === "indigo"  && "hover:border-sky-500/40 hover:shadow-sky-500/10",
                                             h.color === "amber"   && "hover:border-amber-500/40 hover:shadow-amber-500/10"
                                         )}
                                     >
-                                        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground group-hover:text-muted-foreground transition-colors">{h.label}</p>
+                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-muted-foreground transition-colors">{h.label}</p>
                                         <div>
-                                            <p className={cn("text-2xl font-black font-mono leading-none mt-2 transition-transform group-hover:scale-105 origin-left", c.val)}>{h.value}</p>
-                                            <p className="text-[9px] text-muted-foreground font-medium mt-1 truncate">{h.sub}</p>
+                                            <p className={cn("text-2xl font-black font-mono nums leading-none mt-2 transition-transform group-hover:scale-105 origin-left", c.val)}>{h.value}</p>
+                                            <p className="text-[10px] text-muted-foreground font-medium mt-1 truncate">{h.sub}</p>
                                         </div>
                                     </div>
                                 )
@@ -333,26 +333,24 @@ export default function MetaAdsView({
 
                         {/* ── ZONE 2: Secondary stats ── */}
                         <div className={cn(
-                            "grid grid-cols-2 md:grid-cols-3 xl:flex items-center gap-0 mb-3 rounded-xl border overflow-hidden",
+                            "mb-3 rounded-xl border overflow-hidden",
                             isDark ? "border-border bg-white/[0.02]" : "border-border bg-zinc-50"
                         )}>
-                            {kpiCards.slice(4).map((k, i) => (
-                                <div key={k.label} 
-                                    style={{ animationDelay: `${(i + 4) * 50}ms` }}
-                                    className={cn(
-                                    "flex-1 flex flex-col items-center py-2.5 px-1 text-center sm:shrink-0 transition-all duration-300", // Removed group and cursor-default
-                                    "hover:bg-zinc-100 dark:hover:bg-white/5",
-                                    "animate-in fade-in slide-in-from-bottom-2 fill-mode-both",
-                                    // Borders for grid (mobile/md)
-                                    i % (mounted && window.innerWidth < 1280 ? (window.innerWidth < 768 ? 2 : 3) : 6) !== 0 && (isDark ? "border-l border-border" : "border-l border-zinc-100"),
-                                    i >= (mounted && window.innerWidth < 768 ? 2 : (mounted && window.innerWidth < 1280 ? 3 : 0)) && (isDark ? "border-t border-border" : "border-t border-zinc-100"),
-                                    // Reset side borders for flex (xl and up)
-                                    "xl:border-t-0 xl:border-l xl:first:border-l-0"
-                                )}>
-                                    <p className="text-[7px] font-black uppercase tracking-widest text-muted-foreground leading-none mb-1 whitespace-nowrap group-hover:text-muted-foreground transition-colors">{k.label}</p>
-                                    <p className="text-xs font-black font-mono leading-none transition-transform group-hover:scale-110" style={{ color: themeColors[k.theme] }}>{k.value}</p>
-                                </div>
-                            ))}
+                            <div className="grid grid-cols-2 md:grid-cols-3 xl:flex items-stretch -ml-px -mt-px">
+                                {kpiCards.slice(4).map((k, i) => (
+                                    <div key={k.label}
+                                        style={{ animationDelay: `${(i + 4) * 50}ms` }}
+                                        className={cn(
+                                        "flex-1 flex flex-col items-center justify-center py-3 px-1 text-center transition-all duration-300",
+                                        "border-l border-t border-border",
+                                        "hover:bg-zinc-100 dark:hover:bg-white/5",
+                                        "animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+                                    )}>
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground leading-none mb-1.5 whitespace-nowrap transition-colors">{k.label}</p>
+                                        <p className="text-sm font-black font-mono leading-none transition-transform hover:scale-110" style={{ color: themeColors[k.theme] }}>{k.value}</p>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         {/* ── ZONE 3: Insights — unified card with list rows ── */}
@@ -388,18 +386,18 @@ export default function MetaAdsView({
                                     metaRight: `${Number(topCtr.clicks||0).toLocaleString("en-US")} clicks · $${Number(topCtr.spend||0).toLocaleString("en-US")} spend`,
                                 },
                                 {
-                                    icon: <BarChart2 className="h-4 w-4 text-blue-500" />,
-                                    iconBg: "bg-blue-500/15",
+                                    icon: <BarChart2 className="h-4 w-4 text-sky-500" />,
+                                    iconBg: "bg-sky-500/15",
                                     badge: "Campaigns",
-                                    badgeColor: "text-blue-500",
+                                    badgeColor: "text-sky-500",
                                     name: topCamp ? topCamp[0] : "No campaigns",
                                     metaLeft: `${campaigns.length} active`,
-                                    metaLeftColor: "text-blue-500",
+                                    metaLeftColor: "text-sky-500",
                                     metaRight: topCamp ? `$${topCamp[1].toLocaleString("en-US", { maximumFractionDigits: 0 })} top spend` : "",
                                 },
                             ].filter(Boolean) as { icon: React.ReactNode; iconBg: string; badge: string; badgeColor: string; name: string; metaLeft: string; metaLeftColor: string; metaRight: string }[]
                             return (
-                                <div className={cn("rounded-md border mb-3 overflow-hidden", isDark ? "border-border bg-white/[0.02]" : "border-border bg-zinc-50")}>
+                                <div className={cn("rounded-xl border mb-3 overflow-hidden", isDark ? "border-border bg-white/[0.02]" : "border-border bg-zinc-50")}>
                                     {rows.map((row, i) => (
                                         <div key={row.badge} className={cn(
                                             "flex items-center gap-3 px-4 py-3.5 transition-all duration-300", // Removed group and cursor-default
@@ -411,15 +409,15 @@ export default function MetaAdsView({
                                             </div>
                                             <div className="min-w-0 flex-1 overflow-hidden">
                                                 <div className="flex items-center gap-2 mb-0.5">
-                                                    <span className={cn("text-[8px] font-black uppercase tracking-widest transition-opacity group-hover:opacity-100 opacity-80", row.badgeColor)}>{row.badge}</span>
+                                                    <span className={cn("text-[9px] font-black uppercase tracking-widest transition-opacity group-hover:opacity-100 opacity-80", row.badgeColor)}>{row.badge}</span>
                                                 </div>
-                                                <p className="text-[10px] font-bold text-foreground truncate leading-tight max-w-[120px] sm:max-w-[240px] transition-all group-hover:translate-x-1 group-hover:text-[#1877F2]">
+                                                <p className="text-[11px] font-bold text-foreground truncate leading-tight max-w-[120px] sm:max-w-[240px] transition-all group-hover:translate-x-1 group-hover:text-[#1877F2]">
                                                     {row.name}
                                                 </p>
                                             </div>
                                             <div className="text-right shrink-0 transition-transform group-hover:scale-105">
                                                 <p className={cn("text-sm font-black font-mono", row.metaLeftColor)}>{row.metaLeft}</p>
-                                                <p className="text-[8px] text-muted-foreground font-bold whitespace-nowrap">{row.metaRight}</p>
+                                                <p className="text-[9px] text-muted-foreground font-bold whitespace-nowrap">{row.metaRight}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -432,58 +430,64 @@ export default function MetaAdsView({
                         {/* ── ZONE 4: Tabbed charts ── */}
                         <Tabs defaultValue="spend" className="w-full">
                             <TabsList className="mb-4 h-auto p-1 bg-zinc-100 dark:bg-card border border-border rounded-xl grid grid-cols-2 lg:grid-cols-4 w-full">
-                                <TabsTrigger value="spend" className="rounded-lg py-2 text-[10px] sm:text-xs font-black uppercase tracking-wide data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-md flex items-center justify-center gap-1.5">
+                                <TabsTrigger value="spend" className="rounded-lg py-2 text-[10px] sm:text-xs font-black uppercase tracking-wide data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 flex items-center justify-center gap-1.5">
                                     <BarChart2 className="h-3 w-3 shrink-0" /><span className="hidden sm:inline">ROAS Trends</span><span className="sm:hidden">ROAS</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="ctr" className="rounded-lg py-2 text-[10px] sm:text-xs font-black uppercase tracking-wide data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-md flex items-center justify-center gap-1.5">
+                                <TabsTrigger value="ctr" className="rounded-lg py-2 text-[10px] sm:text-xs font-black uppercase tracking-wide data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 flex items-center justify-center gap-1.5">
                                     <Percent className="h-3 w-3 shrink-0" /><span className="hidden sm:inline">CTR Analysis</span><span className="sm:hidden">CTR</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="format" className="rounded-lg py-2 text-[10px] sm:text-xs font-black uppercase tracking-wide data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-md flex items-center justify-center gap-1.5">
+                                <TabsTrigger value="format" className="rounded-lg py-2 text-[10px] sm:text-xs font-black uppercase tracking-wide data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 flex items-center justify-center gap-1.5">
                                     <PieChartIcon className="h-3 w-3 shrink-0" /><span className="hidden sm:inline">Format Mix</span><span className="sm:hidden">Format</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="top" className="rounded-lg py-2 text-[10px] sm:text-xs font-black uppercase tracking-wide data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-md flex items-center justify-center gap-1.5">
+                                <TabsTrigger value="top" className="rounded-lg py-2 text-[10px] sm:text-xs font-black uppercase tracking-wide data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 flex items-center justify-center gap-1.5">
                                     <List className="h-3 w-3 shrink-0" /><span className="hidden sm:inline">Top Performers</span><span className="sm:hidden">Top</span>
                                 </TabsTrigger>
                             </TabsList>
 
                             {/* ---- TAB 1: Spend & Revenue ---- */}
                             <TabsContent value="spend" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <Card className="border border-border bg-white dark:bg-[#0f0f11] rounded-md shadow-sm overflow-hidden">
+                                <Card className="card-premium rounded-xl overflow-hidden">
                                     <div className="grid grid-cols-1 md:grid-cols-2 min-h-[280px]">
                                         {/* LEFT: Chart */}
                                         <div className="p-5 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-border transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.01]">
-                                            <p className="text-xs font-black text-foreground mb-0.5">ROAS Trends</p>
-                                            <p className="text-[9px] text-muted-foreground font-medium mb-4">Top 10 ads by ROAS</p>
+                                            <h3 className="text-sm font-black text-foreground mb-0.5">ROAS Trends</h3>
+                                            <p className="text-[10px] text-muted-foreground font-medium mb-4">Top 10 ads by ROAS</p>
                                             <div className="h-52">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart data={spendChartData} margin={{ top: 4, right: 4, left: -20, bottom: 50 }} style={{ background: "transparent" }}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.06} />
-                                                        <XAxis dataKey="name" tick={{ fontSize: 7, fontWeight: 700, fill: "#71717a" }} angle={-35} textAnchor="end" tickLine={false} axisLine={false} />
-                                                        <YAxis tick={{ fontSize: 8, fontWeight: 700, fill: "#71717a" }} tickFormatter={v => `$${v}`} tickLine={false} axisLine={false} />
+                                                        <defs>
+                                                            <linearGradient id="metaSpendGrad" x1="0" y1="0" x2="0" y2="1">
+                                                                <stop offset="0%" stopColor="#007aff" />
+                                                                <stop offset="100%" stopColor="#0dd6ec" />
+                                                            </linearGradient>
+                                                        </defs>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.08} />
+                                                        <XAxis dataKey="name" tick={{ fontSize: 7, fontWeight: 700, fill: "currentColor", fillOpacity: 0.6 }} angle={-35} textAnchor="end" tickLine={false} axisLine={false} />
+                                                        <YAxis tick={{ fontSize: 8, fontWeight: 700, fill: "currentColor", fillOpacity: 0.6 }} tickFormatter={v => `$${v}`} tickLine={false} axisLine={false} />
                                                         <RechartsTooltip content={<ChartTooltip prefix="$" />} cursor={{ fill: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)" }} />
-                                                        <Bar dataKey="spend"   fill="#3b82f6" radius={[4,4,0,0]} maxBarSize={22} />
+                                                        <Bar dataKey="spend"   fill="url(#metaSpendGrad)" radius={[4,4,0,0]} maxBarSize={22} />
                                                         <Bar dataKey="revenue" fill="#10b981" radius={[4,4,0,0]} maxBarSize={22} />
                                                     </BarChart>
                                                 </ResponsiveContainer>
                                             </div>
                                             <div className="flex items-center gap-4 mt-3">
-                                                <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground"><div className="w-2.5 h-2.5 rounded-sm bg-blue-500" /> Spend</div>
+                                                <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground"><div className="w-2.5 h-2.5 rounded-sm bg-sky-500" /> Spend</div>
                                                 <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Revenue</div>
                                             </div>
                                         </div>
                                         {/* RIGHT: Stats */}
                                         <div className="p-5 flex flex-col justify-between">
-                                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-4">Summary</p>
+                                            <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Summary</h3>
                                             <div className="space-y-3 flex-1">
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300", // Removed group and cursor-default
-                                                    isDark ? "bg-white/[0.03] border-border hover:bg-blue-500/5 hover:border-blue-500/20" : "bg-zinc-50 border-border hover:bg-blue-50 hover:border-blue-300"
+                                                    isDark ? "bg-white/[0.03] border-border hover:bg-sky-500/5 hover:border-sky-500/20" : "bg-zinc-50 border-border hover:bg-sky-50 hover:border-sky-300"
                                                 )}>
                                                     <div>
-                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-blue-500/70 transition-colors">Total Spend</p>
-                                                        <p className="text-lg font-black text-blue-500 font-mono transition-transform group-hover:scale-105 origin-left">${totalSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-sky-500/70 transition-colors">Total Spend</p>
+                                                        <p className="text-lg font-black text-sky-500 font-mono transition-transform group-hover:scale-105 origin-left">${totalSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                                     </div>
-                                                    <DollarSign className="h-5 w-5 text-blue-500/30 transition-all group-hover:scale-110 group-hover:rotate-12 group-hover:text-blue-500" />
+                                                    <DollarSign className="h-5 w-5 text-sky-500/30 transition-all group-hover:scale-110 group-hover:rotate-12 group-hover:text-sky-500" />
                                                 </div>
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300", // Removed group and cursor-default
@@ -519,13 +523,13 @@ export default function MetaAdsView({
                                                 </div>
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300", // Removed group and cursor-default
-                                                    isDark ? "bg-white/[0.03] border-border hover:bg-indigo-500/5 hover:border-indigo-500/20" : "bg-zinc-50 border-border hover:bg-indigo-50 hover:border-indigo-300"
+                                                    isDark ? "bg-white/[0.03] border-border hover:bg-sky-500/5 hover:border-sky-500/20" : "bg-zinc-50 border-border hover:bg-sky-50 hover:border-sky-300"
                                                 )}>
                                                     <div>
-                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-indigo-500/70 transition-colors">ROAS</p>
-                                                        <p className="text-lg font-black text-indigo-500 font-mono transition-transform group-hover:scale-105 origin-left">{avgRoas.toFixed(2)}x</p>
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-sky-500/70 transition-colors">ROAS</p>
+                                                        <p className="text-lg font-black text-sky-500 font-mono transition-transform group-hover:scale-105 origin-left">{avgRoas.toFixed(2)}x</p>
                                                     </div>
-                                                    <Activity className="h-5 w-5 text-indigo-500/30 transition-all group-hover:scale-110 group-hover:text-indigo-500" />
+                                                    <Activity className="h-5 w-5 text-sky-500/30 transition-all group-hover:scale-110 group-hover:text-sky-500" />
                                                 </div>
                                             </div>
                                         </div>
@@ -535,20 +539,26 @@ export default function MetaAdsView({
 
                             {/* ---- TAB 2: CTR Analysis ---- */}
                             <TabsContent value="ctr" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <Card className="border border-border bg-white dark:bg-[#0f0f11] rounded-md shadow-sm overflow-hidden">
+                                <Card className="card-premium rounded-xl overflow-hidden">
                                     <div className="grid grid-cols-1 md:grid-cols-2 min-h-[280px]">
                                         {/* LEFT: Chart */}
                                         <div className="p-5 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-border transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.01]">
-                                            <p className="text-xs font-black text-foreground mb-0.5">CTR by Ad</p>
-                                            <p className="text-[9px] text-muted-foreground font-medium mb-4">Top 10 ads by click-through rate</p>
+                                            <h3 className="text-sm font-black text-foreground mb-0.5">CTR by Ad</h3>
+                                            <p className="text-[10px] text-muted-foreground font-medium mb-4">Top 10 ads by click-through rate</p>
                                             <div className="h-52">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart data={ctrChartData} margin={{ top: 4, right: 4, left: -20, bottom: 50 }} style={{ background: "transparent" }}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.06} />
-                                                        <XAxis dataKey="name" tick={{ fontSize: 7, fontWeight: 700, fill: "#71717a" }} angle={-35} textAnchor="end" tickLine={false} axisLine={false} />
-                                                        <YAxis tick={{ fontSize: 8, fontWeight: 700, fill: "#71717a" }} tickFormatter={v => `${v}%`} tickLine={false} axisLine={false} />
+                                                        <defs>
+                                                            <linearGradient id="metaCtrGrad" x1="0" y1="0" x2="0" y2="1">
+                                                                <stop offset="0%" stopColor="#007aff" />
+                                                                <stop offset="100%" stopColor="#0dd6ec" />
+                                                            </linearGradient>
+                                                        </defs>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.08} />
+                                                        <XAxis dataKey="name" tick={{ fontSize: 7, fontWeight: 700, fill: "currentColor", fillOpacity: 0.6 }} angle={-35} textAnchor="end" tickLine={false} axisLine={false} />
+                                                        <YAxis tick={{ fontSize: 8, fontWeight: 700, fill: "currentColor", fillOpacity: 0.6 }} tickFormatter={v => `${v}%`} tickLine={false} axisLine={false} />
                                                         <RechartsTooltip content={<ChartTooltip prefix="" suffix="%" />} cursor={{ fill: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)" }} />
-                                                        <Bar dataKey="ctr" fill="#8b5cf6" radius={[4,4,0,0]} maxBarSize={22} />
+                                                        <Bar dataKey="ctr" fill="url(#metaCtrGrad)" radius={[4,4,0,0]} maxBarSize={22} />
                                                     </BarChart>
                                                 </ResponsiveContainer>
                                             </div>
@@ -559,7 +569,7 @@ export default function MetaAdsView({
                                         </div>
                                         {/* RIGHT: Stats */}
                                         <div className="p-5 flex flex-col justify-between">
-                                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-4">CTR Insights</p>
+                                            <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-4">CTR Insights</h3>
                                             <div className="space-y-3 flex-1">
                                                 <div className={cn(
                                                     "flex items-center justify-between p-3 rounded-xl border transition-all duration-300", // Removed group and cursor-default
@@ -609,12 +619,12 @@ export default function MetaAdsView({
 
                             {/* ---- TAB 3: Format Mix ---- */}
                             <TabsContent value="format" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <Card className="border border-border bg-white dark:bg-[#0f0f11] rounded-md shadow-sm overflow-hidden">
+                                <Card className="card-premium rounded-xl overflow-hidden">
                                     <div className="grid grid-cols-1 md:grid-cols-2 min-h-[280px]">
                                         {/* LEFT: Pie Chart */}
                                         <div className="p-5 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-border transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.01]">
-                                            <p className="text-xs font-black text-foreground mb-0.5">Format Diversity</p>
-                                            <p className="text-[9px] text-muted-foreground font-medium mb-2">Spend by ad type</p>
+                                            <h3 className="text-sm font-black text-foreground mb-0.5">Format Diversity</h3>
+                                            <p className="text-[10px] text-muted-foreground font-medium mb-2">Spend by ad type</p>
                                             <div className="h-56">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <PieChart style={{ background: "transparent" }}>
@@ -642,7 +652,7 @@ export default function MetaAdsView({
                                         </div>
                                         {/* RIGHT: Breakdown */}
                                         <div className="p-5">
-                                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-4">Spend Breakdown</p>
+                                            <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Spend Breakdown</h3>
                                             <div className="space-y-2.5">
                                                 {formatChartData.map((item, i) => {
                                                     const pct = totalSpend > 0 ? (item.value / totalSpend * 100) : 0
@@ -672,13 +682,13 @@ export default function MetaAdsView({
 
                             {/* ---- TAB 4: Top Performers Table ---- */}
                             <TabsContent value="top" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-4 duration-700">
-                            <Card className="p-5 md:p-6 border border-border bg-white dark:bg-[#0f0f11] rounded-md shadow-sm overflow-x-auto">
+                            <Card className="card-premium p-5 md:p-6 rounded-xl overflow-x-auto">
                                     <div className="flex items-center justify-between mb-6">
                                         <div>
                                             <h3 className="text-lg font-black text-foreground">Top Performers</h3>
                                             <p className="text-xs text-muted-foreground font-medium mt-0.5">Top 10 ads ranked by ROAS</p>
                                         </div>
-                                        <Badge className="bg-blue-500/10 text-blue-500 border-none font-black text-xs px-3 py-1">
+                                        <Badge className="bg-gradient-primary text-white border-none font-black text-xs px-3 py-1">
                                             {topAdsByRoas.length} Ads
                                         </Badge>
                                     </div>
@@ -705,7 +715,7 @@ export default function MetaAdsView({
                                                                 <p className="text-xs font-bold text-foreground truncate group-hover:text-[#1877F2] transition-colors">{ad.adName}</p>
                                                                 <p className="text-[9px] text-muted-foreground font-medium truncate">{ad.campaignName}</p>
                                                             </td>
-                                                            <td className="py-3 px-4 text-xs font-black text-blue-500 whitespace-nowrap">${sp.toLocaleString()}</td>
+                                                            <td className="py-3 px-4 text-xs font-black text-sky-500 whitespace-nowrap">${sp.toLocaleString()}</td>
                                                             <td className="py-3 px-4 text-xs font-black text-emerald-500 whitespace-nowrap">${rev.toLocaleString()}</td>
                                                             <td className="py-3 px-4 text-xs font-black whitespace-nowrap">
                                                                 <span className={cn(adRoas >= 2 ? "text-emerald-500" : adRoas >= 1 ? "text-amber-500" : "text-red-400")}>
@@ -731,10 +741,10 @@ export default function MetaAdsView({
                     <div className="space-y-4 animate-in fade-in duration-500 pt-0">
                         {/* Brand / Status Header — Top Badge */}
                         <div className="flex items-center gap-2 mb-6 px-1.5 pt-2">
-                            <div className="p-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                                <Layout className="h-3.5 w-3.5 text-blue-500" />
+                            <div className="p-1.5 rounded-lg bg-gradient-primary text-white shadow-sm">
+                                <Layout className="h-3.5 w-3.5" />
                             </div>
-                            <h1 className="text-[10px] font-black tracking-[0.25em] text-blue-500 uppercase">
+                            <h1 className="text-[10px] font-black tracking-[0.25em] gradient-text uppercase">
                                 HOLAPRIME SOURCE LIBRARY
                             </h1>
                         </div>
@@ -764,17 +774,9 @@ export default function MetaAdsView({
                             extraActions={
                                  <button
                                      onClick={() => setShowOverview(true)}
-                                     className="group flex items-center gap-1.5 h-8 px-3.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-200
- bg-white/60 dark:bg-card/60 backdrop-blur-sm
- border border-border dark:border-zinc-700
- text-foreground/80 dark:text-zinc-200
- shadow-sm hover:shadow-md
- hover:bg-blue-50 dark:hover:bg-blue-900/15
- hover:border-blue-300 dark:hover:border-blue-600
- hover:text-blue-600 dark:hover:text-blue-400
- active:opacity-80"
+                                     className="btn-gradient group flex items-center gap-1.5 h-8 px-3.5 rounded-lg text-[11px] font-black uppercase tracking-wider text-white cursor-pointer"
                                  >
-                                     <TrendingUp className="h-3 w-3 shrink-0 text-blue-500 transition-transform group-hover:-translate-y-px" />
+                                     <TrendingUp className="h-3 w-3 shrink-0 transition-transform group-hover:-translate-y-px" />
                                      <span>OVERVIEW</span>
                                  </button>
                             }

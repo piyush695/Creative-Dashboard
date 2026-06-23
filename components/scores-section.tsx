@@ -39,7 +39,7 @@ export function getScoresList(adData: AdData): ScoreItem[] {
     {
       name: "Visual Design",
       score: adData.scoreVisualDesign || 0,
-      color: "from-blue-100 to-indigo-200 dark:from-blue-900/40 dark:to-indigo-900/40",
+      color: "from-blue-100 to-sky-200 dark:from-blue-900/40 dark:to-sky-900/40",
       icon: Palette,
       key: "visualDesignJustification",
       description: "Analysis of the overall visual aesthetic and brand alignment."
@@ -113,11 +113,11 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
     <div className="space-y-8 animate-in fade-in duration-700 w-full">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg md:text-xl font-black text-foreground tracking-tight italic opacity-80">Creative intelligence summary</h3>
+          <h3 className="text-lg md:text-xl font-black gradient-text tracking-tight">Creative intelligence summary</h3>
           <p className="text-muted-foreground/60 text-[10px] font-black mt-0.5">Dimensional performance metric hub</p>
         </div>
         {!selectedScoreName && (
-          <div className="hidden md:flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-primary/60 bg-card px-3 py-1.5 rounded-xl border border-border shadow-sm transition-all hover:bg-secondary hover:-translate-y-1">
+          <div className="hidden md:flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-primary/70 card-premium hover-lift px-3 py-1.5">
             <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
             Select a Dimension for deep analysis
           </div>
@@ -125,17 +125,17 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
       </div>
 
       {/* Overall Score Section - Studio Neutral Hub */}
-      <Card className="relative overflow-hidden border border-border shadow-md bg-white dark:bg-[#0A0A0A] p-0.5 rounded-md md:rounded-md">
-        <div className="absolute top-0 right-0 w-[40%] h-full bg-primary opacity-[0.03] dark:opacity-[0.08] blur-[60px] pointer-events-none transition-all duration-1000" />
+      <Card className="card-premium relative overflow-hidden p-0.5">
+        <div className="absolute top-0 right-0 w-[40%] h-full bg-gradient-primary opacity-[0.06] dark:opacity-[0.1] blur-[60px] pointer-events-none transition-all duration-1000" />
 
         <CardContent className="p-4 md:p-5 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-4 md:gap-6">
             <div className="flex flex-wrap justify-center gap-3 md:gap-5">
-              {/* Creative Score */}
+              {/* Creative Score — gradient aggregate */}
               <div className="text-center group/score">
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-card border border-border dark:border-border flex flex-col items-center justify-center relative shadow-sm transition-all duration-300 group-hover/score:border-primary/50 group-hover/score:scale-105">
-                  <span className="text-2xl md:text-3xl font-black text-foreground dark:text-white tracking-tight leading-none mb-0.5">{overallScore}</span>
-                  <span className="text-[10px] font-black text-primary">Score</span>
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-primary text-white flex flex-col items-center justify-center relative shadow-md transition-all duration-300 group-hover/score:scale-105 group-hover/score:shadow-lg">
+                  <span className="nums text-2xl md:text-3xl font-black tracking-tight leading-none mb-0.5">{overallScore}</span>
+                  <span className="text-[10px] font-black text-white/90">Score</span>
                 </div>
                 <p className="mt-2 text-[9px] font-black text-muted-foreground/60">Intelligence hub</p>
               </div>
@@ -144,7 +144,7 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
               {adData.performanceScore && (
                 <div className="text-center group/score">
                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 flex flex-col items-center justify-center relative shadow-sm transition-all duration-300 group-hover/score:border-emerald-500/50 group-hover/score:scale-105">
-                    <span className="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400">{adData.performanceScore}</span>
+                    <span className="nums text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400">{adData.performanceScore}</span>
                     <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-500 tracking-tighter">Performance</span>
                   </div>
                   <p className="mt-2 text-[9px] font-black text-muted-foreground/60">Predicted yield</p>
@@ -156,7 +156,7 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
                 <div className="text-center group/score">
                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-amber-950/20 border border-amber-900/30 flex flex-col items-center justify-center relative shadow-md transition-all duration-500 group-hover/score:border-amber-500/50 group-hover/score:scale-105">
                     <span className="text-xl md:text-2xl font-black text-amber-400">{adData.compositeRating}</span>
-                    <span className="text-[7px] font-black text-amber-500 uppercase tracking-tighter">Composite</span>
+                    <span className="text-[9px] font-black text-amber-500 uppercase tracking-tighter">Composite</span>
                   </div>
                   <p className="mt-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground">Final Rating</p>
                 </div>
@@ -176,17 +176,17 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
               </div>
 
               <div className="flex flex-wrap justify-center lg:justify-start gap-3">
-                <div className="px-3 py-1.5 rounded-xl bg-card border border-border flex flex-col items-start gap-0.5">
-                  <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Analysis Mode</span>
-                  <span className="text-[9px] font-black text-zinc-200">{adData.analysisMode || "VISUAL & METRICS"}</span>
+                <div className="px-3 py-1.5 rounded-lg bg-card border border-border flex flex-col items-start gap-0.5">
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Analysis Mode</span>
+                  <span className="text-[11px] font-black text-foreground">{adData.analysisMode || "VISUAL & METRICS"}</span>
                 </div>
-                <div className="px-3 py-1.5 rounded-xl bg-card border border-border flex flex-col items-start gap-0.5">
-                  <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Psychology Strength</span>
-                  <span className="text-[9px] font-black text-zinc-200">{adData.psychologyStrength || "STRONG"}</span>
+                <div className="px-3 py-1.5 rounded-lg bg-card border border-border flex flex-col items-start gap-0.5">
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Psychology Strength</span>
+                  <span className="text-[11px] font-black text-foreground">{adData.psychologyStrength || "STRONG"}</span>
                 </div>
-                <div className="px-3 py-1.5 rounded-xl bg-card border border-border flex flex-col items-start gap-0.5">
-                  <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Design Quality</span>
-                  <span className="text-[9px] font-black text-zinc-200">{adData.designQuality || "PROFESSIONAL"}</span>
+                <div className="px-3 py-1.5 rounded-lg bg-card border border-border flex flex-col items-start gap-0.5">
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Design Quality</span>
+                  <span className="text-[11px] font-black text-foreground">{adData.designQuality || "PROFESSIONAL"}</span>
                 </div>
               </div>
             </div>
@@ -209,17 +209,20 @@ export default function ScoresSection({ adData, selectedScoreName, onSelectScore
             >
               <div className={cn("absolute inset-0 bg-gradient-to-br opacity-60 dark:opacity-10 transition-all duration-700 group-hover:opacity-100", score.color)} />
               <CardContent className="p-3 md:p-4 relative z-10 flex flex-col h-full min-h-[100px] md:min-h-[120px]">
-                <h4 className="font-black text-[10px] text-primary mb-1 transition-all group-hover:translate-x-1">{score.name}</h4>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <score.icon className="h-4 w-4 text-primary shrink-0" />
+                  <h4 className="font-black text-xs text-primary transition-all group-hover:translate-x-1">{score.name}</h4>
+                </div>
 
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-lg md:text-xl font-black text-foreground tracking-tight transition-all group-hover:scale-110 origin-left">{score.score}</span>
-                  <span className="text-[9px] font-black text-primary/40">Rating</span>
+                  <span className="text-xl md:text-2xl font-black text-foreground tracking-tight transition-all group-hover:scale-110 origin-left">{score.score}</span>
+                  <span className="text-[10px] font-black text-primary/50">Rating</span>
                 </div>
 
                 <div className="mt-auto space-y-3 md:space-y-4">
                   <div className="w-full bg-secondary/80 dark:bg-white/10 rounded-full h-1.5 overflow-hidden shadow-inner p-[1px]">
                     <div
-                      className="bg-gradient-to-r from-primary to-indigo-400 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]"
+                      className="bg-gradient-to-r from-primary to-sky-400 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]"
                       style={{ width: `${score.score * 10}%` }}
                     />
                   </div>

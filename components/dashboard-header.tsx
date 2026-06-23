@@ -27,8 +27,8 @@ export default function DashboardHeader() {
 
     return (
         <div className="border-b border-zinc-200 bg-white/80 backdrop-blur-md sticky top-0 z-10 transition-all duration-300">
-            <div className="px-8 py-6 flex justify-between items-center">
-                <Link href="/" className="hover:opacity-80 transition-opacity">
+            <div className="px-4 md:px-6 py-4 flex justify-between items-center">
+                <Link href="/" className="cursor-pointer hover:opacity-80 transition-opacity">
                     <div className="flex flex-col items-start leading-none">
                         <div className="flex items-center gap-1.5">
                             <span className="text-2xl md:text-3xl font-black tracking-tightest text-zinc-900 dark:text-zinc-100">
@@ -98,7 +98,7 @@ export default function DashboardHeader() {
                                 </Link>
 
                                 {/* Change Password Item - Only for Credentials Users */}
-                                {!session.user?.image && (
+                                {(session.user as any)?.provider === "credentials" && (
                                     <DropdownMenuItem
                                         className="cursor-pointer hover:bg-zinc-100 focus:bg-zinc-100 text-zinc-700 focus:text-zinc-900 rounded-md py-2.5 px-3 transition-colors my-1"
                                         onSelect={(e) => {

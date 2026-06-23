@@ -39,14 +39,14 @@ export default function AdDetailTabs({ adData, benchmark, onClose, onEnlargeImag
     return (
         <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20 pt-8 mt-2">
             {/* Premium Header for Selected Ad */}
-            <div className="flex flex-col gap-4 p-4 md:p-6 bg-white/70 dark:bg-card/70 backdrop-blur-3xl rounded-md md:rounded-md border border-border shadow-sm relative overflow-hidden group">
+            <div className="flex flex-col gap-4 p-4 md:p-6 bg-white/70 dark:bg-card/70 backdrop-blur-3xl rounded-xl border border-border shadow-sm relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity pointer-events-none">
                     <Sparkles className="h-48 w-48 text-primary" />
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-7 relative z-10 w-full">
                     <div
-                        className="h-24 w-40 md:h-28 md:w-44 rounded-xl md:rounded-md overflow-hidden border-2 border-primary/20 shadow-lg shrink-0 group-hover:scale-[1.05] transition-transform duration-700 cursor-pointer aspect-video"
+                        className="h-24 w-40 md:h-28 md:w-44 rounded-xl overflow-hidden border-2 border-primary/20 shadow-lg shrink-0 group-hover:scale-[1.05] transition-transform duration-700 cursor-pointer aspect-video"
                         onClick={(e) => {
                             e.stopPropagation();
                             if (onEnlargeImage) onEnlargeImage(adData.thumbnailUrl, adData.adName);
@@ -82,28 +82,28 @@ export default function AdDetailTabs({ adData, benchmark, onClose, onEnlargeImag
 
             {/* Tabbed Navigation Content */}
             <Tabs defaultValue="performance" className="w-full" onValueChange={onTabChange}>
-                <TabsList className="w-full h-auto p-1 bg-white/50 dark:bg-card/50 backdrop-blur-xl border border-border rounded-md mb-6 md:mb-8 flex flex-nowrap justify-between gap-0.5 overflow-hidden">
+                <TabsList className="w-full h-auto p-1 bg-white/50 dark:bg-card/50 backdrop-blur-xl border border-border rounded-xl mb-6 md:mb-8 flex flex-nowrap justify-between gap-0.5 overflow-hidden">
                     <TabsTrigger
                         value="performance"
-                        className="flex-1 min-w-0 flex justify-center items-center gap-1.5 px-1 py-2 md:px-2 md:py-2.5 rounded-[0.85rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg shadow-primary/30 transition-all font-black tracking-tight text-[10px] md:text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
+                        className="flex-1 min-w-0 flex justify-center items-center gap-1.5 px-1 py-2 md:px-2 md:py-2.5 rounded-lg cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg shadow-primary/30 transition-all font-black tracking-tight text-[10px] md:text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
                     >
                         <Activity className="h-3 w-3 flex-shrink-0" /> <span className="truncate block">Performance</span>
                     </TabsTrigger>
                     <TabsTrigger
                         value="footprint"
-                        className="flex-1 min-w-0 flex justify-center items-center gap-1.5 px-1 py-2 md:px-2 md:py-2.5 rounded-[0.85rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg shadow-primary/30 transition-all font-black tracking-tight text-[10px] md:text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
+                        className="flex-1 min-w-0 flex justify-center items-center gap-1.5 px-1 py-2 md:px-2 md:py-2.5 rounded-lg cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg shadow-primary/30 transition-all font-black tracking-tight text-[10px] md:text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
                     >
                         <PieChart className="h-3 w-3 flex-shrink-0" /> <span className="truncate block">Design footprint</span>
                     </TabsTrigger>
                     <TabsTrigger
                         value="intelligence"
-                        className="flex-1 min-w-0 flex justify-center items-center gap-1.5 px-1 py-2 md:px-2 md:py-2.5 rounded-[0.85rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg shadow-primary/30 transition-all font-black tracking-tight text-[10px] md:text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
+                        className="flex-1 min-w-0 flex justify-center items-center gap-1.5 px-1 py-2 md:px-2 md:py-2.5 rounded-lg cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg shadow-primary/30 transition-all font-black tracking-tight text-[10px] md:text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
                     >
                         <Zap className="h-3 w-3 flex-shrink-0" /> <span className="truncate block">Creative intelligence</span>
                     </TabsTrigger>
                     <TabsTrigger
                         value="insights"
-                        className="flex-1 min-w-0 flex justify-center items-center gap-1.5 px-1 py-2 md:px-2 md:py-2.5 rounded-[0.85rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg shadow-primary/30 transition-all font-black tracking-tight text-[10px] md:text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
+                        className="flex-1 min-w-0 flex justify-center items-center gap-1.5 px-1 py-2 md:px-2 md:py-2.5 rounded-lg cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg shadow-primary/30 transition-all font-black tracking-tight text-[10px] md:text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
                     >
                         <Sparkles className="h-3 w-3 flex-shrink-0" /> <span className="truncate block">AI insights</span>
                     </TabsTrigger>
@@ -121,7 +121,7 @@ export default function AdDetailTabs({ adData, benchmark, onClose, onEnlargeImag
                 </TabsContent>
 
                 <TabsContent value="footprint" className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <Card className="p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-md relative overflow-hidden group">
+                    <Card className="p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                             <PieChart className="h-32 w-32" />
                         </div>

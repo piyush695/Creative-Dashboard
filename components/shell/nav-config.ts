@@ -1,14 +1,12 @@
 import {
   LayoutDashboard,
   Sparkles,
-  Clock,
   Bookmark,
   Settings,
   User,
   type LucideIcon,
 } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
-import { MetaLogo, GoogleLogo, AdRollLogo } from "@/components/icons/platforms";
 
 type IconLike = LucideIcon | ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
 
@@ -24,21 +22,21 @@ export type NavSection = {
   items: NavItem[];
 };
 
+// Standalone primary items rendered above the grouped sections. These are
+// always visible and never tucked inside a collapsible group — Overview is the
+// dashboard's home and must stay a first-class navigation target.
+export const TOP_NAV: NavItem[] = [
+  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+];
+
+// The "Analyze" section is rendered dynamically from the globally-enabled
+// platforms (see PlatformsProvider + sidebar.tsx), so it is intentionally NOT
+// listed here. Only static sections live in PRIMARY_NAV.
 export const PRIMARY_NAV: NavSection[] = [
   {
-    label: "Analyze",
-    items: [
-      { label: "Overview", href: "/", icon: LayoutDashboard },
-      { label: "Meta Ads", href: "/legacy?platform=meta", icon: MetaLogo },
-      { label: "Google Ads", href: "/legacy?platform=google", icon: GoogleLogo },
-      { label: "AdRoll", href: "/legacy?platform=adroll", icon: AdRollLogo },
-    ],
-  },
-  {
-    label: "Create",
+    label: "Creative Studio",
     items: [
       { label: "Studio", href: "/studio", icon: Sparkles },
-      { label: "History", href: "/history", icon: Clock },
       { label: "Saved", href: "/saved", icon: Bookmark },
     ],
   },

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchAds as fetchGoogleAds, fetchCampaigns as fetchGoogleCampaigns, fetchAdAssets } from "@/lib/realtime-services/googleAdsService";
 import { analyzeAd } from "@/lib/realtime-services/claudeAnalyzer";
 import { connectDB, saveAnalysis } from "@/lib/realtime-services/mongoService";
+import { saveMetaAnalysis } from "@/lib/realtime-services/saveMetaAnalysis";
+import { enrichAndSaveForAd } from "@/lib/realtime-services/metaInsightsEnrich";
 import clientPromise from "@/lib/mongodb-client";
 import fs from "fs";
 
@@ -259,34 +261,104 @@ export async function POST(req: NextRequest, { params }: { params: any }) {
 
         logDebug(`POST ${path}`);
 
-        // AdRoll ad analysis: POST /api/realtime/ads/:adId/analyze
+        // Ad analysis (platform-aware): POST /api/realtime/ads/:adId/analyze
+        // Body: { adData / ad, platform?: 'meta' | 'adroll' | 'google' }
+        // For platform='meta', writes to creative_data via saveMetaAnalysis.
+        // For everything else, falls back to legacy saveAnalysis (google_data).
         if (slug.length === 3 && slug[0] === "ads" && slug[2] === "analyze") {
             const adId = slug[1];
             const body = await req.json();
             const adData = body.adData || body.ad;
+            const platform = body.platform || adData?.platform || "adroll";
 
             if (!adData) {
                 return jsonResponse({ success: false, error: "Missing ad data" }, 400);
             }
 
-            // Use the thumbnail URL for image analysis (AdRoll has images)
-            const imageUrl = adData.thumbnailUrl || adData.src || null;
+            // Use the thumbnail URL for image analysis
+            const imageUrl = adData.thumbnailUrl || adData.imageUrl || adData.src || null;
 
-            logDebug(`Analyzing AdRoll ad: ${adId} | image: ${imageUrl}`);
+            logDebug(`Analyzing ${platform.toUpperCase()} ad: ${adId} | image: ${imageUrl ? "yes" : "no"}`);
 
-            await connectDB();
-
-            // Run AI analysis via Claude
+            // Run AI analysis via Claude (v2 prop-firm-aware analyzer)
             const analysis = await analyzeAd(
-                { ...adData, platform: adData.platform || "adroll" },
+                { ...adData, platform },
                 imageUrl
             );
 
-            // Save to MongoDB
+            // Save to the RIGHT collection based on platform
             try {
-                await saveAnalysis({ ...analysis, adId: adData.adId || adId });
+                if (platform === "meta") {
+                    await saveMetaAnalysis(adData.adId || adId, analysis);
+                } else {
+                    await connectDB();
+                    await saveAnalysis({ ...analysis, adId: adData.adId || adId });
+                }
             } catch (saveErr: any) {
                 logDebug(`Warning: could not save analysis: ${saveErr.message}`);
+            }
+
+            return jsonResponse({ success: true, data: { analysis } });
+        }
+
+        // Enrich a Meta ad with the latest Phase-2 metrics from Meta Insights API.
+        // POST /api/realtime/ads/:adId/enrich
+        // Pulls outbound_clicks, link_ctr, purchase_actions, ROAS rankings, video
+        // retention, etc., and persists onto the creative_data doc. The next
+        // Re-analyze call then has these fields available for stage diagnosis.
+        if (slug.length === 3 && slug[0] === "ads" && slug[2] === "enrich") {
+            const adId = slug[1];
+            logDebug(`Enriching Meta ad: ${adId} (Phase-2 metrics from Insights API)`);
+
+            try {
+                const enriched = await enrichAndSaveForAd(adId);
+                if (!enriched) {
+                    return jsonResponse({
+                        success: false,
+                        error: `Meta Insights API returned no data for ad ${adId} (could be a token issue, an ad with no impressions, or invalid adId)`,
+                    }, 502);
+                }
+                return jsonResponse({ success: true, data: { enriched } });
+            } catch (err: any) {
+                logDebug(`Enrich failed for ${adId}: ${err.message}`);
+                return jsonResponse({
+                    success: false,
+                    error: err?.message || "Enrich call failed unexpectedly",
+                }, 500);
+            }
+        }
+
+        // Re-analyze an EXISTING Meta ad by adId (fetches from creative_data,
+        // re-runs the v2 analyzer, saves back). No client-side ad payload needed.
+        // POST /api/realtime/ads/:adId/reanalyze
+        if (slug.length === 3 && slug[0] === "ads" && slug[2] === "reanalyze") {
+            const adId = slug[1];
+
+            const client = await clientPromise;
+            const db = client.db(process.env.MONGODB_DB || "reddit_data");
+            const adDoc: any = await db.collection("creative_data").findOne({ adId: String(adId) });
+
+            if (!adDoc) {
+                return jsonResponse({ success: false, error: `Ad ${adId} not found in creative_data` }, 404);
+            }
+
+            const imageUrl = adDoc.thumbnailUrl || adDoc.imageUrl || adDoc.src || null;
+            logDebug(`Re-analyzing META ad: ${adId} (v2 prompt) | image: ${imageUrl ? "yes" : "no"}`);
+
+            const analysis = await analyzeAd(
+                { ...adDoc, platform: "meta" },
+                imageUrl
+            );
+
+            try {
+                await saveMetaAnalysis(adId, analysis);
+            } catch (saveErr: any) {
+                logDebug(`Warning: re-analysis save failed: ${saveErr.message}`);
+                return jsonResponse({
+                    success: false,
+                    error: `Analysis ran but save failed: ${saveErr.message}`,
+                    data: { analysis },
+                }, 500);
             }
 
             return jsonResponse({ success: true, data: { analysis } });

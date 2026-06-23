@@ -117,7 +117,7 @@ function ImagePreviewModal({
       >
         <button
           onClick={onClose}
-          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-md bg-background/80 text-foreground transition-colors hover:bg-background"
+          className="absolute right-3 top-3 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-background/80 text-foreground transition-colors hover:bg-background"
           aria-label="Close preview"
         >
           <X className="h-4 w-4" />
@@ -126,7 +126,7 @@ function ImagePreviewModal({
           {url && <img src={url} alt={title} className="max-h-[65vh] max-w-full object-contain" />}
         </div>
         <div className="border-t border-border p-4">
-          <h4 className="line-clamp-2 break-words text-sm font-medium">{title}</h4>
+          <h3 className="line-clamp-2 break-words text-sm font-medium">{title}</h3>
         </div>
       </div>
     </div>,
@@ -213,39 +213,52 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col">
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">History</h1>
+          <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">History</h2>
           <p className="text-sm text-muted-foreground">
             Every creative you've generated, newest first.
             {totalItems > 0 && <span className="ml-1 text-foreground">{totalItems} total</span>}
           </p>
         </div>
-        <div className="relative w-full md:w-[280px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search history…"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            className="h-9 pl-8 pr-8 text-sm"
-          />
-          {inputValue && !isLoading && (
+        <div className="flex w-full items-center gap-2 md:w-auto">
+          <div className="relative w-full md:w-[280px]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search history…"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="h-9 pl-9 pr-9 text-sm"
+            />
+            {inputValue && !isLoading && (
+              <button
+                onClick={() => {
+                  setInputValue("");
+                  setSearchQuery("");
+                }}
+                className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {isLoading && inputValue && (
+              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+            )}
+          </div>
+          {onClose && (
             <button
-              onClick={() => {
-                setInputValue("");
-                setSearchQuery("");
-              }}
-              className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
-              aria-label="Clear search"
+              type="button"
+              onClick={onClose}
+              className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-muted/40 px-3 text-sm font-semibold text-muted-foreground transition-all hover:bg-muted/60 hover:text-foreground cursor-pointer"
+              aria-label="Back"
             >
-              <X className="h-3 w-3" />
+              <ChevronLeft className="h-4 w-4" />
+              Back
             </button>
-          )}
-          {isLoading && inputValue && (
-            <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
           )}
         </div>
       </div>
@@ -264,10 +277,10 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
         />
       ) : (
         <>
-          {/* Desktop table */}
-          <div className="hidden flex-1 overflow-y-auto rounded-md border border-border bg-card md:block">
+          {/* Desktop table — no inner scroll; the page/panel scrolls as one */}
+          <div className="card-premium hidden rounded-xl md:block">
             <table className="w-full text-left">
-              <thead className="sticky top-0 z-10 border-b border-border bg-muted/40 backdrop-blur">
+              <thead className="border-b border-border bg-muted/40">
                 <tr>
                   <Th className="w-24">Preview</Th>
                   <Th>Headline</Th>
@@ -290,7 +303,7 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                           const url = entry.result?.imageUrl || entry.imageUrl || "";
                           if (url) setPreviewImagePopup({ url, title: entry.headline || "Creative" });
                         }}
-                        className="relative block h-14 w-14 overflow-hidden rounded-md border border-border bg-muted transition-transform hover:scale-[1.02]"
+                        className="relative block h-14 w-14 cursor-pointer overflow-hidden rounded-md border border-border bg-muted transition-transform hover:scale-[1.02]"
                       >
                         <HistoryThumbnail
                           creativeId={entry.creativeId}
@@ -300,14 +313,14 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
-                        <h4 className="line-clamp-1 text-sm font-medium">
+                        <h3 className="line-clamp-1 text-sm font-medium text-foreground">
                           {entry.headline || "Untitled creative"}
-                        </h4>
+                        </h3>
                         <div className="flex items-center gap-1.5">
-                          <span className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                          <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                             {(entry.creativeId || "").slice(-8) || "—"}
                           </span>
-                          <span className="rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+                          <span className="rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-primary">
                             {getTabLabel(entry.tab)}
                           </span>
                         </div>
@@ -324,8 +337,8 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <Clock className="h-3 w-3 text-muted-foreground" />
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                         <span>
                           {getEntryDate(entry)
                             ? new Date(getEntryDate(entry)!).toLocaleDateString([], {
@@ -341,11 +354,11 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 gap-1.5"
+                        className="h-8 cursor-pointer gap-1.5"
                         onClick={() => handleRegenerate(entry)}
                         title="Regenerate with this prompt"
                       >
-                        <RefreshCcw className="h-3 w-3" />
+                        <RefreshCcw className="h-3.5 w-3.5" />
                         Regenerate
                       </Button>
                     </td>
@@ -368,7 +381,7 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                     const url = entry.result?.imageUrl || entry.imageUrl || "";
                     if (url) setPreviewImagePopup({ url, title: entry.headline || "Creative" });
                   }}
-                  className="flex items-center gap-3 text-left"
+                  className="flex cursor-pointer items-center gap-3 text-left"
                 >
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
                     <HistoryThumbnail
@@ -377,7 +390,7 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                     />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="line-clamp-1 text-sm font-medium">{entry.headline || "Untitled"}</h4>
+                    <h3 className="line-clamp-1 text-sm font-medium text-foreground">{entry.headline || "Untitled"}</h3>
                     <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                       {entry.prompt || "No prompt"}
                     </p>
@@ -389,10 +402,10 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 w-full gap-1.5"
+                  className="h-8 w-full cursor-pointer gap-1.5"
                   onClick={() => handleRegenerate(entry)}
                 >
-                  <RefreshCcw className="h-3 w-3" />
+                  <RefreshCcw className="h-3.5 w-3.5" />
                   Regenerate
                 </Button>
               </div>
@@ -427,7 +440,7 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                       type="button"
                       onClick={() => setPage(n)}
                       className={cn(
-                        "h-8 min-w-8 rounded-md px-2 text-xs font-medium transition-colors",
+                        "h-8 min-w-8 cursor-pointer rounded-md px-2 text-xs font-medium transition-colors",
                         page === n
                           ? "bg-primary text-primary-foreground"
                           : "border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -504,9 +517,9 @@ function EmptyState({
   onExploreStudio: () => void;
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-md border border-dashed border-border bg-background/40 p-12 text-center">
-      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
-        <Clock className="h-5 w-5 text-muted-foreground" />
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border bg-background/40 p-10 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-muted">
+        <Clock className="h-6 w-6 text-muted-foreground" />
       </div>
       <div className="space-y-1">
         <h3 className="text-base font-semibold tracking-tight">
@@ -523,12 +536,12 @@ function EmptyState({
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <Button size="sm" className="h-9 gap-1.5" onClick={onExploreStudio}>
-          <Sparkles className="h-3.5 w-3.5" />
+        <Button size="sm" className="h-9 cursor-pointer gap-1.5" onClick={onExploreStudio}>
+          <Sparkles className="h-4 w-4" />
           Open Studio
         </Button>
         {searchQuery && (
-          <Button variant="outline" size="sm" className="h-9" onClick={onClear}>
+          <Button variant="outline" size="sm" className="h-9 cursor-pointer" onClick={onClear}>
             Clear search
           </Button>
         )}

@@ -24,8 +24,16 @@ export const authConfig = {
             return isLoggedIn
         },
         async signIn({ user, account, profile }) {
-            if (user.email && !user.email.match(/@holaprime\.com$/)) {
-                return false // Reject sign-in for invalid domains
+            // Gate access to the HolaPrime workspace domain. Normalize casing and
+            // whitespace first — Google may return the email/profile with mixed
+            // case, and a case-sensitive match wrongly rejected authorized
+            // @holaprime.com accounts on their first OAuth sign-in. Fall back to
+            // the OAuth profile email when the mapped user.email isn't populated.
+            const email = (user?.email || (profile as any)?.email || "")
+                .trim()
+                .toLowerCase()
+            if (email && !email.endsWith("@holaprime.com")) {
+                return false // Reject sign-in for non-HolaPrime domains
             }
             return true
         },

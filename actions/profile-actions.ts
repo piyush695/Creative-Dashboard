@@ -10,6 +10,13 @@ export async function updateProfile(data: { name: string; email: string }) {
         return { error: "Not authenticated" }
     }
 
+    // Google/OAuth accounts are managed by the identity provider. Profile edits
+    // are restricted to credentials-based accounts. Enforce server-side so the
+    // client-side restriction can't be bypassed.
+    if ((session.user as any).provider === "google") {
+        return { error: "Profile is managed by your Google account and cannot be edited here." }
+    }
+
     const { name } = data
 
     if (!name || name.trim().length === 0) {

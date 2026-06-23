@@ -215,6 +215,15 @@ export async function updatePassword(email: string, newPassword: string) {
     try {
         const client = await clientPromise
         const db = client.db(process.env.MONGODB_DB || "reddit_data")
+
+        // Only credentials-based accounts (which already have a local password)
+        // may change their password. Google/OAuth accounts have none and are
+        // managed by the provider — refuse so we never create one for them.
+        const user = await db.collection("users").findOne({ email })
+        if (!user || !user.password) {
+            return { success: false, error: "Password is managed by your Google account." }
+        }
+
         const hashedPassword = await bcrypt.hash(newPassword, 10)
         await db.collection("users").updateOne(
             { email },

@@ -12,7 +12,6 @@ import {
   Loader2,
   ChevronsLeft,
   ChevronsRight,
-  ChevronRight,
   Settings,
   LogOut,
   User,
@@ -109,12 +108,13 @@ import CreativeStudioView from "@/components/creative-studio-view";
 import SavedCreativesView from "@/components/saved-creatives-view";
 import CreativeHistoryView from "@/components/creative-history-view";
 import AnalysisSidebar from "@/components/analysis-sidebar";
-import Footer from "@/components/footer";
 import { AdData, PlatformType } from "@/lib/types";
 import { ConnectPlatformDialog } from "@/components/connect-platform-dialog";
+import { usePlatforms } from "@/components/providers/platforms-provider";
+import { isKnownPlatform } from "@/lib/platforms";
 import { AddAdDialog } from "@/components/add-ad-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { fetchAdsFromMongo, fetchGoogleAdsFromMongo } from "@/actions/ads";
+import { fetchAdsFromMongo, fetchGoogleAdsFromMongo, fetchAdDetailById } from "@/actions/ads";
 import ScoreRadarChart from "@/components/score-radar-chart";
 import { EnlargedImageModal } from "@/components/enlarged-image-modal";
 import GoogleAdsView from "@/components/google-ads-view";
@@ -140,6 +140,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DashboardBreadcrumb, computeBreadcrumb } from "@/components/dashboard-breadcrumb";
 
 import {
   updateProfile,
@@ -149,12 +150,27 @@ import {
 } from "@/actions/profile-actions";
 
 const ACCOUNT_LIST = [
-  // Meta accounts
+  // Meta accounts — all 19 visible to the token (per check-meta-api-access.js probe)
   { id: "25613137998288459", name: "HP FOREX - EU", platform: "meta" },
   { id: "1333109771382157", name: "HP FOREX - LATAM", platform: "meta" },
   { id: "1002675181794911", name: "HP FOREX - UK", platform: "meta" },
   { id: "1507386856908357", name: "HP FOREX - USA + CA", platform: "meta" },
   { id: "1024147486590417", name: "HP FUTURES - USA + CA", platform: "meta" },
+  { id: "1470715300596847", name: "HP Affiliates", platform: "meta" },
+  { id: "1080442027052682", name: "Hola Prime - Philippines", platform: "meta" },
+  { id: "898790545438755",  name: "HP-Testing", platform: "meta" },
+  { id: "1685822631995541", name: "05_Africa", platform: "meta" },
+  { id: "1570253877213015", name: "Hola Prime Zocket Manager", platform: "meta" },
+  { id: "1252130839875965", name: "Hola Prime US Zocket Manager", platform: "meta" },
+  { id: "739741928947398",  name: "Hola Prime X Zocket Manager", platform: "meta" },
+  { id: "1068261556366484", name: "Hola Prime (Read-Only) #1", platform: "meta" },
+  { id: "1249213144086506", name: "Hola Prime (Read-Only) #2", platform: "meta" },
+  { id: "1955053831574713", name: "Himanshu Chandel Trader", platform: "meta" },
+  // Disabled / paused accounts (account_status === 2) — still keep them so historical ads show
+  { id: "953858236647175",  name: "Hola Prime - NON US (disabled)", platform: "meta" },
+  { id: "1666802993879148", name: "Hola Prime - US (disabled)", platform: "meta" },
+  { id: "1209058433960342", name: "01_HP_NON-US (disabled)", platform: "meta" },
+  { id: "2190288381392813", name: "02_UK (disabled)", platform: "meta" },
   // Google Ads accounts
   { id: "7791434558", name: "HP Google - Main", platform: "google" },
 ];
@@ -179,6 +195,7 @@ function DashboardContent() {
   const { toast } = useToast();
   const { data: session, status } = useSession();
   const { setTheme, theme, resolvedTheme } = useTheme();
+  const { enabledIds, loading: platformsLoading } = usePlatforms();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -213,6 +230,22 @@ function DashboardContent() {
   const [recentHistory, setRecentHistory] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlatform, setSelectedPlatformState] = useState<string>("home");
+
+  // If the URL points at a known platform that an admin has disabled globally,
+  // send the user back to the overview — disabled platforms must not be usable
+  // anywhere, including via a direct/bookmarked link.
+  useEffect(() => {
+    if (platformsLoading) return;
+    if (
+      selectedPlatform &&
+      selectedPlatform !== "home" &&
+      selectedPlatform !== "all" &&
+      isKnownPlatform(selectedPlatform) &&
+      !enabledIds.includes(selectedPlatform)
+    ) {
+      router.replace("/", { scroll: false });
+    }
+  }, [selectedPlatform, enabledIds, platformsLoading, router]);
 
   useEffect(() => {
     // Land on platform's main view on mount/refresh per user request
@@ -254,6 +287,10 @@ function DashboardContent() {
 
     const accountId = searchParams.get("account");
     setSelectedAccountIdState(accountId || "all");
+
+    // Pick up the global search query from the topbar (?q=…)
+    const qParam = searchParams.get("q") || "";
+    setSearchQuery(qParam);
 
     const view = searchParams.get("view");
     if (view === "library") {
@@ -343,6 +380,20 @@ function DashboardContent() {
     },
     [updateUrl],
   );
+
+  // Canonical "return to a platform's root/main page" — the single reusable
+  // handler behind every breadcrumb platform segment. Works for any platform:
+  // clears nested URL sub-state (selected ad, account, overlays) and local
+  // search, then remounts the platform view so its internal tab/filters reset.
+  const goToPlatformRoot = useCallback(
+    (platform: string) => {
+      setSelectedPlatform(platform);
+      setSearchQuery("");
+      setSelectedAccountId("all");
+      setPlatformResetKey((k) => k + 1);
+    },
+    [setSelectedPlatform, setSelectedAccountId],
+  );
   const setActiveView = useCallback(
     (val: ("dashboard" | "ai-studio" | "saved-creatives") | ((prev: "dashboard" | "ai-studio" | "saved-creatives") => "dashboard" | "ai-studio" | "saved-creatives")) => {
       const v = searchParams.get("view");
@@ -407,6 +458,9 @@ function DashboardContent() {
   const [isReducedMotionEnabled, setIsReducedMotionEnabled] = useState(false);
   const [isAlertSystemEnabled, setIsAlertSystemEnabled] = useState(false);
   const [isAddAdDialogOpen, setIsAddAdDialogOpen] = useState(false);
+  // Bumped when the user clicks the platform breadcrumb segment so the active
+  // platform view remounts back to a clean main state (default tab, no filters).
+  const [platformResetKey, setPlatformResetKey] = useState(0);
   const [isAddingPlatform, setIsAddingPlatform] = useState(false);
   const [platformSearchQuery, setPlatformSearchQuery] = useState("");
   const [isPlatformModalReady, setIsPlatformModalReady] = useState(false);
@@ -675,7 +729,10 @@ function DashboardContent() {
     return filtered.sort((a, b) => a.name.localeCompare(b.name));
   }, [selectedPlatform]);
 
-  // Calculate ad counts per account (platform-aware)
+  // Calculate ad counts per account (platform-aware).
+  // We DON'T filter out 0-count accounts — they appear in the switcher with a "0"
+  // badge so users can see which accounts exist but haven't been synced yet.
+  // Accounts WITH ads sort first; everything is then alpha-sorted within each group.
   const accountStats = useMemo(() => {
     const platformAds =
       selectedPlatform === "all"
@@ -693,7 +750,13 @@ function DashboardContent() {
         ...account,
         count: platformAds.filter((ad) => ad.adAccountId === account.id).length,
       }))
-      .filter((acc) => acc.count > 0);
+      .sort((a, b) => {
+        // Populated accounts first (desc by count), then empty accounts (alpha)
+        if (a.count > 0 && b.count === 0) return -1;
+        if (a.count === 0 && b.count > 0) return 1;
+        if (a.count !== b.count) return b.count - a.count;
+        return a.name.localeCompare(b.name);
+      });
   }, [ads, accounts, selectedPlatform]);
 
   // 2. Load data from MongoDB with real-time polling
@@ -702,22 +765,39 @@ function DashboardContent() {
     if (isManual) setIsSyncing(true);
 
     try {
-      const [metaData, gData] = await Promise.all([
-        fetchAdsFromMongo(),
-        fetchGoogleAdsFromMongo(),
-      ]);
+      const prevCount = ads.length;
+      const hadData = prevCount > 0;
 
-      const data = [...metaData, ...gData];
+      // Google catalog is tiny — fetch once and reuse across both phases.
+      const gData = await fetchGoogleAdsFromMongo();
 
-      const oldCount = ads.length;
+      // ── Phase 1: instant first paint ──
+      // Ship only the scored creatives (a handful of docs) so the grid is
+      // interactive immediately instead of waiting on the full ~28K-row
+      // catalog. Skipped on manual refresh when data already exists, to
+      // avoid a visible shrink/expand flicker in the grid.
+      if (!hadData) {
+        const fastMeta = await fetchAdsFromMongo({ analyzedOnly: true });
+        const fast = [...fastMeta, ...gData];
+        setAds(fast);
+        setGoogleAds(fast.filter(ad => ad.platform === 'google' || ad.platform === 'youtube'));
+        setLastRefreshTime(new Date());
+        setIsLoading(false);
+      }
+
+      // ── Phase 2: full catalog ──
+      // Loads in the background relative to first paint. Keeps search,
+      // per-account browsing and count badges accurate across all ads.
+      const fullMeta = await fetchAdsFromMongo();
+      const data = [...fullMeta, ...gData];
       const newCount = data.length;
 
-      if (oldCount > 0 && newCount > oldCount) {
-        setNewEntriesCount(newCount - oldCount);
+      if (prevCount > 0 && newCount > prevCount) {
+        setNewEntriesCount(newCount - prevCount);
         if (isManual) {
           toast({
             title: "Scan Complete",
-            description: `Found ${newCount - oldCount} new entries since last check.`,
+            description: `Found ${newCount - prevCount} new entries since last check.`,
             duration: 5000,
           });
         }
@@ -973,7 +1053,35 @@ function DashboardContent() {
     updateHistory(id);
   };
 
-  const selectedAdData = ads.find((ad) => ad.id === selectedAdId) || null;
+  const baseSelectedAd = ads.find((ad) => ad.id === selectedAdId) || null;
+  const baseSelectedPlatform = baseSelectedAd?.platform;
+
+  // The list query drops heavy analysis fields for speed. When an ad is opened,
+  // lazily fetch its full document so the detail panel hydrates on demand. The
+  // panel renders instantly from the light object and fills in once this resolves.
+  const [hydratedDetail, setHydratedDetail] = useState<AdData | null>(null);
+  useEffect(() => {
+    if (!selectedAdId || !baseSelectedAd) {
+      setHydratedDetail(null);
+      return;
+    }
+    let cancelled = false;
+    fetchAdDetailById(selectedAdId, baseSelectedPlatform)
+      .then((full) => {
+        if (!cancelled && full) setHydratedDetail(full);
+      })
+      .catch(() => { });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAdId, baseSelectedPlatform]);
+
+  const selectedAdData = baseSelectedAd
+    ? hydratedDetail && hydratedDetail.id === selectedAdId
+      ? { ...baseSelectedAd, ...hydratedDetail }
+      : baseSelectedAd
+    : null;
 
   const recentAds = recentHistory
     .map((id) => ads.find((ad) => ad.id === id))
@@ -1033,6 +1141,29 @@ function DashboardContent() {
     };
   }, [displayedAds]);
 
+  // ── Universal breadcrumb ─────────────────────────────────────────────────
+  // All the state the breadcrumb needs, collected in one place. Driven entirely
+  // by `PLATFORM_META`, so every current and future platform inherits the
+  // breadcrumb + "click platform → its root page" behavior with no extra code.
+  const breadcrumbState = {
+    selectedPlatform,
+    platformMeta: PLATFORM_META,
+    isProfileOpen,
+    isSettingsOpen,
+    isGuideOpen,
+    isViewAllAdsOpen,
+    activeView,
+    isStudioHistoryOpen,
+    selectedAdId,
+    selectedAccountId,
+    accountStats,
+    totalMetaAds: ads.filter((a) => a.platform === "meta" || !a.platform).length,
+    selectedRealtimeCampaign,
+    realtimeCampaigns,
+  };
+  // Bare dashboard home — used to collapse the whole breadcrumb bar.
+  const dashboardIsCurrent = computeBreadcrumb(breadcrumbState).isRoot;
+
   return (
     <div className="flex h-full w-full flex-col bg-background">
       <div className="flex flex-1 overflow-hidden">
@@ -1040,165 +1171,24 @@ function DashboardContent() {
           <div
             className={cn(
               "flex items-center justify-between h-10 md:h-11 py-1 border-b border-border bg-background/50 dark:bg-black/40 backdrop-blur-xl z-10 transition-all duration-300",
-              "px-4 md:px-6"
+              "px-4 md:px-6",
+              // On the bare Dashboard home the breadcrumb is hidden and there are no
+              // bar actions — collapse the whole row so it leaves no empty strip.
+              dashboardIsCurrent && "hidden"
             )}
           >
             <div className="flex items-center gap-2 md:gap-4 min-w-0 overflow-hidden">
 
-              {/* Mobile Title - Breadcrumbs Style */}
-              <div className="flex items-center md:hidden min-w-0 flex-1 gap-1.5 h-full">
-                <span className="text-[11px] text-muted-foreground flex-shrink-0 leading-none">
-                  Dashboard
-                </span>
-                {((selectedPlatform !== "all" ||
-                  connectedPlatforms.length <= 1) && 
-                  !isProfileOpen &&
-                  !isSettingsOpen &&
-                  !isGuideOpen &&
-                  activeView !== "ai-studio" && 
-                  activeView !== "saved-creatives") && (
-                    <>
-                      <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
-                      <span className="text-[11px] text-muted-foreground flex-shrink-0 leading-none whitespace-nowrap uppercase tracking-wider">
-                        {selectedPlatform === "all"
-                          ? "All Platforms"
-                          : PLATFORM_META[selectedPlatform]?.label ||
-                          selectedPlatform}
-                      </span>
-                    </>
-                  )}
-                {(isProfileOpen ||
-                  isSettingsOpen ||
-                  isGuideOpen ||
-                  isViewAllAdsOpen ||
-                  activeView === "ai-studio" ||
-                  activeView === "saved-creatives" ||
-                  selectedPlatform === "meta" ||
-                  selectedPlatform === "google" ||
-                  selectedPlatform === "adroll" ||
-                  selectedPlatform === "all") && (
-                    <>
-                      <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
-                      <span className="text-[12px] font-medium text-foreground whitespace-nowrap leading-none truncate min-w-0">
-                        {isProfileOpen
-                          ? "Profile"
-                          : isSettingsOpen
-                            ? "Settings"
-                            : isGuideOpen
-                              ? "Guide"
-                              : isViewAllAdsOpen
-                                ? "All Ads"
-                                : activeView === "ai-studio"
-                                  ? "AI Studio"
-                                  : activeView === "saved-creatives"
-                                    ? "Creative Vault"
-                                    : (selectedPlatform === "meta" || selectedPlatform === "all")
-                                      ? selectedAccountId === "all"
-                                        ? "All Accounts"
-                                        : accounts.find(
-                                          (a) => a.id === selectedAccountId,
-                                        )?.name || "All Accounts"
-                                      : (selectedPlatform === "google" || selectedPlatform === "adroll")
-                                        ? selectedRealtimeCampaign === "all"
-                                          ? "All Campaigns"
-                                          : realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.name ||
-                                          realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.campaignName ||
-                                          "Campaign"
-                                        : ""}
-                      </span>
-                    </>
-                  )}
-                {activeView === "ai-studio" && isStudioHistoryOpen && (
-                  <>
-                    <ChevronRight className="w-3 h-3 text-muted-foreground/30 flex-shrink-0 mx-px" />
-                    <span className="text-[11px] text-foreground whitespace-nowrap leading-none truncate min-w-0 uppercase tracking-wider">
-                      History
-                    </span>
-                  </>
-                )}
-              </div>
-
-              <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground/80 dark:text-muted-foreground pt-1 pb-1">
-                <LayoutDashboard className="h-3.5 w-3.5 text-muted-foreground/50" />
-                <span className="text-muted-foreground/40">/</span>
-                <span className="text-foreground">Dashboard</span>
-
-                {((selectedPlatform !== "all" ||
-                  connectedPlatforms.length <= 1) && 
-                  !isProfileOpen &&
-                  !isSettingsOpen &&
-                  !isGuideOpen &&
-                  activeView !== "ai-studio" && 
-                  activeView !== "saved-creatives" &&
-                  activeView !== "history") && (
-                    <>
-                      <span className="mx-1 text-muted-foreground/40">/</span>
-                      <span className="text-foreground uppercase tracking-widest text-[11px] opacity-90">
-                        {selectedPlatform === "home"
-                          ? "Home"
-                          : selectedPlatform === "all"
-                          ? "All Platforms"
-                          : PLATFORM_META[selectedPlatform]?.label ||
-                          selectedPlatform}
-                      </span>
-                    </>
-                  )}
-
-                {(isProfileOpen ||
-                  isSettingsOpen ||
-                  isGuideOpen ||
-                  isViewAllAdsOpen ||
-                  activeView === "ai-studio" ||
-                  activeView === "saved-creatives" ||
-                  activeView === "history" ||
-                  selectedPlatform === "meta" ||
-                  selectedPlatform === "google" ||
-                  selectedPlatform === "adroll" ||
-                  selectedPlatform === "all") && (
-                    <>
-                      <span className="mx-1 text-muted-foreground/40">/</span>
-                      <span className="truncate max-w-[150px] lg:max-w-none text-foreground opacity-100 text-[12px] font-medium">
-                        {isProfileOpen
-                          ? "Profile"
-                          : isSettingsOpen
-                            ? "Settings"
-                            : isGuideOpen
-                              ? "Guide"
-                              : isViewAllAdsOpen
-                                ? "All Ads"
-                                : activeView === "ai-studio"
-                                  ? "AI Studio"
-                                  : activeView === "saved-creatives"
-                                    ? "Creative Vault"
-                                    : activeView === "history"
-                                      ? "Generation History"
-                                      : selectedAdId
-                                      ? "Analysis"
-                                      : (selectedPlatform === "meta" || selectedPlatform === "all")
-                                        ? selectedAccountId === "all"
-                                          ? "All Accounts"
-                                          : accounts.find(
-                                            (a) => a.id === selectedAccountId,
-                                          )?.name || "All Accounts"
-                                        : (selectedPlatform === "google" || selectedPlatform === "adroll")
-                                          ? selectedRealtimeCampaign === "all"
-                                            ? "All Campaigns"
-                                            : realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.name ||
-                                            realtimeCampaigns.find(c => c.id === selectedRealtimeCampaign)?.campaignName ||
-                                            "Campaign"
-                                          : ""}
-                      </span>
-                    </>
-                  )}
-                {activeView === "ai-studio" && isStudioHistoryOpen && (
-                  <>
-                    <span className="mx-1 text-muted-foreground/40">/</span>
-                    <span className="truncate max-w-[150px] lg:max-w-none text-foreground opacity-100 text-[11px] uppercase tracking-wider">
-                      History
-                    </span>
-                  </>
-                )}
-              </div>
+              {/* Universal breadcrumb — Dashboard ▸ Platform ▸ Page. Every
+                  platform segment shortcuts straight to that platform's root
+                  page; new platforms inherit this automatically via PLATFORM_META.
+                  Self-hides on the bare dashboard home. */}
+              <DashboardBreadcrumb
+                {...breadcrumbState}
+                onGoHome={() => setSelectedPlatform("home")}
+                onGoToPlatformRoot={goToPlatformRoot}
+                onSelectAccount={(id) => setSelectedAccountId(id)}
+              />
             </div>
             <div className="flex items-center gap-2 flex-shrink-0 ml-1">
               {isGuideOpen ? (
@@ -1389,35 +1379,35 @@ function DashboardContent() {
                 >
                   {/* Decorative Elements */}
                   {/* Decorative Elements - Reduced for Mobile */}
-                  <div className="absolute -top-12 -right-12 w-48 h-48 bg-blue-500/10 rounded-full blur-[40px] md:blur-[80px] group-hover:bg-blue-500/20 transition-all duration-1000 pointer-events-none" />
-                  <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-indigo-500/10 rounded-full blur-[40px] md:blur-[80px] group-hover:bg-indigo-500/20 transition-all duration-1000 pointer-events-none" />
+                  <div className="absolute -top-12 -right-12 w-48 h-48 bg-sky-500/10 rounded-full blur-[40px] md:blur-[80px] group-hover:bg-sky-500/20 transition-all duration-1000 pointer-events-none" />
+                  <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-sky-500/10 rounded-full blur-[40px] md:blur-[80px] group-hover:bg-sky-500/20 transition-all duration-1000 pointer-events-none" />
 
                   <div className="relative z-10">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] md:text-xs font-medium uppercase tracking-wider border border-blue-200/50 dark:border-blue-500/20">
+                          <span className="px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 text-[9px] md:text-xs font-medium uppercase tracking-wider border border-sky-200/50 dark:border-sky-500/20">
                             Support Center
                           </span>
                         </div>
-                        <h2 className="text-2xl md:text-5xl font-semibold tracking-tight text-primary mb-1 drop-shadow-sm flex items-center gap-2">
+                        <h1 className="text-2xl md:text-5xl font-semibold tracking-tight text-primary mb-1 drop-shadow-sm flex items-center gap-2">
                           Hi,{" "}
                           <span className="text-foreground capitalize">
                             {session?.user?.name || "User"}!
                           </span>
-                        </h2>
-                        <h1 className="text-lg md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400 leading-tight">
-                          Dashboard Guidance
                         </h1>
+                        <h2 className="text-lg md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400 leading-tight">
+                          Dashboard Guidance
+                        </h2>
                         <p className="text-xs md:text-sm text-muted-foreground mt-1.5 max-w-2xl leading-relaxed">
                           Welcome to your Creative AI command center. Here's
                           everything you need to know to master the analyzer.
                         </p>
                       </div>
 
-                      <div className="w-full md:w-72 lg:w-80 p-4 rounded-[12px] bg-gradient-to-br from-blue-500/5 to-indigo-500/5 border border-blue-500/10 backdrop-blur-sm relative overflow-hidden group/prime">
+                      <div className="w-full md:w-72 lg:w-80 p-4 rounded-[12px] bg-gradient-to-br from-sky-500/5 to-sky-500/5 border border-sky-500/10 backdrop-blur-sm relative overflow-hidden group/prime">
                         <div className="absolute top-0 right-0 p-2 opacity-10 group-hover/prime:scale-110 transition-transform duration-500">
-                          <Sparkles className="w-8 h-8 text-blue-500" />
+                          <Sparkles className="w-8 h-8 text-sky-500" />
                         </div>
                         <div className="relative z-10">
                           <p className="text-[10px] text-muted-foreground dark:text-muted-foreground font-medium leading-relaxed">
@@ -1431,7 +1421,7 @@ function DashboardContent() {
                     <div className="grid gap-x-12 gap-y-6 md:gap-y-10 grid-cols-1 md:grid-cols-2">
                       <section className="space-y-4 group/item">
                         <div className="flex items-start gap-3 md:gap-4">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-blue-100 dark:border-blue-500/20">
+                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-sky-100 dark:border-sky-500/20">
                             <LayoutDashboard className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                           </div>
                           <div className="space-y-1">
@@ -1456,8 +1446,8 @@ function DashboardContent() {
 
                       <section className="space-y-4 group/item">
                         <div className="flex items-start gap-3 md:gap-4">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-indigo-100 dark:border-indigo-500/20">
-                            <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-indigo-500" />
+                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-[12px] bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:scale-105 transition-transform duration-300 border border-sky-100 dark:border-sky-500/20">
+                            <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-sky-500" />
                           </div>
                           <div className="space-y-1">
                             <h3 className="text-[15px] md:text-lg font-bold">
@@ -1664,7 +1654,7 @@ function DashboardContent() {
                           <Shield className="w-6 h-6 text-amber-600" />
                         </div>
                         <div className="space-y-2">
-                          <h3 className="text-lg font-black tracking-tight text-amber-600 dark:text-amber-500 uppercase text-[10px] tracking-widest">
+                          <h3 className="text-[11px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest">
                             Important Security Note
                           </h3>
                           <p className="text-sm font-bold text-foreground">
@@ -1690,7 +1680,7 @@ function DashboardContent() {
                     </section>
 
                     <div className="mt-8 md:mt-12 p-4 md:p-6 bg-muted/30 rounded-[12px] border border-dashed border-border dark:border-zinc-700 text-center relative overflow-hidden">
-                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-50" />
+                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-sky-500 via-sky-500 to-purple-500 opacity-50" />
                       <p className="text-[11px] md:text-sm font-medium italic text-muted-foreground leading-relaxed">
                         "Empowering your creative strategy with data-driven
                         intelligence.
@@ -1964,10 +1954,10 @@ function DashboardContent() {
                                           setForceShowOverview(false);
                                           updateHistory(ad.id);
                                         }}
-                                      className="bg-white/80 dark:bg-card/80 border border-border/60 dark:border-border rounded-md overflow-hidden hover:border-primary/50 transition-all group cursor-pointer shadow-sm hover:shadow-sm hover:-translate-y-1 duration-300"
+                                      className="card-premium hover-lift group cursor-pointer overflow-hidden rounded-xl"
                                     >
-                                      <div 
-                                        className="aspect-[16/9] w-full relative overflow-hidden bg-muted"
+                                      <div
+                                        className="aspect-[16/9] w-full relative overflow-hidden bg-gradient-subtle"
                                       >
                                         <img
                                           src={ad.thumbnailUrl}
@@ -1978,7 +1968,7 @@ function DashboardContent() {
                                               "/placeholder.svg";
                                           }}
                                         />
-                                        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[9px] font-black text-white uppercase tracking-wider border border-border opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md text-[9px] font-black text-white uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
                                           {account?.name}
                                         </div>
                                       </div>
@@ -1991,7 +1981,7 @@ function DashboardContent() {
                                             {ad.adId}
                                           </span>
                                         </div>
-                                        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-border">
+                                        <div className="flex items-center justify-between pt-2 border-t border-border">
                                           <div className="flex flex-col">
                                             <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
                                               Spend
@@ -2041,10 +2031,10 @@ function DashboardContent() {
                                         setForceShowOverview(false);
                                         updateHistory(ad.id);
                                       }}
-                                      className="flex items-start md:items-center gap-3 md:gap-6 p-3 md:p-4 bg-white/60 dark:bg-card/60 border border-zinc-100 dark:border-border rounded-md hover:border-primary/40 hover:bg-white dark:hover:bg-card transition-all group cursor-pointer shadow-sm hover:shadow-md"
+                                      className="card-premium flex items-start md:items-center gap-3 md:gap-6 p-3 md:p-4 rounded-xl group cursor-pointer"
                                     >
-                                      <div 
-                                        className="w-20 h-20 md:w-32 md:h-20 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50"
+                                      <div
+                                        className="w-20 h-20 md:w-32 md:h-20 rounded-xl overflow-hidden bg-gradient-subtle shrink-0 border border-border/50"
                                       >
                                         <img
                                           src={ad.thumbnailUrl}
@@ -2099,9 +2089,9 @@ function DashboardContent() {
                             )}
 
                             {discoveryViewMode === "table" && (
-                              <div className="bg-white/40 dark:bg-card/40 border border-zinc-100 dark:border-border rounded-md overflow-hidden shadow-sm">
+                              <div className="card-premium rounded-xl overflow-hidden">
                                 <Table>
-                                  <TableHeader className="bg-zinc-50/50 dark:bg-white/5">
+                                  <TableHeader className="bg-muted/50">
                                     <TableRow>
                                       <TableHead className="w-[100px] font-bold text-[10px] uppercase">
                                         Preview
@@ -2419,9 +2409,11 @@ function DashboardContent() {
                           }
                           activeAnalysis={activeAnalysis}
                           onTabChange={() => setActiveAnalysis(null)}
+                          onReanalyzed={() => loadData(false)}
                         />
                       ) : (
                         <MetaAdsView
+                          key={`meta-${platformResetKey}`}
                           metaAds={ads.filter(a => selectedPlatform === "meta" ? a.platform === "meta" || !a.platform : true)}
                           selectedAccountId={selectedAccountId}
                           searchQuery={searchQuery}
@@ -2464,9 +2456,11 @@ function DashboardContent() {
                         }
                         activeAnalysis={activeAnalysis}
                         onTabChange={() => setActiveAnalysis(null)}
+                        onReanalyzed={() => loadData(false)}
                       />
                     ) : (
                       <AdrollView
+                        key={`adroll-${platformResetKey}`}
                         adrollAds={ads.filter(a => a.platform === 'adroll')}
                         selectedAccountId={selectedAccountId}
                         searchQuery={searchQuery}
@@ -2506,6 +2500,7 @@ function DashboardContent() {
                       />
                     ) : (
                       <GoogleAdsView
+                        key={`google-${platformResetKey}`}
                         googleAds={googleAds}
                         selectedAccountId={selectedAccountId}
                         searchQuery={searchQuery}
@@ -2536,7 +2531,7 @@ function DashboardContent() {
                     <div className="flex-1 w-full flex flex-col items-center justify-center min-h-[400px] relative overflow-hidden rounded-[20px] md:rounded-[48px] border border-slate-200/80 dark:border-border bg-gradient-to-br from-white via-white to-slate-50/80 dark:from-zinc-950/50 dark:via-zinc-950/50 dark:to-zinc-950/50 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.08)] dark:shadow-sm transition-all duration-1000 group p-4 md:p-8">
                       {/* Dynamic Background Glows - Desktop Only */}
                       <div className="hidden md:block absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-primary/15 dark:bg-primary/20 rounded-full blur-[90px] animate-pulse" />
-                      <div className="hidden md:block absolute -bottom-[10%] -left-[5%] w-[40%] h-[40%] bg-indigo-500/10 dark:bg-indigo-500/10 rounded-full blur-[90px] animate-pulse delay-700" />
+                      <div className="hidden md:block absolute -bottom-[10%] -left-[5%] w-[40%] h-[40%] bg-sky-500/10 dark:bg-sky-500/10 rounded-full blur-[90px] animate-pulse delay-700" />
 
                       {/* Animated Content Grid */}
                       <div className="relative z-10 flex flex-col items-center text-center px-4 md:px-6 w-full max-w-xl">
@@ -2555,8 +2550,8 @@ function DashboardContent() {
                           </div>
 
                           {/* Orbiting Elements */}
-                          <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center animate-bounce">
-                            <Sparkles className="w-4 h-4 text-blue-500" />
+                          <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-sky-500/20 border border-sky-500/30 flex items-center justify-center animate-bounce">
+                            <Sparkles className="w-4 h-4 text-sky-500" />
                           </div>
                         </div>
 
@@ -2572,7 +2567,7 @@ function DashboardContent() {
                             </div>
                             <h2 className="text-2xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
                               Integration{" "}
-                              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-indigo-600 to-primary dark:from-primary dark:via-indigo-500 dark:to-primary animate-gradient bg-[length:200%_auto]">
+                              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-sky-600 to-primary dark:from-primary dark:via-sky-500 dark:to-primary animate-gradient bg-[length:200%_auto]">
                                 Pending.
                               </span>
                             </h2>
@@ -2623,18 +2618,6 @@ function DashboardContent() {
 
               </>
             )}
-          </div>
-          <div
-            className={cn(
-              "mt-auto",
-              activeAnalysis &&
-              mounted &&
-              !(mounted ? isMobile : false) &&
-              searchQuery.trim() &&
-              "md:pr-[280px] xl:pr-[320px] 2xl:pr-[360px]",
-            )}
-          >
-            <Footer />
           </div>
         </main>
 

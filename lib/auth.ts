@@ -71,9 +71,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         return null as any // Force invalid session if user is deleted
                     }
 
+                    // Derive the auth provider reliably from the DB record rather
+                    // than trusting token.provider, which is only populated at
+                    // sign-in (when `account` exists) and is undefined on JWT
+                    // refreshes or pre-existing sessions. A local password means a
+                    // credentials account; its absence means an OAuth/Google account
+                    // whose profile + password are managed by the provider.
+                    const hasPassword = Boolean(user.password);
+
+                    // Admin elevation: a user is an Admin if their DB role says so
+                    // OR their email is listed in ADMIN_EMAILS (comma-separated).
+                    // The env fallback lets an operator grant admin without a DB
+                    // write — see scripts/set-admin.js for the persistent route.
+                    const adminEmails = (process.env.ADMIN_EMAILS || "")
+                        .split(",")
+                        .map((e) => e.trim().toLowerCase())
+                        .filter(Boolean);
+                    const isEnvAdmin = Boolean(
+                        user.email && adminEmails.includes(user.email.toLowerCase())
+                    );
+                    const role = isEnvAdmin ? "Admin" : (user.role || "Viewer");
+
                     (session.user as any).id = userId;
-                    (session.user as any).role = user.role || "Viewer";
-                    (session.user as any).provider = token.provider as string;
+                    (session.user as any).role = role;
+                    (session.user as any).hasPassword = hasPassword;
+                    (session.user as any).provider =
+                        (token.provider as string) || (hasPassword ? "credentials" : "google");
                 } catch (e) {
                     console.error("Session validation error:", e)
                     return null as any

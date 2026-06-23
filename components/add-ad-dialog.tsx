@@ -82,7 +82,7 @@ export function AddAdDialog({ open, onOpenChange, defaultPlatform, onSuccess }: 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden rounded-[24px] border-border shadow-sm bg-card">
-                <div className="bg-gradient-to-br from-primary via-indigo-600 to-primary/80 p-8 text-white relative overflow-hidden">
+                <div className="bg-gradient-to-br from-primary via-sky-600 to-primary/80 p-8 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-8 opacity-10">
                         <Sparkles className="w-24 h-24" />
                     </div>

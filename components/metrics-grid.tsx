@@ -57,7 +57,7 @@ export default function MetricsGrid({ adData, selectedMetricLabel, onSelectMetri
   return (
     <div className="space-y-6 w-full relative">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <h3 className="text-xl font-black text-foreground tracking-tight opacity-80">Performance metrics</h3>
+        <h3 className="text-xl font-black gradient-text tracking-tight">Performance metrics</h3>
 
         {/* Desktop Hint Message - Professionally positioned above the grid */}
         {!isClickable && (
@@ -76,30 +76,33 @@ export default function MetricsGrid({ adData, selectedMetricLabel, onSelectMetri
             <Card
               key={metric.label}
               className={cn(
-                "group transition-all duration-300 relative overflow-hidden border border-border/60 dark:border-border bg-white dark:bg-[#09090b] shadow-sm hover:shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700 rounded-xl min-w-0",
+                "card-premium hover-lift group transition-all duration-300 relative overflow-hidden min-w-0",
                 isClickable ? "cursor-pointer active:scale-[0.98]" : "cursor-default",
-                isSelected && "ring-2 ring-primary shadow-lg -translate-y-1 bg-primary/[0.01]"
+                isSelected && "ring-2 ring-primary shadow-lg -translate-y-1"
               )}
               onClick={() => isClickable && onSelectMetric(metric.label)}
             >
-              {/* Subtle Thematic Glow */}
-              <div className={cn("absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500")} />
+              {/* Subtle gradient wash on hover / when selected */}
+              <div className={cn(
+                "absolute inset-0 bg-gradient-subtle transition-opacity duration-500",
+                isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )} />
 
               <CardContent className="p-3 md:p-4 relative z-10">
                 <div className="flex flex-col items-start gap-1 md:gap-2">
                   <div className="flex items-center justify-between w-full mb-1">
-                    <span className="text-[9px] md:text-[10px] font-black text-muted-foreground/60 tracking-widest uppercase">{metric.label}</span>
-                    <div className="p-1 rounded-lg bg-primary/10 border border-primary/20 shrink-0">
-                      <Icon className="h-3 w-3 md:h-3.5 md:w-3.5 text-primary transition-all duration-500 group-hover:scale-110" />
+                    <span className="text-[10px] md:text-[11px] font-black text-muted-foreground/80 tracking-widest uppercase">{metric.label}</span>
+                    <div className="p-2 rounded-lg bg-gradient-primary text-white shadow-sm shrink-0 transition-transform duration-500 group-hover:scale-110">
+                      <Icon className="h-4 w-4 md:h-[18px] md:w-[18px]" />
                     </div>
                   </div>
                   <div className="flex items-baseline gap-1 flex-wrap">
-                    <span className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none truncate max-w-full">{metric.value}</span>
+                    <span className="nums text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none truncate max-w-full">{metric.value}</span>
                     <span className="text-[10px] sm:text-xs font-extrabold text-primary/60">{metric.unit}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 pt-1.5 border-t border-zinc-100 dark:border-border w-full mt-1">
+                  <div className="flex items-center gap-1.5 pt-1.5 border-t border-border w-full mt-1">
                     <div className="w-1 h-1 rounded-full bg-primary/40 group-hover:bg-primary transition-colors shrink-0" />
-                    <p className="text-[7px] md:text-[8px] font-bold text-muted-foreground/50 tracking-widest truncate">{metric.desc}</p>
+                    <p className="text-[10px] md:text-[11px] font-medium text-muted-foreground/70 tracking-wide truncate">{metric.desc}</p>
                   </div>
                 </div>
               </CardContent>

@@ -30,13 +30,13 @@ export function ModeToggle() {
                 align="end"
                 className="rounded-2xl border-zinc-200/50 dark:border-zinc-800/50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl p-1.5 shadow-2xl"
             >
-                <DropdownMenuItem onClick={() => setTheme("light")} className="rounded-xl cursor-pointer gap-2.5 px-3 py-2 text-xs font-semibold transition-colors focus:bg-indigo-50 dark:focus:bg-indigo-900/20">
+                <DropdownMenuItem onClick={() => setTheme("light")} className="rounded-xl cursor-pointer gap-2.5 px-3 py-2 text-xs font-semibold transition-colors focus:bg-sky-50 dark:focus:bg-sky-900/20">
                     <Sun className="h-4 w-4 text-amber-500" /> Light
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")} className="rounded-xl cursor-pointer gap-2.5 px-3 py-2 text-xs font-semibold transition-colors focus:bg-indigo-50 dark:focus:bg-indigo-900/20">
-                    <Moon className="h-4 w-4 text-indigo-400" /> Dark
+                <DropdownMenuItem onClick={() => setTheme("dark")} className="rounded-xl cursor-pointer gap-2.5 px-3 py-2 text-xs font-semibold transition-colors focus:bg-sky-50 dark:focus:bg-sky-900/20">
+                    <Moon className="h-4 w-4 text-sky-400" /> Dark
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")} className="rounded-xl cursor-pointer gap-2.5 px-3 py-2 text-xs font-semibold transition-colors focus:bg-indigo-50 dark:focus:bg-indigo-900/20">
+                <DropdownMenuItem onClick={() => setTheme("system")} className="rounded-xl cursor-pointer gap-2.5 px-3 py-2 text-xs font-semibold transition-colors focus:bg-sky-50 dark:focus:bg-sky-900/20">
                     <Activity className="h-4 w-4 text-zinc-500" /> System
                 </DropdownMenuItem>
             </DropdownMenuContent>

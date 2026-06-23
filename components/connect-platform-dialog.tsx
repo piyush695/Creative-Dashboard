@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Facebook, Play, Linkedin, Twitter, Smartphone, Disc as Pinterest, ShoppingBag, Loader2, Sparkles, Plus, Instagram, Send, Target, Search, Newspaper } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { usePlatforms } from "@/components/providers/platforms-provider"
 
 interface ConnectPlatformDialogProps {
     open: boolean
@@ -32,10 +33,14 @@ const platforms = [
 
 export function ConnectPlatformDialog({ open, onOpenChange, connectedPlatforms, enabledPlatforms, onConnect, onDisconnect }: ConnectPlatformDialogProps) {
     const { toast } = useToast()
+    const { enabledIds } = usePlatforms()
     const [connectingId, setConnectingId] = useState<string | null>(null)
 
-    // Filter platforms based on settings
-    const filteredPlatforms = platforms.filter(p => !enabledPlatforms || enabledPlatforms.includes(p.id))
+    // Only offer platforms that are globally enabled (admin-controlled). Also
+    // respect the optional per-call enabledPlatforms prop for backward compat.
+    const filteredPlatforms = platforms.filter(
+        (p) => enabledIds.includes(p.id) && (!enabledPlatforms || enabledPlatforms.includes(p.id))
+    )
 
     const handleAction = (platformId: string, label: string, isConnected: boolean) => {
         setConnectingId(platformId)

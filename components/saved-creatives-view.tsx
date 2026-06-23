@@ -84,7 +84,7 @@ const HistoryThumbnail = React.memo(function HistoryThumbnail({
     );
   return (
     <div className="flex h-full w-full items-center justify-center bg-muted/30">
-      <ImageIcon className="h-4 w-4 text-muted-foreground/40" />
+      <ImageIcon className="h-5 w-5 text-muted-foreground/50" />
     </div>
   );
 });
@@ -112,12 +112,12 @@ function ImagePreviewModal({
       onClick={onClose}
     >
       <div
-        className="relative flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-md border border-border bg-card animate-slide-up"
+        className="relative flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-card animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-md bg-background/80 text-foreground transition-colors hover:bg-background"
+          className="absolute right-3 top-3 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border bg-background/80 text-foreground transition-colors hover:bg-background"
           aria-label="Close preview"
         >
           <X className="h-4 w-4" />
@@ -188,19 +188,19 @@ export default function SavedCreativesView() {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Saved</h1>
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Saved</h1>
           <p className="text-sm text-muted-foreground">
             Your bookmarked creatives. {totalItems > 0 && <span className="text-foreground">{totalItems} total</span>}
           </p>
         </div>
         <div className="relative w-full md:w-[280px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search saved creatives…"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            className="h-9 pl-8 pr-8 text-sm"
+            className="h-9 pl-9 pr-8 text-sm"
           />
           {inputValue && !isLoading && (
             <button
@@ -208,10 +208,10 @@ export default function SavedCreativesView() {
                 setInputValue("");
                 setSearchQuery("");
               }}
-              className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
+              className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
               aria-label="Clear search"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
           {isLoading && inputValue && (
@@ -235,7 +235,7 @@ export default function SavedCreativesView() {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden flex-1 overflow-y-auto rounded-md border border-border bg-card md:block">
+          <div className="card-premium hidden flex-1 overflow-y-auto rounded-xl md:block">
             <table className="w-full text-left">
               <thead className="sticky top-0 z-10 border-b border-border bg-muted/40 backdrop-blur">
                 <tr>
@@ -259,7 +259,7 @@ export default function SavedCreativesView() {
                           const url = entry.result?.imageUrl || entry.imageUrl || "";
                           if (url) setPreviewImagePopup({ url, title: entry.headline || "Saved Creative" });
                         }}
-                        className="relative block h-14 w-14 overflow-hidden rounded-md border border-border bg-muted transition-transform hover:scale-[1.02]"
+                        className="relative block h-14 w-14 cursor-pointer overflow-hidden rounded-lg border border-border bg-muted transition-transform hover:scale-[1.03]"
                       >
                         <HistoryThumbnail
                           creativeId={entry.creativeId}
@@ -288,13 +288,13 @@ export default function SavedCreativesView() {
                       </p>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className="inline-flex h-7 min-w-[40px] items-center justify-center rounded-md border border-border bg-muted/40 px-2 text-xs font-semibold tabular-nums">
+                      <span className="inline-flex h-7 min-w-[40px] items-center justify-center rounded-md border border-primary/30 bg-primary/10 px-2 text-xs font-semibold tabular-nums text-primary">
                         {entry.score || entry.result?.targetScore || "—"}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                      <div className="flex items-center gap-1.5 text-xs text-foreground">
+                        <Calendar className="h-3.5 w-3.5 text-sky-500" />
                         <span>
                           {getEntryDate(entry)
                             ? new Date(getEntryDate(entry)!).toLocaleDateString([], {
@@ -322,9 +322,9 @@ export default function SavedCreativesView() {
                   const url = entry.result?.imageUrl || entry.imageUrl || "";
                   if (url) setPreviewImagePopup({ url, title: entry.headline || "Saved Creative" });
                 }}
-                className="flex items-center gap-3 rounded-md border border-border bg-card p-3 text-left transition-colors hover:bg-accent"
+                className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary/40 hover:bg-accent"
               >
-                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
                   <HistoryThumbnail
                     creativeId={entry.creativeId}
                     immediateUrl={entry.result?.imageUrl || entry.imageUrl || null}
@@ -335,8 +335,20 @@ export default function SavedCreativesView() {
                   <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                     {entry.prompt || "No prompt"}
                   </p>
+                  {getEntryDate(entry) && (
+                    <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <Calendar className="h-3 w-3 text-sky-500" />
+                      <span>
+                        {new Date(getEntryDate(entry)!).toLocaleDateString([], {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <span className="shrink-0 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs font-semibold tabular-nums">
+                <span className="inline-flex h-7 shrink-0 items-center justify-center rounded-md border border-primary/30 bg-primary/10 px-2 text-xs font-semibold tabular-nums text-primary">
                   {entry.score || entry.result?.targetScore || "—"}
                 </span>
               </button>
@@ -371,7 +383,7 @@ export default function SavedCreativesView() {
                       type="button"
                       onClick={() => setPage(n)}
                       className={cn(
-                        "h-8 min-w-8 rounded-md px-2 text-xs font-medium transition-colors",
+                        "h-8 min-w-8 cursor-pointer rounded-md px-2 text-xs font-medium transition-colors",
                         page === n
                           ? "bg-primary text-primary-foreground"
                           : "border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -426,8 +438,8 @@ function SkeletonRows() {
   return (
     <div className="flex flex-1 flex-col gap-2 overflow-hidden">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-md border border-border bg-card p-3">
-          <div className="skeleton h-12 w-12 rounded-md" />
+        <div key={i} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+          <div className="skeleton h-12 w-12 rounded-lg" />
           <div className="flex-1 space-y-2">
             <div className="skeleton h-3 w-2/3 rounded" />
             <div className="skeleton h-3 w-1/3 rounded" />
@@ -449,9 +461,9 @@ function EmptyState({
   onExploreStudio: () => void;
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-md border border-dashed border-border bg-background/40 p-12 text-center">
-      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
-        <Bookmark className="h-5 w-5 text-muted-foreground" />
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border bg-background/40 p-8 text-center sm:p-10">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+        <Bookmark className="h-6 w-6 text-primary" />
       </div>
       <div className="space-y-1">
         <h3 className="text-base font-semibold tracking-tight">
@@ -469,7 +481,7 @@ function EmptyState({
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
         <Button size="sm" className="h-9 gap-1.5" onClick={onExploreStudio}>
-          <Sparkles className="h-3.5 w-3.5" />
+          <Sparkles className="h-4 w-4" />
           Open Studio
         </Button>
         {searchQuery && (

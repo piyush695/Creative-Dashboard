@@ -460,7 +460,7 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                             <Activity className="mr-2 h-3.5 w-3.5 text-emerald-500" /> Line Chart
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setChartType("Area")} className="text-xs font-medium cursor-pointer">
-                            <Activity className="mr-2 h-3.5 w-3.5 text-indigo-500 fill-current" /> Area Chart
+                            <Activity className="mr-2 h-3.5 w-3.5 text-sky-500 fill-current" /> Area Chart
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setChartType("Pie")} className="text-xs font-medium cursor-pointer">
                             <PieChartIcon className="mr-2 h-3.5 w-3.5 text-purple-500" /> Pie Chart

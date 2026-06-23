@@ -5,6 +5,7 @@ import { Facebook, Play, Linkedin, Twitter, Smartphone, Disc as Pinterest, Globe
 import { Button } from "@/components/ui/button"
 
 import { PlatformType } from "@/lib/types"
+import { usePlatforms } from "@/components/providers/platforms-provider"
 
 interface PlatformFilterProps {
     selected: PlatformType
@@ -28,25 +29,30 @@ const platforms = [
 ] as const
 
 export default function PlatformFilter({ selected, onSelect, onAddAd }: PlatformFilterProps) {
+    const { enabledIds } = usePlatforms()
+    // Only show "All" plus platforms an admin has enabled globally. Disabled
+    // platforms must not be selectable here.
+    const visiblePlatforms = platforms.filter((p) => p.id === "all" || enabledIds.includes(p.id))
+
     return (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
-            <div className="flex items-center gap-1.5 p-1 bg-zinc-100/50 dark:bg-card/50 border border-border rounded-[14px] overflow-x-auto no-scrollbar max-w-full">
-                {platforms.map((platform) => {
+            <div className="flex items-center gap-1.5 p-1 bg-muted/50 border border-border rounded-xl overflow-x-auto no-scrollbar max-w-full">
+                {visiblePlatforms.map((platform) => {
                     const isActive = selected === platform.id
                     return (
                         <button
                             key={platform.id}
                             onClick={() => onSelect(platform.id as PlatformType)}
                             className={cn(
-                                "flex items-center gap-2 px-3.5 py-2 rounded-[10px] text-[11px] font-black uppercase tracking-wider transition-all duration-300 whitespace-nowrap group",
+                                "flex items-center gap-2 px-3.5 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all duration-200 whitespace-nowrap group cursor-pointer",
                                 isActive
-                                    ? cn("shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-white/20 dark:border-border", platform.activeBg, "text-foreground scale-[0.98]")
-                                    : "text-muted-foreground hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                    ? "bg-gradient-primary text-white shadow-md"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                             )}
                         >
                             <platform.icon className={cn(
-                                "w-3.5 h-3.5 transition-transform duration-300",
-                                isActive ? platform.color + " scale-110" : "text-muted-foreground group-hover:scale-110"
+                                "w-4 h-4 transition-transform duration-200",
+                                isActive ? "text-white scale-110" : cn(platform.color, "group-hover:scale-110")
                             )} />
                             <span>{platform.label}</span>
                         </button>
@@ -57,7 +63,7 @@ export default function PlatformFilter({ selected, onSelect, onAddAd }: Platform
             {onAddAd && (
                 <Button
                     onClick={onAddAd}
-                    className="h-10 px-5 bg-primary hover:bg-primary/90 text-white font-black text-[11px] uppercase tracking-[0.1em] rounded-[14px] shadow-[0_8px_20px_rgba(0,122,255,0.25)] flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
+                    className="btn-gradient h-10 px-5 text-white font-black text-[11px] uppercase tracking-[0.1em] rounded-lg flex items-center gap-2 shrink-0 cursor-pointer"
                 >
                     <Plus className="w-4 h-4" />
                     Add Creative

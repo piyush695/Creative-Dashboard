@@ -16,7 +16,10 @@ const HomeOverviewView = dynamic(() => import("@/components/home-overview-view")
 
 export default function OverviewPage() {
   return (
-    <div className="mx-auto w-full max-w-screen-2xl px-6 py-6">
+    // Full-width to match the legacy/search view's container (px-4 md:px-6, no
+    // max-width). Keeping a centred max-width here caused a visible horizontal
+    // shift when navigating to search results on screens wider than 2xl.
+    <div className="w-full px-4 py-6 md:px-6">
       <HomeOverviewView />
     </div>
   );

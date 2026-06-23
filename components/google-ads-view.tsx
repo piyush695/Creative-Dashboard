@@ -293,61 +293,66 @@ export default function GoogleAdsView({
     const renderMetricsCards = () => {
         if (filteredAds.length === 0 && searchQuery.trim() !== "") return null;
 
-        return (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 mb-4 md:mb-6">
-                {[
-                    { label: "Interactions", value: totalInteractions, color: "text-blue-500", icon: MousePointer2, id: "interactions", desc: "Total Clicks", info: "Measures how many times people interacted with your ad.", theme: "blue" },
-                    { label: "Impressions", value: totalImpr, color: "text-indigo-500", icon: Eye, id: "impr", desc: "Total Reach", info: "The number of times your ad was displayed.", theme: "indigo" },
-                    { label: "Avg. CPC", value: `$${avgCpc.toFixed(2)}`, color: "text-amber-500", icon: DollarSign, id: "cpc", desc: "Cost Efficiency", info: "Average cost paid for each click on your ad.", theme: "amber" },
-                    { label: "Conversions", value: totalConversions, color: "text-emerald-500", icon: Check, id: "conv", desc: "Total Acquisitions", info: "The total number of attributed conversions.", theme: "emerald" },
-                    { label: "Conv. Value", value: `$${totalConvValue.toLocaleString()}`, color: "text-violet-500", icon: BarChart3, id: "value", desc: "Gross Return", info: "The total value of all attributed conversions.", theme: "violet" },
-                    { label: "Account ROAS", value: `${avgRoas.toFixed(2)}x`, color: "text-sky-500", icon: TrendingUp, id: "roas", desc: "Efficiency", info: "Return on Ad Spend (Conv Value / Spend).", theme: "sky" }
-                ].map((metric) => (
-                    <Card key={metric.id} className="relative p-2 md:p-3.5 border border-border/50 dark:border-border shadow-sm bg-white dark:bg-[#09090b] rounded-md group transition-all duration-300 hover:shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700 overflow-hidden min-h-0">
-                        {/* Thematic Background Glow */}
-                        <div className={cn(
-                            "absolute -right-6 -top-6 w-16 h-16 rounded-full blur-2xl opacity-0 group-hover:opacity-20 transition-all duration-700",
-                            metric.theme === "blue" ? "bg-blue-500" :
-                                metric.theme === "indigo" ? "bg-indigo-500" :
-                                    metric.theme === "amber" ? "bg-amber-500" :
-                                        metric.theme === "emerald" ? "bg-emerald-500" :
-                                            metric.theme === "violet" ? "bg-violet-500" : "bg-sky-500"
-                        )} />
+        // KPI hero cards — aligned to the Meta view's design system: tinted
+        // surfaces, mono numerals, an icon chip and an info affordance, with a
+        // subtle hover lift. Same metrics/values as before — presentation only.
+        const metrics = [
+            { label: "Interactions", value: totalInteractions.toLocaleString(), desc: "Total clicks", icon: MousePointer2, theme: "sky", info: "Measures how many times people interacted with your ad." },
+            { label: "Impressions", value: totalImpr.toLocaleString(), desc: "Total reach", icon: Eye, theme: "sky", info: "The number of times your ad was displayed." },
+            { label: "Avg. CPC", value: `$${avgCpc.toFixed(2)}`, desc: "Cost per click", icon: DollarSign, theme: "amber", info: "Average cost paid for each click on your ad." },
+            { label: "Conversions", value: totalConversions.toLocaleString(), desc: "Acquisitions", icon: Check, theme: "emerald", info: "The total number of attributed conversions." },
+            { label: "Conv. Value", value: `$${totalConvValue.toLocaleString()}`, desc: "Gross return", icon: BarChart3, theme: "violet", info: "The total value of all attributed conversions." },
+            { label: "Account ROAS", value: `${avgRoas.toFixed(2)}x`, desc: "Efficiency", icon: TrendingUp, theme: "sky", info: "Return on Ad Spend (Conv Value / Spend)." },
+        ]
 
-                        <div className="flex items-center justify-between mb-1.5 md:mb-4">
-                            <div className={cn(
-                                "p-1 md:p-2 rounded-xl border transition-all duration-300 group-hover:scale-110",
-                                metric.theme === "blue" ? "bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400" :
-                                    metric.theme === "indigo" ? "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400" :
-                                        metric.theme === "amber" ? "bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20 text-amber-600 dark:text-amber-400" :
-                                            metric.theme === "emerald" ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400" :
-                                                metric.theme === "violet" ? "bg-violet-50 dark:bg-violet-500/10 border-violet-100 dark:border-violet-500/20 text-violet-600 dark:text-violet-400" :
-                                                    "bg-sky-50 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20 text-sky-600 dark:text-sky-400"
-                            )}>
-                                <metric.icon className="h-3.5 w-3.5 md:h-4 md:w-4" />
+        const cm: Record<string, { val: string; bg: string; bd: string; hb: string; chip: string }> = {
+            sky: { val: "text-sky-600 dark:text-sky-400", bg: "bg-sky-50 dark:bg-sky-500/10", bd: "border-sky-200 dark:border-sky-500/20", hb: "hover:border-sky-500/40 hover:shadow-sky-500/10", chip: "bg-sky-100/70 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20 text-sky-600 dark:text-sky-400" },
+            amber: { val: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-500/10", bd: "border-amber-200 dark:border-amber-500/20", hb: "hover:border-amber-500/40 hover:shadow-amber-500/10", chip: "bg-amber-100/70 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400" },
+            emerald: { val: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-500/10", bd: "border-emerald-200 dark:border-emerald-500/20", hb: "hover:border-emerald-500/40 hover:shadow-emerald-500/10", chip: "bg-emerald-100/70 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400" },
+            violet: { val: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-500/10", bd: "border-violet-200 dark:border-violet-500/20", hb: "hover:border-violet-500/40 hover:shadow-violet-500/10", chip: "bg-violet-100/70 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/20 text-violet-600 dark:text-violet-400" },
+        }
+
+        return (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5 md:gap-3 mb-4 md:mb-6">
+                {metrics.map((metric, i) => {
+                    const c = cm[metric.theme]
+                    return (
+                        <div
+                            key={metric.label}
+                            style={{ animationDelay: `${i * 60}ms` }}
+                            className={cn(
+                                "group relative flex flex-col justify-between overflow-hidden rounded-xl border p-3 md:p-4 min-h-[92px] md:min-h-[108px] transition-all duration-300",
+                                "hover:-translate-y-1 hover:shadow-sm animate-in fade-in slide-in-from-bottom-3 fill-mode-both",
+                                c.bg, c.bd, c.hb,
+                            )}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className={cn("rounded-lg border p-1.5 transition-transform duration-300 group-hover:scale-110", c.chip)}>
+                                    <metric.icon className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                                </div>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Info className="h-3 w-3 md:h-3.5 md:w-3.5 text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-[200px] text-xs font-medium">
+                                        <p>{metric.info}</p>
+                                    </TooltipContent>
+                                </Tooltip>
                             </div>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Info className="h-3 w-3 md:h-3.5 md:w-3.5 text-zinc-300 dark:text-muted-foreground hover:text-muted-foreground transition-colors cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent className="bg-card border-border text-zinc-300 rounded-xl px-4 py-2 text-xs font-medium max-w-[200px]">
-                                    <p>{metric.info}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </div>
-                        <div className="space-y-0 md:space-y-1">
-                            <p className="text-[8px] md:text-[10px] font-black text-muted-foreground dark:text-muted-foreground uppercase tracking-widest leading-tight">{metric.label}</p>
-                            <div className="flex items-baseline gap-2">
-                                <h3 className="text-base md:text-2xl font-black font-mono tracking-tighter text-foreground leading-none">
+                            <div>
+                                <p className={cn("font-mono text-lg md:text-2xl font-black tracking-tight leading-none", c.val)}>
                                     {metric.value}
-                                </h3>
-                            </div>
-                            <div className="pt-1 md:pt-2 border-t border-zinc-100 dark:border-border mt-1.5 md:mt-3 hidden md:flex items-center justify-between">
-                                <span className="text-[7.5px] md:text-[8px] font-black uppercase text-muted-foreground tracking-widest">{metric.desc}</span>
+                                </p>
+                                <p className="mt-1.5 text-[9px] md:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground leading-none">
+                                    {metric.label}
+                                </p>
+                                <p className="mt-1 hidden truncate text-[9px] font-medium text-muted-foreground/70 md:block">
+                                    {metric.desc}
+                                </p>
                             </div>
                         </div>
-                    </Card>
-                ))}
+                    )
+                })}
             </div>
         )
     }
@@ -371,7 +376,7 @@ export default function GoogleAdsView({
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-20 overflow-hidden max-w-full">
                     {/* Primary Row: High-Level Insights */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <Card className="lg:col-span-4 p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md relative overflow-hidden group">
+                        <Card className="lg:col-span-4 p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-[#1a73e8]/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-[#1a73e8]/10 transition-all duration-1000" />
                             <div className="flex items-center justify-between mb-8 md:mb-10">
                                 <div>
@@ -423,7 +428,7 @@ export default function GoogleAdsView({
                         </Card>
 
                         {/* Performance Trends Chart */}
-                        <Card className="lg:col-span-8 p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-md relative overflow-hidden group">
+                        <Card className="lg:col-span-8 p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-xl relative overflow-hidden group">
                             <div className="flex items-center justify-between mb-8">
                                 <div>
                                     <h3 className="text-xl font-semibold tracking-tight text-foreground">Performance snapshot</h3>
@@ -486,15 +491,15 @@ export default function GoogleAdsView({
                             </div>
 
                             <div className="grid grid-cols-3 gap-2 md:gap-6 mt-8">
-                                <div className="text-center p-2 md:p-4 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group/stat hover:border-blue-500/20 transition-all flex flex-col justify-center">
-                                    <p className="text-[7px] md:text-[9px] font-black text-muted-foreground tracking-widest mb-1 group-hover:text-blue-500 transition-colors">Top performer</p>
+                                <div className="text-center p-2 md:p-4 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group/stat hover:border-sky-500/20 transition-all flex flex-col justify-center">
+                                    <p className="text-[7px] md:text-[9px] font-black text-muted-foreground tracking-widest mb-1 group-hover:text-sky-500 transition-colors">Top performer</p>
                                     <p className="text-xs md:text-sm font-black text-foreground">${Number(sortedAdsForChart[0]?.spend || 0).toLocaleString()}</p>
                                 </div>
-                                <div className="text-center p-2 md:p-4 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group/stat hover:border-blue-500/20 transition-all flex flex-col justify-center">
-                                    <p className="text-[7px] md:text-[9px] font-black text-muted-foreground tracking-widest mb-1 group-hover:text-blue-500 transition-colors">Avg. efficiency</p>
+                                <div className="text-center p-2 md:p-4 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group/stat hover:border-sky-500/20 transition-all flex flex-col justify-center">
+                                    <p className="text-[7px] md:text-[9px] font-black text-muted-foreground tracking-widest mb-1 group-hover:text-sky-500 transition-colors">Avg. efficiency</p>
                                     <p className="text-xs md:text-sm font-black text-foreground">{(totalInteractions / (totalImpr || 1) * 100).toFixed(2)}%</p>
                                 </div>
-                                <div className="text-center p-2 md:p-4 rounded-md bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 group/stat hover:bg-blue-100/50 transition-all flex flex-col justify-center">
+                                <div className="text-center p-2 md:p-4 rounded-md bg-sky-50 dark:bg-sky-900/10 border border-sky-100 dark:border-sky-900/20 group/stat hover:bg-sky-100/50 transition-all flex flex-col justify-center">
                                     <p className="text-[7px] md:text-[9px] font-black text-[#1a73e8] tracking-widest mb-1 group-hover:scale-105 transition-transform">Volatility</p>
                                     <p className="text-xs md:text-sm font-black text-[#1a73e8]">Low</p>
                                 </div>
@@ -505,7 +510,7 @@ export default function GoogleAdsView({
                     {/* Secondary Row: Lists & Breakdowns */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Top Campaigns List */}
-                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md flex flex-col min-h-[450px] lg:h-[520px]">
+                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-xl flex flex-col min-h-[450px] lg:h-[520px]">
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-[11px] font-black tracking-[0.2em] text-muted-foreground">Top campaigns</h3>
                                 <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-border">
@@ -550,7 +555,7 @@ export default function GoogleAdsView({
                         </Card>
 
                         {/* Ad Type Distribution */}
-                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-md flex flex-col min-h-[450px] lg:h-[520px]">
+                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-xl flex flex-col min-h-[450px] lg:h-[520px]">
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-[11px] font-black tracking-[0.2em] text-muted-foreground">Format performance</h3>
                                 <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-border">
@@ -571,7 +576,7 @@ export default function GoogleAdsView({
                                             dataKey="value"
                                         >
                                             {formatChartData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={["#1a73e8", "#34a853", "#fbbc05", "#ea4335", "#a855f7", "#ec4899"][index % 6]} stroke="none" />
+                                                <Cell key={`cell-${index}`} fill={["#1a73e8", "#34a853", "#fbbc05", "#ea4335", "#0dd6ec", "#ec4899"][index % 6]} stroke="none" />
                                             ))}
                                         </Pie>
                                         <RechartsTooltip
@@ -599,7 +604,7 @@ export default function GoogleAdsView({
                                                     <div className={cn("h-3 w-3 rounded-full shadow-sm shrink-0", colors[i % colors.length])} />
                                                     <span className="text-[9px] md:text-[10px] font-black text-foreground tracking-widest truncate">{item.type}</span>
                                                 </div>
-                                                <div className="shrink-0 px-2 py-0.5 rounded-full bg-blue-500/10 text-[#1a73e8] text-[9px] font-black">{item.ctr.toFixed(2)}% CTR</div>
+                                                <div className="shrink-0 px-2 py-0.5 rounded-full bg-sky-500/10 text-[#1a73e8] text-[9px] font-black">{item.ctr.toFixed(2)}% CTR</div>
                                             </div>
                                             <div className="flex items-end justify-between">
                                                 <div className="space-y-0.5">
@@ -617,7 +622,7 @@ export default function GoogleAdsView({
                         </Card>
 
                         {/* Top Keywords / Search Terms */}
-                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-md flex flex-col min-h-[450px] lg:h-[520px] overflow-hidden">
+                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-xl flex flex-col min-h-[450px] lg:h-[520px] overflow-hidden">
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-[11px] font-black tracking-[0.2em] text-muted-foreground">Search keywords</h3>
                                 <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-border">
@@ -681,7 +686,7 @@ export default function GoogleAdsView({
                     {/* Tertiary Row: Creative Intelligence & Analytics */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Psychological Triggers Card */}
-                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-md relative overflow-hidden group">
+                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-xl relative overflow-hidden group">
                             <div className="absolute -right-20 -top-20 w-64 h-64 bg-purple-500/5 rounded-full blur-[80px] group-hover:bg-purple-500/10 transition-all duration-1000" />
                             <div className="flex items-center justify-between mb-6 relative z-10">
                                 <div>
@@ -694,10 +699,10 @@ export default function GoogleAdsView({
                             </div>
                             <div className="grid grid-cols-2 gap-4 relative z-10">
                                 {[
-                                    { label: "Social Proof", key: "socialProofPresent" as const, color: "from-purple-500 to-blue-500" },
+                                    { label: "Social Proof", key: "socialProofPresent" as const, color: "from-purple-500 to-sky-500" },
                                     { label: "Scarcity", key: "scarcityPresent" as const, color: "from-purple-400 to-pink-500" },
-                                    { label: "Loss Aversion", key: "lossAversionPresent" as const, color: "from-blue-600 to-purple-600" },
-                                    { label: "Anchoring", key: "anchoringPresent" as const, color: "from-indigo-500 to-purple-400" },
+                                    { label: "Loss Aversion", key: "lossAversionPresent" as const, color: "from-sky-600 to-purple-600" },
+                                    { label: "Anchoring", key: "anchoringPresent" as const, color: "from-sky-500 to-purple-400" },
                                 ].map(trigger => {
                                     // Strictly count true values from db
                                     const count = filteredAds.filter(ad => ad[trigger.key] === true).length
@@ -719,7 +724,7 @@ export default function GoogleAdsView({
                         </Card>
 
                         {/* Behavioral Triggers */}
-                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-md relative overflow-hidden group">
+                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 backdrop-blur-xl shadow-sm rounded-xl relative overflow-hidden group">
                             <div className="absolute -right-20 -top-20 w-64 h-64 bg-purple-500/5 rounded-full blur-[80px] group-hover:bg-purple-500/10 transition-all duration-1000" />
                             <div className="flex items-center justify-between mb-6 relative z-10">
                                 <div>
@@ -763,7 +768,7 @@ export default function GoogleAdsView({
                     {/* Final Row: Recommendations Hub */}
                     {/* Optimization Hub - Redesigned to Sleek Dark/Glass */}
                     {/* Optimization Hub - Redesigned to Match Performance Snapshot Style */}
-                    <div className="space-y-8 bg-zinc-50/50 dark:bg-[#09090b] p-6 md:p-8 rounded-md border border-border shadow-sm">
+                    <div className="space-y-8 bg-zinc-50/50 dark:bg-[#09090b] p-6 md:p-8 rounded-xl border border-border shadow-sm">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -771,9 +776,9 @@ export default function GoogleAdsView({
                                         Active engine
                                     </Badge>
                                 </div>
-                                <h3 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-none">
+                                <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-none">
                                     Optimization Hub
-                                </h3>
+                                </h2>
                                 <p className="text-xs font-bold text-muted-foreground">
                                     Neutral engine detected <span className="text-foreground">{recommendations.length} Strategic shifts</span>
                                 </p>
@@ -787,7 +792,7 @@ export default function GoogleAdsView({
 
                         <div className="flex xl:grid xl:grid-cols-3 gap-3 md:gap-4 overflow-x-auto xl:overflow-visible pb-6 md:pb-0 snap-x snap-mandatory -mx-3 px-3 md:mx-0 md:px-0 hide-scrollbar">
                             {recommendations.length > 0 ? recommendations.map((rec, i) => (
-                                <div key={i} className="min-w-[280px] w-[280px] xl:w-full xl:min-w-0 snap-center flex-shrink-0 xl:flex-shrink-1 p-5 md:p-6 bg-white dark:bg-[#121214] hover:bg-zinc-50 dark:hover:bg-[#18181b] rounded-md border border-border hover:border-zinc-300 dark:hover:border-border transition-all cursor-pointer group/rec shadow-sm hover:shadow-md hover:-translate-y-1 duration-300 relative overflow-hidden">
+                                <div key={i} className="min-w-[280px] w-[280px] xl:w-full xl:min-w-0 snap-center flex-shrink-0 xl:flex-shrink-1 p-5 md:p-6 bg-white dark:bg-[#121214] hover:bg-zinc-50 dark:hover:bg-[#18181b] rounded-xl border border-border hover:border-zinc-300 dark:hover:border-border transition-all cursor-pointer group/rec shadow-sm hover:shadow-md hover:-translate-y-1 duration-300 relative overflow-hidden">
                                     <div className="flex flex-col h-full relative z-10">
                                         <div className="flex items-start justify-between mb-4 md:mb-6">
                                             <div className="h-10 w-10 rounded-xl bg-muted/50 flex items-center justify-center group-hover/rec:bg-[#1a73e8] transition-all duration-300">
@@ -833,12 +838,12 @@ export default function GoogleAdsView({
                     <div className="space-y-8 pt-4">
                         <div className="flex items-center justify-between px-2">
                             <div className="space-y-2">
-                                <h3 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-none">Power creatives</h3>
+                                <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-none">Power creatives</h2>
                                 <p className="text-[10px] md:text-xs text-muted-foreground font-black mt-1">Benchmarking highest efficiency neural outputs</p>
                             </div>
                             <Button
                                 variant="ghost"
-                                className="hidden md:flex text-xs font-black text-[#1a73e8] hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-md h-14 px-8 border border-border shadow-sm transition-all hover:scale-105 group"
+                                className="hidden md:flex text-xs font-black text-[#1a73e8] hover:bg-sky-50 dark:hover:bg-sky-900/10 rounded-md h-14 px-8 border border-border shadow-sm transition-all hover:scale-105 group"
                                 onClick={() => setActiveTab("ads")}
                             >
                                 View global assets <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -856,7 +861,7 @@ export default function GoogleAdsView({
                         {/* Mobile: Horizontal Scroll, Desktop: Grid */}
                         <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6 overflow-x-auto md:overflow-visible pb-8 md:pb-0 snap-x snap-mandatory -mx-3 px-3 md:mx-0 md:px-0 hide-scrollbar pt-2">
                             {filteredAds.slice(0, cardLimit).map((ad, i) => (
-                                <Card key={ad.id} className="min-w-[280px] md:min-w-0 w-[280px] md:w-full bg-white dark:bg-[#09090b] border border-border hover:border-zinc-300 dark:hover:border-zinc-700 rounded-md p-3.5 flex flex-col gap-4 group shadow-sm transition-all duration-300 snap-center flex-shrink-0 md:flex-shrink-1">
+                                <Card key={ad.id} className="min-w-[280px] md:min-w-0 w-[280px] md:w-full bg-white dark:bg-[#09090b] border border-border hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md rounded-xl p-3.5 flex flex-col gap-4 group shadow-sm transition-all duration-300 snap-center flex-shrink-0 md:flex-shrink-1">
 
                                     {/* Image Header Section */}
                                     <div className="relative aspect-video w-full rounded-md overflow-hidden bg-zinc-100 dark:bg-card border border-border/50">
@@ -897,15 +902,15 @@ export default function GoogleAdsView({
                                         </div>
 
                                         {/* CTR Box */}
-                                        <div className="bg-blue-50 dark:bg-blue-500/5 rounded-md p-2.5 border border-blue-100 dark:border-blue-500/10 flex flex-col justify-between h-[75px] relative overflow-hidden group/ctr transition-all hover:bg-blue-100/50 dark:hover:bg-blue-500/10">
+                                        <div className="bg-sky-50 dark:bg-sky-500/5 rounded-md p-2.5 border border-sky-100 dark:border-sky-500/10 flex flex-col justify-between h-[75px] relative overflow-hidden group/ctr transition-all hover:bg-sky-100/50 dark:hover:bg-sky-500/10">
                                             {/* Subtle background glow */}
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-blue-500/10 blur-xl rounded-full -mr-4 -mt-4 transition-opacity" />
+                                            <div className="absolute top-0 right-0 w-12 h-12 bg-sky-500/10 blur-xl rounded-full -mr-4 -mt-4 transition-opacity" />
 
                                             <div className="flex justify-between items-center relative z-10">
-                                                <div className="w-1 h-1 rounded-full bg-blue-500" />
-                                                <p className="text-[9px] text-blue-500 dark:text-blue-400 font-black opacity-80">Efficiency</p>
+                                                <div className="w-1 h-1 rounded-full bg-sky-500" />
+                                                <p className="text-[9px] text-sky-500 dark:text-sky-400 font-black opacity-80">Efficiency</p>
                                             </div>
-                                            <p className="text-[17px] font-black text-blue-600 dark:text-blue-500 tracking-tight text-right relative z-10">
+                                            <p className="text-[17px] font-black text-sky-600 dark:text-sky-500 tracking-tight text-right relative z-10">
                                                 {Number(ad.ctr).toFixed(2)}%
                                             </p>
                                         </div>
@@ -921,7 +926,7 @@ export default function GoogleAdsView({
                                                 setCopiedId(ad.id)
                                                 setTimeout(() => setCopiedId(null), 2000)
                                             }}
-                                            className="text-muted-foreground hover:text-zinc-900 dark:hover:text-white transition-colors p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                            className="text-muted-foreground hover:text-zinc-900 dark:hover:text-white transition-colors p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
                                         >
                                             {copiedId === ad.id ? (
                                                 <Check className="h-3.5 w-3.5 text-emerald-500" />
@@ -954,7 +959,7 @@ export default function GoogleAdsView({
             return (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
                     {renderMetricsCards()}
-                    <Card className="rounded-md border-border shadow-sm bg-white/80 dark:bg-card/80 backdrop-blur-xl group/table overflow-hidden">
+                    <Card className="rounded-xl border border-border shadow-sm bg-white/80 dark:bg-card/80 backdrop-blur-xl group/table overflow-hidden">
                         <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-white/10">
                             <Table className="w-full min-w-full">
                                 <TableHeader>
@@ -982,7 +987,7 @@ export default function GoogleAdsView({
                                         </TableRow>
                                     ) : (
                                         campaignsData.map((camp) => (
-                                            <TableRow key={camp.name} className="group/row hover:bg-blue-50/30 dark:hover:bg-blue-900/5 cursor-pointer border-b border-zinc-100 dark:border-border transition-all duration-300">
+                                            <TableRow key={camp.name} className="group/row hover:bg-sky-50/30 dark:hover:bg-sky-900/5 cursor-pointer border-b border-zinc-100 dark:border-border transition-all duration-300">
                                                 <TableCell className="px-6 text-center hidden lg:table-cell">
                                                     <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-border" />
                                                 </TableCell>
@@ -1003,7 +1008,7 @@ export default function GoogleAdsView({
                                                 <TableCell className="text-right font-bold text-[13px] text-muted-foreground dark:text-muted-foreground px-1 hidden md:table-cell">{camp.count}</TableCell>
                                                 <TableCell className="text-right font-black text-[12px] md:text-[14px] text-foreground px-1">${camp.cost.toLocaleString()}</TableCell>
                                                 <TableCell className="text-right font-bold text-[13px] text-muted-foreground dark:text-muted-foreground px-1 hidden lg:table-cell">{camp.impr.toLocaleString()}</TableCell>
-                                                <TableCell className="text-right px-4 md:px-6 font-black text-[13px] md:text-[15px] text-[#1a73e8] bg-blue-50/5 dark:bg-blue-900/5">{camp.ctr.toFixed(1)}%</TableCell>
+                                                <TableCell className="text-right px-4 md:px-6 font-black text-[13px] md:text-[15px] text-[#1a73e8] bg-sky-50/5 dark:bg-sky-900/5">{camp.ctr.toFixed(1)}%</TableCell>
                                             </TableRow>
                                         ))
                                     )}
@@ -1021,7 +1026,7 @@ export default function GoogleAdsView({
             return (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
                     {renderMetricsCards()}
-                    <Card className="rounded-md border-border shadow-sm bg-white/80 dark:bg-card/80 backdrop-blur-xl group/table overflow-hidden">
+                    <Card className="rounded-xl border border-border shadow-sm bg-white/80 dark:bg-card/80 backdrop-blur-xl group/table overflow-hidden">
                         <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-white/10">
                             <Table className="w-full min-w-[600px] md:min-w-full">
                                 <TableHeader>
@@ -1062,7 +1067,7 @@ export default function GoogleAdsView({
                                         </TableRow>
                                     ) : (
                                         extractedKeywords.map((kw, i) => (
-                                            <TableRow key={`${kw.word}-${i}`} className="group/row hover:bg-blue-50/30 dark:hover:bg-blue-900/5 cursor-pointer border-b border-zinc-100 dark:border-border transition-all duration-300">
+                                            <TableRow key={`${kw.word}-${i}`} className="group/row hover:bg-sky-50/30 dark:hover:bg-sky-900/5 cursor-pointer border-b border-zinc-100 dark:border-border transition-all duration-300">
                                                 <TableCell className="px-6 text-center hidden lg:table-cell">
                                                     <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-border" />
                                                 </TableCell>
@@ -1092,7 +1097,7 @@ export default function GoogleAdsView({
         return (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
                 {renderMetricsCards()}
-                <Card className="rounded-md border border-border shadow-sm bg-white/80 dark:bg-card/80 backdrop-blur-xl group/table overflow-hidden">
+                <Card className="rounded-xl border border-border shadow-sm bg-white/80 dark:bg-card/80 backdrop-blur-xl group/table overflow-hidden">
                     <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-white/10">
                         <Table className="w-full min-w-[700px] md:min-w-full">
                             <TableHeader>
@@ -1106,7 +1111,7 @@ export default function GoogleAdsView({
                                     <TableHead className="w-[80px] md:w-[100px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-2">Cost</TableHead>
                                     <TableHead className="w-[100px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-4 hidden lg:table-cell">Impr.</TableHead>
                                     <TableHead className="w-[100px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-4 hidden lg:table-cell">Int.</TableHead>
-                                    <TableHead className="w-[80px] md:w-[120px] text-[#1a73e8] font-black text-[9px] uppercase tracking-widest text-right px-2 bg-blue-50/10 dark:bg-blue-900/5">Rate</TableHead>
+                                    <TableHead className="w-[80px] md:w-[120px] text-[#1a73e8] font-black text-[9px] uppercase tracking-widest text-right px-2 bg-sky-50/10 dark:bg-sky-900/5">Rate</TableHead>
                                     <TableHead className="w-[100px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-center px-2">Action</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -1174,7 +1179,7 @@ export default function GoogleAdsView({
                                                 <TableCell className="text-right font-black text-[11px] md:text-[12px] text-foreground px-2">${Number(ad.spend).toLocaleString()}</TableCell>
                                                 <TableCell className="text-right font-bold text-[12px] text-muted-foreground px-4 hidden lg:table-cell">{Number(ad.impressions).toLocaleString()}</TableCell>
                                                 <TableCell className="text-right font-bold text-[12px] text-muted-foreground px-4 hidden lg:table-cell">{Number(ad.clicks).toLocaleString()}</TableCell>
-                                                <TableCell className="text-right font-black text-[12px] md:text-[15px] text-[#1a73e8] px-2 bg-blue-50/10 dark:bg-blue-900/5">{(Number(ad.ctr) || 0).toFixed(1)}%</TableCell>
+                                                <TableCell className="text-right font-black text-[12px] md:text-[15px] text-[#1a73e8] px-2 bg-sky-50/10 dark:bg-sky-900/5">{(Number(ad.ctr) || 0).toFixed(1)}%</TableCell>
                                                 <TableCell className="px-2">
                                                     <div className="flex items-center justify-center">
                                                         <Button
@@ -1199,7 +1204,7 @@ export default function GoogleAdsView({
                                                     <Button
                                                         onClick={() => setDisplayLimit(prev => prev + 24)}
                                                         variant="outline"
-                                                        className="h-12 px-8 border-none bg-blue-50 text-[#1a73e8] dark:bg-white/5 dark:text-blue-400 text-[11px] font-black uppercase tracking-widest rounded-md"
+                                                        className="h-12 px-8 border-none bg-sky-50 text-[#1a73e8] dark:bg-white/5 dark:text-sky-400 text-[11px] font-black uppercase tracking-widest rounded-md"
                                                     >
                                                         Show More Creatives
                                                     </Button>
@@ -1226,7 +1231,7 @@ export default function GoogleAdsView({
                     {/* Row 1: Platform & Mode Toggle */}
                     <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20 shadow-inner group/icon shrink-0">
+                            <div className="w-9 h-9 rounded-xl bg-sky-500/10 dark:bg-sky-500/20 flex items-center justify-center border border-sky-500/20 shadow-inner group/icon shrink-0">
                                 <TrendingUp className="h-4 w-4 text-[#1a73e8] dark:text-[#4285f4]" />
                             </div>
                             <div className="flex flex-col min-w-0 gap-0.5">
@@ -1250,18 +1255,18 @@ export default function GoogleAdsView({
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52 rounded-md p-2 bg-white/95 dark:bg-card/95 backdrop-blur-xl border border-border shadow-sm z-50">
-                                <DropdownMenuItem onClick={() => { setDataSource("database"); onDataSourceChange?.("database"); }} className={cn("rounded-xl py-2.5 cursor-pointer mb-1", dataSource === "database" && "bg-blue-500/5")}>
+                                <DropdownMenuItem onClick={() => { setDataSource("database"); onDataSourceChange?.("database"); }} className={cn("rounded-xl py-2.5 cursor-pointer mb-1", dataSource === "database" && "bg-sky-500/5")}>
                                     <div className="flex items-center gap-2.5">
-                                        <Database className={cn("h-4 w-4 shrink-0", dataSource === "database" ? "text-blue-500" : "text-muted-foreground")} />
+                                        <Database className={cn("h-4 w-4 shrink-0", dataSource === "database" ? "text-sky-500" : "text-muted-foreground")} />
                                         <div>
                                             <p className="text-xs font-bold text-foreground">Historical Reports</p>
                                             <p className="text-[10px] text-muted-foreground font-medium">Database analysis cards</p>
                                         </div>
                                     </div>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { setDataSource("realtime"); onDataSourceChange?.("realtime"); }} className={cn("rounded-xl py-2.5 cursor-pointer", dataSource === "realtime" && "bg-blue-500/5")}>
+                                <DropdownMenuItem onClick={() => { setDataSource("realtime"); onDataSourceChange?.("realtime"); }} className={cn("rounded-xl py-2.5 cursor-pointer", dataSource === "realtime" && "bg-sky-500/5")}>
                                     <div className="flex items-center gap-2.5">
-                                        <Wifi className={cn("h-4 w-4 shrink-0", dataSource === "realtime" ? "text-blue-500" : "text-muted-foreground")} />
+                                        <Wifi className={cn("h-4 w-4 shrink-0", dataSource === "realtime" ? "text-sky-500" : "text-muted-foreground")} />
                                         <div>
                                             <p className="text-xs font-bold text-foreground">Live Analytics</p>
                                             <p className="text-[10px] text-muted-foreground font-medium">Real-time performance</p>
@@ -1277,7 +1282,7 @@ export default function GoogleAdsView({
                 <div className="hidden md:flex px-6 py-3 items-center justify-between gap-3 border-b border-zinc-100 dark:border-border bg-white dark:bg-black w-full">
 
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20 shadow-inner group/icon shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-sky-500/10 dark:bg-sky-500/20 flex items-center justify-center border border-sky-500/20 shadow-inner group/icon shrink-0">
                             <TrendingUp className="h-4 w-4 text-[#1a73e8] dark:text-[#4285f4]" />
                         </div>
                         <div className="flex flex-col min-w-0">
@@ -1294,11 +1299,11 @@ export default function GoogleAdsView({
                                         <span className="text-xs font-bold">All Platforms</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => onPlatformChange?.("google")} className="rounded-xl py-2 cursor-pointer mb-1">
-                                        <Play className="h-4 w-4 mr-2 text-blue-500" />
+                                        <Play className="h-4 w-4 mr-2 text-sky-500" />
                                         <span className="text-xs font-bold">Google Ads</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => onPlatformChange?.("meta")} className="rounded-xl py-2 cursor-pointer mb-1">
-                                        <Facebook className="h-4 w-4 mr-2 text-blue-600" />
+                                        <Facebook className="h-4 w-4 mr-2 text-sky-600" />
                                         <span className="text-xs font-bold">Meta Ads</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => onPlatformChange?.("adroll")} className="rounded-xl py-2 cursor-pointer">
@@ -1321,7 +1326,7 @@ export default function GoogleAdsView({
                     <div className="flex items-center gap-2 lg:gap-3 justify-end">
                         {/* Realtime Search Bar - Moved to Top Bar */}
                         {dataSource === "realtime" && (
-                            <div className="bg-card/40 border border-border rounded-xl px-1 shadow-sm relative group w-full md:max-w-[260px] transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800 h-9 flex items-center mr-auto lg:mr-0">
+                            <div className="bg-card border border-border rounded-xl px-1 shadow-sm relative group w-full md:max-w-[260px] transition-all hover:bg-accent h-9 flex items-center mr-auto lg:mr-0">
                                 <Search className="absolute left-3 h-3.5 w-3.5 text-muted-foreground group-focus-within:text-[#1a73e8] transition-colors" />
                                 <Input
                                     placeholder={realtimeView === 'campaigns' ? "Search live campaigns..." : realtimeView === 'ads' ? "Search ads..." : "Search assets..."}
@@ -1340,7 +1345,7 @@ export default function GoogleAdsView({
                         {/* Date selectors */}
                         {dataSource === "realtime" ? (
                             <Select value={realtimeDateRange} onValueChange={setRealtimeDateRange}>
-                                <SelectTrigger className="w-36 h-9 rounded-xl bg-zinc-50 dark:bg-white/5 border-border text-xs font-medium focus:ring-1 focus:ring-blue-500 shadow-sm">
+                                <SelectTrigger className="w-36 h-9 rounded-xl bg-card dark:bg-card border border-border text-xs font-semibold focus:ring-1 focus:ring-sky-500 shadow-sm">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="rounded-md border-border">
@@ -1354,20 +1359,20 @@ export default function GoogleAdsView({
                         ) : (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="h-9 px-3 bg-zinc-50 dark:bg-white/5 border-border rounded-xl flex items-center gap-2 hover:border-blue-500/30 transition-all">
+                                    <Button variant="outline" className="h-9 px-3 bg-card dark:bg-card border border-border rounded-xl flex items-center gap-2 hover:bg-accent hover:border-sky-500/30 transition-all">
                                         <Calendar className="h-3.5 w-3.5 text-[#1a73e8]" />
-                                        <span className="text-xs font-black text-foreground/80 dark:text-zinc-300">{selectedDateLabel}</span>
+                                        <span className="text-xs font-bold text-foreground">{selectedDateLabel}</span>
                                         <ChevronDown className="h-3 w-3 text-zinc-300" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56 rounded-md p-2 bg-white/95 dark:bg-card/95 backdrop-blur-xl border border-border shadow-sm overflow-y-auto max-h-72">
-                                    <DropdownMenuItem onClick={() => setSelectedDate("all")} className={cn("rounded-xl py-2 cursor-pointer mb-1", selectedDate === "all" && "bg-blue-50 text-blue-600")}>
+                                    <DropdownMenuItem onClick={() => setSelectedDate("all")} className={cn("rounded-xl py-2 cursor-pointer mb-1", selectedDate === "all" && "bg-sky-50 text-sky-600")}>
                                         <Calendar className="h-3.5 w-3.5 mr-2 opacity-60" />
                                         <span className="text-xs font-bold">All Time</span>
                                     </DropdownMenuItem>
                                     {uniqueAnalysisDates.map(({ value, label }) => (
-                                        <DropdownMenuItem key={value} onClick={() => setSelectedDate(value)} className={cn("rounded-xl py-2 cursor-pointer", selectedDate === value && "bg-blue-50 text-blue-600")}>
-                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2" />
+                                        <DropdownMenuItem key={value} onClick={() => setSelectedDate(value)} className={cn("rounded-xl py-2 cursor-pointer", selectedDate === value && "bg-sky-50 text-sky-600")}>
+                                            <div className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-2" />
                                             <span className="text-xs font-medium">{label}</span>
                                         </DropdownMenuItem>
                                     ))}
@@ -1378,27 +1383,27 @@ export default function GoogleAdsView({
                         {/* Mode Toggle */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="h-9 px-3 bg-zinc-50 dark:bg-white/5 border-border rounded-xl flex items-center gap-2 hover:border-blue-500/30 transition-all shadow-sm">
+                                <Button variant="outline" className="h-9 px-3 bg-card dark:bg-card border border-border rounded-xl flex items-center gap-2 hover:bg-accent hover:border-sky-500/30 transition-all shadow-sm">
                                     {dataSource === "database" ? <Database className="h-3.5 w-3.5 text-[#1a73e8]" /> : <Wifi className="h-3.5 w-3.5 text-[#1a73e8] animate-pulse" />}
-                                    <span className="text-xs font-black text-foreground/80 dark:text-zinc-300">
+                                    <span className="text-xs font-bold text-foreground">
                                         {dataSource === "database" ? "Historical reports" : "Live Analytics"}
                                     </span>
                                     <ChevronDown className="h-3 w-3 text-zinc-300" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56 rounded-md p-2 bg-white/95 dark:bg-card/95 backdrop-blur-xl border-border shadow-sm">
-                                <DropdownMenuItem onClick={() => { setDataSource("database"); onDataSourceChange?.("database"); }} className={cn("rounded-xl py-2.5 cursor-pointer mb-1", dataSource === "database" && "bg-blue-500/5")}>
+                                <DropdownMenuItem onClick={() => { setDataSource("database"); onDataSourceChange?.("database"); }} className={cn("rounded-xl py-2.5 cursor-pointer mb-1", dataSource === "database" && "bg-sky-500/5")}>
                                     <div className="flex items-center gap-2.5">
-                                        <Database className={cn("h-4 w-4 shrink-0", dataSource === "database" ? "text-blue-500" : "text-muted-foreground")} />
+                                        <Database className={cn("h-4 w-4 shrink-0", dataSource === "database" ? "text-sky-500" : "text-muted-foreground")} />
                                         <div>
                                             <p className="text-xs font-bold text-foreground">Historical Reports</p>
                                             <p className="text-[10px] text-muted-foreground font-medium">Database analysis cards</p>
                                         </div>
                                     </div>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { setDataSource("realtime"); onDataSourceChange?.("realtime"); }} className={cn("rounded-xl py-2.5 cursor-pointer", dataSource === "realtime" && "bg-blue-500/5")}>
+                                <DropdownMenuItem onClick={() => { setDataSource("realtime"); onDataSourceChange?.("realtime"); }} className={cn("rounded-xl py-2.5 cursor-pointer", dataSource === "realtime" && "bg-sky-500/5")}>
                                     <div className="flex items-center gap-2.5">
-                                        <Wifi className={cn("h-4 w-4 shrink-0", dataSource === "realtime" ? "text-blue-500" : "text-muted-foreground")} />
+                                        <Wifi className={cn("h-4 w-4 shrink-0", dataSource === "realtime" ? "text-sky-500" : "text-muted-foreground")} />
                                         <div>
                                             <p className="text-xs font-bold text-foreground">Live Analytics</p>
                                             <p className="text-[10px] text-muted-foreground font-medium">Real-time performance</p>
@@ -1416,8 +1421,8 @@ export default function GoogleAdsView({
                                 onClick={onRefresh}
                                 disabled={isSyncing}
                                 className={cn(
-                                    "h-9 w-9 bg-zinc-50 dark:bg-white/5 border-border rounded-xl ml-1 hover:border-blue-500/30 hover:bg-blue-50 hover:text-blue-500 transition-all shadow-sm",
-                                    isSyncing && "opacity-70"
+                                    "h-9 w-9 bg-card dark:bg-card border border-border rounded-xl ml-1 hover:border-sky-500/30 hover:bg-sky-50 hover:text-sky-500 transition-all shadow-sm cursor-pointer",
+                                    isSyncing && "opacity-70 cursor-not-allowed"
                                 )}
                             >
                                 <RefreshCw className={cn("h-4 w-4 text-muted-foreground dark:text-muted-foreground", isSyncing && "animate-spin")} />
@@ -1436,7 +1441,7 @@ export default function GoogleAdsView({
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={cn(
-                                    "relative py-4 flex items-center gap-2.5 transition-all shrink-0 group",
+                                    "relative py-4 flex items-center gap-2.5 transition-all shrink-0 group cursor-pointer",
                                     activeTab === tab.id ? "opacity-100" : "opacity-60 hover:opacity-100"
                                 )}
                             >
@@ -1478,13 +1483,13 @@ export default function GoogleAdsView({
             ) : (
                 <div className="flex flex-col w-full">
                     <div className="py-4 md:py-6 space-y-4 md:space-y-6 w-full max-w-full overflow-hidden px-0">
-                        <div className="flex flex-col lg:flex-row lg:items-center gap-4 bg-white/40 dark:bg-card/40 backdrop-blur-md border border-border/50 dark:border-border rounded-md md:rounded-md p-3 shadow-sm relative group">
+                        <div className="flex flex-col lg:flex-row lg:items-center gap-4 bg-card dark:bg-card border border-border rounded-xl p-3 shadow-sm relative group">
                             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 flex-1 min-w-0">
                                 <div className="relative group w-full md:max-w-xs">
                                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground group-focus-within:text-[#1a73e8] transition-colors" />
                                     <Input
-                                        placeholder="Search ads..."
-                                        className="pl-10 h-10 bg-zinc-100/50 dark:bg-white/5 border-none rounded-xl text-xs font-bold focus-visible:ring-2 focus-visible:ring-blue-500/20 transition-all w-full"
+                                        placeholder="Search ads by name..."
+                                        className="pl-10 h-10 bg-background dark:bg-white/5 border border-border rounded-xl text-xs font-bold focus-visible:ring-2 focus-visible:ring-sky-500/20 transition-all w-full"
                                         value={searchQuery}
                                         onChange={(e) => onSearchChange(e.target.value)}
                                     />
@@ -1494,14 +1499,14 @@ export default function GoogleAdsView({
 
                                 <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 [&::-webkit-scrollbar]:hidden scroll-smooth flex-nowrap">
                                     <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
-                                        <SelectTrigger className="flex-none w-[130px] md:w-[160px] h-10 bg-zinc-100/50 dark:bg-white/5 border-none rounded-xl text-[9px] md:text-xs font-medium uppercase tracking-wider focus:ring-2 focus:ring-blue-500/20">
-                                            <LayoutGrid className="h-3 w-3 mr-2 text-muted-foreground" />
+                                        <SelectTrigger className="flex-none w-[140px] md:w-[170px] h-10 bg-background dark:bg-white/5 border border-border rounded-xl text-[11px] md:text-xs font-semibold tracking-tight focus:ring-2 focus:ring-sky-500/20 [&>span]:truncate">
+                                            <LayoutGrid className="h-3.5 w-3.5 mr-2 shrink-0 text-muted-foreground" />
                                             <SelectValue placeholder="Campaigns" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-md border-border bg-white/95 dark:bg-card/95 backdrop-blur-xl max-w-[85vw] sm:max-w-[400px]">
-                                            <SelectItem value="all" className="rounded-xl font-bold text-xs uppercase cursor-pointer">All Campaigns</SelectItem>
+                                            <SelectItem value="all" className="rounded-lg font-semibold text-xs cursor-pointer">All Campaigns</SelectItem>
                                             {uniqueCampaigns.map(camp => (
-                                                <SelectItem key={camp} value={camp} className="rounded-xl font-bold text-xs uppercase cursor-pointer break-words truncate">
+                                                <SelectItem key={camp} value={camp} className="rounded-lg font-semibold text-xs cursor-pointer break-words truncate">
                                                     <span className="truncate block max-w-full">{camp}</span>
                                                 </SelectItem>
                                             ))}
@@ -1509,14 +1514,14 @@ export default function GoogleAdsView({
                                     </Select>
 
                                     <Select value={selectedType} onValueChange={setSelectedType}>
-                                        <SelectTrigger className="flex-none w-[110px] md:w-[140px] h-10 bg-zinc-100/50 dark:bg-white/5 border-none rounded-xl text-[9px] md:text-xs font-medium uppercase tracking-wider focus:ring-2 focus:ring-blue-500/20">
-                                            <Filter className="h-3 w-3 mr-2 text-muted-foreground" />
+                                        <SelectTrigger className="flex-none w-[120px] md:w-[150px] h-10 bg-background dark:bg-white/5 border border-border rounded-xl text-[11px] md:text-xs font-semibold tracking-tight focus:ring-2 focus:ring-sky-500/20 [&>span]:truncate">
+                                            <Filter className="h-3.5 w-3.5 mr-2 shrink-0 text-muted-foreground" />
                                             <SelectValue placeholder="Types" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-md border-border bg-white/95 dark:bg-card/95 backdrop-blur-xl max-w-[85vw] sm:max-w-[400px]">
-                                            <SelectItem value="all" className="rounded-xl font-bold text-xs uppercase cursor-pointer">All Types</SelectItem>
+                                            <SelectItem value="all" className="rounded-lg font-semibold text-xs cursor-pointer">All Types</SelectItem>
                                             {campaignTypes.map(type => (
-                                                <SelectItem key={type} value={type} className="rounded-xl font-bold text-xs uppercase cursor-pointer break-words truncate">
+                                                <SelectItem key={type} value={type} className="rounded-lg font-semibold text-xs cursor-pointer break-words truncate">
                                                     <span className="truncate block max-w-full">{type}</span>
                                                 </SelectItem>
                                             ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,13 +70,13 @@ function ResetPasswordForm() {
 
   if (isSuccess) {
     return (
-      <div className="w-full max-w-[400px] rounded-md border border-border bg-card p-6 text-center">
+      <div className="glass w-full max-w-[400px] rounded-xl p-6 text-center shadow-lg">
         <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-md bg-emerald-500/10">
           <CheckCircle2 className="h-5 w-5 text-emerald-500" aria-hidden="true" />
         </div>
         <h2 className="mt-3 text-lg font-semibold tracking-tight">Password updated</h2>
         <p className="mt-1 text-sm text-muted-foreground">Redirecting to sign in…</p>
-        <Button className="mt-5 h-10 w-full" onClick={() => router.push("/login")}>
+        <Button className="btn-gradient mt-5 h-10 w-full" onClick={() => router.push("/login")}>
           Go to sign in
         </Button>
       </div>
@@ -84,14 +85,33 @@ function ResetPasswordForm() {
 
   return (
     <div className="w-full max-w-[400px]">
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Set new password</h1>
+      <div className="mb-6 flex flex-col items-center text-center">
+        <Image
+          src="/logos/holaprime-dark.svg"
+          alt="HolaPrime"
+          width={176}
+          height={103}
+          unoptimized
+          className="h-11 w-auto dark:hidden"
+        />
+        <Image
+          src="/logos/holaprime-light.svg"
+          alt="HolaPrime"
+          width={176}
+          height={103}
+          unoptimized
+          className="hidden h-11 w-auto dark:block"
+        />
+        <span className="mt-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          Creative Analyzer
+        </span>
+        <h1 className="mt-6 text-2xl font-semibold tracking-tight">Set new password</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           Pick something strong — at least 8 characters.
         </p>
       </div>
 
-      <div className="rounded-md border border-border bg-card p-6">
+      <div className="glass rounded-xl p-6 shadow-lg">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="new-password" className="text-xs font-medium text-foreground">
@@ -159,7 +179,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="flex min-h-[100svh] items-center justify-center bg-background px-4 py-8 text-foreground">
+    <div className="bg-aurora flex min-h-[100svh] items-center justify-center bg-background px-4 py-8 text-foreground">
       <Suspense
         fallback={
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

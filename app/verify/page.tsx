@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
+import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Loader2, XCircle, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -32,7 +33,29 @@ function VerifyContent() {
   }, [searchParams, router, toast]);
 
   return (
-    <div className="w-full max-w-[400px] rounded-md border border-border bg-card p-6 text-center">
+    <div className="w-full max-w-[400px]">
+      <div className="mb-6 flex flex-col items-center text-center">
+        <Image
+          src="/logos/holaprime-dark.svg"
+          alt="HolaPrime"
+          width={176}
+          height={103}
+          unoptimized
+          className="h-11 w-auto dark:hidden"
+        />
+        <Image
+          src="/logos/holaprime-light.svg"
+          alt="HolaPrime"
+          width={176}
+          height={103}
+          unoptimized
+          className="hidden h-11 w-auto dark:block"
+        />
+        <span className="mt-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          Creative Analyzer
+        </span>
+      </div>
+      <div className="glass rounded-xl p-6 text-center shadow-lg">
       {status === "loading" && (
         <div className="flex flex-col items-center gap-3 py-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
@@ -56,13 +79,14 @@ function VerifyContent() {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }
 
 export default function VerifyPage() {
   return (
-    <div className="flex min-h-[100svh] items-center justify-center bg-background px-4 py-8 text-foreground">
+    <div className="bg-aurora flex min-h-[100svh] items-center justify-center bg-background px-4 py-8 text-foreground">
       <Suspense fallback={null}>
         <VerifyContent />
       </Suspense>

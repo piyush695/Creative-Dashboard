@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -221,15 +223,32 @@ export default function LoginPage() {
       : "We'll send a one-time code to your inbox.";
 
   return (
-    <div className="flex min-h-[100svh] w-full flex-col bg-background text-foreground">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-[13px] font-semibold">
-            h
-          </div>
-          <div className="text-sm font-semibold tracking-tight">hola prime</div>
-        </div>
+    <div className="bg-aurora flex min-h-[100svh] w-full flex-col bg-background text-foreground">
+      {/* Header — brand top-left, theme toggle top-right */}
+      <header className="relative z-10 flex items-start justify-between px-5 pb-4 pt-7 sm:px-8 sm:pt-9">
+        <Link href="/" className="flex flex-col items-start" aria-label="HolaPrime — Creative Analyzer">
+          {/* HolaPrime brand logo — theme aware, natural aspect ratio */}
+          <Image
+            src="/logos/holaprime-dark.svg"
+            alt="HolaPrime"
+            width={176}
+            height={103}
+            unoptimized
+            className="h-12 w-auto dark:hidden sm:h-14"
+          />
+          <Image
+            src="/logos/holaprime-light.svg"
+            alt="HolaPrime"
+            width={176}
+            height={103}
+            unoptimized
+            className="hidden h-12 w-auto dark:block sm:h-14"
+          />
+          {/* Tagline sized + aligned to the logo width */}
+          <span className="mt-1.5 w-full text-center text-[7px] font-semibold uppercase tracking-[0.1em] text-muted-foreground sm:text-[8px]">
+            Creative Analyzer
+          </span>
+        </Link>
         <Button
           variant="ghost"
           size="icon"
@@ -242,15 +261,15 @@ export default function LoginPage() {
       </header>
 
       {/* Centered auth card */}
-      <main className="flex flex-1 items-center justify-center px-4 py-8">
-        <div className="w-full max-w-[400px]">
+      <main className="relative z-10 flex flex-1 items-center justify-center overflow-y-auto px-4 py-8 sm:py-12">
+        <div className="w-full max-w-[400px] animate-scale-in">
           {/* Title block */}
           <div className="mb-6 text-center">
             <h1 className="text-2xl font-semibold tracking-tight">{headerTitle}</h1>
             <p className="mt-1.5 text-sm text-muted-foreground">{headerSubtitle}</p>
           </div>
 
-          <div className="rounded-md border border-border bg-card p-6">
+          <div className="glass rounded-xl p-6 shadow-lg">
             {/* ── LOGIN ──────────────────────────────────────────────── */}
             {view === "login" && (
               <div className="space-y-4">
@@ -323,7 +342,7 @@ export default function LoginPage() {
                       </button>
                     </div>
                   </div>
-                  <Button type="submit" className="h-10 w-full" disabled={isLoading}>
+                  <Button type="submit" className="btn-gradient h-10 w-full" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {isLoading ? "Signing in…" : "Sign in"}
                   </Button>
@@ -377,7 +396,7 @@ export default function LoginPage() {
                     </button>
                   </div>
                 </div>
-                <Button type="submit" className="h-10 w-full" disabled={isLoading}>
+                <Button type="submit" className="btn-gradient h-10 w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isLoading ? "Sending code…" : "Send verification code"}
                 </Button>
@@ -409,7 +428,7 @@ export default function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="h-10 w-full"
+                  className="btn-gradient h-10 w-full"
                   disabled={isLoading || regOtp.length < 6}
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -442,7 +461,7 @@ export default function LoginPage() {
                     required
                   />
                 </div>
-                <Button type="submit" className="h-10 w-full" disabled={isLoading}>
+                <Button type="submit" className="btn-gradient h-10 w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isLoading ? "Sending code…" : "Send recovery code"}
                 </Button>
@@ -472,7 +491,7 @@ export default function LoginPage() {
                     required
                   />
                 </div>
-                <Button type="submit" className="h-10 w-full" disabled={isLoading || forgotOtp.length < 6}>
+                <Button type="submit" className="btn-gradient h-10 w-full" disabled={isLoading || forgotOtp.length < 6}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isLoading ? "Verifying…" : "Verify code"}
                 </Button>
@@ -531,7 +550,7 @@ export default function LoginPage() {
                     </button>
                   </div>
                 </div>
-                <Button type="submit" className="h-10 w-full" disabled={isLoading}>
+                <Button type="submit" className="btn-gradient h-10 w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isLoading ? "Updating…" : "Update password"}
                 </Button>

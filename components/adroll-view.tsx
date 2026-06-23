@@ -316,7 +316,7 @@ export default function AdrollView({
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-20 overflow-hidden max-w-full">
                     {/* Primary Row: High-Level Insights */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <Card className="lg:col-span-4 p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md relative overflow-hidden group">
+                        <Card className="lg:col-span-4 p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-[#E0267D]/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-[#E0267D]/10 transition-all duration-1000" />
                             <div className="flex items-center justify-between mb-8 md:mb-10">
                                 <div>
@@ -368,7 +368,7 @@ export default function AdrollView({
                         </Card>
 
                         {/* Performance Trends Chart */}
-                        <Card className="lg:col-span-8 p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md relative overflow-hidden group">
+                        <Card className="lg:col-span-8 p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-xl relative overflow-hidden group">
                             <div className="flex items-center justify-between mb-8">
                                 <div>
                                     <h3 className="text-xl font-semibold tracking-tight text-foreground">Performance snapshot</h3>
@@ -431,15 +431,15 @@ export default function AdrollView({
                             </div>
 
                             <div className="grid grid-cols-3 gap-2 md:gap-6 mt-8">
-                                <div className="text-center p-2 md:p-4 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group/stat hover:border-#E0267D/20 transition-all flex flex-col justify-center">
-                                    <p className="text-[7px] md:text-[9px] font-black text-muted-foreground tracking-widest mb-1 group-hover:text-#E0267D transition-colors">Top performer</p>
+                                <div className="text-center p-2 md:p-4 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group/stat hover:border-[#E0267D]/20 transition-all flex flex-col justify-center">
+                                    <p className="text-[7px] md:text-[9px] font-black text-muted-foreground tracking-widest mb-1 group-hover:text-[#E0267D] transition-colors">Top performer</p>
                                     <p className="text-xs md:text-sm font-black text-foreground">${Number(sortedAdsForChart[0]?.spend || 0).toLocaleString()}</p>
                                 </div>
-                                <div className="text-center p-2 md:p-4 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group/stat hover:border-#E0267D/20 transition-all flex flex-col justify-center">
-                                    <p className="text-[7px] md:text-[9px] font-black text-muted-foreground tracking-widest mb-1 group-hover:text-#E0267D transition-colors">Avg. efficiency</p>
+                                <div className="text-center p-2 md:p-4 rounded-md bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border group/stat hover:border-[#E0267D]/20 transition-all flex flex-col justify-center">
+                                    <p className="text-[7px] md:text-[9px] font-black text-muted-foreground tracking-widest mb-1 group-hover:text-[#E0267D] transition-colors">Avg. efficiency</p>
                                     <p className="text-xs md:text-sm font-black text-foreground">{(totalInteractions / (totalImpr || 1) * 100).toFixed(2)}%</p>
                                 </div>
-                                <div className="text-center p-2 md:p-4 rounded-md bg-#E0267D/10 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 group/stat hover:bg-blue-100/50 transition-all flex flex-col justify-center">
+                                <div className="text-center p-2 md:p-4 rounded-md bg-[#E0267D]/10 dark:bg-sky-900/10 border border-sky-100 dark:border-sky-900/20 group/stat hover:bg-sky-100/50 transition-all flex flex-col justify-center">
                                     <p className="text-[7px] md:text-[9px] font-black text-[#E0267D] tracking-widest mb-1 group-hover:scale-105 transition-transform">Volatility</p>
                                     <p className="text-xs md:text-sm font-black text-[#E0267D]">Low</p>
                                 </div>
@@ -450,7 +450,7 @@ export default function AdrollView({
                     {/* Secondary Row: Lists & Breakdowns */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Top Campaigns List */}
-                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md flex flex-col min-h-[450px] lg:h-[520px]">
+                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-xl flex flex-col min-h-[450px] lg:h-[520px]">
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-[11px] font-black tracking-[0.2em] text-muted-foreground">Top campaigns</h3>
                                 <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-border">
@@ -495,7 +495,7 @@ export default function AdrollView({
                         </Card>
 
                         {/* Ad Type Distribution */}
-                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md flex flex-col min-h-[450px] lg:h-[520px]">
+                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-xl flex flex-col min-h-[450px] lg:h-[520px]">
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-[11px] font-black tracking-[0.2em] text-muted-foreground">Format performance</h3>
                                 <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-border">
@@ -516,7 +516,7 @@ export default function AdrollView({
                                             dataKey="value"
                                         >
                                             {formatChartData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={["#E0267D", "#34a853", "#fbbc05", "#ea4335", "#a855f7", "#ec4899"][index % 6]} stroke="none" />
+                                                <Cell key={`cell-${index}`} fill={["#E0267D", "#34a853", "#fbbc05", "#ea4335", "#0dd6ec", "#ec4899"][index % 6]} stroke="none" />
                                             ))}
                                         </Pie>
                                         <RechartsTooltip
@@ -544,7 +544,7 @@ export default function AdrollView({
                                                     <div className={cn("h-3 w-3 rounded-full shadow-sm shrink-0", colors[i % colors.length])} />
                                                     <span className="text-[9px] md:text-[10px] font-black text-foreground tracking-widest truncate">{item.type}</span>
                                                 </div>
-                                                <div className="shrink-0 px-2 py-0.5 rounded-full bg-#E0267D/10 text-[#E0267D] text-[9px] font-black">{item.ctr.toFixed(2)}% CTR</div>
+                                                <div className="shrink-0 px-2 py-0.5 rounded-full bg-[#E0267D]/10 text-[#E0267D] text-[9px] font-black">{item.ctr.toFixed(2)}% CTR</div>
                                             </div>
                                             <div className="flex items-end justify-between">
                                                 <div className="space-y-0.5">
@@ -562,7 +562,7 @@ export default function AdrollView({
                         </Card>
 
                         {/* Top Keywords / Search Terms */}
-                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md flex flex-col min-h-[450px] lg:h-[520px] overflow-hidden">
+                        <Card className="p-6 md:p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-xl flex flex-col min-h-[450px] lg:h-[520px] overflow-hidden">
                             <div className="flex items-center justify-between mb-8">
                                 <h3 className="text-[11px] font-black tracking-[0.2em] text-muted-foreground">Search keywords</h3>
                                 <div className="h-8 w-8 rounded-xl bg-zinc-50 dark:bg-white/5 flex items-center justify-center border border-zinc-100 dark:border-border">
@@ -620,7 +620,7 @@ export default function AdrollView({
                     {/* Tertiary Row: Creative Intelligence & Analytics */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Psychological Triggers Card */}
-                        <Card className="p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md relative overflow-hidden group">
+                        <Card className="p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-xl relative overflow-hidden group">
                             <div className="absolute -right-20 -top-20 w-64 h-64 bg-purple-500/5 rounded-full blur-[80px] group-hover:bg-purple-500/10 transition-all duration-1000" />
                             <div className="flex items-center justify-between mb-8 relative z-10">
                                 <div>
@@ -633,10 +633,10 @@ export default function AdrollView({
                             </div>
                             <div className="grid grid-cols-2 gap-4 relative z-10">
                                 {[
-                                    { label: "Social Proof", key: "socialProof" as const, color: "from-purple-500 to-#E0267D" },
+                                    { label: "Social Proof", key: "socialProof" as const, color: "from-purple-500 to-[#E0267D]" },
                                     { label: "Scarcity", key: "scarcity" as const, color: "from-purple-400 to-pink-500" },
-                                    { label: "Loss Aversion", key: "lossAversion" as const, color: "from-#E0267D to-purple-600" },
-                                    { label: "Curiosity", key: "curiosityGap" as const, color: "from-indigo-500 to-purple-400" },
+                                    { label: "Loss Aversion", key: "lossAversion" as const, color: "from-[#E0267D] to-purple-600" },
+                                    { label: "Curiosity", key: "curiosityGap" as const, color: "from-sky-500 to-purple-400" },
                                 ].map((trigger: any) => {
                                     const count = filteredAds.filter((ad: any) => (ad as any)[trigger.key] === "Yes" || (ad as any)[trigger.key + "Present"] === true).length
                                     const percentage = (count / (filteredAds.length || 1)) * 100
@@ -656,7 +656,7 @@ export default function AdrollView({
                         </Card>
 
                         {/* AIDA Model Performance */}
-                        <Card className="p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-md relative overflow-hidden group">
+                        <Card className="p-8 border border-border bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md shadow-sm rounded-xl relative overflow-hidden group">
                             <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] group-hover:bg-emerald-500/10 transition-all duration-1000" />
                             <div className="flex items-center justify-between mb-8 relative z-10">
                                 <div>
@@ -763,7 +763,7 @@ export default function AdrollView({
                             </div>
                             <Button
                                 variant="ghost"
-                                className="hidden md:flex text-xs font-black text-[#E0267D] hover:bg-#E0267D/10 dark:hover:bg-blue-900/10 rounded-md h-14 px-8 border border-border shadow-sm transition-all hover:scale-105 group"
+                                className="hidden md:flex text-xs font-black text-[#E0267D] hover:bg-[#E0267D]/10 dark:hover:bg-sky-900/10 rounded-md h-14 px-8 border border-border shadow-sm transition-all hover:scale-105 group"
                                 onClick={() => setActiveTab("ads")}
                             >
                                 View global assets <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -784,7 +784,7 @@ export default function AdrollView({
                                 <Card key={ad.id} className="min-w-[280px] md:min-w-0 w-[280px] md:w-full bg-white dark:bg-[#09090b] border border-border hover:border-zinc-300 dark:hover:border-zinc-700 rounded-md p-4 flex flex-col gap-4 group shadow-sm transition-all duration-300 snap-center flex-shrink-0 md:flex-shrink-1">
 
                                     {/* Image Header Section */}
-                                    <div className="relative aspect-[1.5] w-full rounded-md overflow-hidden bg-zinc-100 dark:bg-card border border-border/50">
+                                    <div className="relative aspect-[1.5] w-full rounded-xl overflow-hidden bg-zinc-100 dark:bg-card border border-border/50">
                                         <img
                                             src={ad.thumbnailUrl || "/placeholder.svg"}
                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -813,7 +813,7 @@ export default function AdrollView({
                                     {/* Stats Grid - MATCHING REFERENCE */}
                                     <div className="grid grid-cols-2 gap-3">
                                         {/* Spend Box */}
-                                        <div className="bg-card/50 rounded-md p-3 border border-zinc-100 dark:border-border/50 flex flex-col justify-between h-[80px] group/spend transition-all hover:bg-zinc-100 dark:hover:bg-card">
+                                        <div className="bg-card/50 rounded-xl p-3 border border-zinc-100 dark:border-border/50 flex flex-col justify-between h-[80px] group/spend transition-all hover:bg-zinc-100 dark:hover:bg-card">
                                             <div className="flex items-center gap-1.5">
                                                 <div className="w-1 h-1 rounded-full bg-zinc-400 dark:bg-zinc-500 group-hover/spend:bg-zinc-600 dark:group-hover/spend:bg-zinc-300 transition-colors" />
                                                 <p className="text-[10px] text-muted-foreground font-black">Spend</p>
@@ -822,15 +822,15 @@ export default function AdrollView({
                                         </div>
 
                                         {/* CTR Box */}
-                                        <div className="bg-#E0267D/10 dark:bg-#E0267D/5 rounded-md p-3 border border-blue-100 dark:border-#E0267D/10 flex flex-col justify-between h-[80px] relative overflow-hidden group/ctr transition-all hover:bg-blue-100/50 dark:hover:bg-#E0267D/10">
+                                        <div className="bg-[#E0267D]/10 dark:bg-[#E0267D]/5 rounded-md p-3 border border-sky-100 dark:border-[#E0267D]/10 flex flex-col justify-between h-[80px] relative overflow-hidden group/ctr transition-all hover:bg-sky-100/50 dark:hover:bg-[#E0267D]/10">
                                             {/* Subtle background glow */}
-                                            <div className="absolute top-0 right-0 w-12 h-12 bg-#E0267D/10 blur-xl rounded-full -mr-4 -mt-4 transition-opacity" />
+                                            <div className="absolute top-0 right-0 w-12 h-12 bg-[#E0267D]/10 blur-xl rounded-full -mr-4 -mt-4 transition-opacity" />
 
                                             <div className="flex justify-between items-center relative z-10">
-                                                <div className="w-1 h-1 rounded-full bg-#E0267D" />
-                                                <p className="text-[10px] text-#E0267D dark:text-#E0267D font-black opacity-80">CTR efficiency</p>
+                                                <div className="w-1 h-1 rounded-full bg-[#E0267D]" />
+                                                <p className="text-[10px] text-[#E0267D] dark:text-[#E0267D] font-black opacity-80">CTR efficiency</p>
                                             </div>
-                                            <p className="text-[18px] font-black text-#E0267D dark:text-#E0267D tracking-tight text-right relative z-10">
+                                            <p className="text-[18px] font-black text-[#E0267D] dark:text-[#E0267D] tracking-tight text-right relative z-10">
                                                 {Number(ad.ctr).toFixed(2)}%
                                             </p>
                                         </div>
@@ -878,7 +878,7 @@ export default function AdrollView({
 
             return (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
-                    <Card className="rounded-md border-border shadow-sm overflow-hidden bg-white/80 dark:bg-card/80 backdrop-blur-xl group/table">
+                    <Card className="rounded-xl border-border shadow-sm overflow-hidden bg-white/80 dark:bg-card/80 backdrop-blur-xl group/table">
                         <div className="w-full overflow-x-auto">
                             <Table className="min-w-[800px]">
                                 <TableHeader>
@@ -906,7 +906,7 @@ export default function AdrollView({
                                         </TableRow>
                                     ) : (
                                         campaignsData.map((camp: any) => (
-                                            <TableRow key={camp.name} className="group/row hover:bg-#E0267D/10/30 dark:hover:bg-blue-900/5 cursor-pointer border-b border-zinc-100 dark:border-border transition-all duration-300">
+                                            <TableRow key={camp.name} className="group/row hover:bg-[#E0267D]/10 dark:hover:bg-sky-900/5 cursor-pointer border-b border-zinc-100 dark:border-border transition-all duration-300">
                                                 <TableCell className="px-6 text-center hidden lg:table-cell">
                                                     <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-border" />
                                                 </TableCell>
@@ -927,7 +927,7 @@ export default function AdrollView({
                                                 <TableCell className="text-right font-bold text-[13px] text-muted-foreground dark:text-muted-foreground">{camp.count}</TableCell>
                                                 <TableCell className="text-right font-black text-[14px] text-foreground px-2">${camp.cost.toLocaleString()}</TableCell>
                                                 <TableCell className="text-right font-bold text-[13px] text-muted-foreground dark:text-muted-foreground px-2 hidden sm:table-cell">{camp.impr.toLocaleString()}</TableCell>
-                                                <TableCell className="text-right px-6 font-black text-[15px] text-[#E0267D] bg-#E0267D/10/5 dark:bg-blue-900/5">{camp.ctr.toFixed(2)}%</TableCell>
+                                                <TableCell className="text-right px-6 font-black text-[15px] text-[#E0267D] bg-[#E0267D]/5 dark:bg-sky-900/5">{camp.ctr.toFixed(2)}%</TableCell>
                                             </TableRow>
                                         ))
                                     )}
@@ -946,7 +946,7 @@ export default function AdrollView({
 
             return (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
-                    <Card className="rounded-md border-border shadow-sm overflow-hidden bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md group/table">
+                    <Card className="rounded-xl border-border shadow-sm overflow-hidden bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md group/table">
                         <div className="w-full overflow-x-auto">
                             <Table className="min-w-[800px]">
                                 <TableHeader>
@@ -974,7 +974,7 @@ export default function AdrollView({
                                         </TableRow>
                                     ) : (
                                         formattedKeywords.map((kw: any, i: number) => (
-                                            <TableRow key={`${kw.word}-${i}`} className="group/row hover:bg-#E0267D/10/30 dark:hover:bg-blue-900/5 cursor-pointer border-b border-zinc-100 dark:border-border transition-all duration-300">
+                                            <TableRow key={`${kw.word}-${i}`} className="group/row hover:bg-[#E0267D]/10 dark:hover:bg-sky-900/5 cursor-pointer border-b border-zinc-100 dark:border-border transition-all duration-300">
                                                 <TableCell className="px-6 text-center hidden lg:table-cell">
                                                     <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-border" />
                                                 </TableCell>
@@ -1016,9 +1016,9 @@ export default function AdrollView({
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {audiences.length > 0 ? audiences.map((aud: any) => (
-                            <Card key={aud.name} className="p-6 border border-border bg-card rounded-md hover:scale-[1.02] transition-transform cursor-pointer group shadow-sm">
+                            <Card key={aud.name} className="p-6 border border-border bg-card rounded-xl hover:scale-[1.02] transition-transform cursor-pointer group shadow-sm">
                                 <div className="flex items-center justify-between mb-6">
-                                    <div className="h-10 w-10 rounded-xl bg-#E0267D/10 flex items-center justify-center text-[#E0267D]">
+                                    <div className="h-10 w-10 rounded-xl bg-[#E0267D]/10 flex items-center justify-center text-[#E0267D]">
                                         <Info className="h-5 w-5" />
                                     </div>
                                     <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[9px] uppercase tracking-widest">{aud.score}% Affinity</Badge>
@@ -1049,7 +1049,7 @@ export default function AdrollView({
         // Ads & Assets tab (the main table)
         return (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-24">
-                <Card className="rounded-md border border-border shadow-sm overflow-hidden bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md group/table">
+                <Card className="rounded-xl border border-border shadow-sm overflow-hidden bg-white/80 dark:bg-card/80 md:backdrop-blur-xl backdrop-blur-md group/table">
                     <div className="overflow-x-auto custom-scrollbar">
                         <div className="min-w-[800px]">
                             <Table>
@@ -1064,7 +1064,7 @@ export default function AdrollView({
                                         <TableHead className="w-[80px] md:w-[100px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-4">Cost</TableHead>
                                         <TableHead className="w-[80px] md:w-[100px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-4 hidden sm:table-cell">Impr.</TableHead>
                                         <TableHead className="w-[80px] md:w-[100px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-right px-4 hidden md:table-cell">Int.</TableHead>
-                                        <TableHead className="w-[100px] md:w-[120px] text-[#E0267D] font-black text-[9px] uppercase tracking-widest text-right px-6 bg-#E0267D/10/10 dark:bg-blue-900/5">Int. Rate</TableHead>
+                                        <TableHead className="w-[100px] md:w-[120px] text-[#E0267D] font-black text-[9px] uppercase tracking-widest text-right px-6 bg-[#E0267D]/10 dark:bg-sky-900/5">Int. Rate</TableHead>
                                         <TableHead className="w-[120px] md:w-[140px] text-muted-foreground dark:text-muted-foreground font-black text-[9px] uppercase tracking-widest text-center px-4">Action</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -1074,7 +1074,7 @@ export default function AdrollView({
                                             <TableCell colSpan={9} className="h-[400px] text-center border-none">
                                                 <div className="flex flex-col items-center justify-center space-y-6 max-w-sm mx-auto">
                                                     <div className="relative">
-                                                        <div className="absolute inset-0 bg-#E0267D/10 blur-3xl rounded-full scale-150 opacity-20" />
+                                                        <div className="absolute inset-0 bg-[#E0267D]/10 blur-3xl rounded-full scale-150 opacity-20" />
                                                         <div className="relative h-20 w-20 rounded-md bg-white dark:bg-zinc-800 border border-border shadow-sm flex items-center justify-center">
                                                             <Search className="h-10 w-10 text-[#E0267D]" />
                                                         </div>
@@ -1127,7 +1127,7 @@ export default function AdrollView({
                                                     <TableCell className="text-right font-black text-[14px] text-foreground px-4">${Number(ad.spend).toLocaleString()}</TableCell>
                                                     <TableCell className="text-right font-bold text-[13px] text-muted-foreground px-4 hidden sm:table-cell">{Number(ad.impressions).toLocaleString()}</TableCell>
                                                     <TableCell className="text-right font-bold text-[13px] text-muted-foreground px-4 hidden md:table-cell">{Number(ad.clicks).toLocaleString()}</TableCell>
-                                                    <TableCell className="text-right font-black text-[15px] text-[#E0267D] px-6 bg-#E0267D/10/10 dark:bg-blue-900/5">{(Number(ad.ctr) || 0).toFixed(2)}%</TableCell>
+                                                    <TableCell className="text-right font-black text-[15px] text-[#E0267D] px-6 bg-[#E0267D]/10 dark:bg-sky-900/5">{(Number(ad.ctr) || 0).toFixed(2)}%</TableCell>
                                                     <TableCell className="px-4">
                                                         <div className="flex items-center justify-center">
                                                             <Button
@@ -1152,7 +1152,7 @@ export default function AdrollView({
                                                         <Button
                                                             onClick={() => setDisplayLimit(prev => prev + 24)}
                                                             variant="outline"
-                                                            className="h-12 px-8 border-none bg-#E0267D/10 text-[#E0267D] dark:bg-white/5 dark:text-#E0267D text-[11px] font-black uppercase tracking-widest rounded-md"
+                                                            className="h-12 px-8 border-none bg-[#E0267D]/10 text-[#E0267D] dark:bg-white/5 dark:text-[#E0267D] text-[11px] font-black uppercase tracking-widest rounded-md"
                                                         >
                                                             Show More Creatives
                                                         </Button>
@@ -1214,7 +1214,7 @@ export default function AdrollView({
                                     <ChevronDown className="h-2.5 w-2.5 text-muted-foreground" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-52 rounded-md p-2 bg-white/95 dark:bg-card/95 backdrop-blur-xl border-border shadow-sm z-50">
+                            <DropdownMenuContent align="end" className="w-52 rounded-xl p-2 bg-white/95 dark:bg-card/95 backdrop-blur-xl border-border shadow-sm z-50">
                                 <DropdownMenuItem onClick={() => setDataSource("database")} className={cn("rounded-xl py-2.5 cursor-pointer mb-1", dataSource === "database" && "bg-[#E0267D]/5")}>
                                     <div className="flex items-center gap-2.5">
                                         <Database className={cn("h-4 w-4 shrink-0", dataSource === "database" ? "text-[#E0267D]" : "text-muted-foreground")} />
@@ -1343,7 +1343,7 @@ export default function AdrollView({
                                         <ChevronDown className="h-3 w-3 text-muted-foreground" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-52 rounded-md p-2 bg-white/95 dark:bg-card/95 backdrop-blur-xl border-border shadow-sm z-50">
+                                <DropdownMenuContent align="end" className="w-52 rounded-xl p-2 bg-white/95 dark:bg-card/95 backdrop-blur-xl border-border shadow-sm z-50">
                                     <DropdownMenuItem onClick={() => setDataSource("database")} className={cn("rounded-xl py-2.5 cursor-pointer mb-1", dataSource === "database" && "bg-[#E0267D]/5")}>
                                         <div className="flex items-center gap-2.5">
                                             <Database className={cn("h-4 w-4 shrink-0", dataSource === "database" ? "text-[#E0267D]" : "text-muted-foreground")} />
@@ -1383,7 +1383,7 @@ export default function AdrollView({
             {/* ── Content ────────────────────────────────────────────── */}
             {dataSource === "realtime" ? (
                 <div className="flex flex-col w-full gap-4 py-6">
-                    <div className="bg-white dark:bg-black relative -mx-4 md:-mx-6 rounded-md overflow-hidden" style={{ height: "calc(100vh - 200px)" }}>
+                    <div className="bg-white dark:bg-black relative -mx-4 md:-mx-6 rounded-xl overflow-hidden" style={{ height: "calc(100vh - 200px)" }}>
                         <RealtimeNativeView
                             key={realtimeRefreshKey}
                             dateRange={realtimeDateRange}
@@ -1460,7 +1460,7 @@ export default function AdrollView({
                                     >
                                         {/* Media Section */}
                                         <div
-                                            className="relative aspect-[1.7] w-full overflow-hidden bg-zinc-100 dark:bg-card border-b border-zinc-100 dark:border-border"
+                                            className="relative aspect-[1.7] w-full overflow-hidden bg-zinc-100 dark:bg-card border-b border-zinc-100 dark:border-border cursor-pointer"
                                             onClick={(e) => {
                                                 e.stopPropagation()
                                                 if (onEnlargeImage && ad.thumbnailUrl) onEnlargeImage(ad.thumbnailUrl, ad.adName || ad.adId)
@@ -1475,7 +1475,7 @@ export default function AdrollView({
                                                 />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center opacity-20">
-                                                    <Brain className="h-7 w-7" />
+                                                    <Brain className="h-10 w-10" />
                                                 </div>
                                             )}
 
@@ -1500,24 +1500,28 @@ export default function AdrollView({
                                         {/* Info Section */}
                                         <div className="p-4 flex flex-col gap-3.5 flex-1">
                                             <div className="space-y-1">
-                                                <h3 className="text-xs font-bold text-foreground leading-snug line-clamp-1 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors uppercase tracking-tight">
+                                                <h3 className="text-sm font-bold text-foreground leading-snug line-clamp-1 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors uppercase tracking-tight">
                                                     {ad.adName || ad.adId || "Untitled Creative"}
                                                 </h3>
-                                                <p className="text-[9px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-[0.15em]">ID: {ad.adId?.substring(0, 8)}</p>
+                                                <p className="text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-[0.15em]">ID: {ad.adId?.substring(0, 8)}</p>
                                             </div>
 
                                             {/* Minimalist Metrics Grid */}
                                             <div className="grid grid-cols-2 gap-2">
                                                 <div className="bg-card/40 rounded-lg p-2.5 border border-zinc-100 dark:border-border flex flex-col justify-center h-[55px] relative overflow-hidden group/m">
                                                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-cyan-500 opacity-0 group-hover/m:opacity-100 transition-opacity" />
-                                                    <p className="text-[8px] font-black uppercase text-muted-foreground mb-0.5 tracking-wider">Efficiency</p>
+                                                    <p className="text-[9px] font-black uppercase text-muted-foreground mb-0.5 tracking-wider flex items-center gap-1">
+                                                        <MousePointer2 className="h-3 w-3 text-cyan-500" /> Efficiency
+                                                    </p>
                                                     <p className="text-lg font-black font-mono text-foreground tracking-tighter leading-none">
                                                         {Number(ad.ctr || 0).toFixed(2)}%
                                                     </p>
                                                 </div>
                                                 <div className="bg-card/40 rounded-lg p-2.5 border border-zinc-100 dark:border-border flex flex-col justify-center h-[55px] relative overflow-hidden group/m">
                                                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-emerald-500 opacity-0 group-hover/m:opacity-100 transition-opacity" />
-                                                    <p className="text-[8px] font-black uppercase text-muted-foreground mb-0.5 tracking-wider">Spend</p>
+                                                    <p className="text-[9px] font-black uppercase text-muted-foreground mb-0.5 tracking-wider flex items-center gap-1">
+                                                        <DollarSign className="h-3 w-3 text-emerald-500" /> Spend
+                                                    </p>
                                                     <p className="text-lg font-black font-mono text-foreground tracking-tighter leading-none">
                                                         ${Number(ad.spend || 0).toLocaleString()}
                                                     </p>
@@ -1529,8 +1533,8 @@ export default function AdrollView({
                                                 <Button
                                                     onClick={(e) => { e.stopPropagation(); onSelectAd(ad); }}
                                                     className={cn(
-                                                        "h-8 px-5 font-bold text-[10px] uppercase tracking-widest rounded-md transition-all duration-300 flex items-center gap-2 active:scale-95",
-                                                        "bg-card dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-teal-600 dark:hover:bg-cyan-500 hover:text-white shadow-lg"
+                                                        "h-8 px-5 font-bold text-[10px] uppercase tracking-widest rounded-md transition-all duration-300 flex items-center gap-2 active:scale-95 cursor-pointer",
+                                                        "bg-[#E0267D] text-white hover:bg-[#c01f6b] shadow-sm"
                                                     )}
                                                 >
                                                     <Sparkles className="h-3.5 w-3.5" />
