@@ -103,16 +103,13 @@ const AdGridCard = ({
     <div
       onClick={() => onSelect(ad.id)}
       className={cn(
-        "group relative flex flex-col w-[300px] sm:w-auto snap-center rounded-2xl transition-all duration-300 cursor-default overflow-hidden p-3",
-        "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800",
-        "hover:shadow-2xl dark:hover:shadow-black/60 hover:border-zinc-300 dark:hover:border-zinc-700",
-        "hover:-translate-y-1",
-        hasHighlight && "ring-2 ring-primary ring-offset-2 dark:ring-offset-zinc-950 border-transparent"
+        "group relative flex flex-col w-[300px] sm:w-auto snap-center card-premium hover-lift cursor-pointer overflow-hidden p-3",
+        hasHighlight && "ring-2 ring-primary ring-offset-2 ring-offset-background border-transparent"
       )}
     >
       {/* Framed Image Section */}
       <div
-        className="aspect-[1.91/1] w-full relative overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800 shadow-inner cursor-pointer"
+        className="aspect-[1.91/1] w-full relative overflow-hidden rounded-xl bg-gradient-subtle shadow-inner cursor-pointer"
         onClick={(e) => {
           e.stopPropagation()
           if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName)
@@ -127,7 +124,7 @@ const AdGridCard = ({
 
         {/* Floating Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-start justify-between z-10">
-          <div className="w-8 h-8 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-md flex items-center justify-center shadow-md border border-white/20">
+          <div className="w-8 h-8 rounded-full glass flex items-center justify-center shadow-md">
             <PlatformIcon platform={ad.platform} className="w-4 h-4" />
           </div>
 
@@ -152,7 +149,7 @@ const AdGridCard = ({
         {/* Title & Read More - Single Line */}
         <div className="flex items-center gap-1.5 w-full">
           <h3
-            className="font-medium text-[15px] leading-snug text-zinc-900 dark:text-zinc-100 hover:text-primary transition-colors truncate cursor-text"
+            className="font-medium text-[15px] leading-snug text-foreground hover:text-primary transition-colors truncate cursor-text"
           >
             <span className="select-text">
               {displayName}
@@ -173,17 +170,17 @@ const AdGridCard = ({
         {/* Metrics Grid */}
         <div className="grid grid-cols-3 gap-1.5 mt-auto">
           {/* Spend */}
-          <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-1.5 border border-zinc-100 dark:border-zinc-800/50 group-hover:border-zinc-200 dark:group-hover:border-zinc-700 transition-colors cursor-text select-text">
-            <p className="text-[8px] font-bold text-muted-foreground mb-0.5">Spend</p>
-            <p className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+          <div className="bg-muted/50 rounded-lg p-1.5 border border-border/50 group-hover:border-border transition-colors cursor-text select-text">
+            <p className="text-[9px] font-bold text-muted-foreground mb-0.5">Spend</p>
+            <p className="text-[11px] font-bold text-foreground tracking-tight nums">
               ${Number(ad.spend || 0).toLocaleString()}
             </p>
           </div>
 
           {/* ROAS */}
-          <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-lg p-1.5 border border-indigo-100 dark:border-indigo-500/20 group-hover:border-indigo-200 dark:group-hover:border-indigo-700 transition-colors cursor-text select-text text-center">
-            <p className="text-[8px] font-bold text-indigo-500 mb-0.5">ROAS</p>
-            <p className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 tracking-tight tabular-nums">
+          <div className="bg-sky-500/10 rounded-lg p-1.5 border border-sky-500/20 group-hover:border-sky-500/40 transition-colors cursor-text select-text text-center">
+            <p className="text-[9px] font-bold text-sky-500 mb-0.5">ROAS</p>
+            <p className="text-[11px] font-bold text-sky-600 dark:text-sky-400 tracking-tight nums">
               {(() => {
                   const rev = Number(ad.purchaseValue) || 0;
                   const sp = Number(ad.spend) || 0;
@@ -193,9 +190,9 @@ const AdGridCard = ({
           </div>
 
           {/* CTR */}
-          <div className="bg-primary/5 dark:bg-primary/10 rounded-lg p-1.5 border border-primary/10 dark:border-primary/20 text-right group-hover:border-primary/20 transition-colors cursor-text select-text">
-            <p className="text-[8px] font-bold text-muted-foreground mb-0.5">CTR</p>
-            <p className="text-[11px] font-black text-primary tracking-tight tabular-nums">
+          <div className="bg-primary/10 rounded-lg p-1.5 border border-primary/20 text-right group-hover:border-primary/40 transition-colors cursor-text select-text">
+            <p className="text-[9px] font-bold text-primary mb-0.5">CTR</p>
+            <p className="text-[11px] font-bold text-primary tracking-tight nums">
               {Number(ad.ctr || 0).toFixed(2)}%
             </p>
           </div>
@@ -204,7 +201,7 @@ const AdGridCard = ({
         {/* ID Footer */}
         <div
           onClick={(e) => ad.platform === 'meta' && e.stopPropagation()}
-          className="group/id flex items-center justify-between gap-2 pt-2.5 pb-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 w-[calc(100%+1.5rem)] -mx-3 px-3 cursor-default mt-2"
+          className="group/id flex items-center justify-between gap-2 pt-2.5 pb-2 border-t border-dashed border-border w-[calc(100%+1.5rem)] -mx-3 px-3 cursor-default mt-2"
         >
           <span className="text-[10px] font-mono text-muted-foreground/70 truncate transition-colors group-hover/id:text-primary font-medium select-text">
             ID: {ad.adId}
@@ -278,17 +275,13 @@ const AdListCard = ({
     <div
       onClick={() => onSelect(ad.id)}
       className={cn(
-        "group relative flex flex-col sm:flex-row h-auto sm:h-40 w-full rounded-2xl transition-all duration-300 cursor-default overflow-hidden",
-        "bg-white dark:bg-zinc-900",
-        "border border-zinc-200/60 dark:border-white/5",
-        "hover:border-primary/50 hover:shadow-lg dark:hover:shadow-black/20",
-        "hover:-translate-y-0.5",
-        hasHighlight && "ring-2 ring-primary ring-offset-2 dark:ring-offset-zinc-950 border-transparent shadow-lg"
+        "group relative flex flex-col sm:flex-row h-auto sm:h-40 w-full card-premium hover-lift cursor-pointer overflow-hidden",
+        hasHighlight && "ring-2 ring-primary ring-offset-2 ring-offset-background border-transparent shadow-lg"
       )}
     >
       {/* Image Section - Stacked on Mobile, Left on Desktop */}
       <div
-        className="w-full sm:w-48 aspect-[1.91/1] sm:aspect-auto relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 sm:m-3 rounded-t-2xl sm:rounded-xl cursor-pointer"
+        className="w-full sm:w-48 aspect-[1.91/1] sm:aspect-auto relative overflow-hidden bg-gradient-subtle shrink-0 sm:m-3 rounded-t-xl sm:rounded-xl cursor-pointer"
         onClick={(e) => {
           e.stopPropagation()
           if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName)
@@ -302,13 +295,13 @@ const AdListCard = ({
         />
 
         {/* Hover Action Overlay */}
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center z-10">
-          <Maximize2 className="w-6 h-6 text-white drop-shadow-md" />
+        <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center z-10">
+          <Maximize2 className="w-6 h-6 text-foreground drop-shadow-md" />
         </div>
       </div>
 
       {/* Content Section - Bottom on Mobile, Right on Desktop */}
-      <div className="flex-1 p-4 flex flex-col justify-between min-w-0 bg-gradient-to-r from-transparent to-zinc-50/50 dark:to-zinc-900/50">
+      <div className="flex-1 p-4 flex flex-col justify-between min-w-0 bg-gradient-to-r from-transparent to-muted/30">
 
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
@@ -317,10 +310,10 @@ const AdListCard = ({
                 className={cn(
                   "text-[10px] px-2.5 py-1 rounded-full font-medium border",
                   ad.performanceLabel === "TOP_PERFORMER"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
+                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400"
                     : ad.performanceLabel === "AVERAGE"
-                      ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20"
-                      : "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
+                      ? "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400"
+                      : "bg-muted text-muted-foreground border-border"
                 )}
               >
                 {ad.performanceLabel === "TOP_PERFORMER" ? "Top performer" : (ad.performanceLabel ? ad.performanceLabel.charAt(0).toUpperCase() + ad.performanceLabel.slice(1).toLowerCase().replace(/_/g, " ") : "Active")}
@@ -346,7 +339,7 @@ const AdListCard = ({
           </div>
 
           <div className="flex items-center gap-1.5 w-full mt-1">
-            <h3 className="font-medium text-sm sm:text-[15px] leading-snug text-zinc-900 dark:text-zinc-100 truncate hover:text-primary transition-colors min-w-0 cursor-text select-text">
+            <h3 className="font-medium text-sm sm:text-[15px] leading-snug text-foreground truncate hover:text-primary transition-colors min-w-0 cursor-text select-text">
               {displayName}
             </h3>
             <button
@@ -361,17 +354,17 @@ const AdListCard = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-6 pt-3 border-t border-zinc-100 dark:border-white/5 mt-auto">
+        <div className="flex items-center gap-4 sm:gap-6 pt-3 border-t border-border mt-auto">
           <div>
-            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-tightest mb-0.5 cursor-text">Spend</p>
-            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100 cursor-text tracking-tighter">
+            <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tight mb-0.5 cursor-text">Spend</p>
+            <p className="text-xs font-bold text-foreground cursor-text tracking-tight nums">
               ${Number(ad.spend || 0).toLocaleString()}
             </p>
           </div>
 
           <div>
-            <p className="text-[9px] text-indigo-500 font-black uppercase tracking-tightest mb-0.5 cursor-text">ROAS</p>
-            <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 cursor-text tracking-tighter">
+            <p className="text-[9px] text-sky-500 font-bold uppercase tracking-tight mb-0.5 cursor-text">ROAS</p>
+            <p className="text-xs font-bold text-sky-600 dark:text-sky-400 cursor-text tracking-tight nums">
               {(() => {
                   const rev = Number(ad.purchaseValue) || 0;
                   const sp = Number(ad.spend) || 0;
@@ -381,9 +374,9 @@ const AdListCard = ({
           </div>
 
           <div>
-            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-tightest mb-0.5 cursor-text">CTR</p>
+            <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tight mb-0.5 cursor-text">CTR</p>
             <div className="flex items-center gap-1.5">
-              <p className="text-xs font-black text-primary leading-none tabular-nums cursor-text tracking-tighter">
+              <p className="text-xs font-bold text-primary leading-none nums cursor-text tracking-tight">
                 {Number(ad.ctr || 0).toFixed(2)}%
               </p>
             </div>
@@ -418,11 +411,11 @@ const AdTableRow = ({
   return (
     <TableRow
       onClick={() => onSelect(ad.id)}
-      className={`cursor-pointer transition-colors ${isSelected ? "bg-primary/[0.03] dark:bg-primary/[0.05]" : "hover:bg-secondary dark:hover:bg-zinc-800/50"}`}
+      className={cn("cursor-pointer transition-colors", isSelected ? "bg-gradient-subtle" : "hover:bg-muted/60")}
     >
       <TableCell>
         <div
-          className="w-12 h-12 rounded bg-secondary dark:bg-zinc-800 overflow-hidden cursor-zoom-in border border-border"
+          className="w-12 h-12 rounded-lg bg-gradient-subtle overflow-hidden cursor-zoom-in border border-border"
           onClick={(e) => {
             e.stopPropagation();
             if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName);
@@ -435,7 +428,7 @@ const AdTableRow = ({
       </TableCell>
       <TableCell className="max-w-[200px] sm:max-w-[400px]">
         <div className="space-y-1">
-          <p className="font-bold text-xs truncate dark:text-white cursor-text">{ad.adName}....</p>
+          <p className="font-semibold text-xs truncate text-foreground cursor-text">{ad.adName}....</p>
 
           <div
             onClick={(e) => ad.platform === 'meta' && e.stopPropagation()}
@@ -444,7 +437,7 @@ const AdTableRow = ({
           >
             <span className="text-[10px] font-mono opacity-50 select-text">{ad.adId}</span>
             <div
-              className="opacity-0 group-hover/id:opacity-100 font-mono text-zinc-400 hover:text-primary transition-all duration-200 hover:scale-110 cursor-pointer p-0.5 rounded shadow-sm"
+              className="opacity-0 group-hover/id:opacity-100 font-mono text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 cursor-pointer p-0.5 rounded shadow-sm"
               onClick={handleCopyId}
               title="Click to copy ID"
             >
@@ -455,25 +448,25 @@ const AdTableRow = ({
       </TableCell>
       <TableCell>
         <span
-          className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter whitespace-nowrap shadow-sm ${ad.performanceLabel === "TOP_PERFORMER"
-            ? "bg-green-100 text-green-700 border border-green-200 dark:bg-green-950/40 dark:text-green-400 dark:border-green-900/50"
+          className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tight whitespace-nowrap border", ad.performanceLabel === "TOP_PERFORMER"
+            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400"
             : ad.performanceLabel === "AVERAGE"
-              ? "bg-yellow-100 text-yellow-700 border border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-400 dark:border-yellow-900/50"
-              : "bg-red-100 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-900/50"
-            }`}
+              ? "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400"
+              : "bg-destructive/10 text-destructive border-destructive/20"
+            )}
         >
           {ad.performanceLabel || "Active"}
         </span>
       </TableCell>
-      <TableCell className="text-right font-bold text-xs cursor-text whitespace-nowrap">${Number(ad.spend || 0).toLocaleString()}</TableCell>
-      <TableCell className="text-right font-black text-indigo-600 dark:text-indigo-400 text-xs cursor-text">
+      <TableCell className="text-right font-semibold text-xs cursor-text whitespace-nowrap nums">${Number(ad.spend || 0).toLocaleString()}</TableCell>
+      <TableCell className="text-right font-bold text-sky-600 dark:text-sky-400 text-xs cursor-text nums">
           {(() => {
                   const rev = Number(ad.purchaseValue) || 0;
                   const sp = Number(ad.spend) || 0;
                   return sp > 0 ? (rev / sp).toFixed(2) : "0.00";
               })()}x
       </TableCell>
-      <TableCell className="text-right font-black text-primary text-xs cursor-text">{Number(ad.ctr || 0).toFixed(2)}%</TableCell>
+      <TableCell className="text-right font-bold text-primary text-xs cursor-text nums">{Number(ad.ctr || 0).toFixed(2)}%</TableCell>
     </TableRow>
   );
 }
@@ -497,10 +490,10 @@ export default function SampleAds({
           <h3 className="text-base sm:text-lg font-black tracking-tight text-zinc-900 dark:text-zinc-50 whitespace-nowrap uppercase">Your Ads</h3>
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
             <Select value={viewMode} onValueChange={(v: any) => setViewMode(v)}>
-              <SelectTrigger className="w-[120px] sm:w-[150px] h-11 shrink-0 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl border border-border/40 rounded-2xl text-xs font-medium transition-all hover:bg-white hover:shadow-md group">
+              <SelectTrigger className="w-[120px] sm:w-[150px] h-11 shrink-0 bg-white/40 dark:bg-card/40 backdrop-blur-xl border border-border/40 rounded-md text-xs font-medium transition-all hover:bg-white hover:shadow-md group">
               <SelectValue placeholder="Display" />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl">
+            <SelectContent className="bg-card border-border rounded-xl shadow-sm">
               <SelectItem value="grid" className="font-bold cursor-pointer rounded-lg">
                 <div className="flex items-center gap-2">
                   <LayoutGrid className="h-3.5 w-3.5 text-primary" />
@@ -537,7 +530,7 @@ export default function SampleAds({
       </div>
 
       {adList.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-border rounded-xl bg-card/50 text-muted-foreground animate-in fade-in duration-500">
+        <div className="flex flex-col items-center justify-center p-8 border border-dashed border-border rounded-xl bg-card/50 text-muted-foreground animate-in fade-in duration-500">
           <div className="max-w-xs text-center space-y-2">
             <p className="text-sm font-bold text-foreground/80">
               {!hasAdsInAccount ? "No Ad Data Available" : "No Results Found"}
@@ -582,15 +575,15 @@ export default function SampleAds({
           )}
 
           {viewMode === "table" && (
-            <div className="rounded-xl border border-border overflow-hidden bg-white dark:bg-zinc-900">
+            <div className="rounded-xl border border-border overflow-hidden bg-card">
               <Table>
-                <TableHeader className="bg-zinc-50 dark:bg-zinc-800/50">
+                <TableHeader className="bg-muted/50">
                   <TableRow>
                     <TableHead className="w-[80px] font-bold text-[10px] uppercase">Preview</TableHead>
                     <TableHead className="font-bold text-[10px] uppercase">Ad Name</TableHead>
                     <TableHead className="font-bold text-[10px] uppercase">Status</TableHead>
                     <TableHead className="text-right font-bold text-[10px] uppercase">Spend</TableHead>
-                    <TableHead className="text-right font-bold text-[10px] uppercase text-indigo-500">ROAS</TableHead>
+                    <TableHead className="text-right font-bold text-[10px] uppercase text-sky-500">ROAS</TableHead>
                     <TableHead className="text-right font-bold text-[10px] uppercase">CTR</TableHead>
                   </TableRow>
                 </TableHeader>

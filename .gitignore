@@ -25,3 +25,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Ad library uploads (manual fallback; not tracked in git)
+/public/ad-library-uploads/*/*.png
+/public/ad-library-uploads/*/*.jpg
+/public/ad-library-uploads/*/*.jpeg
+/public/ad-library-uploads/*/*.webp
+/public/ad-library-uploads/*/*.gif

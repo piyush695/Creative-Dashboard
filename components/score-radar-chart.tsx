@@ -417,7 +417,7 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
     const StatusIcon = status ? status.icon : null
 
     return (
-        <div className="w-full h-auto min-h-[350px] flex flex-col md:flex-row bg-white dark:bg-[#18181b] rounded-xl border border-zinc-200 dark:border-zinc-800 p-1 relative overflow-hidden shadow-sm transition-colors duration-300 group/container">
+        <div className="w-full h-auto min-h-[350px] flex flex-col md:flex-row bg-white dark:bg-[#18181b] rounded-xl border border-border p-1 relative overflow-hidden shadow-sm transition-colors duration-300 group/container">
 
             {/* Subtle Background Gradeint */}
             <div className="absolute inset-0 bg-gradient-to-br from-zinc-50/0 via-zinc-50/0 to-zinc-50/0 dark:from-white/0 dark:via-white/0 dark:to-white/[0.02] pointer-events-none" />
@@ -425,29 +425,29 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
             {/* Mobile Title & Dropdown (< md) */}
             {/* Mobile Title (Left) */}
             <div className="absolute top-4 left-4 z-20 flex md:hidden items-center gap-2">
-                <div className="p-1 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
-                    <Sparkles className="h-3 w-3 text-zinc-500 dark:text-zinc-400" />
+                <div className="p-1 rounded bg-muted border border-border dark:border-zinc-700">
+                    <Sparkles className="h-3 w-3 text-muted-foreground dark:text-muted-foreground" />
                 </div>
-                <h4 className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">Creative Attributes</h4>
+                <h4 className="text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-widest">Creative Attributes</h4>
             </div>
 
             {/* Mobile Controls (Right) */}
             <div className="absolute top-4 right-2 z-20 flex md:hidden items-center gap-1.5">
                 <div
-                    className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded-full border cursor-pointer transition-all", showBenchmark ? "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700" : "bg-transparent border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-900")}
+                    className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded-full border cursor-pointer transition-all", showBenchmark ? "bg-muted border-border dark:border-zinc-700" : "bg-transparent border-transparent hover:bg-zinc-50 dark:hover:bg-card")}
                     onClick={() => setShowBenchmark(!showBenchmark)}
                 >
-                    <GitCompare className={cn("h-3 w-3", showBenchmark ? "text-orange-500" : "text-zinc-400")} />
+                    <GitCompare className={cn("h-3 w-3", showBenchmark ? "text-orange-500" : "text-muted-foreground")} />
                 </div>
 
                 <div className="h-3 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
 
                 <DropdownMenu>
                     <DropdownMenuTrigger className="flex items-center gap-1 outline-none group opacity-80 active:opacity-100 transition-opacity">
-                        <h4 className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest cursor-pointer">
+                        <h4 className="text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-widest cursor-pointer">
                             {chartType}
                         </h4>
-                        <ChevronDown className="h-3 w-3 text-zinc-400 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                        <ChevronDown className="h-3 w-3 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" alignOffset={-4} className="w-40 z-50">
                         <DropdownMenuItem onClick={() => setChartType("Radar")} className="text-xs font-medium cursor-pointer">
@@ -460,7 +460,7 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                             <Activity className="mr-2 h-3.5 w-3.5 text-emerald-500" /> Line Chart
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setChartType("Area")} className="text-xs font-medium cursor-pointer">
-                            <Activity className="mr-2 h-3.5 w-3.5 text-indigo-500 fill-current" /> Area Chart
+                            <Activity className="mr-2 h-3.5 w-3.5 text-sky-500 fill-current" /> Area Chart
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setChartType("Pie")} className="text-xs font-medium cursor-pointer">
                             <PieChartIcon className="mr-2 h-3.5 w-3.5 text-purple-500" /> Pie Chart
@@ -474,26 +474,26 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                 {/* Desktop Title & Dropdown (>= md) */}
                 <div className="absolute top-4 left-4 z-20 hidden md:flex items-center gap-3">
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
-                            <Sparkles className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+                        <div className="p-1.5 rounded-md bg-muted border border-border dark:border-zinc-700">
+                            <Sparkles className="h-3.5 w-3.5 text-muted-foreground dark:text-muted-foreground" />
                         </div>
-                        <h4 className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest hidden lg:block">Creative Attributes</h4>
+                        <h4 className="text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-widest hidden lg:block">Creative Attributes</h4>
                     </div>
 
                     <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
 
                     <DropdownMenu>
                         <DropdownMenuTrigger className="flex items-center gap-1.5 outline-none group opacity-60 hover:opacity-100 transition-opacity">
-                            {chartType === 'Radar' && <Hexagon className="h-3 w-3 text-zinc-500 dark:text-zinc-400" />}
-                            {chartType === 'Bar' && <BarChart3 className="h-3 w-3 text-zinc-500 dark:text-zinc-400" />}
-                            {chartType === 'Line' && <Activity className="h-3 w-3 text-zinc-500 dark:text-zinc-400" />}
-                            {chartType === 'Area' && <Activity className="h-3 w-3 text-zinc-500 dark:text-zinc-400 fill-current" />}
-                            {chartType === 'Pie' && <PieChartIcon className="h-3 w-3 text-zinc-500 dark:text-zinc-400" />}
+                            {chartType === 'Radar' && <Hexagon className="h-3 w-3 text-muted-foreground dark:text-muted-foreground" />}
+                            {chartType === 'Bar' && <BarChart3 className="h-3 w-3 text-muted-foreground dark:text-muted-foreground" />}
+                            {chartType === 'Line' && <Activity className="h-3 w-3 text-muted-foreground dark:text-muted-foreground" />}
+                            {chartType === 'Area' && <Activity className="h-3 w-3 text-muted-foreground dark:text-muted-foreground fill-current" />}
+                            {chartType === 'Pie' && <PieChartIcon className="h-3 w-3 text-muted-foreground dark:text-muted-foreground" />}
 
-                            <h4 className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest cursor-pointer">
+                            <h4 className="text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-widest cursor-pointer">
                                 {chartType}
                             </h4>
-                            <ChevronDown className="h-3 w-3 text-zinc-400 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                            <ChevronDown className="h-3 w-3 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-40 z-50">
                             <DropdownMenuItem onClick={() => setChartType("Radar")} className="text-xs font-medium cursor-pointer">
@@ -518,11 +518,11 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                     <div className="flex items-center gap-2 ml-2">
                         <div className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
                         <div
-                            className={cn("flex items-center gap-1.5 px-2 py-1 rounded-full border cursor-pointer transition-all", showBenchmark ? "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700" : "bg-transparent border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-900")}
+                            className={cn("flex items-center gap-1.5 px-2 py-1 rounded-full border cursor-pointer transition-all", showBenchmark ? "bg-muted border-border dark:border-zinc-700" : "bg-transparent border-transparent hover:bg-zinc-50 dark:hover:bg-card")}
                             onClick={() => setShowBenchmark(!showBenchmark)}
                         >
-                            <GitCompare className={cn("h-3 w-3", showBenchmark ? "text-orange-500" : "text-zinc-400")} />
-                            <span className={cn("text-[10px] font-bold uppercase tracking-wider hidden 2xl:inline-block", showBenchmark ? "text-orange-500" : "text-zinc-400")}>
+                            <GitCompare className={cn("h-3 w-3", showBenchmark ? "text-orange-500" : "text-muted-foreground")} />
+                            <span className={cn("text-[10px] font-bold uppercase tracking-wider hidden 2xl:inline-block", showBenchmark ? "text-orange-500" : "text-muted-foreground")}>
                                 Benchmark
                             </span>
                         </div>
@@ -536,12 +536,12 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                 <div className="flex items-center justify-center gap-4 pb-4 pt-2">
                     <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-sm bg-[#ea580c]" />
-                        <span className="text-[10px] font-bold uppercase text-zinc-500">Current Score</span>
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground">Current Score</span>
                     </div>
                     {showBenchmark && (
                         <div className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-sm bg-[#71717a] opacity-50" />
-                            <span className="text-[10px] font-bold uppercase text-zinc-500">Industry Avg</span>
+                            <span className="text-[10px] font-bold uppercase text-muted-foreground">Industry Avg</span>
                         </div>
                     )}
                 </div>
@@ -551,7 +551,7 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
 
             {/* Right Side: Content Panel */}
             <div className="w-full md:w-7/12 flex items-center p-2 md:p-6 md:pl-2">
-                <div className="w-full h-full rounded-xl bg-zinc-50/50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800/50 relative overflow-hidden flex flex-col justify-center px-6 py-6 transition-all duration-500">
+                <div className="w-full h-full rounded-xl bg-zinc-50/50 dark:bg-card/30 border border-zinc-100 dark:border-border/50 relative overflow-hidden flex flex-col justify-center px-6 py-6 transition-all duration-500">
 
                     {/* Decorative background element for right panel */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
@@ -578,7 +578,7 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                             {/* Justification Box */}
                             <div className="relative pl-4">
                                 <div className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-zinc-200 dark:bg-zinc-700" />
-                                <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-medium italic">
+                                <p className="text-muted-foreground dark:text-muted-foreground text-sm leading-relaxed font-medium italic">
                                     "{activeData.justification}"
                                 </p>
                             </div>
@@ -586,11 +586,11 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                             {/* Score Meter */}
                             <div className="flex items-center gap-4 pt-2">
                                 <div className="flex-1">
-                                    <div className="flex justify-between text-[10px] uppercase font-bold text-zinc-400 mb-1.5">
+                                    <div className="flex justify-between text-[10px] uppercase font-bold text-muted-foreground mb-1.5">
                                         <span>Metric Score</span>
-                                        <span className="text-zinc-900 dark:text-white">{activeData.score}/10</span>
+                                        <span className="text-foreground">{activeData.score}/10</span>
                                     </div>
-                                    <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-1000 ease-out"
                                             style={{ width: `${(activeData.score / 10) * 100}%` }}
@@ -601,7 +601,7 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
 
                             {/* Actions Row */}
                             <div className="flex gap-2 pt-2">
-                                <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1.5 tracking-wider uppercase font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100" onClick={() => setShowBenchmark(!showBenchmark)}>
+                                <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1.5 tracking-wider uppercase font-bold text-muted-foreground hover:text-zinc-900 dark:hover:text-zinc-100" onClick={() => setShowBenchmark(!showBenchmark)}>
                                     <GitCompare className="h-3 w-3" />
                                     {showBenchmark ? "Hide Avg" : "Compare"}
                                 </Button>
@@ -611,13 +611,13 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                         <div className="flex flex-col items-center justify-center text-center h-full space-y-3 opacity-60 dark:opacity-40">
                             <div className="relative">
                                 <div className="absolute inset-0 bg-orange-500/20 blur-xl rounded-full" />
-                                <div className="h-14 w-14 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-sm flex items-center justify-center relative z-10 rotate-3 transition-transform group-hover/container:rotate-6 duration-700">
-                                    <Info className="h-6 w-6 text-zinc-400 dark:text-zinc-500" />
+                                <div className="h-14 w-14 rounded-md bg-white dark:bg-zinc-800 border border-border dark:border-zinc-700 shadow-sm flex items-center justify-center relative z-10 rotate-3 transition-transform group-hover/container:rotate-6 duration-700">
+                                    <Info className="h-6 w-6 text-muted-foreground dark:text-muted-foreground" />
                                 </div>
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-300">Detailed AI Analysis</p>
-                                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Hover over chart elements to explore</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Hover over chart elements to explore</p>
                             </div>
 
                         </div>

@@ -57,21 +57,21 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex items-center gap-2 mb-2">
         <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-        <h3 className="text-xl font-black text-foreground tracking-tightest uppercase opacity-80">Intelligence Analysis</h3>
+        <h3 className="text-xl font-black text-foreground tracking-tight uppercase opacity-80">Intelligence Analysis</h3>
       </div>
 
       {/* Primary Key Insight */}
-      <Card className="relative overflow-hidden border border-border/40 premium-shadow glass transition-all group rounded-[2.5rem]">
+      <Card className="relative overflow-hidden border border-border bg-card transition-colors group rounded-lg">
         <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
-        <CardHeader className="pb-2 px-8 pt-8">
+        <CardHeader className="pb-2 px-6 pt-6">
           <div className="flex gap-4 items-center">
-            <div className="p-3 rounded-2xl bg-primary/10 shadow-inner">
+            <div className="p-3 rounded-lg bg-primary/10 shadow-inner">
               <Lightbulb className="h-6 w-6 text-primary transition-transform group-hover:rotate-12 duration-500" />
             </div>
             <CardTitle className="text-lg font-black uppercase tracking-widest text-foreground">Strategic Intelligence</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="px-8 pb-8">
+        <CardContent className="px-6 pb-6">
           <p className="text-base md:text-lg text-foreground/80 leading-relaxed font-black tracking-tight">
             {typeof insight === 'object' ? JSON.stringify(insight) : insight}
           </p>
@@ -80,7 +80,7 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Performance Highs - What Works */}
-        <Card className="border-none shadow-lg bg-emerald-50/30 dark:bg-emerald-500/5 relative overflow-hidden group">
+        <Card className="border border-emerald-200/60 dark:border-emerald-500/20 shadow-sm bg-emerald-50/30 dark:bg-emerald-500/5 relative overflow-hidden group rounded-lg transition-colors hover:border-emerald-300 dark:hover:border-emerald-500/40">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <TrendingUp className="h-16 w-16 text-emerald-600" />
           </div>
@@ -105,7 +105,7 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
         </Card>
 
         {/* Action Gap - What Doesn't Work */}
-        <Card className="border-none shadow-lg bg-amber-50/30 dark:bg-amber-500/5 relative overflow-hidden group">
+        <Card className="border border-amber-200/60 dark:border-amber-500/20 shadow-sm bg-amber-50/30 dark:bg-amber-500/5 relative overflow-hidden group rounded-lg transition-colors hover:border-amber-300 dark:hover:border-amber-500/40">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <AlertCircle className="h-16 w-16 text-amber-600" />
           </div>
@@ -132,15 +132,15 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
 
       {/* Strategic Elements Action Plan - Refined Tech Aesthetic */}
       {(adData.keepElements || adData.changeElements || adData.addElements) && (
-        <Card className="border border-border shadow-2xl bg-white dark:bg-zinc-900 relative overflow-hidden group rounded-[2.5rem] shine-effect">
+        <Card className="border border-border bg-card relative overflow-hidden group rounded-lg">
           <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[150%] bg-primary opacity-[0.05] dark:opacity-[0.1] blur-[100px] pointer-events-none transition-all duration-1000" />
-          <CardHeader className="px-8 pt-10 pb-6">
+          <CardHeader className="px-6 pt-6 pb-4">
             <CardTitle className="text-xl font-black uppercase tracking-[0.3em] text-primary">Creative Blueprint</CardTitle>
-            <CardDescription className="text-muted-foreground/60 font-black uppercase tracking-[0.2em] text-[10px]">Iterative Optimization Framework</CardDescription>
+            <CardDescription className="text-muted-foreground/70 font-black uppercase tracking-[0.2em] text-[10px]">Iterative Optimization Framework</CardDescription>
           </CardHeader>
-          <CardContent className="px-8 pb-10">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="space-y-4 p-8 rounded-[2.5rem] bg-zinc-50 dark:bg-white/5 border border-border dark:border-white/10 transition-all hover:bg-white dark:hover:bg-white/10 hover:shadow-xl hover:border-emerald-500/30 duration-500">
+          <CardContent className="px-6 pb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="space-y-3 p-5 rounded-lg bg-zinc-50 dark:bg-white/5 border border-border dark:border-border transition-all hover:bg-white dark:hover:bg-white/10 hover:shadow-sm hover:border-emerald-500/30 duration-500">
                 <div className="flex items-center gap-3 mb-1">
                   <div className="p-2 rounded-xl bg-emerald-500/10">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -149,7 +149,7 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
                 </div>
                 <p className="text-sm font-semibold leading-relaxed text-foreground/80 dark:text-zinc-300">{adData.keepElements}</p>
               </div>
-              <div className="space-y-4 p-8 rounded-[2.5rem] bg-zinc-50 dark:bg-white/5 border border-border dark:border-white/10 transition-all hover:bg-white dark:hover:bg-white/10 hover:shadow-xl hover:border-amber-500/30 duration-500">
+              <div className="space-y-3 p-5 rounded-lg bg-zinc-50 dark:bg-white/5 border border-border dark:border-border transition-all hover:bg-white dark:hover:bg-white/10 hover:shadow-sm hover:border-amber-500/30 duration-500">
                 <div className="flex items-center gap-3 mb-1">
                   <div className="p-2 rounded-xl bg-amber-500/10">
                     <XCircle className="h-4 w-4 text-amber-600" />
@@ -158,7 +158,7 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
                 </div>
                 <p className="text-sm font-semibold leading-relaxed text-foreground/80 dark:text-zinc-300">{adData.changeElements}</p>
               </div>
-              <div className="space-y-4 p-8 rounded-[2.5rem] bg-zinc-50 dark:bg-white/5 border border-border dark:border-white/10 transition-all hover:bg-white dark:hover:bg-white/10 hover:shadow-xl hover:border-primary/30 duration-500">
+              <div className="space-y-3 p-5 rounded-lg bg-zinc-50 dark:bg-white/5 border border-border dark:border-border transition-all hover:bg-white dark:hover:bg-white/10 hover:shadow-sm hover:border-primary/30 duration-500">
                 <div className="flex items-center gap-3 mb-1">
                   <div className="p-2 rounded-xl bg-primary/10">
                     <PlusCircle className="h-4 w-4 text-primary" />
@@ -174,31 +174,31 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
 
       {/* Actionable Recommendations */}
       <div className="space-y-4 pt-4">
-        <h4 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-400 inline-flex items-center gap-2">
+        <h4 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground inline-flex items-center gap-2">
           Recommended Optimization Steps <TrendingUp className="h-3.5 w-3.5" />
         </h4>
         <div className="space-y-4">
           {recommendations.map((rec, idx) => (
-            <div key={idx} className="flex flex-col gap-4 p-8 rounded-[3rem] bg-white dark:bg-zinc-900 border border-border premium-shadow premium-shadow-hover transition-all group/rec">
-              <div className="flex flex-col md:flex-row gap-8">
+            <div key={idx} className="flex flex-col gap-4 p-5 rounded-lg bg-card border border-border hover:bg-accent transition-colors group/rec">
+              <div className="flex flex-col md:flex-row gap-5">
                 <div className="flex-shrink-0">
-                  <span className="flex items-center justify-center w-12 h-12 rounded-[1.5rem] bg-primary text-white text-lg font-black shadow-xl shadow-primary/30 group-hover/rec:scale-110 transition-all duration-500">
+                  <span className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary text-white text-lg font-black shadow-sm shadow-primary/30 group-hover/rec:scale-110 transition-all duration-500">
                     {idx + 1}
                   </span>
                 </div>
-                <div className="flex-1 space-y-6">
+                <div className="flex-1 space-y-4">
                   {formatRecommendationText(rec.text)}
 
                   <div className="flex flex-wrap gap-3 items-stretch">
                     {rec.impact && (
-                      <div className="flex flex-col gap-1 min-w-[200px] flex-1 px-4 py-3 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/10 transition-all hover:scale-[1.02] cursor-default">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-primary/60">Expected Performance Impact</span>
+                      <div className="flex flex-col gap-1 min-w-[200px] flex-1 px-4 py-3 bg-primary/5 dark:bg-primary/10 rounded-lg border border-primary/10 transition-all hover:scale-[1.02] cursor-default">
+                        <span className="text-[10px] font-medium uppercase tracking-wider text-primary/80">Expected Performance Impact</span>
                         <span className="text-xs font-bold text-foreground/80 dark:text-zinc-200 leading-tight">{rec.impact}</span>
                       </div>
                     )}
                     {rec.effort && (
-                      <div className="flex flex-col gap-1 px-4 py-3 bg-secondary dark:bg-zinc-800 rounded-2xl border border-border dark:border-zinc-700 shrink-0 transition-all hover:scale-[1.02] cursor-default">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Implementation Effort</span>
+                      <div className="flex flex-col gap-1 px-4 py-3 bg-secondary dark:bg-zinc-800 rounded-lg border border-border dark:border-zinc-700 shrink-0 transition-all hover:scale-[1.02] cursor-default">
+                        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">Implementation Effort</span>
                         <span className="text-xs font-black text-foreground dark:text-zinc-100">{rec.effort}</span>
                       </div>
                     )}

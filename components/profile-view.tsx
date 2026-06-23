@@ -118,7 +118,7 @@ export default function ProfileView({ onOpenPasswordChange, onBack }: ProfileVie
             <div className="flex h-full items-center justify-center p-12">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
-                    <p className="text-zinc-500 font-medium animate-pulse">Accessing Secure Vault...</p>
+                    <p className="text-muted-foreground font-medium animate-pulse">Accessing Secure Vault...</p>
                 </div>
             </div>
         )
@@ -127,80 +127,80 @@ export default function ProfileView({ onOpenPasswordChange, onBack }: ProfileVie
     const isGoogleUser = (session.user as any).provider === "google"
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-6">
-                <div className="flex items-center gap-4">
+        <div className="mx-auto max-w-6xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border pb-5">
+                <div className="flex items-center gap-3">
                     {onBack && (
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={onBack}
-                            className="h-10 w-10 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-all shadow-sm border border-zinc-200 dark:border-zinc-800 mb-1"
+                            className="h-10 w-10 cursor-pointer rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-zinc-900 dark:hover:text-white transition-all shadow-sm border border-border mb-1"
                         >
                             <ChevronDown className="h-5 w-5 rotate-90" />
                         </Button>
                     )}
                     <div className="space-y-1">
-                        <h1 className="text-xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">Identity & Security</h1>
-                        <p className="text-zinc-500 text-[10px] md:text-sm uppercase tracking-widest font-bold opacity-60">Manage your centralized analyzer profile</p>
+                        <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Identity & Security</h1>
+                        <p className="text-muted-foreground text-xs md:text-sm">Manage your centralized analyzer profile</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-full text-blue-400">
-                    <BadgeCheck className="h-3 w-3" />
+                <div className="flex items-center gap-1.5 text-xs font-medium tracking-wide bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-full text-blue-500 dark:text-blue-400">
+                    <BadgeCheck className="h-3.5 w-3.5" />
                     {isGoogleUser ? "Account Synced via Google" : "Verified Analyst Account"}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Left: Quick Bio & Identity */}
                 <div className="lg:col-span-4 space-y-6">
-                    <Card className="border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/40 backdrop-blur-2xl shadow-xl overflow-hidden border-t-0 p-0">
-                        <div className="h-20 bg-gradient-to-r from-blue-600 to-indigo-700 relative" />
+                    <Card className="border border-border bg-white/50 dark:bg-card/40 backdrop-blur-2xl shadow-sm overflow-hidden p-0 rounded-xl">
+                        <div className="h-20 bg-gradient-to-r from-blue-600 to-sky-700 relative" />
                         <CardContent className="relative pt-0 text-center px-6 pb-8">
                             <div className="relative -top-10 inline-block">
-                                <Avatar className="h-20 w-20 border-4 border-white dark:border-zinc-900 shadow-2xl">
+                                <Avatar className="h-20 w-20 border-4 border-white dark:border-zinc-900 shadow-sm">
                                     <AvatarImage src={session.user?.image || ""} alt={session.user?.name || "User"} />
-                                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-2xl font-black uppercase">
+                                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-2xl font-bold uppercase">
                                         {session.user?.name?.[0] || 'U'}
                                     </AvatarFallback>
                                 </Avatar>
-                                <button className="absolute bottom-0 right-0 p-1.5 bg-blue-600 rounded-full border-2 border-white dark:border-zinc-900 text-white hover:bg-blue-500 transition-colors shadow-lg">
-                                    <Camera className="h-3 w-3" />
+                                <button className="absolute bottom-0 right-0 cursor-pointer p-1.5 bg-blue-600 rounded-full border-2 border-white dark:border-zinc-900 text-white hover:bg-blue-500 transition-colors shadow-lg">
+                                    <Camera className="h-3.5 w-3.5" />
                                 </button>
                             </div>
                             <div className="-mt-8 mb-6">
-                                <h2 className="text-xl font-black text-zinc-900 dark:text-white tracking-tight">{session.user?.name}</h2>
-                                <p className="text-zinc-500 text-xs font-medium mt-1 truncate">{session.user?.email}</p>
+                                <h2 className="text-xl font-semibold text-foreground tracking-tight">{session.user?.name}</h2>
+                                <p className="text-muted-foreground text-xs font-medium mt-1 truncate">{session.user?.email}</p>
                                 <div className="mt-4">
-                                    <span className="px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-[9px] font-black uppercase tracking-widest rounded-md border border-zinc-200 dark:border-zinc-700">
+                                    <span className="px-2.5 py-1 bg-muted text-muted-foreground text-[11px] font-medium uppercase tracking-wider rounded-md border border-border">
                                         {(session.user as any).role || "Viewer"}
                                     </span>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 py-4 border-t border-zinc-100 dark:border-zinc-800/50">
-                                <div className="space-y-0.5">
-                                    <p className="text-[9px] font-black uppercase tracking-tighter text-zinc-400 dark:text-zinc-500">Status</p>
-                                    <div className="flex items-center justify-center gap-1">
-                                        <div className="h-1 w-1 rounded-full bg-emerald-500" />
-                                        <p className="text-[11px] font-bold text-emerald-500">Online</p>
+                            <div className="grid grid-cols-2 gap-4 py-4 border-t border-zinc-100 dark:border-border/50">
+                                <div className="space-y-1">
+                                    <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Status</h4>
+                                    <div className="flex items-center justify-center gap-1.5">
+                                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                        <p className="text-xs font-semibold text-emerald-500">Online</p>
                                     </div>
                                 </div>
-                                <div className="space-y-0.5">
-                                    <p className="text-[9px] font-black uppercase tracking-tighter text-zinc-400 dark:text-zinc-500">Access</p>
-                                    <p className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">Level 1</p>
+                                <div className="space-y-1">
+                                    <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Access</h4>
+                                    <p className="text-xs font-semibold text-foreground/80 dark:text-zinc-300">Level 1</p>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <div className="p-5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-3xl space-y-4">
+                    <div className="p-5 bg-card/50 border border-border rounded-xl space-y-4">
                         <div className="flex items-center gap-2">
                             <Fingerprint className="h-4 w-4 text-blue-500" />
-                            <span className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-white">Security ID</span>
+                            <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground">Security ID</h3>
                         </div>
-                        <div className="bg-white/50 dark:bg-black/20 p-3 rounded-xl border border-zinc-200 dark:border-white/5">
-                            <p className="text-[9px] font-mono text-zinc-400 mb-1">Authorization Token</p>
-                            <p className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 break-all leading-relaxed bg-zinc-100 dark:bg-zinc-950 p-2 rounded border border-zinc-200 dark:border-zinc-800">
+                        <div className="bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-border">
+                            <h4 className="text-[11px] font-mono text-muted-foreground mb-1.5">Authorization Token</h4>
+                            <p className="text-[11px] font-mono text-muted-foreground break-all leading-relaxed bg-zinc-100 dark:bg-background p-2 rounded border border-border">
                                 {(session.user as any).id || "SYSTEM_UID_82910"}
                             </p>
                         </div>
@@ -209,40 +209,49 @@ export default function ProfileView({ onOpenPasswordChange, onBack }: ProfileVie
 
                 {/* Right: Detailed Fields */}
                 <div className="lg:col-span-8 space-y-6">
-                    <Card className="border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/40 backdrop-blur-2xl shadow-xl p-0 overflow-hidden">
-                        <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 p-6 md:p-8">
+                    <Card className="border border-border bg-white/50 dark:bg-card/40 backdrop-blur-2xl shadow-sm p-0 overflow-hidden rounded-xl">
+                        <CardHeader className="border-b border-zinc-100 dark:border-border/50 p-6">
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <CardTitle className="text-lg md:text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Identity Details</CardTitle>
-                                    <CardDescription className="text-xs text-zinc-500">Essential information for your analyst profile</CardDescription>
+                                <div className="space-y-1">
+                                    <CardTitle className="text-lg font-semibold text-foreground tracking-tight">Identity Details</CardTitle>
+                                    <CardDescription className="text-xs text-muted-foreground">Essential information for your analyst profile</CardDescription>
                                 </div>
                                 <User className="h-8 w-8 text-primary opacity-20" />
                             </div>
                         </CardHeader>
-                        <CardContent className="p-6 md:p-8">
+                        <CardContent className="p-6">
                             <form onSubmit={handleSubmit} className="space-y-6">
+                                {isGoogleUser && (
+                                    <div className="flex items-start gap-3 p-4 bg-amber-500/5 rounded-lg border border-amber-500/20">
+                                        <Globe className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
+                                        <p className="text-xs leading-relaxed text-muted-foreground font-medium">
+                                            These details are managed through your Google account and cannot be changed within the application. Please update your name and email from your Google Account settings.
+                                        </p>
+                                    </div>
+                                )}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Full Name</Label>
+                                        <Label htmlFor="name" className="text-xs font-medium uppercase tracking-wider text-muted-foreground ml-1">Full Name</Label>
                                         <div className="relative group">
-                                            <User className="absolute left-3.5 top-3.5 h-4 w-4 text-zinc-400 group-focus-within:text-[#007AFF] transition-colors" />
+                                            <User className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                                             <Input
                                                 id="name"
                                                 value={formData.name}
                                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
-                                                className="pl-11 h-12 bg-white/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 text-foreground focus:border-[#007AFF] focus:ring-[#007AFF]/20 transition-all rounded-xl text-sm font-medium"
+                                                className="pl-11 h-11 bg-white/50 dark:bg-background/50 border-border text-foreground focus:border-primary focus:ring-primary/20 transition-all rounded-lg text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
                                                 required
+                                                disabled={isGoogleUser}
                                             />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Primary Email</Label>
+                                        <Label htmlFor="email" className="text-xs font-medium uppercase tracking-wider text-muted-foreground ml-1">Primary Email</Label>
                                         <div className="relative">
-                                            <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-zinc-300 dark:text-zinc-600" />
+                                            <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
                                             <Input
                                                 id="email"
                                                 value={formData.email}
-                                                className="pl-11 h-12 bg-zinc-50/50 dark:bg-zinc-950/20 border-zinc-200 dark:border-zinc-900 text-zinc-400 dark:text-zinc-600 cursor-not-allowed rounded-xl text-sm italic"
+                                                className="pl-11 h-11 bg-zinc-50/50 dark:bg-background/20 border-border text-muted-foreground cursor-not-allowed rounded-lg text-sm"
                                                 disabled
                                             />
                                         </div>
@@ -252,8 +261,8 @@ export default function ProfileView({ onOpenPasswordChange, onBack }: ProfileVie
                                 <div className="pt-2">
                                     <Button
                                         type="submit"
-                                        className="bg-primary hover:bg-primary/90 text-white font-black text-[10px] uppercase tracking-[0.2em] h-12 rounded-xl px-8 transition-all shadow-lg shadow-primary/20 border-t border-white/20"
-                                        disabled={isLoading}
+                                        className="bg-primary hover:bg-primary/90 cursor-pointer text-white font-semibold text-sm h-11 rounded-lg px-8 transition-all shadow-lg shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                        disabled={isLoading || isGoogleUser}
                                     >
                                         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Synchronize Profile"}
                                     </Button>
@@ -263,96 +272,96 @@ export default function ProfileView({ onOpenPasswordChange, onBack }: ProfileVie
                     </Card>
 
                     {/* Security Actions Card */}
-                    <Card className="border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/40 backdrop-blur-2xl shadow-xl p-0 overflow-hidden">
-                        <CardHeader className="p-6 md:p-8 pb-4">
-                            <CardTitle className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                    <Card className="border border-border bg-white/50 dark:bg-card/40 backdrop-blur-2xl shadow-sm p-0 overflow-hidden rounded-xl">
+                        <CardHeader className="p-6 pb-4">
+                            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
                                 <Shield className="h-5 w-5 text-blue-500" />
                                 Security Infrastructure
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6 md:p-8 pt-0 space-y-4">
+                        <CardContent className="p-6 pt-0 space-y-4">
                             {!isGoogleUser ? (
-                                <div className="flex flex-col md:flex-row md:items-center justify-between p-5 bg-blue-500/5 rounded-2xl border border-blue-500/10 gap-4">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between p-5 bg-blue-500/5 rounded-lg border border-blue-500/20 gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                        <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
                                             <Lock className="h-5 w-5" />
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-zinc-900 dark:text-white">Revision Controls</p>
-                                            <p className="text-[11px] text-zinc-500 font-medium italic">Full write access enabled for credentials</p>
+                                        <div className="space-y-0.5">
+                                            <h4 className="text-sm font-semibold text-foreground">Revision Controls</h4>
+                                            <p className="text-xs text-muted-foreground font-medium">Full write access enabled for credentials</p>
                                         </div>
                                     </div>
                                     <Button
                                         variant="outline"
-                                        className="h-10 px-6 border-zinc-200 dark:border-zinc-800 hover:bg-white dark:hover:bg-zinc-800 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
+                                        className="h-10 px-6 cursor-pointer border-border hover:bg-white dark:hover:bg-zinc-800 text-sm font-medium rounded-lg transition-all"
                                         onClick={onOpenPasswordChange}
                                     >
                                         Revise Password
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="p-5 bg-amber-500/5 rounded-2xl border border-amber-500/10 flex items-center gap-4">
-                                    <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600">
+                                <div className="p-5 bg-amber-500/5 rounded-lg border border-amber-500/20 flex items-center gap-4">
+                                    <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
                                         <Globe className="h-5 w-5" />
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-zinc-900 dark:text-white">Authored via Google</p>
-                                        <p className="text-[11px] text-zinc-500 font-medium">Security is managed by your Google Identity Provider. Password change is handled through your Google Account settings.</p>
+                                    <div className="space-y-0.5">
+                                        <h4 className="text-sm font-semibold text-foreground">Authored via Google</h4>
+                                        <p className="text-xs text-muted-foreground font-medium">Security is managed by your Google Identity Provider. Password change is handled through your Google Account settings.</p>
                                     </div>
                                 </div>
                             )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="flex items-center gap-4 p-5 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-100 dark:border-zinc-900/50 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900">
-                                    <Calendar className="h-5 w-5 text-blue-400" />
+                                <div className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-background/40 rounded-lg border border-border transition-all hover:bg-zinc-100 dark:hover:bg-card hover:border-blue-500/30">
+                                    <Calendar className="h-5 w-5 shrink-0 text-blue-500" />
                                     <div className="flex-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-0.5">Account Created</p>
-                                        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Feb 05, 2026</p>
+                                        <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Account Created</h4>
+                                        <p className="text-sm font-semibold text-foreground/90 dark:text-zinc-200">Feb 05, 2026</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4 p-5 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-100 dark:border-zinc-900/50 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900">
-                                    <Shield className="h-5 w-5 text-emerald-400" />
+                                <div className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-background/40 rounded-lg border border-border transition-all hover:bg-zinc-100 dark:hover:bg-card hover:border-emerald-500/30">
+                                    <Shield className="h-5 w-5 shrink-0 text-emerald-500" />
                                     <div className="flex-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-0.5">Account Status</p>
+                                        <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Account Status</h4>
                                         <div className="flex items-center gap-1.5">
                                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                            <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Active / Verified</p>
+                                            <p className="text-sm font-semibold text-foreground/90 dark:text-zinc-200">Active / Verified</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4 p-5 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-100 dark:border-zinc-900/50 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900">
-                                    <RefreshCw className="h-5 w-5 text-amber-400" />
+                                <div className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-background/40 rounded-lg border border-border transition-all hover:bg-zinc-100 dark:hover:bg-card hover:border-amber-500/30">
+                                    <RefreshCw className="h-5 w-5 shrink-0 text-amber-500" />
                                     <div className="flex-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-0.5">Last Updated</p>
-                                        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{lastUpdated || "Never"}</p>
+                                        <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Last Updated</h4>
+                                        <p className="text-sm font-semibold text-foreground/90 dark:text-zinc-200">{lastUpdated || "Never"}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4 p-5 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-100 dark:border-zinc-900/50 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900">
-                                    <Fingerprint className="h-5 w-5 text-rose-400" />
+                                <div className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-background/40 rounded-lg border border-border transition-all hover:bg-zinc-100 dark:hover:bg-card hover:border-rose-500/30">
+                                    <Fingerprint className="h-5 w-5 shrink-0 text-rose-500" />
                                     <div className="flex-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-0.5">Login Method</p>
-                                        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{isGoogleUser ? "Google Cloud Auth" : "Internal Credentials"}</p>
+                                        <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Login Method</h4>
+                                        <p className="text-sm font-semibold text-foreground/90 dark:text-zinc-200">{isGoogleUser ? "Google Cloud Auth" : "Internal Credentials"}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4 p-5 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-100 dark:border-zinc-900/50 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900">
-                                    <Activity className="h-5 w-5 text-indigo-400" />
+                                <div className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-background/40 rounded-lg border border-border transition-all hover:bg-zinc-100 dark:hover:bg-card hover:border-sky-500/30">
+                                    <Activity className="h-5 w-5 shrink-0 text-sky-500" />
                                     <div className="flex-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-0.5">Last Session</p>
-                                        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{new Date().toLocaleDateString()} @ {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                        <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Last Session</h4>
+                                        <p className="text-sm font-semibold text-foreground/90 dark:text-zinc-200">{new Date().toLocaleDateString()} @ {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4 p-5 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-100 dark:border-zinc-900/50 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900">
-                                    <Monitor className="h-5 w-5 text-cyan-400" />
+                                <div className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-background/40 rounded-lg border border-border transition-all hover:bg-zinc-100 dark:hover:bg-card hover:border-cyan-500/30">
+                                    <Monitor className="h-5 w-5 shrink-0 text-cyan-500" />
                                     <div className="flex-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-0.5">Current Device</p>
-                                        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{deviceType}</p>
+                                        <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Current Device</h4>
+                                        <p className="text-sm font-semibold text-foreground/90 dark:text-zinc-200">{deviceType}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4 p-5 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-100 dark:border-zinc-900/50 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-900">
-                                    <Globe className="h-5 w-5 text-purple-400" />
+                                <div className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-background/40 rounded-lg border border-border transition-all hover:bg-zinc-100 dark:hover:bg-card hover:border-purple-500/30">
+                                    <Globe className="h-5 w-5 shrink-0 text-purple-500" />
                                     <div className="flex-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-0.5">Primary Region</p>
-                                        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Global Index 1</p>
+                                        <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Primary Region</h4>
+                                        <p className="text-sm font-semibold text-foreground/90 dark:text-zinc-200">Global Index 1</p>
                                     </div>
                                 </div>
                             </div>

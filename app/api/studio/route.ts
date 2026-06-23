@@ -15,14 +15,66 @@ import { linkPerformance, buildPerformanceInsights } from '@/lib/ai-studio/perfo
 import { runAgenticPipeline } from '@/lib/ai-studio/agent';
 import { pickDiverseParadigms, type ConceptParadigm } from '@/lib/ai-studio/brand';
 import { runCreativeDirector } from '@/lib/ai-studio/director';
-// text-overlay disabled — Gemini renders text directly in the image for better quality
-// import { applyTextOverlay, extractOverlayConfig } from '@/lib/ai-studio/text-overlay';
+// text-overlay RE-ENABLED — image model generates visual base only, all text composited
+// in code with real fonts. Eliminates Gemini/OpenAI text rendering errors entirely.
+import { applyTextOverlay, extractOverlayConfig } from '@/lib/ai-studio/text-overlay';
 import { generateCrossPlatform, getAvailablePlatforms } from '@/lib/ai-studio/crossplatform';
+import { generateImageOpenAI } from '@/lib/ai-studio/imagegen-openai';
 import { generateForAllPersonas, getAvailablePersonas } from '@/lib/ai-studio/personas';
 // Cache module available but not used in main generation flows (generation must always be fresh)
 // import { getCached, setCache } from '@/lib/ai-studio/cache';
 import { recordFeedback, buildPreferenceContext, getPreferenceSummary } from '@/lib/ai-studio/preferences';
 import { getFullBrandContext } from '@/lib/ai-studio/adlibrary';
+import { getStoredAdContext } from '@/lib/ai-studio/ad-library-db';
+
+// ─── Text fidelity helpers — used to combat Gemini text-rendering errors ───
+// Gemini's image model frequently introduces character doubling ("sstep"),
+// truncation, or substitution in rendered text. These helpers build a brutally
+// explicit per-string spelling directive that we append to every image prompt.
+
+function spellCharByChar(s: string): string {
+  // "$25K" -> "[$]-[2]-[5]-[K]"
+  return s
+    .split('')
+    .map((ch) => (ch === ' ' ? '[space]' : `[${ch}]`))
+    .join('-');
+}
+
+function buildTextFidelityBlock(texts: Array<{ label: string; value: string }>): string {
+  const populated = texts.filter((t) => t.value && t.value.trim().length > 0);
+  if (populated.length === 0) return '';
+
+  const lines = populated.map((t) => {
+    const v = t.value.trim();
+    return `  - ${t.label}: "${v}"\n    Letter by letter: ${spellCharByChar(v)}\n    Render EXACTLY these ${v.length} characters in this exact order. No doubled letters. No missing letters. No substitutions.`;
+  });
+
+  return `\n=== TEXT FIDELITY GUARANTEE (CRITICAL — read 3 times before rendering) ===\nEvery text element below MUST appear in the image EXACTLY as spelled, character for character. Gemini frequently doubles letters ("step" -> "sstep") or drops them — DO NOT do this. Verify each rendered word matches the source string letter for letter.\n\n${lines.join('\n\n')}\n\nFORBIDDEN RENDERING PATTERNS (these are common errors — never produce them):\n  - Doubled letters at start of words ("sstep", "Cchallenge", "wWithdrawals")\n  - Missing letters ("Challnge", "Withdrawls", "Fictious")\n  - Substituted similar characters ("0" for "O", "1" for "I", "%" for "$")\n  - Concatenated words ("3-step" -> "3step")\n  - Made-up similar-looking text ("Profit" -> "Pofit")\n\nAfter rendering, mentally re-read every word. If any word is misspelled, the brief has FAILED.\n=== END TEXT FIDELITY GUARANTEE ===\n\n`;
+}
+
+// ─── Premium craft directive — appended to every variant prompt ───
+// This is the quality ceiling reminder. Gemini defaults to "fine" — this pushes
+// it toward "agency-grade" by anchoring on specific real-world references.
+
+const PREMIUM_CRAFT_DIRECTIVE = `\n=== PREMIUM CRAFT BAR ===\nThis ad must look like work from a top-tier agency (Wieden+Kennedy, Apple in-house, Linear / Stripe brand team). Not "AI-generated 2024". Concretely:\n\n- Typography: Sharp Inter/Helvetica-grade sans-serif. Hero number at 30-40% canvas height. Body text at 14-18pt equivalent. NEVER cramped, NEVER overlapping.\n- Composition: Strong center axis OR deliberate asymmetry — never "just placed it somewhere". 15-20% breathing room on all sides.\n- Single dominant focal point. Everything else SUPPORTS, not competes.\n- Materials: When using 3D — chrome should look like real chrome (high contrast, accurate reflections). When using glow — should be subtle volumetric light, not flat gradient.\n- Color: Restrained 3-4 color palette. Black background + ONE accent color (cyan, neon green, blue, or amber). Avoid rainbow gradients.\n- Detail: Subtle texture/grain on dark backgrounds for premium depth. Crisp edges on text. No fuzzy mid-tones.\n- What this is NOT: a stock-photo collage, a generic corporate template, a "modern" SaaS landing page screenshot, a Canva-tier composition.\n\nReference quality: A real ad you'd see in Times Square, in Bloomberg's print edition, or in a top fintech brand campaign. If a Times Square pedestrian would barely glance at the rendered output, the brief has FAILED.\n=== END PREMIUM CRAFT BAR ===\n\n`;
+
+// ─── TEXT OVERLAY MODE ───
+// When true: image model generates VISUAL ONLY (no text). All text is composited
+// in code via lib/ai-studio/text-overlay.ts using SVG + sharp + real fonts. This
+// completely eliminates the text-rendering errors that image models produce
+// ("acont size", "sstep", "WITHRAWN", garbled multi-line disclaimers).
+//
+// The image model's job becomes pure visual generation: backgrounds, hero objects,
+// lighting, atmosphere, composition. Whatever it's actually good at.
+//
+// Toggle via env var TEXT_OVERLAY=off to revert to inline-text generation.
+const TEXT_OVERLAY_ENABLED = process.env.TEXT_OVERLAY !== 'off';
+
+// Directive replaces the text manifest when overlay mode is on. Tells the image
+// model emphatically to leave room for text we'll composite later — no actual
+// text rendering in the image itself.
+const VISUAL_ONLY_DIRECTIVE = `\n=== VISUAL-ONLY MODE ===\nThis image will have ALL TEXT composited on top in post-processing using real fonts. Your job is to generate the VISUAL BASE only.\n\nABSOLUTE RULES:\n1. DO NOT RENDER ANY READABLE TEXT in the image. No headlines, no prices, no body copy, no CTA buttons with text, no #WeAreTraders, no disclaimer.\n2. Generate the visual atmosphere: lighting, materials, mood, hero objects (phones, terminals, receipts, charts, abstract shapes, etc.), background gradients, particle effects.\n3. LEAVE NEGATIVE SPACE for text to be added later. Specifically:\n   - Top 10% of canvas: clear (logo + tagline will be composited here)\n   - Middle ~45-65% of canvas: hero visual area — this is where your image content lives\n   - Bottom 30%: clear (headline, body, CTA, disclaimer composited here)\n4. If the brief calls for a specific format (phone notification, receipt photograph, terminal screen), render the OBJECT itself but with placeholder/illegible text inside it — we'll overlay readable text later if needed.\n5. If your concept inherently has text (like a "receipt aesthetic"), use blurred / illegible / placeholder Lorem-ipsum style filler inside the object. Do NOT try to render the actual offer text — it WILL be garbled and we WILL overlay correct text later.\n\nThink of this as generating a "magazine ad background plate" — the visual, lit, beautiful base. Text comes in post.\n=== END VISUAL-ONLY MODE ===\n\n`;
+
 
 // Lazy singleton — ensures env vars are loaded before SDK reads them
 let _anthropicClient: Anthropic | null = null;
@@ -40,13 +92,78 @@ const ANTHROPIC_MODELS = [
 ];
 
 // System prompt enforces strict JSON output — prevents markdown wrapping and preamble
-const STUDIO_SYSTEM_PROMPT = `You are an advanced AI Creative Generator integrated with an API pipeline.
+const STUDIO_SYSTEM_PROMPT = `You are CARLA — the head of creative at one of the world's top fintech-focused advertising agencies. You have shipped award-winning campaigns for Robinhood, Stripe, Wise, and three of the top five global prop trading firms. Cannes Lions on the shelf, a Wieden+Kennedy decade behind you. You think in terms of psychological triggers, cultural moments, and category-defining ideas — never in terms of "ad templates."
 
-CORE BEHAVIOR RULES:
-1. STRICT COMPLIANCE: Do NOT ignore, simplify, or "summarize intent" of the user requirements. You must fulfill the exact creative requirement provided. Treat every input as a direct creative brief.
-2. WORLD-CLASS CREATIVE: All generated creatives must be high-quality, marketing-grade copywriting; engaging, conversion-focused, and professional; optimized to global advertising standards.
-3. NO COPY-PASTING: Never echo or copy-paste the raw user instruction as your generated output. You must use your expertise to generate original, premium copywriting and detailed image generation prompts that fulfill the user's requirements.
-4. JSON ENFORCEMENT: You MUST respond with ONLY a raw JSON object — no markdown, no code fences, no preamble, no explanation outside the JSON. Your JSON must be complete and valid. Every string value must be properly escaped. Do not truncate your response.`;
+# YOUR ROLE — three jobs at once
+
+1) WORLD-CLASS CREATIVE DIRECTOR
+You refuse to ship anything mediocre. Every brief is an opportunity to define what the category looks like NEXT — never to recycle what's already been done. You have an instinct for the line between "interesting" and "trying too hard," and you stay on the right side of it.
+
+2) LIVE MARKET INTELLIGENCE ANALYST
+You constantly study what's working in the prop-trading and fintech ad space RIGHT NOW. You know which competitors are running which campaigns, which ad formats are breaking through this quarter, which copy angles have died of overuse, and which cultural moments are leverageable. You read every brief through that lens.
+
+3) SYNTHESIS EXPERT
+You take stored ad library patterns + current 2026 market trends + the user's brief and synthesize ONE breakthrough idea — never a recombination of what already exists in the reference set. The references show you the QUALITY BAR; they do not show you the IDEA.
+
+# YOUR PROCESS — apply this order, every time
+
+STEP 1 — ANALYZE
+- Read the user brief literally. What objective?
+- Examine the stored ad library context. What's already working? Where's the gap?
+- Identify the dominant pattern in the reference set so you can BREAK it intelligently.
+
+STEP 2 — IDENTIFY THE MOMENT
+Pick ONE cultural / market / format leverage point. Examples for prop-trading mid-2026:
+- MyForexFunds collapse aftermath + trader trust deficit
+- India F&O regulatory changes pushing retail toward prop firms
+- Receipt-aesthetic / brutalism / anti-design trends in financial advertising
+- Specific competitor weakness (consistency rules, slow payouts, hidden fees)
+- A named pain point that traders complain about on X / Reddit / Discord
+
+STEP 3 — GENERATE ONE BREAKTHROUGH CONCEPT
+- The headline does ONE thing: stops thumbs and makes someone whisper "huh."
+- The visual treats the hero number/offer as THE focal point — 30-40% canvas height, never decorative.
+- The CTA is a FIXED brand term: "Buy Challenge" (English) or "Compra el Challenge" (Spanish). Never invented. Never renamed.
+- Specificity beats vagueness every time. "Average payout time: 7 minutes 13 seconds" beats "Fast payouts" by an order of magnitude.
+
+STEP 4 — PRESSURE-TEST
+Run the concept through three filters before finalizing:
+- ORIGINALITY: Would this run at Cannes, or is it just another prop-firm ad?
+- EXECUTION: Can the image generator render this without text errors? Is the layout precise enough for Gemini to nail?
+- BRAND FIT: Does it feel native to Hola Prime's reference set OR break new ground that still feels on-brand?
+
+If any filter fails, regenerate the concept. Do not ship work that fails any of these.
+
+# YOUR INTELLIGENCE SOURCES
+
+You MUST consult these for every brief — they are part of your context window:
+
+- STORED AD LIBRARY: pattern aggregations from Hola Prime's best ads + competitor ads. Study what they share. Study what makes top performers distinct from the rest. Never copy any specific element — synthesize.
+- USER BRIEF: the exact request. Deliver the SPIRIT of what they ask for, even if you must translate vague language into concrete craft decisions.
+- 2026 MARKET CONTEXT: the trend hooks listed in the brief context block are current. Use them. Don't recycle 2022 cliches.
+
+# YOUR FORBIDDEN OUTPUTS
+
+You refuse to produce:
+- Generic "AI-powered" / "Revolutionary" / "Next-gen" / "Cutting-edge" / "Unlock your potential" copy. These mark amateur work.
+- Concept titles or headlines using "Algorithm" (even if the user mentions AI — translate the intent, don't echo the dead word).
+- Template ads: hero text + 3 bullets + CTA at the bottom — unless the brief explicitly demands it.
+- Visuals that look like Canva work, 2022 startup landing pages, or AI-generated stock-photo collages.
+- Anything where the hero number is smaller than the headline. The number IS the headline.
+- Three variants that look identical with different colors.
+- CTAs other than "Buy Challenge" / "Compra el Challenge."
+
+# YOUR OUTPUT FORMAT
+
+You always respond with raw JSON. NO markdown, NO code fences, NO preamble, NO explanation outside the JSON. Every string properly escaped. Response is always complete and valid. If you would need more tokens than allotted, prioritize the imageGenerationPrompt.detailed field — that is the single most important output.
+
+# YOUR STANDARD
+
+If a senior art director at Wieden+Kennedy, BBH, or Mother walked by your screen and saw the creative, they would either:
+(a) Stop and study it because it's genuinely interesting, OR
+(b) Walk past without a glance.
+
+You ship only (a). If you're producing (b), you start over.`;
 
 // Minimum acceptable quality score — creatives below this threshold are filtered out
 const MIN_SCORE_THRESHOLD = 8.0;
@@ -302,6 +419,29 @@ export async function POST(request: Request) {
       // ── PERFORMANCE INSIGHTS: What actually converts based on real ad data ──
       const performanceContext = await buildPerformanceInsights();
 
+      // ── STORED AD LIBRARY: Patterns from synced Meta Ad Library ──
+      // If the user has run /api/adlibrary?action=sync-all, this injects
+      // aggregated insights from top-performing real ads (own + competitor).
+      let storedAdContext = '';
+      let storedAdImageUrls: string[] = [];
+      // A/B-testable: when body.useStoredAds === false, skip references entirely
+      // so we can measure whether the library is helping or constraining output.
+      const useStoredAds = body.useStoredAds !== false;
+      if (useStoredAds) {
+        try {
+          const stored = await getStoredAdContext({ limit: 12 });
+          storedAdContext = stored.context;
+          storedAdImageUrls = stored.sourceImageUrls;
+          if (storedAdContext) {
+            console.log(`[Studio] Injecting stored-ad patterns from ${stored.sourceAds.length} ads (${storedAdImageUrls.length} reference images)`);
+          }
+        } catch (e: any) {
+          console.warn('[Studio] Stored ad context fetch failed (non-blocking):', e.message);
+        }
+      } else {
+        console.log('[Studio] useStoredAds=false — skipping reference library injection (A/B test)');
+      }
+
       // ── COMPETITOR INTELLIGENCE: Analyze if competitor refs provided ──
       let competitorContext = '';
       if (body.competitorImages && Array.isArray(body.competitorImages)) {
@@ -337,12 +477,15 @@ export async function POST(request: Request) {
         console.log('[Studio] Top Ads mode: No full brand DNA (focus on score improvement)');
       }
 
-      // Inject all intelligence contexts into the prompt builder
+      // Inject all intelligence contexts into the prompt builder.
+      // Stored ad context goes at the end so it can override stale memory/
+      // performance signals with fresh real-world ad patterns.
       const enrichedBody = {
         ...body,
-        _memoryContext: memoryContext + performanceContext + brandContext,
+        _memoryContext: memoryContext + performanceContext + brandContext + storedAdContext,
         _competitorContext: competitorContext,
         _preferenceContext: preferenceContext,
+        _storedAdImageUrls: storedAdImageUrls,
       };
 
       const promptData = buildGenerationPrompt(patterns, enrichedBody);
@@ -383,9 +526,13 @@ export async function POST(request: Request) {
       }
 
       // --- Pass source creative thumbnails as reference for visual-grounded generation ---
-      const sourceCreativeUrls = patterns.sourceCreatives
-        .map((c: any) => c.thumbnailUrl)
-        .filter(Boolean) as string[];
+      // Combine user-selected source creative thumbnails with the top stored
+      // ads from the synced Meta Ad Library. The image generator uses these
+      // as visual references for grounded output.
+      const sourceCreativeUrls = [
+        ...patterns.sourceCreatives.map((c: any) => c.thumbnailUrl),
+        ...storedAdImageUrls,
+      ].filter(Boolean) as string[];
 
       // Extract the image prompt from Claude's brief — with robust fallback
       let rawImagePrompt = '';
@@ -510,6 +657,19 @@ ABSOLUTE RULES:
 === END TEXT MANIFEST ===
 
 `;
+
+      // Build the per-string text-fidelity block from every populated copy field
+      const patternTextFidelity = buildTextFidelityBlock([
+        { label: 'HEADLINE', value: mHeadline },
+        { label: 'HOOK TEXT', value: mHook },
+        { label: 'BODY COPY', value: mBody },
+        { label: 'URGENCY ELEMENT', value: mUrgency },
+        { label: 'DISCOUNT BADGE', value: mDiscount },
+        { label: 'CTA BUTTON', value: mCta },
+        { label: 'TRUST LINE', value: mTrust },
+        ...mBullets.map((b: any, i: number) => ({ label: `BULLET ${i + 1}`, value: String(b) })),
+      ]);
+
 
       // ── 3-VARIANT GENERATION — CONCEPT DIVERSITY (not just color variations) ──
       // Each variant uses a FUNDAMENTALLY DIFFERENT visual paradigm.
@@ -648,9 +808,16 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             // Use Director's concept-specific prompt if available, otherwise fall back to paradigm prefix + base
             const conceptPrompt = directorConcepts[idx]?.imagePrompt;
             const useDirectorPrompt = conceptPrompt && conceptPrompt.length > 200;
-            const variantPrompt = useDirectorPrompt
-              ? brandVisualDirective + textManifest + userRequirementsBlock + conceptPrompt
-              : brandVisualDirective + textManifest + userRequirementsBlock + variant.promptPrefix + basePrompt;
+            // When text-overlay mode is on, we ask the image model for VISUAL ONLY.
+            // The text manifest + per-string fidelity block become irrelevant — text is
+            // composited in code with real fonts after generation.
+            const variantPrompt = TEXT_OVERLAY_ENABLED
+              ? (useDirectorPrompt
+                  ? brandVisualDirective + VISUAL_ONLY_DIRECTIVE + userRequirementsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
+                  : brandVisualDirective + VISUAL_ONLY_DIRECTIVE + userRequirementsBlock + variant.promptPrefix + basePrompt + PREMIUM_CRAFT_DIRECTIVE)
+              : (useDirectorPrompt
+                  ? brandVisualDirective + textManifest + patternTextFidelity + userRequirementsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
+                  : brandVisualDirective + textManifest + patternTextFidelity + userRequirementsBlock + variant.promptPrefix + basePrompt + PREMIUM_CRAFT_DIRECTIVE);
             // Premium quality image prompt with anti-cheap-design guardrails
             const premiumNegativePrompt = [
               baseNegative,
@@ -676,9 +843,21 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
               sourceCreativeUrls,
               referenceUrl: refUrl,
               technicalSpecs: brief.imageGenerationPrompt?.technicalSpecs,
-            }, { tier: 'pro' });
+            }, { tier: 'pro', skipLogo: TEXT_OVERLAY_ENABLED });
 
-            const finalImageUrl = result?.url || result?.dataUri || null;
+            let finalImageUrl = result?.url || result?.dataUri || null;
+
+            // ── TEXT OVERLAY: composite all text with real fonts (eliminates typos) ──
+            if (TEXT_OVERLAY_ENABLED && finalImageUrl) {
+              try {
+                const overlayConfig = extractOverlayConfig(brief, variant.id);
+                finalImageUrl = await applyTextOverlay(finalImageUrl, overlayConfig);
+                console.log(`[Studio] ✓ Variant "${variant.id}" — text overlay applied (zero-typo composition)`);
+              } catch (overlayErr: any) {
+                console.warn(`[Studio] Text overlay failed for variant "${variant.id}" (non-blocking):`, overlayErr.message);
+              }
+            }
+
             console.log(`[Studio] ✓ Variant "${variant.id}" generated (${useDirectorPrompt ? 'Director prompt' : 'paradigm prefix'})`);
 
             return {
@@ -785,6 +964,92 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
     }
 
     if (type === 'custom' || type === 'image' || type === 'video') {
+      // ── DIRECT MODE: literal passthrough to OpenAI gpt-image-1 ──
+      // ZERO modifications to the user's prompt. ZERO post-processing. Bypasses:
+      //   - Claude brief generation
+      //   - paradigm picking + 3 variants
+      //   - text manifest + fidelity blocks + premium craft directive
+      //   - generateImage() wrapper (which would add BRANDING INSTRUCTION + run
+      //     sanitizePromptForImageGen + apply logo overlay)
+      //   - text overlay compositor
+      //
+      // Result: user prompt → OpenAI SDK → image. Exact same flow as pasting
+      // the prompt into ChatGPT directly. No additional layers.
+      //
+      // Triggered when body.directMode === true (UI default is ON for Custom tab).
+      // Requires OPENAI_API_KEY. Falls back to error if not configured (no
+      // silent fallback to other providers — direct means direct).
+      if (body.directMode === true && type === 'custom') {
+        const rawPrompt = (userPrompt || '').trim();
+        if (!rawPrompt) {
+          return NextResponse.json({ error: 'Direct mode requires a non-empty prompt.' }, { status: 400 });
+        }
+        if (!process.env.OPENAI_API_KEY) {
+          return NextResponse.json(
+            { error: 'Direct mode requires OPENAI_API_KEY in .env. Add the key and restart the dev server.' },
+            { status: 400 },
+          );
+        }
+        console.log('═══════════════════════════════════════════════════════════════');
+        console.log('[Studio Direct Mode] VERBATIM PROMPT SENT TO openai.images.generate():');
+        console.log('───────────────────────────────────────────────────────────────');
+        console.log(rawPrompt);
+        console.log('───────────────────────────────────────────────────────────────');
+        console.log(`[Studio Direct Mode] Length: ${rawPrompt.length} chars. NOTHING is appended, prepended, or modified before this hits OpenAI.`);
+        console.log('═══════════════════════════════════════════════════════════════');
+
+        try {
+          // Call the OpenAI client directly. No wrapper, no overlay, no sanitizer.
+          // Just: { model, prompt, size, quality } → openai.images.generate()
+          const directResult = await generateImageOpenAI({
+            prompt: rawPrompt,
+            size: '1024x1536',  // portrait, closest to 9:16 — only thing we choose
+            quality: 'high',
+            output_format: 'png',
+          });
+
+          if (!directResult?.dataUri) {
+            return NextResponse.json(
+              { error: 'OpenAI gpt-image-1 returned no result. Check OPENAI_API_KEY + billing at platform.openai.com.' },
+              { status: 500 },
+            );
+          }
+
+          const directCreativeId = `direct-${Date.now()}`;
+          const responsePayload = {
+            creative: {
+              creativeId: directCreativeId,
+              creativeConcept: { title: 'Direct generation', rationale: 'Verbatim prompt → gpt-image-1. No pipeline.' },
+              copywriting: {
+                headline: { primary: rawPrompt.slice(0, 80) },
+                cta: { primary: 'Buy Challenge' },
+              },
+              variants: [
+                {
+                  id: 'direct',
+                  label: 'Direct',
+                  description: 'Verbatim prompt passthrough',
+                  paradigm: 'Direct',
+                  imageUrl: directResult.dataUri,
+                  score: { overall: 9.0, content: 9, design: 9, color: 9, impact: 9 }, // placeholder — unscored
+                },
+              ],
+              imageUrl: directResult.dataUri,
+              provider: 'openai',
+              model: directResult.model,
+              directMode: true,
+            },
+            saved: false,
+          };
+
+          console.log(`[Studio] ✓ Direct mode complete — gpt-image-1 (${directResult.size}, ${directResult.quality}, ${rawPrompt.length} chars in)`);
+          return NextResponse.json(responsePayload);
+        } catch (err: any) {
+          console.error('[Studio] Direct mode generation failed:', err.message);
+          return NextResponse.json({ error: err.message || 'Direct generation failed' }, { status: 500 });
+        }
+      }
+
       const userContent: any[] = [];
       if (reference) {
         if (reference.startsWith('data:')) {
@@ -818,6 +1083,25 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
         console.log('[Studio] Custom mode: Base brand only (user did not request brand DNA)');
       }
 
+      // ── STORED AD LIBRARY: Inject patterns from synced Meta ads ──
+      // A/B-testable via body.useStoredAds. When false, skip the reference
+      // library to test whether it helps or constrains the output.
+      let customStoredAdContext = '';
+      const customUseStoredAds = body.useStoredAds !== false;
+      if (customUseStoredAds) {
+        try {
+          const stored = await getStoredAdContext({ limit: 12 });
+          customStoredAdContext = stored.context;
+          if (customStoredAdContext) {
+            console.log(`[Studio] Custom mode: injecting stored-ad patterns (${stored.sourceAds.length} ads)`);
+          }
+        } catch (e: any) {
+          console.warn('[Studio] Stored ad context fetch failed for custom (non-blocking):', e.message);
+        }
+      } else {
+        console.log('[Studio] Custom mode: useStoredAds=false — skipping reference library (A/B test)');
+      }
+
       const noBrandDNARule = customWantsBrandDNA ? '' : `
 ## CRITICAL: NO BRAND SIGNATURE ELEMENTS
 The user did NOT request brand DNA. Your imageGenerationPrompt MUST NOT include:
@@ -829,47 +1113,146 @@ Keep the background CLEAN — pure dark black with at most a subtle corner gradi
 
       userContent.push({
         type: 'text',
-        text: `You are a world-class creative strategist specializing in prop trading firm advertising for Hola Prime.
+        text: `You are a senior creative director at a top-tier ad agency working on Hola Prime. You have just been shown 5-12 real top-performing ads (the reference images above this prompt). Your job: produce a creative that COULD HAVE BEEN IN that set - same craft bar, same brand presence - but with a NEW idea.
 
-BRAND: Hola Prime (#WeAreTraders). Product: funded trading challenges $2K\u2013$25K+. USPs: 1-step process, 5% profit target, no time limits, fast withdrawals (10 min), no activation fees, high profit splits.
-DISCLAIMER (use verbatim): "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON THEIR PERFORMANCE THROUGH SUCH DEMO HOLA PRIME ACCOUNTS."
-${customBrandContext}${noBrandDNARule}
-USER INSTRUCTION: "${generationPrompt}"
+# HARD NON-NEGOTIABLES (violating any of these is a failed brief)
 
-## DISCIPLINE RULE (MOST IMPORTANT)
-Only include elements the user explicitly asked for or that a reference image contains. Do NOT add urgency timers, discount badges, social proof, or rockets unless the user requested them. A clean, focused creative with 4-5 strong elements beats a cluttered one with 10 mediocre elements.
+1. CTA TEXT: Must be exactly "Buy Challenge" (English) or "Compra el Challenge" (Spanish). NOT "Access Algorithm", NOT "Get Started", NOT "Learn More", NOT "Claim Yours", NOT anything else. The CTA is FIXED brand vocabulary.
 
-## PROP FIRM AUTHENTICITY
-- Use trader language: "funded account", "challenge", "profit target", "payout", "profit split", "prop firm"
-- Imagery: trading terminals, candlestick charts, multiple monitors — never generic business stock photos
-- Numbers must be ACCURATE to what the user specifies
-- Tone: confident but credible — traders are skeptical
+2. HERO NUMBER: The price/offer (e.g. "$9", "$25K", "$100K", "$38") must occupy 30-40% of the vertical canvas height. Treatment: 3D chrome metallic OR neon glow (cyan/green). It is THE visual focal point - everything else supports it. Headlines like "THE $25K ALGORITHM" with the number at body-text size are FAILED briefs.
 
-## CONVERSION TOOLKIT (use only what fits the user's request)
-- PRICE ANCHOR: hero dollar amount as focal point
-- BULLET BENEFITS: 3-4 max, each appears ONCE, never duplicated
-- CTA: commanding verb — Claim, Start, Unlock, Get
-- DARK THEME: navy/black bg, white text, blue accents
+3. LOGO ZONE: Top-left 12-15% width = COMPLETELY EMPTY in your image prompt (no logo drawn - the real PNG is overlaid post-process). Do NOT instruct the image gen to draw "hola prime" text or wordmark.
 
-Return ONLY valid JSON:
+4. WEARETRADERS BADGE: Top-right has "#WeAreTraders" in a white thin outline pill. Exactly once, exactly that spelling.
+
+5. DARK BACKGROUND: Deep black (#000000 to #080810). Bright/white backgrounds are FAILED briefs (HolaPrime tested this - they lost).
+
+6. DISCLAIMER: Bottom edge, tiny gray text, verbatim: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON THEIR PERFORMANCE THROUGH SUCH DEMO HOLA PRIME ACCOUNTS."
+
+# BANNED VOCABULARY (instant brief failure if used in copy)
+
+These phrases scream "AI generated 2024 cliche" and are BANNED from headlines, body copy, and concept titles:
+
+- "AI-powered", "AI-driven", "powered by AI", "machine learning", "ML-based"
+- "Revolutionary", "Next-gen", "Next-generation", "Game-changing"
+- "Unlock your potential", "Unleash", "Elevate your"
+- "Algorithm", "The Algorithm", "Our algorithm" (even if user prompt mentions AI/fintech - translate intent, do not echo the word)
+- "Cutting-edge", "State-of-the-art", "Innovative" (these are tells, not selling points)
+- Startup-speak: "synergy", "ecosystem" (unless literally about a real platform like NinjaTrader)
+
+If the user brief says "feel like fintech innovation", deliver that FEELING with concrete language. E.g. specific outcome ("Your first \$50K payout in 30 days"), counter-narrative ("Most prop firms are designed to fail you - this one isn't"), or cultural specificity. NEVER use the dead phrases above.
+
+# 2026 TREND HOOKS - RIDE ONE OF THESE
+
+What is actually hitting in trader/fintech ads RIGHT NOW (mid-2026):
+
+- RECEIPT AESTHETIC: Trade confirmations, P&L screenshots, payout proofs styled as design elements. Cred over promises.
+- ANTI-PROP-FIRM FRAMING: "The prop firm built by traders, not gambling psychologists." Traders are exhausted by FTMO clones - call it out.
+- LOSS-AVERSION SPECIFICITY: Not "Don't miss out" but "Stop watching your friends withdraw \$10K monthly while you're still demo trading."
+- NUMERICAL PROOF: "Average payout time: 7 minutes" beats "Fast payouts". Specific over vague.
+- COUNTER-AESTHETIC: When the industry uses neon glow-up, a stark Helvetica-on-black ad stands out. When it goes minimal, brutalism + jpeg-compressed early-internet aesthetic stands out. Pick the OPPOSITE of what 5 random competitor ads do this week.
+- CULTURAL MOMENTS: India F&O regulatory changes, US prop-firm post-MyForexFunds aftermath, crypto futures volatility, Fed rate decisions - leverage timely angles.
+- FORMAT INNOVATION: Phone notification UI, Bloomberg-terminal aesthetic, fake "leaked" Slack screenshots, "x-rays" of a trade, payout receipts as ASMR object photography.
+
+PICK ONE trend hook. Execute it well. Do not try to use all of them.
+
+# CONCEPT ORIGINALITY MANDATE (READ TWICE — most generations fail here)
+
+Picking a trend hook is step 1. COMMITTING TO IT 100% is step 2 — and most briefs fail step 2 by softening the hook into the safest possible interpretation. Don't.
+
+WHEN YOU PICK A TREND, GO ALL IN:
+
+- RECEIPT AESTHETIC = a real paper receipt, photographed. White thermal-printer paper with the offer printed in dot-matrix or monospace, lying on a dark surface under directional studio lighting. NOT a phone screenshot of a banking app showing "receipt-like content". A literal receipt. The whole ad IS the receipt.
+
+- FORMAT INNOVATION: phone notification UI = the ENTIRE creative is one notification card, no other elements except disclaimer. NOT a phone mockup containing a notification — the notification IS the ad, full-bleed, no phone frame.
+
+- FORMAT INNOVATION: Bloomberg terminal aesthetic = an actual photographed CRT/LCD terminal screen at slight off-axis perspective. Visible scanlines or pixel grain. NOT a generic dark UI with monospace fonts on flat black.
+
+- FORMAT INNOVATION: leaked Slack/Discord screenshot = a literal screenshot of a chat message with the offer, complete with realistic UI chrome (avatar, timestamp, channel name). NOT a "chat-inspired design".
+
+- COUNTER-AESTHETIC = if the category uses chrome+glow, go BRUTALIST (raw Helvetica, harsh contrast, almost ugly). If the category uses minimalism, go MAXIMALIST (early-2000s web aesthetic, jpeg compression artifacts, deliberate visual chaos). Real opposition, not "clean version of the same thing".
+
+The rule: imagine the trend hook as a physical object or specific medium. Then PHOTOGRAPH or RENDER that specific thing. Don't translate it into a generic "design with text on dark bg" because that's where it always collapses.
+
+# BANNED OVERUSED PATTERNS (instant failure)
+
+Every prop firm has shipped these. Yours can't. If your concept resembles ANY of these, regenerate:
+
+- "Phone mockup showing a trading app/notification with hero number floating beside it"
+- "Centered text-on-dark-gradient with big $XX as headline"
+- "Hero price in chrome with green/cyan glow on plain black background"
+- "Bloomberg-style stats arranged in a 2x2 or 3-column grid"
+- "Comparison table: us vs them with checkmarks/X marks side by side"
+- "Diagonal line going up-right behind text"
+- "Generic 'modern fintech' card on dark gradient"
+
+These are 90% of prop firm ads. They are COMPETENT and FORGETTABLE. The bar is UNMISTAKABLE.
+
+# THE COMMIT TEST
+
+Before finalizing, ask: "Could this concept appear in 5+ competitor prop firm ads with minimal changes?" If YES → the brief has failed. Regenerate with a weirder, more physical, more specific interpretation. The goal isn't "good for an AI ad" — it's "couldn't have been made by anyone but us".
+
+# THE BAR — A CONCRETE EXAMPLE OF SUCCESS
+
+A previously-shipped Hola Prime ad that nailed the brief looked like this (study its DNA):
+
+> A photographed paper receipt or printed terminal slip, dark surface, soft drop shadow under it suggesting it's physically on a table. The receipt itself is near-black with cream/light gray edge. A small blue folder-tab sticky note peeks from behind the top-left edge — one accent color, used once. Inside the receipt:
+>  - Hero "$99 Challenge entry" — heavy Helvetica/Inter Bold, 3 lines stacked, MASSIVE, dominates upper third
+>  - Secondary "Unlock: $25k trading capital" — clean medium weight
+>  - Dotted divider line
+>  - Right-aligned itemized list: "No consistency rule | 5% profit target | 90% profit split" each on its own line, like receipt line items
+>  - Dotted divider
+>  - "Payouts ÷10 min" with division symbol used cleverly
+>  - Footer: "BUILT BY TRADERS, FOR TRADERS" in tiny small caps
+>  - "Hola Prime®" wordmark at the bottom, small, restrained
+> Zero decorative noise. Zero gradients. Zero glow. Brutalist Helvetica + paper texture + ONE accent color do all the work. Looks like it could be printed on real thermal paper.
+
+DNA traits to internalize from this example:
+- **Single physical object dominates the entire canvas** (the receipt). Not "a design containing receipt-like elements".
+- **Heavy sans-serif typography carries the weight.** No script fonts, no fancy effects, no chrome. Just bold + restrained.
+- **Right-aligned numbers, dotted dividers, "BUILT BY..." footer.** These specific receipt-authentic details signal commitment to the format.
+- **Restraint > ornament.** ONE accent color (the blue tab). Nothing decorative.
+- **Photographic depth.** Soft shadow under the object, slight curl at the top — it looks photographed, not designed in Figma.
+
+When generating a brief for an offer/promo angle, this is the CRAFT BAR. Match it OR exceed it with a different physical-object concept (terminal screen, Bloomberg printout, leaked Slack screenshot, candlestick chart photographed off a CRT, etc.) — but never settle for "centered text on dark gradient".
+
+# BRAND
+
+Brand: Hola Prime (#WeAreTraders). Funded challenges \$2K to \$100K. USPs: 1-step process, 5% profit target, no time limits, fast withdrawals, no activation fees, high profit splits.
+
+${customBrandContext}${customStoredAdContext}${noBrandDNARule}
+
+# USER REQUEST
+
+"${generationPrompt}"
+
+# EXECUTION RULES
+
+- Across the 3 variants generated downstream, each MUST be a fundamentally different concept - not 3 color variations of the same idea. Different headline, different angle, different emotional hook. If all 3 say similar things about \$25K with chart backgrounds, you have failed.
+- 5-7 elements on the canvas max. Beyond that becomes clutter.
+- Numbers in the user prompt must be PRESERVED EXACTLY. "$25K" stays "$25K". If user says "3-step", show "3-step" not "3 step" or "3steps".
+- Spelling: every word must render correctly. Especially: Challenge, Withdrawals, Fictitious, Simulated, Performance, Accounts. Never write "sstep" or "3% step" - these are common Gemini errors and your prompt must reinforce correct rendering.
+
+# OUTPUT (raw JSON only - no preamble, no markdown fence)
+
 {
   "creativeConcept": {
-    "title": "Concept name",
-    "rationale": "Strategy applied",
+    "title": "Concept name (3-5 words, NO banned vocab)",
+    "rationale": "One sentence: which trend hook and why it fits the user request",
     "targetScore": 9.0,
     "performanceTier": "ELITE",
-    "improvementSummary": "Key improvements"
+    "trendHookUsed": "Which trend from the list above this leverages"
   },
   "copywriting": {
-    "headline": { "primary": "Main headline" },
-    "body": { "primary": "Body copy" },
-    "cta": { "primary": "CTA text" },
-    "attentionGrabber": "Thumb-stop first line",
-    "urgencyText": "Only if requested",
-    "trustText": "Only if requested"
+    "headline": { "primary": "Sharp, specific, under 8 words. NO banned vocab. Hero number prominent." },
+    "body": { "primary": "1-2 short lines max. Concrete benefit, no startup-speak." },
+    "cta": { "primary": "Buy Challenge" },
+    "attentionGrabber": "First line that stops the thumb in under 1 second",
+    "urgencyText": "Only if a specific real urgency exists (e.g. promo expiry)",
+    "trustText": "Only if real (Trustpilot 4.5, Deloitte review, etc.)"
   },
   "imageGenerationPrompt": {
-    "detailed": "600+ word image prompt. RULES: (1) Include ONLY elements the user asked for. (2) Every bullet/text appears EXACTLY ONCE — never duplicate. (3) Spell every word correctly — especially: Withdrawals, Challenge, Limits, Process, Fictitious, Simulated, Performance, Accounts. (4) Use prop-firm-authentic imagery: trading terminals with candlestick charts, not generic stock photos. (5) Describe exact layout: what goes where, relative sizes, spacing. (6) Disclaimer must be copied verbatim from above."
+    "detailed": "600+ word image prompt. Structure: (1) Hero number with exact size (30-40% canvas height) and treatment (3D chrome OR neon glow), positioned center. (2) Headline placement and exact text. (3) Top-left empty zone for logo overlay (must remain visually clear). (4) Top-right #WeAreTraders pill badge. (5) Body copy placement and exact text. (6) CTA = blue pill button with literal text 'Buy Challenge' - never any other text. (7) Background: deep black with treatment specific to the trend hook chosen. (8) Disclaimer at absolute bottom. SPELL EVERY WORD CORRECTLY especially: Challenge, Withdrawals, Fictitious, Simulated, Performance, Accounts. Numbers preserved exactly. No element duplicated."
   }
 }`
       });
@@ -960,6 +1343,17 @@ ${cNumberLock}
 DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON THEIR PERFORMANCE THROUGH SUCH DEMO HOLA PRIME ACCOUNTS."
 === END MANIFEST ===\n\n`;
 
+      // Build per-string fidelity block for the custom path
+      const customTextFidelity = buildTextFidelityBlock([
+        { label: 'HEADLINE', value: cmHeadline },
+        { label: 'HOOK TEXT', value: cmHook },
+        { label: 'BODY COPY', value: cmBody },
+        { label: 'URGENCY ELEMENT', value: cmUrgency },
+        { label: 'DISCOUNT BADGE', value: cmDiscount },
+        { label: 'CTA BUTTON', value: cmCta },
+      ]);
+
+
       // Build User Requirements block for Custom path
       const customUserReqsDirective = [
         userPrompt && `USER REQUIREMENT (HIGHEST PRIORITY): ${userPrompt}`,
@@ -988,18 +1382,37 @@ DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULAT
           try {
             const conceptPrompt = customDirectorConcepts[idx]?.imagePrompt;
             const useDirectorPrompt = conceptPrompt && conceptPrompt.length > 200;
-            const variantPrompt = useDirectorPrompt
-              ? customBrandPrefix + customTextManifest + customUserReqsBlock + conceptPrompt
-              : customBrandPrefix + customTextManifest + customUserReqsBlock + variant.prefix + baseImagePrompt;
+            // When text-overlay mode is on, swap text manifest + fidelity blocks
+            // for the visual-only directive — image model generates background plate,
+            // text gets composited in code with real fonts post-generation.
+            const variantPrompt = TEXT_OVERLAY_ENABLED
+              ? (useDirectorPrompt
+                  ? customBrandPrefix + VISUAL_ONLY_DIRECTIVE + customUserReqsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
+                  : customBrandPrefix + VISUAL_ONLY_DIRECTIVE + customUserReqsBlock + variant.prefix + baseImagePrompt + PREMIUM_CRAFT_DIRECTIVE)
+              : (useDirectorPrompt
+                  ? customBrandPrefix + customTextManifest + customTextFidelity + customUserReqsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
+                  : customBrandPrefix + customTextManifest + customTextFidelity + customUserReqsBlock + variant.prefix + baseImagePrompt + PREMIUM_CRAFT_DIRECTIVE);
             const result = await generateImage({
               detailed: variantPrompt,
               referenceUrl: reference || undefined,
               negative: baseNeg + (customWantsBrandDNA ? '' : ', translucent circles, iridescent spheres, glowing orbs'),
               technicalSpecs: brief?.imageGenerationPrompt?.technicalSpecs,
-            }, { tier: 'pro' });
+            }, { tier: 'pro', skipLogo: TEXT_OVERLAY_ENABLED });
 
 
-            const finalImageUrl = result?.url || result?.dataUri || null;
+            let finalImageUrl = result?.url || result?.dataUri || null;
+
+            // ── TEXT OVERLAY: composite all text with real fonts (eliminates typos) ──
+            if (TEXT_OVERLAY_ENABLED && finalImageUrl) {
+              try {
+                const overlayConfig = extractOverlayConfig(brief, variant.id);
+                finalImageUrl = await applyTextOverlay(finalImageUrl, overlayConfig);
+                console.log(`[Studio] ✓ Custom variant "${variant.id}" — text overlay applied (zero-typo composition)`);
+              } catch (overlayErr: any) {
+                console.warn(`[Studio] Text overlay failed for custom variant "${variant.id}" (non-blocking):`, overlayErr.message);
+              }
+            }
+
             console.log(`[Studio] ✓ Custom variant "${variant.id}" generated (${useDirectorPrompt ? 'Director' : 'paradigm'})`);
 
             return {
@@ -1007,7 +1420,7 @@ DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULAT
               label: customDirectorConcepts[idx]?.paradigm || variant.label,
               description: customDirectorConcepts[idx]?.visualApproach || variant.description,
               paradigm: customDirectorConcepts[idx]?.paradigm || variant.label,
-              imageUrl: result?.url || result?.dataUri || null,
+              imageUrl: finalImageUrl,
             };
           } catch (e: any) {
             console.warn(`[Studio] ✗ Custom variant "${variant.id}" failed:`, e.message);

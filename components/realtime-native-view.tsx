@@ -201,24 +201,24 @@ export function RealtimeNativeView({
     const ctr = topStats.impr > 0 ? (topStats.clicks / topStats.impr) * 100 : 0;
 
     return (
-        <div className="w-full h-full flex flex-col bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 dark:from-black dark:via-blue-950/20 dark:to-indigo-950/10 text-zinc-900 dark:text-zinc-100 font-sans relative">
+        <div className="w-full h-full flex flex-col bg-gradient-to-br from-white via-sky-50/30 to-sky-50/20 dark:from-black dark:via-sky-950/20 dark:to-sky-950/10 text-foreground font-sans relative">
 
             {/* Breadcrumb Navigation only — controls moved to google-ads-view header */}
             {(view !== 'campaigns' || selectedCampaign) && (
-                <div className="flex-none px-4 md:px-0 py-2.5 border-b border-zinc-200 dark:border-white/10 bg-white/50 backdrop-blur-md dark:bg-black/50 flex items-center gap-2 z-10">
+                <div className="flex-none px-4 md:px-0 py-2.5 border-b border-border bg-white/50 backdrop-blur-md dark:bg-black/50 flex items-center gap-2 z-10">
                     {view !== 'campaigns' && (
-                        <Button variant="ghost" size="icon" onClick={() => view === 'assets' ? setView('ads') : loadCampaigns()} className="h-7 w-7 text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-full transition-all flex-shrink-0">
+                        <Button variant="ghost" size="icon" onClick={() => view === 'assets' ? setView('ads') : loadCampaigns()} className="h-7 w-7 text-muted-foreground hover:text-zinc-900 dark:hover:text-white rounded-full transition-all flex-shrink-0">
                             <ArrowLeft className="h-3.5 w-3.5" />
                         </Button>
                     )}
-                    <div className="flex items-center gap-2 text-sm font-semibold text-zinc-600 dark:text-zinc-400 min-w-0">
-                        <span className={cn("cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors whitespace-nowrap", view === 'campaigns' && "text-zinc-900 dark:text-white")} onClick={loadCampaigns}>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground dark:text-muted-foreground min-w-0">
+                        <span className={cn("cursor-pointer hover:text-sky-600 dark:hover:text-sky-400 transition-colors whitespace-nowrap", view === 'campaigns' && "text-foreground")} onClick={loadCampaigns}>
                             Campaigns
                         </span>
                         {selectedCampaign && (
                             <>
                                 <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
-                                <span className={cn("cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate max-w-[200px]", view === 'ads' && "text-zinc-900 dark:text-white")} onClick={() => setView('ads')}>
+                                <span className={cn("cursor-pointer hover:text-sky-600 dark:hover:text-sky-400 transition-colors truncate max-w-[200px]", view === 'ads' && "text-foreground")} onClick={() => setView('ads')}>
                                     {selectedCampaign.name?.substring(0, 30)}
                                 </span>
                             </>
@@ -226,7 +226,7 @@ export function RealtimeNativeView({
                         {selectedAd && view === 'assets' && (
                             <>
                                 <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
-                                <span className="text-zinc-900 dark:text-white truncate max-w-[200px]">
+                                <span className="text-foreground truncate max-w-[200px]">
                                     {(selectedAd.adName || selectedAd.adGroupName || '').substring(0, 30)}
                                 </span>
                             </>
@@ -237,7 +237,15 @@ export function RealtimeNativeView({
 
             {/* Top Level Stats */}
             {(view === 'campaigns' || view === 'ads') && !loading && !error && (
-                <div className="pt-4 pb-2 px-4 md:px-5 lg:px-6">
+                <div className="pt-4 pb-3 px-4 md:px-5 lg:px-6">
+                    <div className="mb-3">
+                        <h1 className="text-xl md:text-2xl font-black tracking-tight text-foreground leading-none">
+                            {view === 'campaigns' ? 'Native Campaigns' : 'Campaign Creatives'}
+                        </h1>
+                        <p className="text-xs font-medium text-muted-foreground mt-1">
+                            Realtime performance across your native ad inventory
+                        </p>
+                    </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
                         <StatBox index={0} label={view === 'campaigns' ? "Campaigns" : "Ads"} val={activeList.length.toString()} icon={<Layers />} />
                         <StatBox index={1} label="Total Spend" val={formatCurrency(topStats.spend)} icon={<DollarSign />} />
@@ -253,7 +261,7 @@ export function RealtimeNativeView({
                 {/* Ambient glow orbs — using inline style as Tailwind has no radial-gradient utility */}
                 <div
                     className="pointer-events-none absolute top-0 right-0 w-[500px] h-[400px] blur-3xl opacity-60 dark:opacity-100"
-                    style={{ background: 'radial-gradient(ellipse at top right, rgba(59,130,246,0.12) 0%, rgba(99,102,241,0.06) 50%, transparent 80%)' }}
+                    style={{ background: 'radial-gradient(ellipse at top right, rgba(0,122,255,0.12) 0%, rgba(0,122,255,0.06) 50%, transparent 80%)' }}
                 />
                 <div
                     className="pointer-events-none absolute bottom-0 left-0 w-[400px] h-[300px] blur-3xl opacity-60 dark:opacity-100"
@@ -266,8 +274,8 @@ export function RealtimeNativeView({
                         <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center mb-4">
                             <Activity className="h-6 w-6 text-red-600 dark:text-red-400" />
                         </div>
-                        <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-2">Connection Error</h3>
-                        <p className="text-sm text-zinc-500 max-w-sm mb-6">{error}</p>
+                        <h3 className="text-lg font-semibold text-foreground mb-2">Connection Error</h3>
+                        <p className="text-sm text-muted-foreground max-w-sm mb-6">{error}</p>
                         <Button onClick={() => view === 'campaigns' ? loadCampaigns() : loadAds(selectedCampaign)}>Retry Connection</Button>
                     </div>
                 )}
@@ -278,14 +286,14 @@ export function RealtimeNativeView({
                         {/* Spinner rings */}
                         <div className="relative w-16 h-16 sm:w-20 sm:h-20">
                             {/* Outer ring */}
-                            <div className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-blue-500 border-r-blue-400 animate-spin" style={{ animationDuration: '900ms' }} />
+                            <div className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-sky-500 border-r-sky-400 animate-spin" style={{ animationDuration: '900ms' }} />
                             {/* Middle glow ring */}
-                            <div className="absolute inset-0 rounded-full border-[3px] border-blue-500/10 dark:border-blue-500/20" />
+                            <div className="absolute inset-0 rounded-full border-[3px] border-sky-500/10 dark:border-sky-500/20" />
                             {/* Inner ring — opposite direction */}
-                            <div className="absolute inset-[6px] rounded-full border-[3px] border-transparent border-t-violet-500 border-l-indigo-400 animate-spin" style={{ animationDuration: '700ms', animationDirection: 'reverse' }} />
+                            <div className="absolute inset-[6px] rounded-full border-[3px] border-transparent border-t-violet-500 border-l-sky-400 animate-spin" style={{ animationDuration: '700ms', animationDirection: 'reverse' }} />
                             {/* Center pulsing dot */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 animate-pulse shadow-lg shadow-blue-500/40" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-sky-500 to-violet-500 animate-pulse shadow-lg shadow-sky-500/40" />
                             </div>
                         </div>
 
@@ -294,14 +302,14 @@ export function RealtimeNativeView({
                             {[0, 150, 300].map(delay => (
                                 <div
                                     key={delay}
-                                    className="w-1.5 h-1.5 rounded-full bg-blue-500/60 animate-bounce"
+                                    className="w-1.5 h-1.5 rounded-full bg-sky-500/60 animate-bounce"
                                     style={{ animationDelay: `${delay}ms`, animationDuration: '900ms' }}
                                 />
                             ))}
                         </div>
 
                         {/* Label */}
-                        <p className="mt-4 text-[11px] font-bold tracking-[0.2em] uppercase text-zinc-400 dark:text-zinc-500">
+                        <p className="mt-4 text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground dark:text-muted-foreground">
                             Loading data…
                         </p>
                     </div>
@@ -313,15 +321,15 @@ export function RealtimeNativeView({
                         {activeList.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-24 text-center">
                                 <div className="relative mb-6">
-                                    <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-2xl scale-150 animate-pulse" />
-                                    <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/20 flex items-center justify-center shadow-xl">
-                                        <Search className="h-9 w-9 text-blue-400 dark:text-blue-500" />
+                                    <div className="absolute inset-0 rounded-full bg-sky-500/20 blur-2xl scale-150 animate-pulse" />
+                                    <div className="relative w-20 h-20 rounded-xl bg-gradient-to-br from-sky-500/10 to-sky-500/10 border border-sky-500/20 flex items-center justify-center shadow-sm">
+                                        <Search className="h-9 w-9 text-sky-400 dark:text-sky-500" />
                                     </div>
                                 </div>
                                 <h3 className="text-xl font-black tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-500 dark:from-white dark:to-zinc-400 bg-clip-text text-transparent mb-2">
                                     No results found
                                 </h3>
-                                <p className="text-sm text-zinc-500 dark:text-zinc-500 max-w-xs leading-relaxed mb-6">
+                                <p className="text-sm text-muted-foreground dark:text-muted-foreground max-w-xs leading-relaxed mb-6">
                                     No {view === 'campaigns' ? 'campaigns' : 'ads'} match your search. Try a different keyword or clear the search.
                                 </p>
                                 {searchQuery && (
@@ -329,7 +337,7 @@ export function RealtimeNativeView({
                                         variant="outline"
                                         size="sm"
                                         onClick={clearSearch}
-                                        className="h-9 px-4 text-xs font-bold rounded-xl border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-all gap-2"
+                                        className="h-9 px-4 text-xs font-bold rounded-xl border-sky-500/30 text-sky-600 dark:text-sky-400 hover:bg-sky-500/10 transition-all gap-2"
                                     >
                                         <Search className="h-3.5 w-3.5" />
                                         Clear Search
@@ -364,11 +372,11 @@ export function RealtimeNativeView({
                                     ))}
                                 </div>
                                 {!showAllItems && activeList.length > cardLimit && (
-                                    <div className="flex justify-center mt-12 pb-20">
+                                    <div className="flex justify-center mt-8 pb-12">
                                         <Button
                                             onClick={() => setShowAllItems(true)}
                                             variant="ghost"
-                                            className="group text-[11px] font-black uppercase tracking-[0.25em] text-[#1a73e8] hover:bg-[#1a73e8]/10 rounded-2xl px-16 h-16 border border-[#1a73e8]/20 shadow-xl transition-all hover:scale-105"
+                                            className="group text-[11px] font-black uppercase tracking-[0.25em] text-[#1a73e8] hover:bg-[#1a73e8]/10 rounded-lg px-10 h-11 border border-[#1a73e8]/20 shadow-sm transition-all hover:scale-105 cursor-pointer"
                                         >
                                             View All {view === 'campaigns' ? 'Campaigns' : 'Ads'}
                                             <ChevronRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -376,11 +384,11 @@ export function RealtimeNativeView({
                                     </div>
                                 )}
                                 {showAllItems && (
-                                    <div className="flex justify-center mt-12 pb-20">
+                                    <div className="flex justify-center mt-8 pb-12">
                                         <Button
                                             onClick={() => setShowAllItems(false)}
                                             variant="ghost"
-                                            className="group text-[11px] font-black uppercase tracking-[0.25em] text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-2xl px-16 h-16 border border-zinc-200 dark:border-white/10 shadow-xl transition-all"
+                                            className="group text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground hover:bg-zinc-100 dark:hover:bg-white/5 rounded-lg px-10 h-11 border border-border shadow-sm transition-all cursor-pointer"
                                         >
                                             Show Less
                                             <ChevronRight className="ml-3 h-5 w-5 -rotate-90" />
@@ -427,7 +435,7 @@ const formatAdType = (type: string) => {
 
 function StatBox({ label, val, icon, index = 0 }: { label: string, val: string, icon: React.ReactNode, index?: number }) {
     const gradients = [
-        "from-blue-500/10 to-indigo-500/10",
+        "from-sky-500/10 to-sky-500/10",
         "from-emerald-500/10 to-teal-500/10",
         "from-purple-500/10 to-pink-500/10",
         "from-amber-500/10 to-orange-500/10",
@@ -437,35 +445,35 @@ function StatBox({ label, val, icon, index = 0 }: { label: string, val: string, 
     const bgGradient = gradients[index % gradients.length];
 
     return (
-        <div className="relative group overflow-hidden rounded-2xl p-3 bg-white dark:bg-[#0b0c10] border border-zinc-200 dark:border-white/5 hover:border-zinc-300 dark:hover:border-white/10 transition-all duration-300">
+        <div className="relative group overflow-hidden rounded-lg p-4 bg-white dark:bg-[#0b0c10] border border-border hover:border-zinc-300 dark:hover:border-border transition-all duration-300">
             {/* Subtle Hover Glow */}
             <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500", bgGradient)} />
 
-            <div className="flex flex-col items-center justify-center text-center space-y-1.5">
+            <div className="flex flex-col items-center justify-center text-center space-y-2">
                 <div className={cn(
-                    "h-7 w-7 rounded-lg shadow-sm flex items-center justify-center border transition-all duration-500 group-hover:scale-110",
-                    index % 5 === 0 ? "bg-blue-500/10 border-blue-500/20 text-blue-500" :
+                    "h-10 w-10 rounded-lg shadow-sm flex items-center justify-center border transition-all duration-500 group-hover:scale-110",
+                    index % 5 === 0 ? "bg-sky-500/10 border-sky-500/20 text-sky-500" :
                         index % 5 === 1 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" :
                             index % 5 === 2 ? "bg-purple-500/10 border-purple-500/20 text-purple-500" :
                                 index % 5 === 3 ? "bg-amber-500/10 border-amber-500/20 text-amber-500" :
                                     "bg-rose-500/10 border-rose-500/20 text-rose-500"
                 )}>
-                    {React.cloneElement(icon as React.ReactElement<any>, { className: "h-3 w-3" })}
+                    {React.cloneElement(icon as React.ReactElement<any>, { className: "h-5 w-5" })}
                 </div>
                 <div>
-                    <span className="text-lg font-black tracking-tight text-zinc-900 dark:text-white block leading-none mb-0.5">{val}</span>
+                    <span className="text-2xl font-black tracking-tight text-foreground block leading-none mb-1">{val}</span>
                     <div className="flex items-center justify-center gap-1.5">
                         <div className={cn(
-                            "w-1 h-1 rounded-full",
-                            index % 5 === 0 ? "bg-blue-500" :
+                            "w-1.5 h-1.5 rounded-full",
+                            index % 5 === 0 ? "bg-sky-500" :
                                 index % 5 === 1 ? "bg-emerald-500" :
                                     index % 5 === 2 ? "bg-purple-500" :
                                         index % 5 === 3 ? "bg-amber-500" :
                                             "bg-rose-500"
                         )} />
-                        <span className="text-[9px] font-black uppercase tracking-[0.1em] text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">
+                        <h4 className="text-[11px] font-black uppercase tracking-[0.1em] text-muted-foreground group-hover:text-foreground/70 dark:group-hover:text-zinc-300 transition-colors">
                             {label}
-                        </span>
+                        </h4>
                     </div>
                 </div>
             </div>
@@ -492,7 +500,7 @@ function DataCard({ item, type, platform = 'google', onClick, onAnalyze }: { ite
     // Dynamic gradient for missing images
     const getPlaceholderGradient = (seed: string) => {
         const gradients = [
-            "from-blue-600/20 via-indigo-600/10 to-violet-600/5",
+            "from-sky-600/20 via-sky-600/10 to-violet-600/5",
             "from-emerald-600/20 via-teal-600/10 to-cyan-600/5",
             "from-violet-600/20 via-purple-600/10 to-fuchsia-600/5",
             "from-orange-600/20 via-amber-600/10 to-yellow-600/5"
@@ -504,15 +512,15 @@ function DataCard({ item, type, platform = 'google', onClick, onAnalyze }: { ite
     return (
         <div
             className={cn(
-                "group relative rounded-[1.5rem] transition-all duration-500 cursor-pointer overflow-hidden flex flex-col h-full w-full",
-                "bg-white dark:bg-[#0c0c0e] border border-zinc-200 dark:border-white/10",
+                "group relative rounded-md transition-all duration-500 cursor-pointer overflow-hidden flex flex-col h-full w-full",
+                "bg-white dark:bg-[#0c0c0e] border border-border",
                 "hover:border-[#1a73e8]/40 hover:shadow-[0_12px_30px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_12px_30px_rgba(0,0,0,0.3)]",
                 "hover:-translate-y-1.5 transition-all duration-500"
             )}
             onClick={onClick}
         >
             {/* Media Section */}
-            <div className="relative aspect-video w-full overflow-hidden bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-white/5">
+            <div className="relative aspect-video w-full overflow-hidden bg-card/50 border-b border-zinc-100 dark:border-border">
                 {(item.thumbnailUrl && !isCampaign) || (isCampaign && item.thumbnailUrl) ? (
                     <img
                         src={item.thumbnailUrl}
@@ -542,7 +550,7 @@ function DataCard({ item, type, platform = 'google', onClick, onAnalyze }: { ite
                         "flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md border",
                         isActive
                             ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                            : "bg-zinc-500/10 border-zinc-500/20 text-zinc-500 shadow-sm"
+                            : "bg-zinc-500/10 border-zinc-500/20 text-muted-foreground shadow-sm"
                     )}>
                         <div className={cn("w-1.5 h-1.5 rounded-full", isActive ? "bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "bg-zinc-500")} />
                         <span className="text-[8px] font-black uppercase tracking-widest leading-none mt-[1px]">
@@ -553,7 +561,7 @@ function DataCard({ item, type, platform = 'google', onClick, onAnalyze }: { ite
 
                 {/* Platform Indicator */}
                 <div className="absolute top-3 right-3 z-10">
-                    <div className="w-6 h-6 rounded-lg bg-white/20 dark:bg-black/30 backdrop-blur-xl border border-white/20 dark:border-white/10 flex items-center justify-center shadow-lg">
+                    <div className="w-6 h-6 rounded-lg bg-white/20 dark:bg-black/30 backdrop-blur-xl border border-white/20 dark:border-border flex items-center justify-center shadow-lg">
                         {isAdroll ? (
                             <span className="text-white text-[9px] font-black italic">A</span>
                         ) : (
@@ -567,43 +575,43 @@ function DataCard({ item, type, platform = 'google', onClick, onAnalyze }: { ite
             <div className="p-4 flex flex-col gap-4 flex-1">
                 <div className="space-y-1 focus-within:ring-0">
                     <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-[#1a73e8] border-b border-[#1a73e8]/30 pb-0.5">
+                        <span className="text-[10px] font-medium uppercase tracking-wider text-[#1a73e8] border-b border-[#1a73e8]/30 pb-0.5">
                             {formatAdType(subType)}
                         </span>
                         <div className="flex items-center gap-1">
-                            <span className="text-[11px] font-black text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800/80 px-2.5 py-0.5 rounded-full border border-zinc-200 dark:border-white/10 shadow-sm">
+                            <span className="text-sm font-black text-foreground bg-muted/80 px-2.5 py-0.5 rounded-full border border-border shadow-sm">
                                 ${formatNumber(spend)}
                             </span>
                         </div>
                     </div>
-                    <h3 className="text-[15px] font-black text-zinc-900 dark:text-zinc-100 leading-tight line-clamp-1 group-hover:text-[#1a73e8] transition-colors tracking-tight">
+                    <h3 className="text-base font-black text-foreground leading-tight line-clamp-1 group-hover:text-[#1a73e8] transition-colors tracking-tight">
                         {title}
                     </h3>
                 </div>
 
                 {/* Performance Grid */}
                 <div className="grid grid-cols-2 gap-2.5">
-                    <div className="relative bg-zinc-50 dark:bg-zinc-900/40 rounded-xl p-3 border border-zinc-100 dark:border-white/5 flex flex-col justify-center gap-0.5 overflow-hidden group/m transition-all hover:bg-[#1a73e8]/5">
+                    <div className="relative bg-card/40 rounded-lg p-3 border border-zinc-100 dark:border-border flex flex-col justify-center gap-1 overflow-hidden group/m transition-all hover:bg-[#1a73e8]/5">
                         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#1a73e8] scale-y-0 group-hover/m:scale-y-100 transition-transform origin-center" />
-                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Efficiency</p>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Efficiency</h4>
                         <div className="flex items-baseline gap-1">
-                            <span className="text-lg font-black text-zinc-900 dark:text-white leading-none tracking-tight">{ctr}</span>
-                            <span className="text-[10px] font-bold text-[#1a73e8]">%</span>
+                            <span className="text-xl font-black text-foreground leading-none tracking-tight">{ctr}</span>
+                            <span className="text-xs font-bold text-[#1a73e8]">%</span>
                         </div>
                     </div>
-                    <div className="relative bg-zinc-50 dark:bg-zinc-900/40 rounded-xl p-3 border border-zinc-100 dark:border-white/5 flex flex-col justify-center gap-0.5 overflow-hidden group/m transition-all hover:bg-emerald-500/5">
+                    <div className="relative bg-card/40 rounded-lg p-3 border border-zinc-100 dark:border-border flex flex-col justify-center gap-1 overflow-hidden group/m transition-all hover:bg-emerald-500/5">
                         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 scale-y-0 group-hover/m:scale-y-100 transition-transform origin-center" />
-                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Scale</p>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Scale</h4>
                         <div className="flex items-baseline gap-1">
-                            <span className="text-lg font-black text-zinc-900 dark:text-white leading-none tracking-tight">{isCampaign ? conv : impr}</span>
-                            <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest leading-none">{isCampaign ? "Conv" : "Impr"}</span>
+                            <span className="text-xl font-black text-foreground leading-none tracking-tight">{isCampaign ? conv : impr}</span>
+                            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-none">{isCampaign ? "Conv" : "Impr"}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer Link */}
-                <div className="mt-auto pt-4 flex items-center justify-between border-t border-zinc-100 dark:border-white/5">
-                    <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest opacity-60">
+                <div className="mt-auto pt-4 flex items-center justify-between border-t border-zinc-100 dark:border-border">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                         ID: {(item.adId?.substring(0, 8) || item.id?.substring(0, 8))}
                     </span>
 
@@ -613,9 +621,9 @@ function DataCard({ item, type, platform = 'google', onClick, onAnalyze }: { ite
                             if (onAnalyze) onAnalyze();
                             else onClick();
                         }}
-                        className="h-8 px-4 bg-zinc-900 dark:bg-white hover:bg-[#1a73e8] dark:hover:bg-[#1a73e8] text-white dark:text-zinc-900 hover:text-white dark:hover:text-white font-black text-[10px] uppercase tracking-[0.15em] rounded-lg transition-all duration-300 flex items-center justify-center gap-1.5 shadow-md hover:shadow-[#1a73e8]/20 group/btn relative overflow-hidden"
+                        className="h-8 px-4 bg-card dark:bg-white hover:bg-[#1a73e8] dark:hover:bg-[#1a73e8] text-white dark:text-zinc-900 hover:text-white dark:hover:text-white font-black text-[10px] uppercase tracking-[0.15em] rounded-lg transition-all duration-300 flex items-center justify-center gap-1.5 shadow-md hover:shadow-[#1a73e8]/20 group/btn relative overflow-hidden"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/0 via-white/10 to-blue-600/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-sky-600/0 via-white/10 to-sky-600/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
                         {isCampaign ? <Layers className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
                         {isCampaign ? "View Ads" : "Analyze"}
                     </Button>
@@ -629,10 +637,10 @@ function DataCard({ item, type, platform = 'google', onClick, onAnalyze }: { ite
 function MetricBox({ val, label, colorClass }: { val: string, label: string, colorClass?: string }) {
     return (
         <div className="flex flex-col gap-0.5 min-w-0">
-            <span className={cn("font-mono text-[11px] font-black tracking-tight leading-none truncate", colorClass || "text-zinc-900 dark:text-white")} title={val}>
+            <span className={cn("font-mono text-sm font-black tracking-tight leading-none truncate", colorClass || "text-foreground")} title={val}>
                 {val}
             </span>
-            <span className="text-[8px] uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500 font-bold leading-none mt-0.5 truncate">{label}</span>
+            <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-bold leading-none mt-1 truncate">{label}</span>
         </div>
     );
 }
@@ -645,7 +653,7 @@ function AssetDetailView({ ad, assetsData, searchQuery, onAnalyze }: { ad: any, 
     const [selectedVideo, setSelectedVideo] = useState<any>(null);
     const [textFilter, setTextFilter] = useState<'HEADLINE' | 'DESCRIPTION' | 'LONG_HEADLINE' | 'ALL'>('ALL');
 
-    if (!assetsData) return <div className="p-8 text-center text-zinc-500">No assets data available.</div>;
+    if (!assetsData) return <div className="p-8 text-center text-muted-foreground">No assets data available.</div>;
 
     const { assets = [], summary = {} } = assetsData;
 
@@ -667,7 +675,7 @@ function AssetDetailView({ ad, assetsData, searchQuery, onAnalyze }: { ad: any, 
     const videos = filteredAssets.filter((a: any) => !!a.videoId);
 
     const tabs = [
-        { id: 'intelligence', label: 'Intelligence', icon: Sparkles, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+        { id: 'intelligence', label: 'Intelligence', icon: Sparkles, color: 'text-sky-500', bgColor: 'bg-sky-500/10' },
         { id: 'images', label: `Images (${images.length})`, icon: ImageIcon, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
         { id: 'videos', label: `Videos (${videos.length})`, icon: Video, color: 'text-rose-500', bgColor: 'bg-rose-500/10' },
         { id: 'texts', label: `Texts (${headlines.length + descriptions.length + longHeadlines.length})`, icon: Type, color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
@@ -689,15 +697,15 @@ function AssetDetailView({ ad, assetsData, searchQuery, onAnalyze }: { ad: any, 
                                 setTextFilter('ALL');
                             }}
                             className={cn(
-                                "flex items-center gap-2.5 px-3 py-3 rounded-[1rem] transition-all duration-300 border font-black uppercase tracking-tight text-[10px] shrink-0 snap-start",
+                                "flex items-center gap-2.5 px-3 py-3 rounded-lg transition-all duration-300 border font-black uppercase tracking-tight text-[11px] shrink-0 snap-start cursor-pointer",
                                 activeTab === tab.id
-                                    ? "bg-white dark:bg-white/5 shadow-md border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white"
-                                    : "bg-transparent border-transparent text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                                    ? "bg-white dark:bg-white/5 shadow-md border-border text-foreground"
+                                    : "bg-transparent border-transparent text-muted-foreground hover:text-foreground/80 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/5"
                             )}
                         >
                             <div className={cn(
                                 "p-1.5 rounded-lg transition-all",
-                                activeTab === tab.id ? `${tab.bgColor} ${tab.color}` : "bg-zinc-100 dark:bg-white/5 text-zinc-400"
+                                activeTab === tab.id ? `${tab.bgColor} ${tab.color}` : "bg-zinc-100 dark:bg-white/5 text-muted-foreground"
                             )}>
                                 <tab.icon className="h-3.5 w-3.5" />
                             </div>
@@ -721,7 +729,7 @@ function AssetDetailView({ ad, assetsData, searchQuery, onAnalyze }: { ad: any, 
                                     <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
                                         <ImageIcon className="h-5 w-5" />
                                     </div>
-                                    <h3 className="text-sm font-black uppercase tracking-tightest">Integrated Images</h3>
+                                    <h3 className="text-sm font-black uppercase tracking-tight">Integrated Images</h3>
                                 </div>
                                 <Button
                                     onClick={() => {
@@ -736,7 +744,7 @@ function AssetDetailView({ ad, assetsData, searchQuery, onAnalyze }: { ad: any, 
                                             body: JSON.stringify({ adData: ad, typeFilter: 'IMAGE' })
                                         });
                                     }}
-                                    className="rounded-2xl bg-[#1a73e8] hover:bg-[#1557b0] text-white font-black uppercase tracking-widest text-[10px] h-11 px-8 shadow-lg shadow-blue-500/20"
+                                    className="rounded-md bg-[#1a73e8] hover:bg-[#1557b0] text-white text-xs font-medium uppercase tracking-wider h-11 px-8 shadow-lg shadow-sky-500/20"
                                 >
                                     Analyzer
                                 </Button>
@@ -761,7 +769,7 @@ function AssetDetailView({ ad, assetsData, searchQuery, onAnalyze }: { ad: any, 
                                 <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500">
                                     <Video className="h-5 w-5" />
                                 </div>
-                                <h3 className="text-sm font-black uppercase tracking-tightest">Integrated Videos</h3>
+                                <h3 className="text-sm font-black uppercase tracking-tight">Integrated Videos</h3>
                             </div>
                             {selectedVideo ? (
                                 <VideoHalfScreenPlayer
@@ -788,19 +796,19 @@ function AssetDetailView({ ad, assetsData, searchQuery, onAnalyze }: { ad: any, 
                                     <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
                                         <Type className="h-5 w-5" />
                                     </div>
-                                    <h3 className="text-sm font-black uppercase tracking-tightest">Copy Dynamics</h3>
+                                    <h3 className="text-sm font-black uppercase tracking-tight">Copy Dynamics</h3>
                                 </div>
 
-                                <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-white/5 rounded-2xl">
+                                <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-white/5 rounded-lg">
                                     {(['ALL', 'HEADLINE', 'DESCRIPTION', 'LONG_HEADLINE'] as const).map((type) => (
                                         <button
                                             key={type}
                                             onClick={() => setTextFilter(type)}
                                             className={cn(
-                                                "px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                                                "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer",
                                                 textFilter === type
-                                                    ? "bg-white dark:bg-zinc-800 text-blue-500 shadow-sm"
-                                                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                                                    ? "bg-white dark:bg-zinc-800 text-sky-500 shadow-sm"
+                                                    : "text-muted-foreground hover:text-foreground/80 dark:hover:text-zinc-300"
                                             )}
                                         >
                                             {type.replace(/_/g, ' ')}
@@ -829,13 +837,13 @@ function SummarySection({ ad, headlines, descriptions, images, videos }: any) {
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Ad Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-zinc-200 dark:border-white/10">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-border">
                 <div>
-                    <h2 className="text-xl md:text-2xl font-black text-zinc-900 dark:text-white tracking-tightest leading-none mb-3">
+                    <h2 className="text-xl md:text-2xl font-black text-foreground tracking-tight leading-none mb-3">
                         {ad.adName || ad.adGroupName || "Unnamed Ad"}
                     </h2>
-                    <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                        <span className="flex items-center gap-1.5"><Layers className="h-3.5 w-3.5 text-blue-500" /> {headlines.length + descriptions.length + images.length + videos.length} Total Assets</span>
+                    <div className="flex items-center gap-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        <span className="flex items-center gap-1.5"><Layers className="h-3.5 w-3.5 text-sky-500" /> {headlines.length + descriptions.length + images.length + videos.length} Total Assets</span>
                         <span className="flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5 text-emerald-500" /> {formatCurrency(ad.spend || 0)} Spend</span>
                         <span className="flex items-center gap-1.5"><MousePointerClick className="h-3.5 w-3.5 text-amber-500" /> {ad.ctr}% CTR</span>
                     </div>
@@ -843,16 +851,16 @@ function SummarySection({ ad, headlines, descriptions, images, videos }: any) {
             </div>
 
             {/* AI Analysis Summary */}
-            <Card className="p-6 xl:p-10 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-white/5 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+            <Card className="p-6 xl:p-8 bg-card border-border rounded-xl shadow-sm relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] -mr-32 -mt-32" />
                 <div className="relative z-10">
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-6 mb-10">
-                        <div className="h-16 w-16 rounded-[2rem] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-500/20 shrink-0">
-                            <Sparkles className="h-8 w-8 text-white animate-pulse" />
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-5 mb-6">
+                        <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 flex items-center justify-center shadow-sm shadow-sky-500/20 shrink-0">
+                            <Sparkles className="h-7 w-7 text-white animate-pulse" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-black text-2xl text-zinc-900 dark:text-white leading-tight tracking-tightest">Hola Prime Intelligence</h3>
-                            <p className="text-[10px] text-[#1a73e8] dark:text-blue-400 mt-1 uppercase tracking-[0.2em] font-black">AI-Powered Creative Diagnostics</p>
+                            <h3 className="font-black text-2xl text-foreground leading-tight tracking-tight">Hola Prime Intelligence</h3>
+                            <p className="text-[11px] text-[#1a73e8] dark:text-sky-400 mt-1 uppercase tracking-[0.2em] font-black">AI-Powered Creative Diagnostics</p>
                         </div>
                         <Button
                             onClick={() => {
@@ -871,22 +879,22 @@ function SummarySection({ ad, headlines, descriptions, images, videos }: any) {
                                         }
                                     });
                             }}
-                            className="rounded-2xl bg-[#1a73e8] hover:bg-[#1557b0] text-white font-black uppercase tracking-widest text-[10px] h-12 px-6 shadow-lg shadow-blue-500/20 shrink-0"
+                            className="rounded-md bg-[#1a73e8] hover:bg-[#1557b0] text-white text-xs font-medium uppercase tracking-wider h-12 px-6 shadow-lg shadow-sky-500/20 shrink-0"
                         >
                             Sync intelligence
                         </Button>
                     </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
-                        <div className="p-4 lg:p-6 rounded-3xl bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 transition-all hover:scale-105">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+                        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border transition-all hover:scale-105">
                             <MetricBox val={headlines.length.toString()} label="Headlines" />
                         </div>
-                        <div className="p-4 lg:p-6 rounded-3xl bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 transition-all hover:scale-105">
+                        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border transition-all hover:scale-105">
                             <MetricBox val={descriptions.length.toString()} label="Descriptions" />
                         </div>
-                        <div className="p-4 lg:p-6 rounded-3xl bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 transition-all hover:scale-105">
+                        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border transition-all hover:scale-105">
                             <MetricBox val={images.length.toString()} label="Images" />
                         </div>
-                        <div className="p-4 lg:p-6 rounded-3xl bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 transition-all hover:scale-105">
+                        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-border transition-all hover:scale-105">
                             <MetricBox val={videos.length.toString()} label="Videos" />
                         </div>
                     </div>
@@ -901,27 +909,27 @@ function ImageGrid({ images, onSelectAsset, showAll, onToggleShowAll }: any) {
 
     return (
         <div className="space-y-6">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-zinc-400">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-muted-foreground">
                 <div className="w-8 h-[1px] bg-zinc-200 dark:bg-white/10" />
                 Integrated Images
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                 {displayImages.map((img: any, i: number) => (
-                    <Card key={i} onClick={() => onSelectAsset?.(img)} className="overflow-hidden flex flex-col group border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/40 rounded-2xl cursor-pointer hover:ring-2 hover:ring-blue-500/40 transition-all shadow-sm hover:shadow-2xl">
-                        <div className="aspect-square relative shrink-0 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                    <Card key={i} onClick={() => onSelectAsset?.(img)} className="overflow-hidden flex flex-col group border-border bg-card/40 rounded-xl cursor-pointer hover:ring-2 hover:ring-sky-500/40 transition-all shadow-sm hover:shadow-sm">
+                        <div className="aspect-square relative shrink-0 bg-muted overflow-hidden">
                             {img.imageUrl ? (
                                 <img src={img.imageUrl} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Asset" />
                             ) : (
-                                <div className="absolute inset-0 w-full h-full flex items-center justify-center text-zinc-400"><ImageIcon className="h-8 w-8 opacity-20" /></div>
+                                <div className="absolute inset-0 w-full h-full flex items-center justify-center text-muted-foreground"><ImageIcon className="h-8 w-8 opacity-20" /></div>
                             )}
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest h-9 px-6 hover:bg-white hover:text-black">
+                                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white backdrop-blur-md rounded-full text-xs font-medium uppercase tracking-wider h-9 px-6 hover:bg-white hover:text-black">
                                     Analyze
                                 </Button>
                             </div>
                         </div>
-                        <div className="p-4 flex items-center justify-between gap-2 border-t border-zinc-100 dark:border-white/5 bg-zinc-50/30 dark:bg-black/20 flex-1">
-                            <MetricBox val={img.performanceLabel === 'UNSPECIFIED' ? 'UNSPEC' : (img.performanceLabel || 'PENDING')} label="Status" colorClass={img.performanceLabel === 'BEST' ? 'text-emerald-500' : 'text-zinc-500'} />
+                        <div className="p-4 flex items-center justify-between gap-2 border-t border-zinc-100 dark:border-border bg-zinc-50/30 dark:bg-black/20 flex-1">
+                            <MetricBox val={img.performanceLabel === 'UNSPECIFIED' ? 'UNSPEC' : (img.performanceLabel || 'PENDING')} label="Status" colorClass={img.performanceLabel === 'BEST' ? 'text-emerald-500' : 'text-muted-foreground'} />
                             <div className="text-right">
                                 <MetricBox val={formatPercent(img.ctr || 0)} label="CTR" colorClass="text-[#1a73e8]" />
                             </div>
@@ -934,7 +942,7 @@ function ImageGrid({ images, onSelectAsset, showAll, onToggleShowAll }: any) {
                     <Button
                         onClick={onToggleShowAll}
                         variant="ghost"
-                        className="group text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 hover:bg-blue-500/10 rounded-2xl px-8 h-12"
+                        className="group text-[10px] font-black uppercase tracking-[0.2em] text-sky-500 hover:bg-sky-500/10 rounded-md px-8 h-12"
                     >
                         {showAll ? 'Show Less' : 'View All Images'}
                         <ChevronRight className={cn("ml-2 h-4 w-4 transition-transform", showAll ? "rotate-90" : "")} />
@@ -950,27 +958,27 @@ function VideoGrid({ videos, onSelectVideo, showAll, onToggleShowAll }: any) {
 
     return (
         <div className="space-y-6">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-zinc-400">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-muted-foreground">
                 <div className="w-8 h-[1px] bg-zinc-200 dark:bg-white/10" />
                 Integrated Videos
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {displayVideos.map((vid: any, i: number) => (
-                    <Card key={i} onClick={() => onSelectVideo(vid)} className="overflow-hidden flex flex-col group border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/40 rounded-3xl cursor-pointer hover:ring-2 hover:ring-rose-500/40 transition-all shadow-sm hover:shadow-2xl">
-                        <div className="aspect-video relative shrink-0 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                    <Card key={i} onClick={() => onSelectVideo(vid)} className="overflow-hidden flex flex-col group border-border bg-card/40 rounded-xl cursor-pointer hover:ring-2 hover:ring-rose-500/40 transition-all shadow-sm hover:shadow-sm">
+                        <div className="aspect-video relative shrink-0 bg-muted overflow-hidden">
                             <img
                                 src={`https://img.youtube.com/vi/${vid.videoId}/hqdefault.jpg`}
                                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                 alt="Video Thumbnail"
                             />
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-all">
-                                <div className="h-12 w-12 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-xl shadow-rose-500/40 transform group-hover:scale-110 transition-transform">
+                                <div className="h-12 w-12 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-sm shadow-rose-500/40 transform group-hover:scale-110 transition-transform">
                                     <Video className="h-5 w-5 fill-current" />
                                 </div>
                             </div>
                         </div>
-                        <div className="p-4 flex items-center justify-between gap-2 border-t border-zinc-100 dark:border-white/5 bg-zinc-50/30 dark:bg-black/20 flex-1">
-                            <MetricBox val={vid.performanceLabel === 'UNSPECIFIED' ? 'UNSPEC' : (vid.performanceLabel || 'PENDING')} label="Status" colorClass={vid.performanceLabel === 'BEST' ? 'text-emerald-500' : 'text-zinc-500'} />
+                        <div className="p-4 flex items-center justify-between gap-2 border-t border-zinc-100 dark:border-border bg-zinc-50/30 dark:bg-black/20 flex-1">
+                            <MetricBox val={vid.performanceLabel === 'UNSPECIFIED' ? 'UNSPEC' : (vid.performanceLabel || 'PENDING')} label="Status" colorClass={vid.performanceLabel === 'BEST' ? 'text-emerald-500' : 'text-muted-foreground'} />
                             <div className="text-right">
                                 <MetricBox val={formatPercent(vid.ctr || 0)} label="CTR" colorClass="text-[#1a73e8]" />
                             </div>
@@ -983,7 +991,7 @@ function VideoGrid({ videos, onSelectVideo, showAll, onToggleShowAll }: any) {
                     <Button
                         onClick={onToggleShowAll}
                         variant="ghost"
-                        className="group text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 hover:bg-blue-500/10 rounded-2xl px-8 h-12"
+                        className="group text-[10px] font-black uppercase tracking-[0.2em] text-sky-500 hover:bg-sky-500/10 rounded-md px-8 h-12"
                     >
                         {showAll ? 'Show Less' : 'View All Videos'}
                         <ChevronRight className={cn("ml-2 h-4 w-4 transition-transform", showAll ? "rotate-90" : "")} />
@@ -997,7 +1005,7 @@ function VideoGrid({ videos, onSelectVideo, showAll, onToggleShowAll }: any) {
 function VideoHalfScreenPlayer({ video, onClose }: any) {
     return (
         <div className="flex flex-col xl:flex-row gap-8 animate-in slide-in-from-bottom-8 duration-500 h-[600px]">
-            <div className="xl:w-1/2 h-full rounded-3xl overflow-hidden bg-black shadow-2xl relative group">
+            <div className="xl:w-1/2 h-full rounded-md overflow-hidden bg-black shadow-sm relative group">
                 <iframe
                     className="w-full h-full border-none"
                     src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1`}
@@ -1013,34 +1021,34 @@ function VideoHalfScreenPlayer({ video, onClose }: any) {
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
             </div>
-            <div className="xl:w-1/2 flex flex-col gap-6 p-8 bg-zinc-50/50 dark:bg-white/2 rounded-3xl border border-zinc-200 dark:border-white/5 overflow-y-auto">
+            <div className="xl:w-1/2 flex flex-col gap-6 p-8 bg-zinc-50/50 dark:bg-white/2 rounded-md border border-border overflow-y-auto">
                 <div className="flex justify-between items-start">
                     <div>
                         <Badge className="bg-rose-500/10 text-rose-500 border-none mb-2">VIDEO ASSET</Badge>
-                        <h3 className="text-xl font-black text-zinc-900 dark:text-white leading-tight">{video.assetName || "YouTube Video"}</h3>
-                        <p className="text-zinc-500 text-sm mt-1">{video.videoId}</p>
+                        <h3 className="text-xl font-black text-foreground leading-tight">{video.assetName || "YouTube Video"}</h3>
+                        <p className="text-muted-foreground text-sm mt-1">{video.videoId}</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-2xl bg-white dark:bg-black/20 border border-zinc-100 dark:border-white/5">
+                    <div className="p-4 rounded-xl bg-white dark:bg-black/20 border border-zinc-100 dark:border-border">
                         <MetricBox val={formatNumber(video.impressions)} label="Impressions" />
                     </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-black/20 border border-zinc-100 dark:border-white/5">
+                    <div className="p-4 rounded-xl bg-white dark:bg-black/20 border border-zinc-100 dark:border-border">
                         <MetricBox val={formatPercent(video.ctr)} label="CTR" />
                     </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-black/20 border border-zinc-100 dark:border-white/5">
+                    <div className="p-4 rounded-xl bg-white dark:bg-black/20 border border-zinc-100 dark:border-border">
                         <MetricBox val={formatCurrency(video.spend || 0)} label="Spend" />
                     </div>
-                    <div className="p-4 rounded-2xl bg-white dark:bg-black/20 border border-zinc-100 dark:border-white/5">
+                    <div className="p-4 rounded-xl bg-white dark:bg-black/20 border border-zinc-100 dark:border-border">
                         <MetricBox val={formatNumber(video.conversions)} label="Conversions" />
                     </div>
                 </div>
 
-                <div className="p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10">
-                    <div className="flex items-center gap-2 text-blue-500 mb-3">
+                <div className="p-6 rounded-md bg-sky-500/5 border border-sky-500/10">
+                    <div className="flex items-center gap-2 text-sky-500 mb-3">
                         <Sparkles className="h-4 w-4" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Performance Signal</span>
+                        <span className="text-xs font-medium uppercase tracking-wider">Performance Signal</span>
                     </div>
                     <p className="text-sm font-medium leading-relaxed">
                         This video has {video.performanceLabel?.toLowerCase() || 'average'} performance alignment.
@@ -1057,30 +1065,30 @@ function TextGrid({ assets, title, showAll, onToggleShowAll }: any) {
 
     return (
         <div className="space-y-6">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-zinc-400">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-muted-foreground">
                 <div className="w-8 h-[1px] bg-zinc-200 dark:bg-white/10" />
                 Copy Dynamics: {title}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {displayAssets.map((txt: any, i: number) => (
-                    <Card key={i} className="p-6 border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/40 rounded-[2rem] flex flex-col gap-4 group hover:border-blue-500/50 hover:shadow-2xl transition-all relative overflow-hidden">
+                    <Card key={i} className="p-6 border-border bg-card/40 rounded-xl flex flex-col gap-4 group hover:border-sky-500/50 hover:shadow-sm transition-all relative overflow-hidden">
                         <div className="flex justify-between items-center relative z-10">
-                            <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none px-3 py-1">
+                            <Badge variant="outline" className="text-[10px] font-medium uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border-none px-3 py-1">
                                 {txt.fieldType?.replace(/_/g, ' ')}
                             </Badge>
-                            <Sparkles className="h-4 w-4 text-zinc-200 dark:text-white/10 group-hover:text-blue-500 transition-colors" />
+                            <Sparkles className="h-4 w-4 text-zinc-200 dark:text-white/10 group-hover:text-sky-500 transition-colors" />
                         </div>
-                        <p className={cn("text-zinc-900 dark:text-zinc-100 font-bold leading-relaxed relative z-10", txt.fieldType === 'DESCRIPTION' ? "text-sm" : "text-lg")}>
+                        <p className={cn("text-foreground font-bold leading-relaxed relative z-10", txt.fieldType === 'DESCRIPTION' ? "text-sm" : "text-lg")}>
                             "{txt.content || txt.text}"
                         </p>
-                        <div className="mt-auto pt-5 flex items-center justify-between border-t border-zinc-100 dark:border-white/5 relative z-10">
+                        <div className="mt-auto pt-5 flex items-center justify-between border-t border-zinc-100 dark:border-border relative z-10">
                             <div className="flex flex-col">
-                                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Length</span>
-                                <span className="text-xs font-mono text-zinc-900 dark:text-zinc-400 font-black">{(txt.content || txt.text)?.length || 0} Chars</span>
+                                <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Length</span>
+                                <span className="text-xs font-mono text-zinc-900 dark:text-muted-foreground font-black">{(txt.content || txt.text)?.length || 0} Chars</span>
                             </div>
                             <div className="flex flex-col text-right">
-                                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Yield</span>
-                                <span className={cn("text-xs font-black", txt.performanceLabel === 'BEST' ? "text-emerald-500" : "text-zinc-500")}>
+                                <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Yield</span>
+                                <span className={cn("text-xs font-black", txt.performanceLabel === 'BEST' ? "text-emerald-500" : "text-muted-foreground")}>
                                     {txt.performanceLabel === 'UNSPECIFIED' ? 'UNSPEC' : (txt.performanceLabel || 'PENDING')}
                                 </span>
                             </div>
@@ -1093,7 +1101,7 @@ function TextGrid({ assets, title, showAll, onToggleShowAll }: any) {
                     <Button
                         onClick={onToggleShowAll}
                         variant="ghost"
-                        className="group text-[10px] font-black uppercase tracking-[0.2em] text-[#1a73e8] hover:bg-[#1a73e8]/10 rounded-2xl px-8 h-12"
+                        className="group text-[10px] font-black uppercase tracking-[0.2em] text-[#1a73e8] hover:bg-[#1a73e8]/10 rounded-md px-8 h-12"
                     >
                         {showAll ? 'Show Less' : `View All Copy`}
                         <ChevronRight className={cn("ml-2 h-4 w-4 transition-transform", showAll ? "rotate-90" : "")} />
@@ -1106,11 +1114,11 @@ function TextGrid({ assets, title, showAll, onToggleShowAll }: any) {
 
 function EmptyState({ label, icon: Icon }: { label: string, icon: any }) {
     return (
-        <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-zinc-100/50 dark:bg-white/5 rounded-[3rem] border border-dashed border-zinc-200 dark:border-white/10">
-            <div className="h-16 w-16 rounded-3xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-lg mb-6 border border-zinc-100 dark:border-white/5">
+        <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-zinc-100/50 dark:bg-white/5 rounded-md border border-dashed border-border">
+            <div className="h-16 w-16 rounded-xl bg-card flex items-center justify-center shadow-lg mb-6 border border-zinc-100 dark:border-border">
                 <Icon className="h-8 w-8 text-zinc-300" />
             </div>
-            <h4 className="text-sm font-black uppercase tracking-widest text-zinc-500">{label}</h4>
+            <h4 className="text-sm font-black uppercase tracking-widest text-muted-foreground">{label}</h4>
         </div>
     );
 }
@@ -1162,10 +1170,10 @@ function AnalysisModal({ ad, onClose }: { ad: any, onClose: () => void }) {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-white dark:bg-[#0c0e14] w-full max-w-5xl max-h-full rounded-[2rem] border border-zinc-200 dark:border-white/10 shadow-3xl overflow-hidden flex flex-col">
-                <div className="flex-none p-6 border-b border-zinc-100 dark:border-white/5 flex items-center justify-between bg-zinc-50/50 dark:bg-white/2">
+            <div className="bg-white dark:bg-[#0c0e14] w-full max-w-5xl max-h-full rounded-md border border-border shadow-3xl overflow-hidden flex flex-col">
+                <div className="flex-none p-6 border-b border-zinc-100 dark:border-border flex items-center justify-between bg-zinc-50/50 dark:bg-white/2">
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-lg font-bold text-zinc-900 dark:text-white leading-tight truncate">
+                        <h2 className="text-lg font-bold text-foreground leading-tight truncate">
                             {ad.adName || ad.adGroupName || ad.adId || ad.id}
                         </h2>
                         <div className="flex items-center gap-3 mt-1">
@@ -1173,7 +1181,7 @@ function AnalysisModal({ ad, onClose }: { ad: any, onClose: () => void }) {
                                 {isAdroll ? 'AdRoll Creative Analysis' : 'AI Performance Report'}
                             </p>
                             {ad.adId && (
-                                <span className="text-[9px] font-mono text-zinc-400 truncate">ID: {ad.adId}</span>
+                                <span className="text-[9px] font-mono text-muted-foreground truncate">ID: {ad.adId}</span>
                             )}
                         </div>
                     </div>
@@ -1183,7 +1191,7 @@ function AnalysisModal({ ad, onClose }: { ad: any, onClose: () => void }) {
                                 variant="ghost"
                                 size="sm"
                                 onClick={runAnalysis}
-                                className="text-[10px] font-black uppercase tracking-widest h-8 px-3 rounded-xl text-zinc-500 hover:text-zinc-900 dark:hover:text-white gap-1.5"
+                                className="text-xs font-medium uppercase tracking-wider h-8 px-3 rounded-xl text-muted-foreground hover:text-zinc-900 dark:hover:text-white gap-1.5"
                             >
                                 <Sparkles className="h-3 w-3" />
                                 Re-Analyze
@@ -1197,27 +1205,27 @@ function AnalysisModal({ ad, onClose }: { ad: any, onClose: () => void }) {
 
                 {/* Ad thumbnail preview for AdRoll */}
                 {isAdroll && ad.thumbnailUrl && !loading && (
-                    <div className="flex-none px-6 py-4 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/30 dark:bg-white/[0.02]">
+                    <div className="flex-none px-6 py-4 border-b border-zinc-100 dark:border-border bg-zinc-50/30 dark:bg-white/[0.02]">
                         <div className="flex items-center gap-4">
-                            <div className="w-20 h-16 rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10 flex-shrink-0 bg-zinc-100 dark:bg-zinc-800">
+                            <div className="w-20 h-16 rounded-xl overflow-hidden border border-border flex-shrink-0 bg-muted">
                                 <img src={ad.thumbnailUrl} alt="Ad Creative" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                             </div>
                             <div className="flex gap-4 text-center">
                                 <div>
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Type</p>
-                                    <p className="text-xs font-bold text-zinc-900 dark:text-white capitalize">{ad.adType || 'image'}</p>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Type</p>
+                                    <p className="text-xs font-bold text-foreground capitalize">{ad.adType || 'image'}</p>
                                 </div>
                                 {ad.spend > 0 && <div>
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Spend</p>
-                                    <p className="text-xs font-bold text-zinc-900 dark:text-white">${Number(ad.spend).toFixed(2)}</p>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Spend</p>
+                                    <p className="text-xs font-bold text-foreground">${Number(ad.spend).toFixed(2)}</p>
                                 </div>}
                                 {ad.impressions > 0 && <div>
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Impressions</p>
-                                    <p className="text-xs font-bold text-zinc-900 dark:text-white">{Number(ad.impressions).toLocaleString()}</p>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Impressions</p>
+                                    <p className="text-xs font-bold text-foreground">{Number(ad.impressions).toLocaleString()}</p>
                                 </div>}
                                 {ad.clicks > 0 && <div>
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Clicks</p>
-                                    <p className="text-xs font-bold text-zinc-900 dark:text-white">{Number(ad.clicks).toLocaleString()}</p>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Clicks</p>
+                                    <p className="text-xs font-bold text-foreground">{Number(ad.clicks).toLocaleString()}</p>
                                 </div>}
                             </div>
                         </div>
@@ -1228,12 +1236,12 @@ function AnalysisModal({ ad, onClose }: { ad: any, onClose: () => void }) {
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 space-y-6">
                             <div className="relative">
-                                <Activity className={cn("h-16 w-16 animate-pulse", isAdroll ? "text-[#E0267D]" : "text-blue-500")} />
-                                <Sparkles className={cn("h-6 w-6 absolute -top-2 -right-2 animate-bounce", isAdroll ? "text-[#FF4B91]" : "text-blue-400")} />
+                                <Activity className={cn("h-16 w-16 animate-pulse", isAdroll ? "text-[#E0267D]" : "text-sky-500")} />
+                                <Sparkles className={cn("h-6 w-6 absolute -top-2 -right-2 animate-bounce", isAdroll ? "text-[#FF4B91]" : "text-sky-400")} />
                             </div>
                             <div className="text-center">
                                 <h3 className="text-xl font-bold dark:text-white">Analyzing with Claude 3.5 Sonnet</h3>
-                                <p className="text-zinc-500 text-sm mt-1">Running deep visual and conversion heuristics...</p>
+                                <p className="text-muted-foreground text-sm mt-1">Running deep visual and conversion heuristics...</p>
                             </div>
                         </div>
                     ) : error ? (
@@ -1241,8 +1249,8 @@ function AnalysisModal({ ad, onClose }: { ad: any, onClose: () => void }) {
                             <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center mb-4 mx-auto">
                                 <Activity className="h-6 w-6 text-red-600 dark:text-red-400" />
                             </div>
-                            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">Analysis Failed</h3>
-                            <p className="text-sm text-zinc-500 mt-2">{error}</p>
+                            <h3 className="text-lg font-semibold text-foreground">Analysis Failed</h3>
+                            <p className="text-sm text-muted-foreground mt-2">{error}</p>
                             <div className="flex gap-3 justify-center mt-6">
                                 <Button variant="outline" onClick={runAnalysis}>Retry</Button>
                             </div>
@@ -1303,10 +1311,10 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
                 {/* Score Strip */}
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                     {scoreItems.map(s => (
-                        <div key={s.label} className="p-4 rounded-2xl bg-white dark:bg-white/2 border border-zinc-100 dark:border-white/5 text-center flex flex-col items-center gap-1">
+                        <div key={s.label} className="p-4 rounded-md bg-white dark:bg-white/2 border border-zinc-100 dark:border-border text-center flex flex-col items-center gap-1">
                             <span className={cn("text-2xl font-black font-mono", sc(s.val))}>{s.val}</span>
-                            <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400">{s.label}</span>
-                            <div className="w-12 h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{s.label}</span>
+                            <div className="w-12 h-1 rounded-full bg-muted overflow-hidden">
                                 <div className={cn("h-full rounded-full", scBg(s.val))} style={{ width: `${s.val * 10}%` }} />
                             </div>
                         </div>
@@ -1317,27 +1325,27 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
                 {Object.keys(effectiveness).length > 0 && (
                     <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
                         {effectiveness.ctr_prediction && (
-                            <div className="p-4 rounded-2xl bg-[#E0267D]/5 border border-[#E0267D]/10 text-center">
+                            <div className="p-4 rounded-md bg-[#E0267D]/5 border border-[#E0267D]/10 text-center">
                                 <p className="text-[8px] font-black uppercase tracking-widest text-[#E0267D]">CTR Prediction</p>
-                                <p className="text-lg font-black text-zinc-900 dark:text-white mt-1">{effectiveness.ctr_prediction}</p>
+                                <p className="text-lg font-black text-foreground mt-1">{effectiveness.ctr_prediction}</p>
                             </div>
                         )}
                         {effectiveness.engagement_potential && (
-                            <div className="p-4 rounded-2xl bg-purple-500/5 border border-purple-500/10 text-center">
+                            <div className="p-4 rounded-md bg-purple-500/5 border border-purple-500/10 text-center">
                                 <p className="text-[8px] font-black uppercase tracking-widest text-purple-500">Engagement</p>
-                                <p className="text-sm font-black text-zinc-900 dark:text-white mt-1">{effectiveness.engagement_potential}</p>
+                                <p className="text-sm font-black text-foreground mt-1">{effectiveness.engagement_potential}</p>
                             </div>
                         )}
                         {effectiveness.memorability_score && (
-                            <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 text-center">
+                            <div className="p-4 rounded-md bg-amber-500/5 border border-amber-500/10 text-center">
                                 <p className="text-[8px] font-black uppercase tracking-widest text-amber-500">Memorability</p>
-                                <p className="text-lg font-black text-zinc-900 dark:text-white mt-1">{effectiveness.memorability_score}/10</p>
+                                <p className="text-lg font-black text-foreground mt-1">{effectiveness.memorability_score}/10</p>
                             </div>
                         )}
                         {effectiveness.conversion_likelihood && (
-                            <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center">
+                            <div className="p-4 rounded-md bg-emerald-500/5 border border-emerald-500/10 text-center">
                                 <p className="text-[8px] font-black uppercase tracking-widest text-emerald-500">Conversion</p>
-                                <p className="text-sm font-black text-zinc-900 dark:text-white mt-1">{effectiveness.conversion_likelihood}</p>
+                                <p className="text-sm font-black text-foreground mt-1">{effectiveness.conversion_likelihood}</p>
                             </div>
                         )}
                     </div>
@@ -1345,23 +1353,23 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
 
                 {/* Target Audience */}
                 {audience.demographics && (
-                    <div className="p-6 rounded-2xl bg-white dark:bg-white/2 border border-zinc-100 dark:border-white/10">
+                    <div className="p-6 rounded-md bg-white dark:bg-white/2 border border-zinc-100 dark:border-border">
                         <h3 className="text-xs font-black uppercase tracking-widest text-[#E0267D] mb-4 flex items-center gap-2">
                             <Target className="h-3.5 w-3.5" /> Target Audience
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
-                                <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-1">Demographics</p>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Demographics</p>
                                 <p className="font-medium leading-relaxed">{audience.demographics}</p>
                             </div>
                             <div>
-                                <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-1">Psychographics</p>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Psychographics</p>
                                 <p className="font-medium leading-relaxed">{audience.psychographics}</p>
                             </div>
                         </div>
                         {Array.isArray(audience.pain_points) && audience.pain_points.length > 0 && (
-                            <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-white/5">
-                                <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Pain Points Targeted</p>
+                            <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-border">
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Pain Points Targeted</p>
                                 <ul className="space-y-1">
                                     {audience.pain_points.map((pp: string, i: number) => (
                                         <li key={i} className="flex items-start gap-2 text-sm">
@@ -1378,7 +1386,7 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
                 {/* Psychological Analysis 2-col */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {triggers.length > 0 && (
-                        <div className="p-6 rounded-2xl bg-purple-500/5 border border-purple-500/10">
+                        <div className="p-6 rounded-md bg-purple-500/5 border border-purple-500/10">
                             <h3 className="text-xs font-black uppercase tracking-widest text-purple-500 mb-3 flex items-center gap-2">
                                 <Brain className="h-3.5 w-3.5" /> Psychological Triggers
                             </h3>
@@ -1393,7 +1401,7 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
                         </div>
                     )}
                     {emotionalDrivers.length > 0 && (
-                        <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/10">
+                        <div className="p-6 rounded-md bg-rose-500/5 border border-rose-500/10">
                             <h3 className="text-xs font-black uppercase tracking-widest text-rose-500 mb-3 flex items-center gap-2">
                                 <Sparkles className="h-3.5 w-3.5" /> Emotional Drivers
                             </h3>
@@ -1412,14 +1420,14 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
                 {/* Persuasion + Cognitive Biases */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {persuasion.length > 0 && (
-                        <div className="p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/10">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-indigo-500 mb-3 flex items-center gap-2">
+                        <div className="p-6 rounded-md bg-sky-500/5 border border-sky-500/10">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-sky-500 mb-3 flex items-center gap-2">
                                 <Activity className="h-3.5 w-3.5" /> Persuasion Techniques
                             </h3>
                             <ul className="space-y-2">
                                 {persuasion.map((p: string, i: number) => (
                                     <li key={i} className="flex items-start gap-2 text-sm">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-1.5 flex-shrink-0" />
                                         {p}
                                     </li>
                                 ))}
@@ -1427,7 +1435,7 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
                         </div>
                     )}
                     {biases.length > 0 && (
-                        <div className="p-6 rounded-2xl bg-amber-500/5 border border-amber-500/10">
+                        <div className="p-6 rounded-md bg-amber-500/5 border border-amber-500/10">
                             <h3 className="text-xs font-black uppercase tracking-widest text-amber-500 mb-3 flex items-center gap-2">
                                 <BarChart3 className="h-3.5 w-3.5" /> Cognitive Biases
                             </h3>
@@ -1445,7 +1453,7 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
 
                 {/* Conversion Barriers */}
                 {barriers.length > 0 && (
-                    <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/10">
+                    <div className="p-6 rounded-md bg-rose-500/5 border border-rose-500/10">
                         <h3 className="text-xs font-black uppercase tracking-widest text-rose-600 mb-3 flex items-center gap-2">
                             <Activity className="h-3.5 w-3.5" /> Conversion Barriers
                         </h3>
@@ -1462,33 +1470,33 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
 
                 {/* Retargeting Analysis */}
                 {Object.keys(retargeting).length > 0 && (
-                    <div className="p-6 rounded-2xl bg-[#E0267D]/5 border border-[#E0267D]/10">
+                    <div className="p-6 rounded-md bg-[#E0267D]/5 border border-[#E0267D]/10">
                         <h3 className="text-xs font-black uppercase tracking-widest text-[#E0267D] mb-4 flex items-center gap-2">
                             <Target className="h-3.5 w-3.5" /> Retargeting Intelligence
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             {retargeting.abandonment_stage_targeted && (
                                 <div>
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-1">Abandonment Stage</p>
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Abandonment Stage</p>
                                     <p className="font-medium">{retargeting.abandonment_stage_targeted}</p>
                                 </div>
                             )}
                             {retargeting.message_alignment && (
                                 <div>
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-1">Message Alignment</p>
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Message Alignment</p>
                                     <p className="font-medium">{retargeting.message_alignment}</p>
                                 </div>
                             )}
                             {retargeting.frequency_fatigue_risk && (
                                 <div>
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-1">Fatigue Risk</p>
+                                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Fatigue Risk</p>
                                     <p className="font-medium">{retargeting.frequency_fatigue_risk}</p>
                                 </div>
                             )}
                         </div>
                         {Array.isArray(retargeting.personalization_opportunities) && retargeting.personalization_opportunities.length > 0 && (
                             <div className="mt-4 pt-4 border-t border-[#E0267D]/10">
-                                <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Personalization Opportunities</p>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Personalization Opportunities</p>
                                 <ul className="space-y-1.5">
                                     {retargeting.personalization_opportunities.map((op: string, i: number) => (
                                         <li key={i} className="flex items-start gap-2 text-sm">
@@ -1505,17 +1513,17 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
                 {/* Improvement Recommendations */}
                 {recs.length > 0 && (
                     <div className="space-y-4">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400">Optimization Roadmap</h3>
+                        <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Optimization Roadmap</h3>
                         {recs.map((rec: any, i: number) => (
-                            <div key={i} className="flex gap-4 p-5 rounded-2xl bg-white dark:bg-white/2 border border-zinc-100 dark:border-white/10 hover:border-[#E0267D]/30 transition-all">
+                            <div key={i} className="flex gap-4 p-5 rounded-md bg-white dark:bg-white/2 border border-zinc-100 dark:border-border hover:border-[#E0267D]/30 transition-all">
                                 <div className="flex-none h-8 w-8 rounded-full bg-[#E0267D] text-white flex items-center justify-center font-black text-xs">#{i + 1}</div>
                                 <div className="flex-1 space-y-2">
                                     <div className="flex flex-wrap gap-2 items-center">
-                                        {rec.category && <span className="text-[9px] font-black uppercase tracking-widest text-[#E0267D] bg-[#E0267D]/10 px-2 py-0.5 rounded-full">{rec.category}</span>}
-                                        {rec.priority && <span className={cn("text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full", rec.priority === 'High' ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' : rec.priority === 'Medium' ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800')}>{rec.priority} Priority</span>}
+                                        {rec.category && <span className="text-[10px] font-medium uppercase tracking-wider text-[#E0267D] bg-[#E0267D]/10 px-2 py-0.5 rounded-full">{rec.category}</span>}
+                                        {rec.priority && <span className={cn("text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full", rec.priority === 'High' ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' : rec.priority === 'Medium' ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' : 'bg-zinc-100 text-muted-foreground dark:bg-zinc-800')}>{rec.priority} Priority</span>}
                                         {rec.expected_impact && <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400">{rec.expected_impact}</span>}
                                     </div>
-                                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 leading-snug">{rec.suggestion}</p>
+                                    <p className="text-sm font-medium text-foreground leading-snug">{rec.suggestion}</p>
                                 </div>
                             </div>
                         ))}
@@ -1527,7 +1535,7 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
 
     // ── CLAUDE SCHEMA (Google or re-analyzed AdRoll) ────────────────────────────
     const accentColor = isAdroll ? 'text-[#E0267D]' : 'text-[#1a73e8]';
-    const accentBg = isAdroll ? 'bg-[#E0267D]/10 border-[#E0267D]/10' : 'bg-blue-500/10 border-blue-500/10';
+    const accentBg = isAdroll ? 'bg-[#E0267D]/10 border-[#E0267D]/10' : 'bg-sky-500/10 border-sky-500/10';
 
     const whatWorks = data.whatWorks || data.keyStrengths || '';
     const whatDoesntWork = data.whatDoesntWork || data.keyWeaknesses || '';
@@ -1546,99 +1554,99 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
 
     return (
         <div className="space-y-10 font-sans text-zinc-800 dark:text-zinc-300">
-            <div className="flex flex-col md:flex-row justify-between items-start gap-6 pb-8 border-b border-zinc-100 dark:border-white/5">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-6 pb-8 border-b border-zinc-100 dark:border-border">
                 <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
-                        <Badge className={cn("border-none font-black text-[10px] px-2 py-0.5", isAdroll ? "bg-[#E0267D]/20 text-[#E0267D]" : "bg-blue-500/20 text-blue-500")}>{data.adType || 'Creative'}</Badge>
-                        <Badge variant="outline" className="border-zinc-200 dark:border-white/10 text-[10px] font-black">{data.performanceLabel?.replace(/_/g, ' ') || 'AVERAGE'}</Badge>
+                        <Badge className={cn("border-none font-black text-[10px] px-2 py-0.5", isAdroll ? "bg-[#E0267D]/20 text-[#E0267D]" : "bg-sky-500/20 text-sky-500")}>{data.adType || 'Creative'}</Badge>
+                        <Badge variant="outline" className="border-border text-[10px] font-black">{data.performanceLabel?.replace(/_/g, ' ') || 'AVERAGE'}</Badge>
                     </div>
                     <div className="space-y-4">
-                        <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-white/2 border border-zinc-100 dark:border-white/5">
+                        <div className="p-5 rounded-md bg-zinc-50 dark:bg-white/2 border border-zinc-100 dark:border-border">
                             <h4 className={cn("text-lg font-bold mb-1", sc(compositeScore))}>{data.verdictRating} — {data.verdictDecision}</h4>
-                            <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{data.verdictSummary}</p>
+                            <p className="text-sm leading-relaxed text-muted-foreground dark:text-muted-foreground">{data.verdictSummary}</p>
                         </div>
                     </div>
                 </div>
-                <div className="flex flex-col items-center justify-center p-8 bg-zinc-900 rounded-[2.5rem] min-w-[160px] shadow-2xl">
+                <div className="flex flex-col items-center justify-center p-8 bg-card rounded-xl min-w-[160px] shadow-sm">
                     <span className={cn("text-5xl font-black font-mono", sc(compositeScore))}>{compositeScore}</span>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-2">Overall Score</span>
+                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground mt-2">Overall Score</span>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                         <BarChart3 className="h-3.5 w-3.5" /> Performance metrics
                     </h3>
-                    <div className="p-5 rounded-2xl bg-white dark:bg-white/2 border border-zinc-100 dark:border-white/10 space-y-3">
-                        <div className="flex justify-between text-sm"><span className="text-zinc-500">CTR Insights</span><span className="font-bold">{data.ctrAnalysis}</span></div>
-                        <div className="flex justify-between text-sm"><span className="text-zinc-500">CPC Evaluation</span><span className="font-bold">{data.cpcAnalysis}</span></div>
-                        <div className="flex justify-between text-sm pt-2 border-t border-zinc-100 dark:border-white/5"><span className="text-rose-500 font-bold uppercase text-[10px] tracking-widest">Main Bottleneck</span><span className="font-bold text-rose-500">{data.primaryBottleneck}</span></div>
+                    <div className="p-5 rounded-md bg-white dark:bg-white/2 border border-zinc-100 dark:border-border space-y-3">
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">CTR Insights</span><span className="font-bold">{data.ctrAnalysis}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">CPC Evaluation</span><span className="font-bold">{data.cpcAnalysis}</span></div>
+                        <div className="flex justify-between text-sm pt-2 border-t border-zinc-100 dark:border-border"><span className="text-rose-500 font-bold uppercase text-[10px] tracking-widest">Main Bottleneck</span><span className="font-bold text-rose-500">{data.primaryBottleneck}</span></div>
                     </div>
                 </div>
                 <div className="space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                         <Sparkles className="h-3.5 w-3.5" /> Creative Signals
                     </h3>
-                    <div className="p-5 rounded-2xl bg-white dark:bg-white/2 border border-zinc-100 dark:border-white/10 space-y-3">
-                        <div className="flex justify-between text-sm"><span className="text-zinc-500">Dominant Palette</span><span className="font-bold">{data.dominantColors}</span></div>
-                        <div className="flex justify-between text-sm"><span className="text-zinc-500">Primary Message</span><span className="font-bold">{data.primaryMessage}</span></div>
-                        <div className="flex justify-between text-sm"><span className="text-zinc-500">CTA Effectiveness</span><span className="font-bold">{data.ctaText}</span></div>
+                    <div className="p-5 rounded-md bg-white dark:bg-white/2 border border-zinc-100 dark:border-border space-y-3">
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Dominant Palette</span><span className="font-bold">{data.dominantColors}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Primary Message</span><span className="font-bold">{data.primaryMessage}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">CTA Effectiveness</span><span className="font-bold">{data.ctaText}</span></div>
                     </div>
                 </div>
             </div>
 
             <div>
-                <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-6">Asset Component Scores</h3>
+                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-6">Asset Component Scores</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
                     {ratings.map(r => (
-                        <div key={r.key} className="p-4 rounded-2xl bg-white dark:bg-white/2 border border-zinc-100 dark:border-white/5 text-center flex flex-col items-center">
+                        <div key={r.key} className="p-4 rounded-md bg-white dark:bg-white/2 border border-zinc-100 dark:border-border text-center flex flex-col items-center">
                             <span className={cn("text-2xl font-black font-mono", sc(data[r.key] || 0))}>{data[r.key] || 0}</span>
-                            <span className="text-[9px] font-black uppercase tracking-tighter text-zinc-500 mt-1">{r.label}</span>
+                            <span className="text-[9px] font-black uppercase tracking-tighter text-muted-foreground mt-1">{r.label}</span>
                         </div>
                     ))}
                 </div>
             </div>
 
             <div className="space-y-6">
-                <h3 className="text-xs font-black uppercase tracking-widest text-[#1a73e8] dark:text-blue-400 flex items-center gap-2">
+                <h3 className="text-xs font-black uppercase tracking-widest text-[#1a73e8] dark:text-sky-400 flex items-center gap-2">
                     <Brain className="h-3.5 w-3.5" /> Deep Intelligence Analysis
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {data.psychology_analysis && (
-                        <div className="p-6 rounded-3xl bg-blue-500/5 border border-blue-500/10 transition-all hover:bg-blue-500/10">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-3">Psychology Analysis</h4>
-                            <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{data.psychology_analysis}</p>
+                        <div className="p-6 rounded-md bg-sky-500/5 border border-sky-500/10 transition-all hover:bg-sky-500/10">
+                            <h4 className="text-xs font-medium uppercase tracking-wider text-sky-500 mb-3">Psychology Analysis</h4>
+                            <p className="text-sm leading-relaxed text-foreground/80 dark:text-zinc-300">{data.psychology_analysis}</p>
                         </div>
                     )}
                     {data.behavioral_economics_analysis && (
-                        <div className="p-6 rounded-3xl bg-indigo-500/5 border border-indigo-500/10 transition-all hover:bg-indigo-500/10">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-3">Behavioral Economics</h4>
-                            <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{data.behavioral_economics_analysis}</p>
+                        <div className="p-6 rounded-md bg-sky-500/5 border border-sky-500/10 transition-all hover:bg-sky-500/10">
+                            <h4 className="text-xs font-medium uppercase tracking-wider text-sky-500 mb-3">Behavioral Economics</h4>
+                            <p className="text-sm leading-relaxed text-foreground/80 dark:text-zinc-300">{data.behavioral_economics_analysis}</p>
                         </div>
                     )}
                     {data.neuromarketing_analysis && (
-                        <div className="p-6 rounded-3xl bg-purple-500/5 border border-purple-500/10 transition-all hover:bg-purple-500/10">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-purple-500 mb-3">Neuromarketing Triggers</h4>
-                            <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{data.neuromarketing_analysis}</p>
+                        <div className="p-6 rounded-md bg-purple-500/5 border border-purple-500/10 transition-all hover:bg-purple-500/10">
+                            <h4 className="text-xs font-medium uppercase tracking-wider text-purple-500 mb-3">Neuromarketing Triggers</h4>
+                            <p className="text-sm leading-relaxed text-foreground/80 dark:text-zinc-300">{data.neuromarketing_analysis}</p>
                         </div>
                     )}
                     {data.google_algorithm_analysis && (
-                        <div className="p-6 rounded-3xl bg-amber-500/5 border border-amber-500/10 transition-all hover:bg-amber-500/10">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-500 mb-3">Google Algorithm Alignment</h4>
-                            <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{data.google_algorithm_analysis}</p>
+                        <div className="p-6 rounded-md bg-amber-500/5 border border-amber-500/10 transition-all hover:bg-amber-500/10">
+                            <h4 className="text-xs font-medium uppercase tracking-wider text-amber-500 mb-3">Google Algorithm Alignment</h4>
+                            <p className="text-sm leading-relaxed text-foreground/80 dark:text-zinc-300">{data.google_algorithm_analysis}</p>
                         </div>
                     )}
                     {data.competitive_differentiation && (
-                        <div className="p-6 rounded-3xl bg-rose-500/5 border border-rose-500/10 transition-all hover:bg-rose-500/10">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-3">Competitive Differentiation</h4>
-                            <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{data.competitive_differentiation}</p>
+                        <div className="p-6 rounded-md bg-rose-500/5 border border-rose-500/10 transition-all hover:bg-rose-500/10">
+                            <h4 className="text-xs font-medium uppercase tracking-wider text-rose-500 mb-3">Competitive Differentiation</h4>
+                            <p className="text-sm leading-relaxed text-foreground/80 dark:text-zinc-300">{data.competitive_differentiation}</p>
                         </div>
                     )}
                     {data.predicted_performance_impact && (
-                        <div className="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 transition-all hover:bg-emerald-500/10">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-3">Predicted Impact</h4>
-                            <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{data.predicted_performance_impact}</p>
+                        <div className="p-6 rounded-md bg-emerald-500/5 border border-emerald-500/10 transition-all hover:bg-emerald-500/10">
+                            <h4 className="text-xs font-medium uppercase tracking-wider text-emerald-500 mb-3">Predicted Impact</h4>
+                            <p className="text-sm leading-relaxed text-foreground/80 dark:text-zinc-300">{data.predicted_performance_impact}</p>
                         </div>
                     )}
                 </div>
@@ -1647,16 +1655,16 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
             {(data.recommended_scaling_strategy || data.creative_evolution_path) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {data.recommended_scaling_strategy && (
-                        <div className="p-6 rounded-3xl bg-zinc-900 border border-white/10 shadow-2xl">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4 flex items-center gap-2">
+                        <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
+                            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
                                 <Zap className="h-3 w-3" /> Recommended Scaling Strategy
                             </h4>
                             <p className="text-sm leading-relaxed text-white font-medium">{data.recommended_scaling_strategy}</p>
                         </div>
                     )}
                     {data.creative_evolution_path && (
-                        <div className="p-6 rounded-3xl bg-zinc-900 border border-white/10 shadow-2xl">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4 flex items-center gap-2">
+                        <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
+                            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
                                 <Activity className="h-3 w-3" /> Creative Evolution Path
                             </h4>
                             <p className="text-sm leading-relaxed text-white font-medium">{data.creative_evolution_path}</p>
@@ -1666,13 +1674,13 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/10">
+                <div className="p-6 rounded-md bg-emerald-500/5 border border-emerald-500/10">
                     <h3 className="text-sm font-black uppercase tracking-widest text-emerald-500 mb-4 flex items-center gap-2">
                         <Check className="h-4 w-4" /> Why this works
                     </h3>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{whatWorks}</p>
                 </div>
-                <div className="p-6 rounded-3xl bg-rose-500/5 border border-rose-500/10">
+                <div className="p-6 rounded-md bg-rose-500/5 border border-rose-500/10">
                     <h3 className="text-sm font-black uppercase tracking-widest text-rose-500 mb-4 flex items-center gap-2">
                         <Activity className="h-4 w-4" /> Critical flaws
                     </h3>
@@ -1680,29 +1688,29 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
                 </div>
             </div>
 
-            <div className={cn("p-8 rounded-[2.5rem] border relative overflow-hidden group", accentBg)}>
-                <Sparkles className={cn("h-32 w-32 absolute -right-8 -top-8 rotate-12", isAdroll ? "text-[#E0267D]/10" : "text-blue-500/10")} />
+            <div className={cn("p-8 rounded-md border relative overflow-hidden group", accentBg)}>
+                <Sparkles className={cn("h-32 w-32 absolute -right-8 -top-8 rotate-12", isAdroll ? "text-[#E0267D]/10" : "text-sky-500/10")} />
                 <h3 className={cn("text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10", accentColor)}>
                     <Brain className="h-4 w-4" /> AI Key Insight
                 </h3>
-                <p className="text-lg md:text-xl font-bold italic text-zinc-900 dark:text-zinc-100 leading-relaxed relative z-10">"{keyInsight}"</p>
+                <p className="text-lg md:text-xl font-bold italic text-foreground leading-relaxed relative z-10">"{keyInsight}"</p>
             </div>
 
             <div className="space-y-6">
-                <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400">Optimization Roadmap</h3>
+                <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Optimization Roadmap</h3>
                 <div className="grid gap-4">
                     {[1, 2, 3].map(i => {
                         const rec = data[`recommendation${i}`];
                         if (!rec) return null;
                         return (
-                            <div key={i} className={cn("flex gap-4 p-6 rounded-2xl bg-white dark:bg-white/2 border border-zinc-100 dark:border-white/10 group transition-all", isAdroll ? "hover:border-[#E0267D]/30" : "hover:border-blue-500/30")}>
-                                <div className={cn("flex-none h-8 w-8 rounded-full text-white flex items-center justify-center font-black text-xs", isAdroll ? "bg-[#E0267D]" : "bg-blue-500")}>#{i}</div>
+                            <div key={i} className={cn("flex gap-4 p-6 rounded-md bg-white dark:bg-white/2 border border-zinc-100 dark:border-border group transition-all", isAdroll ? "hover:border-[#E0267D]/30" : "hover:border-sky-500/30")}>
+                                <div className={cn("flex-none h-8 w-8 rounded-full text-white flex items-center justify-center font-black text-xs", isAdroll ? "bg-[#E0267D]" : "bg-sky-500")}>#{i}</div>
                                 <div className="flex-1 space-y-2">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Effort: {data[`recommendation${i}Effort`]}</span>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Impact: {data[`recommendation${i}Impact`]}</span>
+                                        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Effort: {data[`recommendation${i}Effort`]}</span>
+                                        <span className="text-xs font-medium uppercase tracking-wider text-emerald-500">Impact: {data[`recommendation${i}Impact`]}</span>
                                     </div>
-                                    <p className="text-zinc-900 dark:text-white font-bold leading-snug">{rec}</p>
+                                    <p className="text-foreground font-bold leading-snug">{rec}</p>
                                 </div>
                             </div>
                         );

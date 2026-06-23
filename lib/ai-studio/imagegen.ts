@@ -14,8 +14,12 @@
  */
 
 import { applyLogoOverlay } from './logo-overlay';
+import { generateImageIdeogram, normalizeAspectRatio } from './imagegen-ideogram';
+import { generateImageOpenAI, normalizeOpenAISize } from './imagegen-openai';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+const IDEOGRAM_API_KEY = process.env.IDEOGRAM_API_KEY || '';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 /**
@@ -287,7 +291,13 @@ TECHNICAL EXECUTION RULES:
  *   - tier: 'pro' | 'standard'
  */
 export async function generateImage(imageSpec: any, options: any = {}) {
-  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured. Add it to your .env file.');
+  // At least ONE provider must be configured.
+  // Priority chain: OpenAI gpt-image-1 → Ideogram V_3 → Gemini/Imagen.
+  if (!GEMINI_API_KEY && !IDEOGRAM_API_KEY && !OPENAI_API_KEY) {
+    throw new Error(
+      'No image generation provider configured. Add one of OPENAI_API_KEY, IDEOGRAM_API_KEY, or GEMINI_API_KEY to your .env file.',
+    );
+  }
 
   // ── Build the prompt text ──
   let prompt: string;
@@ -392,43 +402,118 @@ PREMIUM LAYOUT RULES (non-negotiable):
     }
   }
 
-  // ── Generation strategy ──
-  // If we have a reference image → use Gemini multimodal (can take image input)
-  // Otherwise → try Imagen (better quality for text-to-image)
+  // ── Generation strategy — 3-tier fallback chain ──
+  // PRIMARY:    OpenAI gpt-image-1 (best aesthetic + composition)
+  // SECONDARY:  Ideogram V_3      (best in-image text fidelity)
+  // FINAL:      Gemini/Imagen     (already-paid fallback)
+  // Each tier is tried only if the upstream provider's API key is set AND
+  // the upstream provider failed. User can disable any tier by removing
+  // its API key from .env.
   let dataUri: string | null = null;
+  let providerUsed: 'openai' | 'ideogram' | 'gemini' = 'gemini';
 
-  if (referenceImageData) {
-    // Path 1: Reference-grounded generation using Gemini multimodal
-    dataUri = await tryGeminiGeneration(prompt, referenceImageData);
-    // Fallback: try without reference but with Imagen
-    if (!dataUri) {
-      console.log('[ImageGen] Gemini multimodal failed, falling back to Imagen (no reference)...');
-      dataUri = await tryImagenGeneration(prompt);
+  const aspectHint =
+    (typeof imageSpec === 'object' && imageSpec?.technicalSpecs?.aspectRatio) ||
+    undefined;
+  const negativeHint =
+    (typeof imageSpec === 'object' && imageSpec?.negative) || undefined;
+
+  // ── TIER 1: Try OpenAI gpt-image-1 first if configured ──
+  if (OPENAI_API_KEY) {
+    try {
+      const openaiResult = await generateImageOpenAI({
+        prompt,
+        size: normalizeOpenAISize(aspectHint),
+        quality: 'high', // premium tier — best for ad creatives
+        output_format: 'png', // lossless for text rendering
+      });
+      if (openaiResult) {
+        dataUri = openaiResult.dataUri;
+        providerUsed = 'openai';
+        console.log(`[ImageGen] ✓ Primary path succeeded: OpenAI gpt-image-1 (${openaiResult.size}, ${openaiResult.quality})`);
+      } else {
+        console.log('[ImageGen] OpenAI returned null — falling through to Ideogram');
+      }
+    } catch (err: any) {
+      console.warn('[ImageGen] OpenAI threw, falling through to Ideogram:', err.message);
     }
-  } else {
-    // Path 2: Pure text-to-image — try Imagen first, then Gemini
-    dataUri = await tryImagenGeneration(prompt);
-    if (!dataUri) {
-      console.log('[ImageGen] Imagen failed, falling back to Gemini...');
-      dataUri = await tryGeminiGeneration(prompt, null);
+  }
+
+  // ── TIER 2: Try Ideogram V_3 if OpenAI didn't deliver ──
+  if (!dataUri && IDEOGRAM_API_KEY) {
+    try {
+      const ideogramResult = await generateImageIdeogram({
+        prompt,
+        aspect_ratio: normalizeAspectRatio(aspectHint),
+        style_type: 'DESIGN',
+        magic_prompt_option: 'OFF',
+        negative_prompt: negativeHint,
+      });
+      if (ideogramResult) {
+        dataUri = ideogramResult.dataUri;
+        providerUsed = 'ideogram';
+        console.log(`[ImageGen] ✓ Secondary path succeeded: Ideogram V_3 (seed: ${ideogramResult.seed})`);
+      } else {
+        console.log('[ImageGen] Ideogram returned null — falling through to Gemini');
+      }
+    } catch (err: any) {
+      console.warn('[ImageGen] Ideogram threw, falling through to Gemini:', err.message);
+    }
+  }
+
+  // ── TIER 3: Fall back to Gemini/Imagen ──
+  if (!dataUri) {
+    if (!GEMINI_API_KEY) {
+      const tried: string[] = [];
+      if (OPENAI_API_KEY) tried.push('OpenAI');
+      if (IDEOGRAM_API_KEY) tried.push('Ideogram');
+      throw new Error(
+        `All configured image providers failed (${tried.join(', ')}) and no GEMINI_API_KEY set as final fallback. Check API keys and credit balances.`,
+      );
+    }
+    if (referenceImageData) {
+      dataUri = await tryGeminiGeneration(prompt, referenceImageData);
+      if (!dataUri) {
+        console.log('[ImageGen] Gemini multimodal failed, falling back to Imagen (no reference)...');
+        dataUri = await tryImagenGeneration(prompt);
+      }
+    } else {
+      dataUri = await tryImagenGeneration(prompt);
+      if (!dataUri) {
+        console.log('[ImageGen] Imagen failed, falling back to Gemini...');
+        dataUri = await tryGeminiGeneration(prompt, null);
+      }
     }
   }
 
   if (!dataUri) {
-    throw new Error('Image generation failed after trying all available models.');
+    throw new Error('Image generation failed after trying all available models (OpenAI, Ideogram, Gemini, Imagen).');
   }
+
+  // ── Logo overlay control ──
+  // When the caller passes options.skipLogo=true, we skip the logo overlay here.
+  // This is the case when the studio route is in TEXT_OVERLAY_ENABLED mode — the
+  // text-overlay step that runs after this draws its own logo, so applying it
+  // twice would cause overlap/duplication.
+  const skipLogo = options?.skipLogo === true;
 
   // ── LOGO OVERLAY: Composite the authentic Hola Prime logo onto every generated image ──
   // This guarantees every creative has the brand logo regardless of generation path.
   // Non-blocking: if overlay fails, the original image is returned.
-  try {
-    dataUri = await applyLogoOverlay(dataUri);
-  } catch (logoErr: any) {
-    console.warn('[ImageGen] Logo overlay failed (non-blocking):', logoErr.message);
+  // Skipped when caller is using the text-overlay compositor — text-overlay draws its
+  // own logo, so running both would cause overlap.
+  if (!skipLogo) {
+    try {
+      dataUri = await applyLogoOverlay(dataUri);
+    } catch (logoErr: any) {
+      console.warn('[ImageGen] Logo overlay failed (non-blocking):', logoErr.message);
+    }
+  } else {
+    console.log('[ImageGen] Skipping logo overlay (caller will composite logo + text together)');
   }
 
   return {
-    provider: 'gemini',
+    provider: providerUsed,
     url: dataUri,
     dataUri,
   };

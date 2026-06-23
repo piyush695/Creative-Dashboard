@@ -49,6 +49,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { EnlargedImageModal } from "./enlarged-image-modal"
+import CreativeHistoryView from "./creative-history-view"
 import {
   Pagination,
   PaginationContent,
@@ -153,6 +154,24 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   const [brandDNA, setBrandDNA] = useState<any>(null)
   const [brandDNALoading, setBrandDNALoading] = useState(false)
   const [knownCompetitors, setKnownCompetitors] = useState<{ name: string; pageId?: string }[]>([])
+  // ── A/B test toggle: use stored ad library as reference for generation ──
+  // Default ON. Flip OFF to test whether the library is helping or constraining.
+  const [useStoredAds, setUseStoredAds] = useState<boolean>(true)
+  // ── Direct mode: bypass brief generation + text overlay, send prompt straight to image model ──
+  // Default ON for the Custom tab — gives the user full control over what the image model sees.
+  const [directMode, setDirectMode] = useState<boolean>(true)
+  // ── Library sync state (Phase 1: Meta Ad Library -> MongoDB) ──
+  const [libraryStats, setLibraryStats] = useState<{
+    totalAds: number
+    activeAds: number
+    ownAds: number
+    competitorAds: number
+    patternsExtracted: number
+    lastSyncAt: string | null
+    brandBreakdown: { brand: string; total: number; active: number }[]
+  } | null>(null)
+  const [syncRunning, setSyncRunning] = useState(false)
+  const [syncSummary, setSyncSummary] = useState<{ totalNewAds: number; totalUpdatedAds: number; patternsExtracted: number; durationMs: number } | null>(null)
 
   const [creatives, setCreatives] = useState<any[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -186,6 +205,19 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   useEffect(() => {
     setCurrentPage(1)
   }, [activeMainTab])
+
+  // Load library stats whenever the Ad Library tab opens
+  useEffect(() => {
+    if (activeMainTab !== "ad-library") return
+    let cancelled = false
+    fetch("/api/adlibrary?action=stats")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data && !data.error) setLibraryStats(data)
+      })
+      .catch(() => { /* non-blocking */ })
+    return () => { cancelled = true }
+  }, [activeMainTab, syncSummary])
 
   const fetchCreatives = async () => {
     try {
@@ -399,16 +431,17 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
     try {
       let body: any = {}
       if (targetTab === "custom") {
-        body = { prompt: currentTabState.prompt, type: "custom", reference: referenceOverride }
+        body = { prompt: currentTabState.prompt, type: "custom", reference: referenceOverride, useStoredAds, directMode }
       } else if (targetTab === "studio") {
         body = { prompt: currentTabState.prompt, reference: referenceOverride || base64File || previewUrl, type: studioSubTab }
       } else {
-        body = { 
-          adIds: optionsOverride?.adIds || selectedIds, 
-          selectedAspects, 
+        body = {
+          adIds: optionsOverride?.adIds || selectedIds,
+          selectedAspects,
           type: "pattern-based",
           prompt: currentTabState.prompt,
           reference: referenceOverride,
+          useStoredAds,
           ...(optionsOverride || currentTabState.generationOptions || {})
         }
       }
@@ -429,12 +462,14 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
         const variants = data.creative.variants || [];
         const maxScore = variants.length > 0 ? Math.max(...variants.map((v: any) => v?.score?.overall || 0)) : 10; // default 10 if variants don't have scores
         
-        // Auto-Regenerate if below 8
-        if (maxScore < 8 && (optionsOverride?.retryCount || 0) < 3) {
-          toast.info(`Quality score (${maxScore}/10) below threshold. Auto-regenerating to improve clarity, persuasion, and structure...`);
-          
+        // Auto-Regenerate if below 7.5 — capped at 1 retry (2 total attempts) to
+        // avoid the frustrating 4-attempt cycle. The hardened prompts make
+        // first-shot quality high enough that more retries are wasted compute.
+        if (maxScore < 7.5 && (optionsOverride?.retryCount || 0) < 1) {
+          toast.info(`Quality score (${maxScore}/10) below 7.5. Auto-regenerating once with sharper directives…`);
+
           if (generationInterval.current) clearInterval(generationInterval.current);
-          
+
           // Retry with improved prompt instructions
           handleGenerate({
             ...optionsOverride,
@@ -540,60 +575,71 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-background text-foreground overflow-hidden font-sans select-none" suppressHydrationWarning>
-      
-      {/* Header */}
-        <header className="px-3 md:px-5 py-2 md:py-3 border-b border-white/[0.06] bg-background/90 backdrop-blur-xl z-50 shrink-0">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/8 border border-blue-500/15 rounded-full shrink-0">
-                <Sparkles className="w-3 h-3 text-blue-400" />
+    <div className={cn("flex flex-col bg-background text-foreground font-sans", isHistoryOpen ? "min-h-full" : "h-full overflow-hidden")} suppressHydrationWarning>
+
+      {/* Studio sub-tabs — AppShell topbar already provides app-level header.
+          Hidden entirely in History view (History has its own header + Back). */}
+      {!isHistoryOpen && (
+        <header className="px-4 md:px-6 py-3 border-b border-border bg-background z-20 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-3">
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <h1 className="text-base font-semibold tracking-tight">Studio</h1>
+              <p className="text-xs text-muted-foreground">Generate on-brand creatives with AI.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="bg-muted/40 p-0.5 rounded-lg border border-border flex w-full sm:w-auto">
+                <button onClick={() => setActiveMainTab("custom")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all cursor-pointer", activeMainTab === "custom" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Custom</button>
+                <button onClick={() => setActiveMainTab("top-ads")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all cursor-pointer", activeMainTab === "top-ads" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Top Ads</button>
+                <button onClick={() => setActiveMainTab("studio")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all cursor-pointer", activeMainTab === "studio" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Studio</button>
+                <button onClick={() => setActiveMainTab("ad-library")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all cursor-pointer", activeMainTab === "ad-library" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                  <span className="flex items-center gap-1">
+                    <Database className="w-3.5 h-3.5" />
+                    Ad Library
+                  </span>
+                </button>
               </div>
-              <h1 className="text-sm font-bold tracking-tight italic text-foreground/90 truncate">Creative Analyzer</h1>
-            </div>
-            {onClose && (
-              <button onClick={onClose} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors border border-border shrink-0 sm:hidden">
-                <X className="w-4 h-4 text-muted-foreground" />
+              <button
+                onClick={toggleHistory}
+                className="px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-lg transition-all flex items-center gap-1.5 border cursor-pointer bg-muted/40 text-muted-foreground hover:text-foreground border-border hover:bg-muted/60"
+              >
+                <History className="w-3.5 h-3.5" />
+                History
               </button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.06] flex w-full sm:w-auto">
-              <button onClick={() => setActiveMainTab("custom")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all", activeMainTab === "custom" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Custom</button>
-              <button onClick={() => setActiveMainTab("top-ads")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all", activeMainTab === "top-ads" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Top Ads</button>
-              <button onClick={() => setActiveMainTab("studio")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all", activeMainTab === "studio" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Studio</button>
-              <button onClick={() => setActiveMainTab("ad-library")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all", activeMainTab === "ad-library" ? "bg-blue-600 text-white shadow-sm" : "text-muted-foreground hover:text-foreground")}>
-                <span className="flex items-center gap-1">
-                  <Database className="w-3 h-3" />
-                  Ad Library
-                </span>
-              </button>
-            </div>
-            <button 
-              onClick={toggleHistory}
-              className={cn(
-                "px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-lg transition-all flex items-center gap-1.5 border",
-                isHistoryOpen 
-                  ? "bg-blue-600 text-white border-blue-500 shadow-sm" 
-                  : "bg-white/[0.04] text-muted-foreground hover:text-foreground border-white/[0.06]"
+              {onClose && (
+                <button onClick={onClose} className="hidden sm:flex w-8 h-8 rounded-full bg-muted items-center justify-center hover:bg-muted/80 transition-colors border border-border shrink-0 cursor-pointer">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
               )}
-            >
-              <History className="w-3 h-3" />
-              History
-            </button>
-            {onClose && (
-              <button onClick={onClose} className="hidden sm:flex w-8 h-8 rounded-full bg-muted items-center justify-center hover:bg-muted/80 transition-colors border border-border shrink-0">
-                <X className="w-4 h-4 text-muted-foreground" />
-              </button>
-            )}
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Main Container */}
+        {/* History view — rendered in normal page flow (NOT an overlay) so it
+            scrolls together with the main page; no internal scroll. */}
+        {isHistoryOpen ? (
+          <div className="w-full px-4 md:px-6 py-5">
+            <CreativeHistoryView
+              onClose={() => { setIsHistoryOpen(false); onHistoryChange?.(false); }}
+              onRegenerate={(prompt, result, tab, generationOptions) => {
+                const targetTab = tab || "custom";
+                setActiveMainTab(targetTab);
+                updateTabState(targetTab, {
+                  prompt: prompt || "",
+                  result: result || null,
+                  mode: result ? "complete" : "standby",
+                  generationOptions: generationOptions || undefined,
+                });
+                if (result) setSelectedVariantIdx(0);
+                setIsHistoryOpen(false);
+                onHistoryChange?.(false);
+              }}
+            />
+          </div>
+        ) : (
         <main className="flex-1 flex flex-col md:flex-row overflow-hidden w-full relative min-h-0">
-        
+
         {/* Sidebar — Hidden for Top Ads */}
         <aside className={cn(
           "w-full md:w-[250px] border-b md:border-b-0 md:border-r border-border flex flex-col bg-card/50 transition-all duration-300 z-40 shrink-0",
@@ -602,16 +648,16 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
         )}>
           <div className="p-4 shrink-0 border-b border-white/[0.04]">
             <div className="flex items-center justify-between">
-              <h2 className="text-[10px] font-semibold text-zinc-500 flex items-center gap-1.5 uppercase tracking-wider">
+              <h2 className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1.5 uppercase tracking-wider">
                 {currentTabState.mode === 'complete' ? (
                   <>
-                    <History className="w-3 h-3 text-blue-400" />
+                    <History className="w-3 h-3 text-sky-400" />
                     Visual History
                   </>
                 ) : (
                   <>
                     <LayoutGrid className="w-3 h-3" />
-                    {activeMainTab === "studio" ? "Synthesis Assets" : "Neural Context"}
+                    {activeMainTab === "studio" ? "Source assets" : "Brief"}
                   </>
                 )}
               </h2>
@@ -621,7 +667,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                     updateTabState(activeMainTab, { result: latestResults[activeMainTab] });
                     setSelectedVariantIdx(0);
                   }}
-                  className="px-2 py-1 bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/20 rounded-md text-[9px] font-bold uppercase tracking-wider transition-all animate-in fade-in slide-in-from-right-1 duration-300"
+                  className="px-2 py-1 bg-sky-600/10 text-sky-400 hover:bg-sky-600 hover:text-white border border-sky-500/20 rounded-md text-[9px] font-bold uppercase tracking-wider transition-all animate-in fade-in slide-in-from-right-1 duration-300"
                 >
                   View Latest
                 </button>
@@ -655,7 +701,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                       <video src={previewUrl} className="w-full h-full object-cover" autoPlay muted loop />
                     )
                   ) : (
-                    <div className="flex flex-col items-center gap-2 text-zinc-600">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
                        <UploadCloud className="w-7 h-7 opacity-40" />
                        <p className="text-[11px] font-medium opacity-60">Upload reference {studioSubTab}</p>
                     </div>
@@ -677,7 +723,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                 }} />
 
                 <div className="space-y-2 pt-3 border-t border-white/[0.04]">
-                   <h3 className="text-[11px] font-medium text-zinc-500">Transform Instructions</h3>
+                   <h3 className="text-[11px] font-medium text-muted-foreground">Transform Instructions</h3>
                     <textarea 
                       value={currentTabState.prompt}
                       onChange={(e) => updateTabState('studio', { prompt: e.target.value })}
@@ -691,15 +737,59 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
             {activeMainTab === "custom" && (
               <div className="flex-1 space-y-3 animate-in slide-in-from-bottom-2 flex flex-col h-full min-h-0">
                 <div className="flex items-center justify-between shrink-0">
-                  <h3 className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Prompt</h3>
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                  <h3 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Prompt</h3>
+                  <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
                 </div>
                 <textarea
                   value={currentTabState.prompt}
                   onChange={(e) => updateTabState('custom', { prompt: e.target.value })}
-                  placeholder="Describe your creative vision in natural language..."
+                  placeholder="What should this creative communicate? Audience, offer, tone…"
                   className="w-full flex-1 min-h-[120px] bg-muted/20 border border-border rounded-xl p-4 text-sm outline-none focus:ring-1 focus:ring-primary/30 transition-all leading-relaxed placeholder:opacity-30 custom-scrollbar resize-none text-foreground/80"
                 />
+                {/* Direct mode: bypass pipeline, send prompt straight to image model */}
+                <div className="shrink-0 rounded-md border border-primary/40 bg-primary/5 p-2.5">
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={directMode}
+                      onChange={(e) => setDirectMode(e.target.checked)}
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] font-medium text-foreground leading-tight">
+                        Direct mode (recommended)
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                        {directMode
+                          ? "ON — your prompt goes straight to the image model. No brief generation, no text overlay. One generation, full control."
+                          : "OFF — full pipeline: Claude brief → 3 variants → text overlay. More processing, more chances for noise."}
+                      </div>
+                    </div>
+                  </label>
+                </div>
+                {/* A/B toggle: stored ad library as reference (only relevant when NOT in direct mode) */}
+                {!directMode && (
+                  <div className="shrink-0 rounded-md border border-border bg-card/60 p-2.5">
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={useStoredAds}
+                        onChange={(e) => setUseStoredAds(e.target.checked)}
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] font-medium text-foreground leading-tight">
+                          Use stored ads as reference
+                        </div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                          {useStoredAds
+                            ? "ON — AI consults your uploaded ad library for style + patterns."
+                            : "OFF — AI generates freely without library constraints."}
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                )}
               </div>
             )}
 
@@ -709,7 +799,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                 currentTabState.mode === 'complete' && "mt-0 pt-0 border-t-0"
               )}>
                 {previousCreatives.length > 0 && currentTabState.mode !== 'complete' && (
-                  <h3 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <History className="w-3 h-3" /> Generation Archive
                   </h3>
                 )}
@@ -749,7 +839,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                            e.stopPropagation();
                            setRegenerateConfirm({ prompt: item.prompt, result: item.result, tab: activeMainTab });
                          }}
-                         className="opacity-0 group-hover:opacity-100 p-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white rounded-lg transition-all shrink-0 ml-2 shadow-inner"
+                         className="opacity-0 group-hover:opacity-100 p-2 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-all shrink-0 ml-2 shadow-inner"
                          title="Regenerate"
                        >
                          <Zap className="w-3.5 h-3.5" />
@@ -762,11 +852,152 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
             {/* ── Ad Library Tab ── */}
             {activeMainTab === "ad-library" && (
               <div className="flex-1 space-y-3 animate-in slide-in-from-bottom-2 flex flex-col h-full min-h-0 overflow-y-auto custom-scrollbar">
+                {/* ── Library Sync Panel ─────────────────────────────── */}
+                <div className="shrink-0 rounded-xl border border-border bg-card p-3 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Database className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs font-semibold">Meta Ad Library</span>
+                    </div>
+                    {libraryStats?.lastSyncAt && (
+                      <span className="text-[10px] text-muted-foreground">
+                        Synced {new Date(libraryStats.lastSyncAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
+                  </div>
+                  {libraryStats && libraryStats.totalAds > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded-lg border border-border bg-muted/40 p-2.5">
+                        <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          <Database className="w-3.5 h-3.5 text-sky-500" /> Stored
+                        </div>
+                        <div className="text-base font-semibold tabular-nums mt-0.5">{libraryStats.totalAds}</div>
+                      </div>
+                      <div className="rounded-lg border border-border bg-muted/40 p-2.5">
+                        <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          <Activity className="w-3.5 h-3.5 text-emerald-500" /> Active
+                        </div>
+                        <div className="text-base font-semibold tabular-nums text-emerald-500 mt-0.5">{libraryStats.activeAds}</div>
+                      </div>
+                      <div className="rounded-lg border border-border bg-muted/40 p-2.5">
+                        <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          <Brain className="w-3.5 h-3.5 text-primary" /> Patterns
+                        </div>
+                        <div className="text-base font-semibold tabular-nums text-primary mt-0.5">{libraryStats.patternsExtracted}</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground">
+                      No ads synced yet. Run a sync to pull HolaPrime + 12 competitors from Meta.
+                    </p>
+                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      disabled={syncRunning}
+                      onClick={async () => {
+                        setSyncRunning(true)
+                        setSyncSummary(null)
+                        try {
+                          const res = await fetch('/api/adlibrary?action=sync-all')
+                          const data = await res.json()
+                          if (data.error) {
+                            toast.error('Meta sync failed: ' + data.error)
+                          } else {
+                            const r = data.result
+                            setSyncSummary({
+                              totalNewAds: r.totalNewAds,
+                              totalUpdatedAds: r.totalUpdatedAds,
+                              patternsExtracted: r.patternsExtracted,
+                              durationMs: r.durationMs,
+                            })
+                            toast.success(`Meta sync · ${r.totalNewAds} new · ${r.patternsExtracted} patterns`)
+                          }
+                        } catch (err: any) {
+                          toast.error('Meta sync error: ' + err.message)
+                        } finally {
+                          setSyncRunning(false)
+                        }
+                      }}
+                      className="h-8 text-[11px] font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      title="Pull ads from Meta Ad Library API (requires API access approval)"
+                    >
+                      {syncRunning ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <RefreshCcw className="h-3 w-3" />
+                      )}
+                      From Meta
+                    </button>
+                    <button
+                      disabled={syncRunning}
+                      onClick={async () => {
+                        setSyncRunning(true)
+                        setSyncSummary(null)
+                        try {
+                          const res = await fetch('/api/adlibrary?action=sync-local')
+                          const data = await res.json()
+                          if (data.error) {
+                            toast.error('Local sync failed: ' + data.error)
+                          } else {
+                            const r = data.result
+                            setSyncSummary({
+                              totalNewAds: r.totalNewAds,
+                              totalUpdatedAds: r.totalUpdatedAds,
+                              patternsExtracted: r.patternsExtracted,
+                              durationMs: r.durationMs,
+                            })
+                            if (r.filesFound === 0) {
+                              toast.info('No image files found — drop ads into public/ad-library-uploads/<brand>/')
+                            } else {
+                              toast.success(`Local sync · ${r.filesFound} files · ${r.totalNewAds} new · ${r.patternsExtracted} patterns`)
+                            }
+                          }
+                        } catch (err: any) {
+                          toast.error('Local sync error: ' + err.message)
+                        } finally {
+                          setSyncRunning(false)
+                        }
+                      }}
+                      className="h-8 text-[11px] font-semibold rounded-md border border-border bg-card hover:bg-accent transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      title="Read images from public/ad-library-uploads/<brand>/ — no Meta API needed"
+                    >
+                      {syncRunning ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <RefreshCcw className="h-3 w-3" />
+                      )}
+                      From Uploads
+                    </button>
+                  </div>
+                  {syncSummary && (
+                    <div className="text-[10px] text-muted-foreground border-t border-border pt-2">
+                      Last run: +{syncSummary.totalNewAds} new · {syncSummary.totalUpdatedAds} updated · {syncSummary.patternsExtracted} patterns in {(syncSummary.durationMs / 1000).toFixed(1)}s
+                    </div>
+                  )}
+                  {libraryStats?.brandBreakdown && libraryStats.brandBreakdown.length > 0 && (
+                    <details className="text-[10px] text-muted-foreground">
+                      <summary className="cursor-pointer hover:text-foreground">
+                        Brand breakdown ({libraryStats.brandBreakdown.length} brands)
+                      </summary>
+                      <div className="mt-2 space-y-0.5 max-h-32 overflow-y-auto pr-1">
+                        {libraryStats.brandBreakdown.map((b) => (
+                          <div key={b.brand} className="flex items-center justify-between">
+                            <span className="truncate">{b.brand}</span>
+                            <span className="tabular-nums text-foreground">
+                              {b.active}/{b.total}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                </div>
+
                 {/* Source Toggle */}
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => setAdLibrarySource('own')}
-                    className={cn("flex-1 px-2 py-1.5 text-[10px] font-semibold rounded-md transition-all border", adLibrarySource === 'own' ? "bg-blue-600/20 text-blue-400 border-blue-500/30" : "bg-muted/10 text-muted-foreground border-white/[0.06]")}
+                    className={cn("flex-1 px-2 py-1.5 text-[10px] font-semibold rounded-md transition-all border", adLibrarySource === 'own' ? "bg-sky-600/20 text-sky-400 border-sky-500/30" : "bg-muted/10 text-muted-foreground border-white/[0.06]")}
                   >Our Ads</button>
                   <button
                     onClick={() => setAdLibrarySource('competitor')}
@@ -821,7 +1052,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                       setAdLibraryLoading(false);
                     }
                   }}
-                  className="w-full h-9 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg font-semibold text-[11px] flex items-center justify-center gap-2 transition-all disabled:opacity-40 shrink-0"
+                  className="w-full h-9 bg-sky-600/80 hover:bg-sky-600 text-white rounded-lg font-semibold text-[11px] flex items-center justify-center gap-2 transition-all disabled:opacity-40 shrink-0"
                 >
                   {adLibraryLoading ? (
                     <>
@@ -878,20 +1109,20 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                   <div className="bg-gradient-to-b from-purple-500/10 to-transparent border border-purple-500/20 rounded-lg p-3 space-y-2">
                     <h4 className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">🧬 Brand DNA Active</h4>
                     <div className="space-y-1.5">
-                      <div className="text-[10px] text-zinc-400">
-                        <span className="text-zinc-500">Colors:</span>{' '}
+                      <div className="text-[10px] text-muted-foreground">
+                        <span className="text-muted-foreground">Colors:</span>{' '}
                         <span className="text-foreground/70">{brandDNA.colorPalette?.primary}, {brandDNA.colorPalette?.secondary}, {brandDNA.colorPalette?.accent}</span>
                       </div>
-                      <div className="text-[10px] text-zinc-400">
-                        <span className="text-zinc-500">Style:</span>{' '}
+                      <div className="text-[10px] text-muted-foreground">
+                        <span className="text-muted-foreground">Style:</span>{' '}
                         <span className="text-foreground/70">{brandDNA.visualStyle?.overallAesthetic}</span>
                       </div>
-                      <div className="text-[10px] text-zinc-400">
-                        <span className="text-zinc-500">Tone:</span>{' '}
+                      <div className="text-[10px] text-muted-foreground">
+                        <span className="text-muted-foreground">Tone:</span>{' '}
                         <span className="text-foreground/70">{brandDNA.copyPatterns?.toneOfVoice}</span>
                       </div>
-                      <div className="text-[10px] text-zinc-400">
-                        <span className="text-zinc-500">Maturity:</span>{' '}
+                      <div className="text-[10px] text-muted-foreground">
+                        <span className="text-muted-foreground">Maturity:</span>{' '}
                         <span className="text-foreground/70">{brandDNA.consistency?.brandMaturityLevel}</span>
                       </div>
                     </div>
@@ -902,7 +1133,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                 {/* Ad List */}
                 {adLibraryAds.length > 0 && (
                   <div className="space-y-2 flex-1">
-                    <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">{adLibraryAds.length} Ads Found</h4>
+                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{adLibraryAds.length} Ads Found</h4>
                     <div className="space-y-1.5">
                       {adLibraryAds.slice(0, 20).map((ad: any, idx: number) => (
                         <div key={ad.id || idx} className="bg-muted/10 border border-white/[0.04] rounded-lg p-2.5 space-y-1.5 hover:border-white/[0.08] transition-all">
@@ -910,20 +1141,20 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                             <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full", ad.isActive ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400")}>
                               {ad.isActive ? '🟢 ACTIVE' : '🔴 STOPPED'}
                             </span>
-                            <span className="text-[9px] text-zinc-500">{ad.daysRunning || 0}d running</span>
+                            <span className="text-[9px] text-muted-foreground">{ad.daysRunning || 0}d running</span>
                           </div>
                           {ad.ad_creative_link_titles?.[0] && (
                             <p className="text-[11px] text-foreground/80 font-medium leading-tight">{ad.ad_creative_link_titles[0]}</p>
                           )}
                           {ad.ad_creative_bodies?.[0] && (
-                            <p className="text-[10px] text-zinc-400 leading-snug line-clamp-2">{ad.ad_creative_bodies[0]}</p>
+                            <p className="text-[10px] text-muted-foreground leading-snug line-clamp-2">{ad.ad_creative_bodies[0]}</p>
                           )}
-                          <div className="flex items-center gap-2 text-[9px] text-zinc-500">
+                          <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
                             {ad.publisher_platforms && <span>{ad.publisher_platforms.join(', ')}</span>}
                             {ad.spend && <span>Spend: ${ad.spend.lower_bound}-${ad.spend.upper_bound}</span>}
                           </div>
                           {ad.ad_snapshot_url && (
-                            <a href={ad.ad_snapshot_url} target="_blank" rel="noopener noreferrer" className="text-[9px] text-blue-400 hover:underline">View Snapshot →</a>
+                            <a href={ad.ad_snapshot_url} target="_blank" rel="noopener noreferrer" className="text-[9px] text-sky-400 hover:underline">View Snapshot →</a>
                           )}
                         </div>
                       ))}
@@ -934,8 +1165,8 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                 {/* Empty state */}
                 {!adLibraryLoading && adLibraryAds.length === 0 && (
                   <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 py-6">
-                    <Database className="w-8 h-8 text-zinc-600" />
-                    <p className="text-[11px] text-zinc-500 max-w-[200px]">
+                    <Database className="w-8 h-8 text-muted-foreground" />
+                    <p className="text-[11px] text-muted-foreground max-w-[200px]">
                       Fetch ads from Meta Ad Library to analyze brand patterns and competitor intelligence
                     </p>
                   </div>
@@ -946,25 +1177,26 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
 
           {/* Restored sidebar Generate CTA for Custom and Studio tabs */}
           {(activeMainTab === 'custom' || activeMainTab === 'studio') && (
-            <div className="p-4 border-t border-white/[0.04] shrink-0">
-              <button 
+            <div className="p-4 border-t border-border shrink-0">
+              <Button
+                size="lg"
                 disabled={currentTabState.isGenerating}
                 onClick={() => {
                   if (currentTabState.mode === 'complete') {
-                    setRegenerateConfirm({ 
-                      prompt: currentTabState.prompt, 
+                    setRegenerateConfirm({
+                      prompt: currentTabState.prompt,
                       tab: activeMainTab,
-                      result: currentTabState.result 
+                      result: currentTabState.result
                     })
                   } else {
                     handleGenerate()
                   }
                 }}
-                className="w-full h-10 bg-primary text-primary-foreground rounded-lg font-semibold text-[11px] tracking-wide flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-40 hover:opacity-90 shadow-lg group"
+                className="w-full font-semibold tracking-wide gap-2 cursor-pointer disabled:cursor-not-allowed group"
               >
                 {currentTabState.isGenerating ? "Processing..." : "Generate"}
-                <Sparkles className="w-4 h-4 text-yellow-400 group-hover:scale-110 transition-transform" />
-              </button>
+                <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              </Button>
             </div>
           )}
         </aside>
@@ -985,17 +1217,17 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
               {activeMainTab === "top-ads" && (
                 <div className="flex-1 flex flex-col">
                   <div className="px-4 md:px-8 py-5 md:py-8 border-b border-white/[0.04] relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-sky-500/5 via-transparent to-transparent pointer-events-none" />
                     
                     <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                       <div className="space-y-1.5">
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-400 uppercase tracking-widest">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-sky-400 uppercase tracking-widest">
                           <Database className="size-3" /> Pattern Repository
                         </div>
                         <h2 className="text-2xl md:text-3xl font-black italic text-foreground uppercase tracking-tighter leading-none">
-                          Winning <span className="text-blue-500">Library</span>
+                          Winning <span className="text-sky-500">Library</span>
                         </h2>
-                        <p className="text-[11px] text-zinc-500 font-medium max-w-sm hidden sm:block">
+                        <p className="text-[11px] text-muted-foreground font-medium max-w-sm hidden sm:block">
                           Select winning patterns to generate high-converting variations.
                         </p>
                       </div>
@@ -1003,14 +1235,14 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                       <div className="flex flex-wrap items-center gap-3 lg:gap-4">
                         {/* selection & analyze - HIDDEN ON MOBILE HEADER, SHOWN ON DESKTOP */}
                         <div className={cn(
-                          "hidden lg:flex items-center gap-3 bg-muted/50 backdrop-blur-xl px-3 py-2 rounded-2xl border border-border transition-all duration-500 shadow-xl overflow-hidden",
+                          "hidden lg:flex items-center gap-3 bg-muted/50 backdrop-blur-xl px-3 py-2 rounded-md border border-border transition-all duration-500 shadow-sm overflow-hidden",
                           selectedIds.length > 0 ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
                         )}>
                           <div className="flex flex-col items-start px-1">
-                            <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">{selectedIds.length} SELECTED</span>
+                            <span className="text-[9px] font-black text-sky-400 uppercase tracking-widest">{selectedIds.length} SELECTED</span>
                             <div className="flex gap-0.5 mt-0.5">
                               {Array.from({ length: Math.min(selectedIds.length, 3) }).map((_, i) => (
-                                <div key={i} className="size-1 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] animate-pulse" />
+                                <div key={i} className="size-1 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(0,122,255,0.6)] animate-pulse" />
                               ))}
                             </div>
                           </div>
@@ -1019,7 +1251,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                               const ad = creatives.find(c => c.adId === selectedIds[0])
                               if (ad) handleAdCardClick(ad)
                             }}
-                            className="bg-blue-600 hover:bg-blue-500 text-white h-9 px-5 rounded-xl font-black text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95 shadow-[0_10px_20px_-5px_rgba(37,99,235,0.4)] border border-blue-400/30 group"
+                            className="btn-gradient text-white h-9 px-5 rounded-xl font-black text-[10px] uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95 shadow-[0_10px_20px_-5px_rgba(0,102,223,0.4)] group"
                           >
                             Analyze <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
                           </button>
@@ -1027,7 +1259,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
 
                         {/* Pagination - HIDDEN ON MOBILE HEADER */}
                         {totalPages > 1 && (
-                          <div className="hidden lg:flex items-center bg-muted/50 backdrop-blur-xl p-1.5 rounded-2xl border border-border shadow-xl h-12">
+                          <div className="hidden lg:flex items-center bg-muted/50 backdrop-blur-xl p-1.5 rounded-md border border-border shadow-sm h-12">
                             <button
                               disabled={currentPage === 1}
                               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
@@ -1067,7 +1299,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
 
                   {/* Ad Grid - Fixed columns */}
                   <div className="flex-1 p-3 md:p-6">
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 max-w-[1600px] mx-auto pb-16">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 max-w-[1600px] mx-auto pb-16">
                       {displayedCreatives.map((ad, idx) => (
                         <div 
                           key={`lib-${ad.adId || idx}`}
@@ -1075,7 +1307,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                           className={cn(
                             "group relative rounded-xl overflow-hidden border transition-all duration-300 cursor-pointer",
                             selectedIds.includes(ad.adId) 
-                              ? "border-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.15)]" 
+                              ? "border-sky-500 shadow-[0_0_20px_rgba(0,102,223,0.15)]" 
                               : "border-white/[0.06] hover:border-white/15 hover:-translate-y-1"
                           )}
                         >
@@ -1085,7 +1317,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                             
                             {/* Score Badge */}
                             <div className="absolute top-2 left-2">
-                               <div className="bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/10 flex items-center gap-1">
+                               <div className="bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-md border border-border flex items-center gap-1">
                                  <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
                                  <span className="text-[10px] font-bold text-white font-mono">{ad.compositeRating || '—'}</span>
                                </div>
@@ -1093,7 +1325,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
 
                             {/* Selection Indicator */}
                             {selectedIds.includes(ad.adId) && (
-                              <div className="absolute inset-0 border-2 border-blue-500/50 rounded-xl pointer-events-none" />
+                              <div className="absolute inset-0 border-2 border-sky-500/50 rounded-xl pointer-events-none" />
                             )}
                              {/* Eye Button (Preview) */}
                              <button 
@@ -1118,7 +1350,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                     {/* Mobile Only Pagination - Bottom of list as requested */}
                     {totalPages > 1 && (
                       <div className="lg:hidden flex justify-center py-6 pb-24">
-                        <div className="flex items-center bg-white/[0.03] backdrop-blur-xl p-2 rounded-2xl border border-white/[0.08] shadow-2xl h-14">
+                        <div className="flex items-center bg-white/[0.03] backdrop-blur-xl p-2 rounded-md border border-white/[0.08] shadow-sm h-14">
                           <button
                             disabled={currentPage === 1}
                             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
@@ -1126,14 +1358,14 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                               "size-10 rounded-xl flex items-center justify-center transition-all",
                               currentPage === 1 
                                 ? "text-zinc-800 cursor-not-allowed opacity-50" 
-                                : "text-zinc-400 hover:text-white"
+                                : "text-muted-foreground hover:text-white"
                             )}
                           >
                             <ChevronLeftIcon className="size-5" />
                           </button>
                           
                           <div className="px-5 flex items-center justify-center min-w-[70px]">
-                            <span className="text-[14px] font-black text-white px-4 py-2 bg-blue-600/10 rounded-lg border border-blue-500/20 shadow-[0_0_20px_rgba(37,99,235,0.1)]">
+                            <span className="text-[14px] font-black text-white px-4 py-2 bg-sky-600/10 rounded-lg border border-sky-500/20 shadow-[0_0_20px_rgba(0,102,223,0.1)]">
                               {currentPage < 10 ? `0${currentPage}` : currentPage}
                             </span>
                           </div>
@@ -1145,7 +1377,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                               "size-10 rounded-xl flex items-center justify-center transition-all",
                               currentPage === totalPages 
                                 ? "text-zinc-800 cursor-not-allowed opacity-50" 
-                                : "text-zinc-400 hover:text-white"
+                                : "text-muted-foreground hover:text-white"
                             )}
                           >
                             <ChevronRightIcon className="size-5" />
@@ -1160,12 +1392,12 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                     "lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-sm z-[100] transition-all duration-500",
                     selectedIds.length > 0 ? "translate-y-0 opacity-100" : "translate-y-24 opacity-0 pointer-events-none"
                   )}>
-                    <div className="bg-zinc-950/90 backdrop-blur-2xl px-4 py-3 rounded-2xl border border-white/[0.1] shadow-2xl flex items-center justify-between gap-4">
+                    <div className="bg-background/90 backdrop-blur-2xl px-4 py-3 rounded-md border border-white/[0.1] shadow-sm flex items-center justify-between gap-4">
                       <div className="flex flex-col items-start min-w-[100px]">
-                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none">{selectedIds.length} SELECTED</span>
+                        <span className="text-[10px] font-black text-sky-400 uppercase tracking-widest leading-none">{selectedIds.length} SELECTED</span>
                         <div className="flex gap-1 mt-1.5">
                           {Array.from({ length: Math.min(selectedIds.length, 3) }).map((_, i) => (
-                            <div key={i} className="size-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] animate-pulse" />
+                            <div key={i} className="size-1.5 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(0,122,255,0.6)] animate-pulse" />
                           ))}
                         </div>
                       </div>
@@ -1174,7 +1406,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                           const ad = creatives.find(c => c.adId === selectedIds[0])
                           if (ad) handleAdCardClick(ad)
                         }}
-                        className="flex-1 bg-blue-600 hover:bg-blue-500 text-white h-11 rounded-xl font-black text-[11px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl border border-blue-400/30"
+                        className="btn-gradient flex-1 text-white h-11 rounded-xl font-black text-[11px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
                       >
                         Analyze Now <ArrowRight className="size-4" />
                       </button>
@@ -1184,17 +1416,16 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
               )}
 
               {activeMainTab !== "top-ads" && (
-                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-3 animate-in fade-in duration-500 min-h-[400px]">
-                  <div className="relative mb-1">
-                    <div className="absolute inset-0 bg-blue-500/5 blur-[60px] rounded-full animate-pulse scale-150" />
-                    <div className="w-16 h-16 rounded-2xl bg-muted/30 border border-border flex items-center justify-center relative z-10 text-primary">
-                      {activeMainTab === "custom" ? <Sparkles className="w-8 h-8" /> : <Settings2 className="w-8 h-8" />}
-                    </div>
+                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 min-h-[400px]">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-border bg-muted text-primary">
+                    {activeMainTab === "custom" ? <Sparkles className="h-6 w-6" /> : <Settings2 className="h-6 w-6" />}
                   </div>
-                  <div className="space-y-1">
-                    <h3 className="text-xl font-bold text-foreground/80">Standby</h3>
-                    <p className="text-[11px] text-muted-foreground font-medium max-w-[280px] mx-auto">
-                      Provide a prompt to begin creative generation.
+                  <div className="space-y-1.5">
+                    <h3 className="text-lg font-semibold tracking-tight">Ready to generate</h3>
+                    <p className="max-w-[320px] text-sm text-muted-foreground">
+                      {activeMainTab === "custom"
+                        ? "Write a brief on the left and hit Generate."
+                        : "Pick a source ad or template to start."}
                     </p>
                   </div>
                 </div>
@@ -1240,7 +1471,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                   {topAdsStep === 'aspects' && (
                     <button
                       onClick={() => setTopAdsStep('generate')}
-                      className="lg:hidden bg-blue-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-all shadow-lg border border-blue-400/30"
+                      className="lg:hidden bg-sky-600 text-white px-4 py-1.5 rounded-lg font-black text-[10px] uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-all shadow-lg border border-sky-400/30"
                     >
                       Next <ArrowRight className="size-3" />
                     </button>
@@ -1256,7 +1487,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                           }}
                           className={cn(
                             "w-7 h-7 rounded-md overflow-hidden border transition-all shrink-0 hover:scale-105",
-                            currentPreviewId === id ? "border-blue-500" : "border-white/10 opacity-50 hover:opacity-100"
+                            currentPreviewId === id ? "border-sky-500" : "border-border opacity-50 hover:opacity-100"
                           )}
                         >
                           <img src={creatives.find(c => c.adId === id)?.thumbnailUrl} className="w-full h-full object-cover" alt="" />
@@ -1264,7 +1495,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                       ))}
                     </div>
                   )}
-                  <div className="text-[10px] font-semibold text-blue-400 bg-blue-500/8 px-3 py-1 rounded-full border border-blue-500/15">
+                  <div className="text-[10px] font-semibold text-sky-400 bg-sky-500/8 px-3 py-1 rounded-full border border-sky-500/15">
                     {selectedIds.length} Locked
                   </div>
                 </div>
@@ -1276,7 +1507,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-5xl mx-auto w-full space-y-4 pb-4">
                     
                     {/* Compact Card */}
-                    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                    <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                       <div className="flex flex-col sm:flex-row gap-0">
                         {/* Image */}
                         <div 
@@ -1296,7 +1527,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                             className={cn(
                               "absolute bottom-2 left-2 right-2 py-1.5 rounded-md text-[9px] font-semibold flex items-center justify-center gap-1 transition-all border backdrop-blur-md cursor-pointer active:scale-95 group/sel",
                               selectedIds.includes(currentPreviewId) 
-                                ? "bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/20" 
+                                ? "bg-sky-600 border-sky-400 text-white shadow-lg shadow-sky-500/20" 
                                 : "bg-white/10 text-white border-white/20 hover:bg-white/20"
                             )}
                           >
@@ -1322,22 +1553,22 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                                 </div>
                               </div>
                             </div>
-                            <div className="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/15">
-                              <span className="text-[9px] font-semibold text-blue-400">Verified</span>
+                            <div className="px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/15">
+                              <span className="text-[9px] font-semibold text-sky-400">Verified</span>
                             </div>
                           </div>
 
                           {fullData[currentPreviewId].verdictSummary && (
                             <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] flex gap-2.5 items-start">
                               <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                              <p className="text-[11px] text-zinc-400 leading-relaxed line-clamp-2">{fullData[currentPreviewId].verdictSummary}</p>
+                              <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{fullData[currentPreviewId].verdictSummary}</p>
                             </div>
                           )}
 
                           {fullData[currentPreviewId].keyInsight && (
                             <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] flex gap-2.5 items-start">
-                              <Lightbulb className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                              <p className="text-[11px] text-zinc-400 leading-relaxed line-clamp-2">{fullData[currentPreviewId].keyInsight}</p>
+                              <Lightbulb className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                              <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{fullData[currentPreviewId].keyInsight}</p>
                             </div>
                           )}
                         </div>
@@ -1345,7 +1576,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                     </div>
 
                     {/* Analysis Tabs */}
-                    <div className="bg-card border border-border rounded-2xl p-4 md:p-5 shadow-sm overflow-hidden">
+                    <div className="bg-card border border-border rounded-xl p-4 md:p-5 shadow-sm overflow-hidden">
                       <Tabs defaultValue="highlights" className="w-full">
                         <TabsList className="bg-muted p-0.5 rounded-xl h-auto w-full flex flex-nowrap overflow-x-auto custom-scrollbar gap-0.5 mb-5 border border-border justify-start">
                           <TabsTrigger value="highlights" className="flex-1 min-w-[100px] text-[10px] font-semibold uppercase tracking-wide rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all py-2.5">DNA Points</TabsTrigger>
@@ -1357,7 +1588,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                         <TabsContent value="highlights" className="space-y-2 outline-none">
                           <div className="flex items-center justify-between mb-3 px-1">
                             <h4 className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">DNA: Winning Elements</h4>
-                            <span className="text-[10px] text-zinc-600">Toggle to include in brief</span>
+                            <span className="text-[10px] text-muted-foreground">Toggle to include in brief</span>
                           </div>
                           {(fullData[currentPreviewId]?.whatWorks || []).map((item: string, i: number) => (
                             <div 
@@ -1380,8 +1611,8 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                         
                         <TabsContent value="aida" className="space-y-3 outline-none">
                           <div className="flex items-center justify-between mb-1 px-1">
-                            <h4 className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider">AIDA Framework Flow</h4>
-                            <span className="text-[10px] text-zinc-600">Select to include in strategy</span>
+                            <h4 className="text-[10px] font-semibold text-sky-400 uppercase tracking-wider">AIDA Framework Flow</h4>
+                            <span className="text-[10px] text-muted-foreground">Select to include in strategy</span>
                           </div>
                           {Object.entries(fullData[currentPreviewId]?.aida || {}).map(([key, val]: any) => (
                             <div 
@@ -1390,25 +1621,25 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                               className={cn(
                                 "p-4 rounded-xl border transition-all cursor-pointer group/aida",
                                 selectedAspects[currentPreviewId]?.aida?.includes(key)
-                                  ? "bg-blue-500/8 border-blue-500/20"
-                                  : "bg-muted/20 border-border text-muted-foreground hover:border-blue-500/20"
+                                  ? "bg-sky-500/8 border-sky-500/20"
+                                  : "bg-muted/20 border-border text-muted-foreground hover:border-sky-500/20"
                               )}
                             >
                               <div className="flex justify-between items-center mb-3">
                                 <div className="flex items-center gap-2.5">
-                                  <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "bg-blue-500 border-blue-500" : "bg-white/5 border-white/[0.08]")}>
+                                  <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "bg-sky-500 border-sky-500" : "bg-white/5 border-white/[0.08]")}>
                                     <CheckCircle2 className={cn("w-2.5 h-2.5 text-white", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "block" : "hidden")} />
                                   </div>
-                                  <span className={cn("text-[11px] font-bold uppercase tracking-wider", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "text-blue-400" : "text-zinc-500 group-hover/aida:text-zinc-400")}>{key}</span>
+                                  <span className={cn("text-[11px] font-bold uppercase tracking-wider", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "text-sky-400" : "text-muted-foreground group-hover/aida:text-muted-foreground")}>{key}</span>
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <div className="w-24 sm:w-32 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(val.score || 0)*10}%` }} />
+                                    <div className="h-full bg-sky-500 rounded-full" style={{ width: `${(val.score || 0)*10}%` }} />
                                   </div>
-                                  <span className="text-xs font-bold font-mono text-blue-400">{val.score}/10</span>
+                                  <span className="text-xs font-bold font-mono text-sky-400">{val.score}/10</span>
                                 </div>
                               </div>
-                              <p className={cn("text-[11px] leading-relaxed", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "text-foreground/80 font-medium" : "text-zinc-500")}>{val.analysis || "Analysis pending."}</p>
+                              <p className={cn("text-[11px] leading-relaxed", selectedAspects[currentPreviewId]?.aida?.includes(key) ? "text-foreground/80 font-medium" : "text-muted-foreground")}>{val.analysis || "Analysis pending."}</p>
                             </div>
                           ))}
                         </TabsContent>
@@ -1416,7 +1647,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                         <TabsContent value="neural" className="grid grid-cols-1 sm:grid-cols-2 gap-3 outline-none">
                           <div className="col-span-full flex items-center justify-between mb-1 px-1">
                             <h4 className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider">Neural & Psychological Context</h4>
-                            <span className="text-[10px] text-zinc-600">Select to influence tone</span>
+                            <span className="text-[10px] text-muted-foreground">Select to influence tone</span>
                           </div>
                           {Object.entries(fullData[currentPreviewId]?.psychology || {}).map(([key, val]: any) => (
                             <div 
@@ -1431,9 +1662,9 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                             >
                               <div className="flex justify-between items-center mb-2">
                                 <span className="text-[11px] font-semibold uppercase tracking-wide">{key.replace(/([A-Z])/g, ' $1')}</span>
-                                <Badge className={cn("text-[9px] font-semibold px-2 py-0.5 rounded-full", val.present ? "text-purple-400 border-purple-400/30 bg-purple-400/8" : "text-zinc-700 border-zinc-700/30")}>{val.strength || 'N/A'}</Badge>
+                                <Badge className={cn("text-[9px] font-semibold px-2 py-0.5 rounded-full", val.present ? "text-purple-400 border-purple-400/30 bg-purple-400/8" : "text-foreground/80 border-zinc-700/30")}>{val.strength || 'N/A'}</Badge>
                               </div>
-                              <p className="text-[11px] leading-relaxed opacity-60">{val.evidence || 'Not detected.'}</p>
+                              <p className="text-[11px] leading-relaxed text-muted-foreground">{val.evidence || 'Not detected.'}</p>
                             </div>
                           ))}
                         </TabsContent>
@@ -1441,7 +1672,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                         <TabsContent value="insights" className="space-y-3 outline-none">
                           <div className="flex items-center justify-between mb-1 px-1">
                             <h4 className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">Growth Recommendations</h4>
-                            <span className="text-[10px] text-zinc-600">Select to imply in creation</span>
+                            <span className="text-[10px] text-muted-foreground">Select to imply in creation</span>
                           </div>
                           {(fullData[currentPreviewId]?.recommendations || []).map((rec: string, i: number) => (
                             <div 
@@ -1462,7 +1693,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                                   <span className={cn("text-[10px] font-bold uppercase tracking-wider", selectedAspects[currentPreviewId]?.recommendations?.includes(i) ? "text-amber-500" : "text-amber-500/40")}>Recommendation #{i+1}</span>
                                   {selectedAspects[currentPreviewId]?.recommendations?.includes(i) && <span className="text-[9px] font-bold bg-amber-500 text-white px-1.5 py-px rounded flex items-center gap-1 uppercase tracking-tighter">Applied</span>}
                                 </div>
-                                <p className={cn("text-[12px] leading-relaxed", selectedAspects[currentPreviewId]?.recommendations?.includes(i) ? "text-foreground font-medium" : "text-zinc-500")}>{rec}</p>
+                                <p className={cn("text-[12px] leading-relaxed", selectedAspects[currentPreviewId]?.recommendations?.includes(i) ? "text-foreground font-medium" : "text-muted-foreground")}>{rec}</p>
                               </div>
                             </div>
                           ))}
@@ -1472,13 +1703,14 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
 
                     {/* Next Step Button — fixed floating at bottom on mobile, inline on desktop */}
                     <div className="flex justify-end pt-6 pb-4">
-                      <button
+                      <Button
+                        size="lg"
                         disabled={selectedIds.length === 0}
                         onClick={() => setTopAdsStep('generate')}
-                        className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all disabled:opacity-40 shadow-lg w-auto"
+                        className="font-semibold gap-2 cursor-pointer disabled:cursor-not-allowed"
                       >
                         Next: Configure Generation <ArrowRight className="w-4 h-4" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -1487,16 +1719,16 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                 {topAdsStep === 'generate' && (
                   <div className="max-w-3xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16 space-y-6">
                     <div className="space-y-2">
-                      <div className="flex items-center gap-1.5 text-[10px] font-semibold text-blue-400 uppercase tracking-widest">
+                      <div className="flex items-center gap-1.5 text-[10px] font-semibold text-sky-400 uppercase tracking-widest">
                         <Settings2 className="w-3 h-3" /> Step 02: Configuration
                       </div>
                       <h2 className="text-2xl font-bold text-foreground">Generation Options</h2>
                       <p className="text-[11px] text-muted-foreground">Configure the parameters for your new creative.</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Ad Type</span>
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ad Type</span>
                         <select 
                           className="w-full h-11 bg-muted/20 border border-border rounded-lg px-4 text-[12px] font-medium text-foreground focus:ring-1 focus:ring-primary/30 outline-none transition-all appearance-none"
                           onChange={(e) => updateTabState('top-ads', { generationOptions: { ...currentTabState.generationOptions, adType: e.target.value } })}
@@ -1508,7 +1740,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Quality Tier</span>
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Quality Tier</span>
                         <select 
                           className="w-full h-11 bg-muted/20 border border-border rounded-lg px-4 text-[12px] font-medium text-foreground focus:ring-1 focus:ring-primary/30 outline-none transition-all appearance-none"
                           onChange={(e) => updateTabState('top-ads', { generationOptions: { ...currentTabState.generationOptions, tier: e.target.value } })}
@@ -1521,7 +1753,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
 
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Target Audience</span>
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Target Audience</span>
                         <textarea 
                            placeholder="e.g. Failed traders looking for fair prop firm"
                            className="w-full h-20 bg-muted/20 border border-border rounded-lg p-4 text-[12px] font-medium text-foreground focus:ring-1 focus:ring-primary/30 outline-none transition-all placeholder:opacity-30 resize-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
@@ -1530,7 +1762,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                         />
                       </div>
                       <div className="space-y-2">
-                        <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Tone / Style Override</span>
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Tone / Style Override</span>
                         <textarea 
                            placeholder="e.g. Bold, meme-friendly, trader-culture"
                            className="w-full h-20 bg-muted/20 border border-border rounded-lg p-4 text-[12px] font-medium text-foreground focus:ring-1 focus:ring-primary/30 outline-none transition-all placeholder:opacity-30 resize-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
@@ -1546,12 +1778,13 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                         <h3 className="text-sm font-bold text-foreground">Ready to Generate</h3>
                         <p className="text-[10px] text-muted-foreground mt-0.5">{selectedIds.length} creatives · {Object.keys(selectedAspects).reduce((acc, k) => acc + (selectedAspects[k]?.whatWorks?.length || 0), 0)} aspects active</p>
                       </div>
-                      <button
+                      <Button
+                        size="lg"
                         onClick={() => handleGenerate()}
-                        className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-lg shrink-0"
+                        className="font-semibold gap-2 shrink-0 cursor-pointer"
                       >
-                        Generate <Sparkles className="w-4 h-4 text-blue-500" />
-                      </button>
+                        Generate <Sparkles className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -1564,7 +1797,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
             const progress = currentTabState.progress;
 
             const stages = [
-              { id: 'input',   label: 'Source Input',       sub: activeMainTab === 'top-ads' ? `${selectedIds.length} creative${selectedIds.length !== 1 ? 's' : ''} selected` : 'Prompt received', color: '#3b82f6', threshold: 0  },
+              { id: 'input',   label: 'Source Input',       sub: activeMainTab === 'top-ads' ? `${selectedIds.length} creative${selectedIds.length !== 1 ? 's' : ''} selected` : 'Prompt received', color: '#007aff', threshold: 0  },
               { id: 'extract', label: 'Pattern Extraction', sub: 'Analyzing winning elements',   color: '#8b5cf6', threshold: 20 },
               { id: 'brief',   label: 'Brief Generation',   sub: 'Synthesizing creative strategy',       color: '#06b6d4', threshold: 45 },
               { id: 'render',  label: 'Visual Rendering',   sub: 'Generating image assets',      color: '#10b981', threshold: 70 },
@@ -1602,7 +1835,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-1 transition-all duration-700"
                     style={{ background: `${activeStage.color}10`, borderColor: `${activeStage.color}30` }}>
                     <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: activeStage.color }} />
-                    <span className="text-[10px] font-bold uppercase tracking-widest transition-colors duration-700" style={{ color: activeStage.color }}>
+                    <span className="text-xs font-medium uppercase tracking-wider transition-colors duration-700" style={{ color: activeStage.color }}>
                       Holaprime Creative Engine · Active
                     </span>
                   </div>
@@ -1717,11 +1950,11 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-2 md:gap-4 w-full">
                   {[
-                    { label: 'Sources',  value: activeMainTab === 'top-ads' ? String(selectedIds.length) : '—', sub: activeMainTab === 'top-ads' ? 'creatives' : 'prompt', color: '#3b82f6' },
+                    { label: 'Sources',  value: activeMainTab === 'top-ads' ? String(selectedIds.length) : '—', sub: activeMainTab === 'top-ads' ? 'creatives' : 'prompt', color: '#007aff' },
                     { label: 'Stage',    value: `${activeIdx + 1}`,  sub: 'of 5 steps',    color: activeStage.color },
                     { label: 'Progress', value: `${Math.floor(progress)}%`, sub: 'complete', color: '#10b981' },
                   ].map((s: any) => (
-                    <div key={s.label} className="p-2 md:p-4 rounded-xl md:rounded-2xl text-center transition-all duration-700 backdrop-blur-md shadow-sm bg-zinc-100/80 border border-zinc-200/50 dark:bg-white/[0.02] dark:border-white/[0.04]"
+                    <div key={s.label} className="p-2 md:p-4 rounded-xl md:rounded-md text-center transition-all duration-700 backdrop-blur-md shadow-sm bg-zinc-100/80 border border-border/50 dark:bg-white/[0.02] dark:border-white/[0.04]"
                       style={{ boxShadow: `0 8px 32px 0 rgba(0,0,0,0.03)` }}>
                       <div className="text-[7px] md:text-[9px] font-bold uppercase tracking-widest mb-1 md:mb-1.5" style={{ color: s.color, opacity: 0.7 }}>{s.label}</div>
                       <div className="text-lg md:text-2xl font-black font-mono" style={{ color: s.color }}>{s.value}</div>
@@ -1741,7 +1974,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className={cn("w-1.5 h-1.5 rounded-full bg-blue-500", pausedTabsRef.current.has(activeMainTab) ? "opacity-50" : "animate-pulse")} />
+                      <div className={cn("w-1.5 h-1.5 rounded-full bg-sky-500", pausedTabsRef.current.has(activeMainTab) ? "opacity-50" : "animate-pulse")} />
                       <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">
                         {pausedTabsRef.current.has(activeMainTab) ? 'Pipeline Paused' : 'Processing pipeline'}
                       </span>
@@ -1757,7 +1990,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                           }
                           forceUpdate({})
                         }}
-                        className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all hover:text-blue-500 text-muted-foreground/60 px-2 py-1 rounded-md hover:bg-muted/50 border border-transparent hover:border-border"
+                        className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all hover:text-sky-500 text-muted-foreground/60 px-2 py-1 rounded-md hover:bg-muted/50 border border-transparent hover:border-border"
                       >
                         {pausedTabsRef.current.has(activeMainTab) ? (
                           <><Play className="w-3 h-3" /> Resume</>
@@ -1881,7 +2114,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                                  "w-6 h-6 rounded-md flex items-center justify-center transition-all active:scale-90",
                                  feedbackState[v.id] === 'like'
                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                   : "text-zinc-600 hover:text-emerald-400 hover:bg-emerald-500/10"
+                                   : "text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10"
                                )}
                                title="Like — more like this"
                              >
@@ -1893,7 +2126,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                                  "w-6 h-6 rounded-md flex items-center justify-center transition-all active:scale-90",
                                  feedbackState[v.id] === 'dislike'
                                    ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                                   : "text-zinc-600 hover:text-rose-400 hover:bg-rose-500/10"
+                                   : "text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
                                )}
                                title="Dislike — avoid this style"
                              >
@@ -1915,7 +2148,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                    {activeVariant?.score && (
                      <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 text-[9px] text-muted-foreground overflow-x-auto">
                        {/* Content */}
-                       <span className="text-[8px] font-bold text-blue-400/50 uppercase shrink-0">Content</span>
+                       <span className="text-[8px] font-bold text-sky-400/50 uppercase shrink-0">Content</span>
                        <span className="flex items-center gap-1 shrink-0">Text <span className="font-bold text-foreground">{activeVariant.score.textAccuracy}/10</span></span>
                        {activeVariant.score.messageClarity != null && (
                          <span className="flex items-center gap-1 shrink-0">Clarity <span className="font-bold text-foreground">{activeVariant.score.messageClarity}/10</span></span>
@@ -2000,7 +2233,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                         updateTabState(activeMainTab, { result: null, mode: activeMainTab === 'top-ads' ? 'ad-details' : 'standby', progress: 0 });
                         if (activeMainTab === 'top-ads') setTopAdsStep('generate');
                       }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-xl border border-white/10 hover:bg-rose-500/25 hover:border-rose-400/50 transition-all shadow-xl"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-xl border border-border hover:bg-rose-500/25 hover:border-rose-400/50 transition-all shadow-sm"
                     >
                       <div className="w-4 h-4 rounded-full bg-rose-500/20 border border-rose-400/40 flex items-center justify-center">
                         <X className="w-2.5 h-2.5 text-rose-400" />
@@ -2014,7 +2247,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                     <Badge className="bg-primary/10 border-primary/30 text-[9px] font-semibold px-3 py-1 rounded-full backdrop-blur-xl text-primary pointer-events-auto">
                       {isImprovement ? 'Version 2 — Improvement Based' : 'Generated Creative'}
                     </Badge>
-                    <h2 className="text-2xl font-bold text-foreground drop-shadow-xl line-clamp-2">{headline}</h2>
+                    <h2 className="text-2xl font-bold text-foreground drop-shadow-sm line-clamp-2">{headline}</h2>
                   </div>
 
                   {/* Action buttons — 2xl+ only overlay */}
@@ -2112,7 +2345,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
             const improvementSummary = r.creativeConcept?.improvementSummary || r.creativeConcept?.rationale || '';
             const primaryTrigger    = r.psychologyBlueprint?.primaryTrigger || '';
             const scoreNum  = typeof score === 'number' ? score : (parseFloat(String(score)) || 8.5);
-            const scoreColor = scoreNum >= 9 ? '#10b981' : scoreNum >= 8 ? '#3b82f6' : scoreNum >= 7 ? '#f59e0b' : '#ef4444';
+            const scoreColor = scoreNum >= 9 ? '#10b981' : scoreNum >= 8 ? '#007aff' : scoreNum >= 7 ? '#f59e0b' : '#ef4444';
 
             const handleCopyText = () => {
               const fullCopy = [headline, hookText, bodyText, ctaText, urgency].filter(Boolean).join('\n\n');
@@ -2167,9 +2400,9 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                        <span className="text-[8px] opacity-50 mt-0.5">Vision scored</span>
                      )}
                   </div>
-                  <div className="flex-1 p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex flex-col justify-center">
-                     <span className="text-[9px] font-semibold text-blue-400/60 uppercase tracking-wider">Tier</span>
-                     <div className="text-lg font-bold text-blue-400 capitalize">
+                  <div className="flex-1 p-4 rounded-xl bg-sky-500/5 border border-sky-500/10 flex flex-col justify-center">
+                     <span className="text-[9px] font-semibold text-sky-400/60 uppercase tracking-wider">Tier</span>
+                     <div className="text-lg font-bold text-sky-400 capitalize">
                        {tier}
                      </div>
                   </div>
@@ -2182,7 +2415,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
 
         {/* Global Image Popup Modal */}
         {previewImagePopup && (
-          <EnlargedImageModal 
+          <EnlargedImageModal
             url={previewImagePopup.url}
             title={previewImagePopup.title || "Ad Preview"}
             onClose={() => setPreviewImagePopup(null)}
@@ -2190,6 +2423,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
         )}
 
       </main>
+        )}
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
@@ -2212,15 +2446,15 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
         open={!!regenerateConfirm} 
         onOpenChange={(open) => !open && setRegenerateConfirm(null)}
       >
-        <SheetContent side="right" className="w-[400px] sm:w-[500px] p-0 border-l border-white/[0.08] bg-zinc-950 text-white overflow-hidden flex flex-col">
-          <SheetHeader className="p-6 border-b border-white/[0.04] bg-zinc-900/50">
+        <SheetContent side="right" className="w-full sm:w-[400px] md:w-[500px] sm:max-w-[90vw] p-0 border-l border-white/[0.08] bg-background text-white overflow-hidden flex flex-col">
+          <SheetHeader className="p-6 border-b border-white/[0.04] bg-card/50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <RefreshCcw className="w-5 h-5 text-blue-400" />
+              <div className="w-10 h-10 rounded-xl bg-sky-500/20 flex items-center justify-center">
+                <RefreshCcw className="w-5 h-5 text-sky-400" />
               </div>
               <div>
                 <SheetTitle className="text-xl font-bold text-white tracking-tight">Refine Creative</SheetTitle>
-                <SheetDescription className="text-zinc-500 text-[11px] font-semibold uppercase tracking-wider">
+                <SheetDescription className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider">
                   Update requirements and generate a new version
                 </SheetDescription>
               </div>
@@ -2230,7 +2464,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
           <div className="flex-1 overflow-y-auto px-6 py-8 space-y-10 custom-scrollbar">
             {/* Previous Requirements Display */}
             <div className="space-y-3">
-              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+              <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                 <Database className="w-3 h-3" /> Previous Requirement
               </Label>
               <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[13px] text-white/50 leading-relaxed font-normal italic">
@@ -2240,19 +2474,19 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
 
             {/* New Requirement Input */}
             <div className="space-y-4">
-              <Label className="text-[10px] font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+              <Label className="text-[10px] font-bold text-sky-400 uppercase tracking-widest flex items-center gap-2">
                 <Sparkles className="w-3 h-3" /> New Requirement
               </Label>
               <Textarea 
                 value={regenerateConfirm?.newRequirement || ""}
                 onChange={(e) => setRegenerateConfirm(prev => prev ? { ...prev, newRequirement: e.target.value } : null)}
                 placeholder="What should be changed or improved?"
-                className="min-h-[180px] bg-white/[0.03] border-white/[0.08] focus:border-blue-500/50 rounded-xl p-4 text-[14px] leading-relaxed resize-none text-white placeholder:text-zinc-600 outline-none ring-0 focus-visible:ring-0 transition-all shadow-inner"
+                className="min-h-[180px] bg-white/[0.03] border-white/[0.08] focus:border-sky-500/50 rounded-xl p-4 text-[14px] leading-relaxed resize-none text-white placeholder:text-muted-foreground outline-none ring-0 focus-visible:ring-0 transition-all shadow-inner"
               />
             </div>
           </div>
 
-          <SheetFooter className="p-6 border-t border-white/[0.04] bg-zinc-900/50">
+          <SheetFooter className="p-6 border-t border-white/[0.04] bg-card/50">
             <Button 
               onClick={() => {
                 if (regenerateConfirm) {
@@ -2270,7 +2504,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                 }
               }}
               disabled={currentTabState.isGenerating || !regenerateConfirm?.newRequirement?.trim()}
-              className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-blue-500/20 active:scale-95 border-t border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-14 bg-sky-600 hover:bg-sky-500 text-white rounded-md font-black text-xs uppercase tracking-widest transition-all shadow-sm shadow-sky-500/20 active:scale-95 border-t border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Generate
             </Button>
