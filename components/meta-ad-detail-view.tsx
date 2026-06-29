@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useToast } from "@/hooks/use-toast"
 import {
     Sparkles,
     X,
@@ -14,9 +15,6 @@ import {
     AlertCircle,
     Layers,
     Activity,
-    RefreshCcw,
-    Loader2,
-    Download,
     Brain,
     ChevronDown,
     ChevronRight
@@ -25,8 +23,10 @@ import { AdData } from "@/lib/types"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { useToast } from "@/hooks/use-toast"
 import MetricsGrid from "./metrics-grid"
+import ScoresSection from "./scores-section"
+import InsightsSection from "./insights-section"
+import ScoreRadarChart from "./score-radar-chart"
 
 interface MetaAdDetailViewProps {
     ad: AdData
@@ -182,7 +182,7 @@ function HeuristicsGrid({ heuristics }: { heuristics: any }) {
             <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
                 {entries.map(([key, val]: any) => {
                     const score = Number(val.score) || 0
-                    const color = score >= 8 ? "bg-emerald-500" : score >= 6 ? "bg-sky-500" : score >= 4 ? "bg-amber-500" : "bg-rose-500"
+                    const color = score >= 8 ? "bg-emerald-500" : score >= 4 ? "bg-sky-500" : "bg-rose-500"
                     return (
                         <div key={key} className="p-2.5 rounded-md bg-background border border-border">
                             <div className="flex items-center justify-between mb-1.5">
@@ -491,13 +491,11 @@ function LeverRow({ name, lever }: { name: string, lever: any }) {
         const score = Number(lever.score) || 0
         const scoreColor =
             score >= 8 ? "text-emerald-500" :
-            score >= 6 ? "text-sky-500" :
-            score >= 4 ? "text-amber-500" :
+            score >= 4 ? "text-sky-500" :
             "text-rose-500"
         const barColor =
             score >= 8 ? "bg-emerald-500" :
-            score >= 6 ? "bg-sky-500" :
-            score >= 4 ? "bg-amber-500" :
+            score >= 4 ? "bg-sky-500" :
             "bg-rose-500"
         return (
             <div className="space-y-1">
@@ -559,12 +557,12 @@ function LensCard({ name, lens }: { name: string, lens: any }) {
     const tier = avg === null ? "neutral" : avg >= 7 ? "high" : avg >= 5 ? "mid" : "low"
     const tierBg =
         tier === "high" ? "bg-emerald-500/5 border-emerald-500/20" :
-        tier === "mid" ? "bg-amber-500/5 border-amber-500/20" :
+        tier === "mid" ? "bg-sky-500/5 border-sky-500/20" :
         tier === "low" ? "bg-rose-500/5 border-rose-500/20" :
         "bg-card border-border"
     const tierText =
         tier === "high" ? "text-emerald-500" :
-        tier === "mid" ? "text-amber-500" :
+        tier === "mid" ? "text-sky-500" :
         tier === "low" ? "text-rose-500" :
         "text-muted-foreground"
 
@@ -592,7 +590,7 @@ function LensCard({ name, lens }: { name: string, lens: any }) {
                             <div
                                 className={cn("h-full",
                                     tier === "high" ? "bg-emerald-500" :
-                                    tier === "mid" ? "bg-amber-500" : "bg-rose-500")}
+                                    tier === "mid" ? "bg-sky-500" : "bg-rose-500")}
                                 style={{ width: `${avg * 10}%` }}
                             />
                         </div>
@@ -832,6 +830,14 @@ function SummaryTab({ ad, formatCurrency, benchmark, onSelectMetric, activeAnaly
 }
 
 function PerformanceTab({ ad, onSelectMetric, activeAnalysis }: { ad: AdData, onSelectMetric?: (l: string) => void, activeAnalysis: any }) {
+    // Group the metrics into readable categories so the footer reference fills
+    // the space below the grid with something genuinely useful instead of a void.
+    const groups: { title: string; items: string[] }[] = [
+        { title: "Efficiency", items: ["ROAS", "CPC", "CPM"] },
+        { title: "Volume", items: ["Spend", "Impressions", "Clicks", "Reach"] },
+        { title: "Quality", items: ["CTR", "Frequency"] },
+    ]
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="bg-zinc-50/30 dark:bg-white/[0.01] p-4 rounded-md border border-zinc-100 dark:border-border">
@@ -841,6 +847,36 @@ function PerformanceTab({ ad, onSelectMetric, activeAnalysis }: { ad: AdData, on
                     selectedMetricLabel={activeAnalysis?.type === 'metric' ? activeAnalysis.name : null}
                 />
             </div>
+
+            {/* Reference footer — explains the figures and groups the metrics so
+                the lower area reads as a finished section rather than blank space. */}
+            <Card className="p-4 md:p-5 bg-card border-border rounded-xl">
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 rounded-md bg-sky-500/10 text-sky-500">
+                        <Info className="h-3.5 w-3.5" />
+                    </div>
+                    <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">About these metrics</h4>
+                </div>
+                <p className="text-[11px] md:text-[12px] text-muted-foreground leading-relaxed">
+                    Figures reflect this creative's lifetime performance from the connected Meta ad account,
+                    using Meta's default attribution window (7-day click · 1-day view). A value of zero means
+                    no spend or activity has been recorded for this ad in the selected range yet.
+                </p>
+                <div className="mt-4 grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+                    {groups.map((g) => (
+                        <div key={g.title} className="rounded-md bg-background border border-border p-3">
+                            <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-2">{g.title}</p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {g.items.map((m) => (
+                                    <span key={m} className="px-1.5 py-0.5 rounded border border-border bg-card text-[9px] font-bold text-muted-foreground uppercase tracking-wide">
+                                        {m}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </Card>
         </div>
     )
 }
@@ -985,6 +1021,9 @@ export default function MetaAdDetailView({
     const tabs = [
         { id: 'summary', label: 'Brief', icon: Sparkles, color: 'text-sky-500', bgColor: 'bg-sky-500/10' },
         { id: 'performance', label: 'Performance', icon: Activity, color: 'text-sky-500', bgColor: 'bg-sky-50/50' },
+        { id: 'footprint', label: 'Design footprint', icon: BarChart3, color: 'text-sky-500', bgColor: 'bg-sky-500/10' },
+        { id: 'intelligence', label: 'Creative intelligence', icon: Zap, color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
+        { id: 'insights', label: 'AI insights', icon: Brain, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
         { id: 'variants', label: 'Variants', icon: MessageSquare, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
     ]
 
@@ -1150,17 +1189,24 @@ export default function MetaAdDetailView({
 
     return (
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 h-full min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-4 lg:pb-10 pt-2 lg:pt-4">
-            {/* Unique Vertical Navigation - Meta Specific Sidebar */}
+            {/* Vertical sidebar — ad preview on top, section tabs below */}
             <div className="hidden lg:flex flex-col w-64 shrink-0 gap-6">
                 <div className="sticky top-0 space-y-6">
-                    <div className="px-4 py-3 bg-card/50 rounded-xl border border-zinc-100 dark:border-border">
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-sky-600" />
-                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Meta Intelligence</h4>
+                    {/* Ad preview */}
+                    <div className="p-4 rounded-md bg-background border border-border shadow-sm relative overflow-hidden group/ad">
+                        <div
+                            className="aspect-square rounded-xl overflow-hidden mb-3 border border-border cursor-pointer shadow-lg transition-transform duration-500 hover:scale-[1.02]"
+                            onClick={() => onEnlargeImage?.(ad.thumbnailUrl, ad.adName)}
+                        >
+                            <img src={ad.thumbnailUrl} alt={ad.adName} className="w-full h-full object-cover" />
                         </div>
-                        <p className="text-[9px] font-bold text-muted-foreground">Creative Control Center</p>
+                        <div className="space-y-1 min-w-0">
+                            <h5 className="text-[10px] font-bold text-foreground truncate leading-tight">{ad.adName}</h5>
+                            <p className="text-[8px] font-mono text-muted-foreground truncate uppercase">ID: {ad.adId.slice(0, 10)}...</p>
+                        </div>
                     </div>
 
+                    {/* Section tabs */}
                     <div className="space-y-1">
                         {tabs.map((tab) => {
                             const Icon = tab.icon
@@ -1197,89 +1243,6 @@ export default function MetaAdDetailView({
                             )
                         })}
                     </div>
-
-                    <div className="p-4 rounded-md bg-background border border-border shadow-sm relative overflow-hidden group/ad">
-                        <div
-                            className="aspect-square rounded-xl overflow-hidden mb-3 border border-border cursor-pointer shadow-lg transition-transform duration-500 hover:scale-[1.02]"
-                            onClick={() => onEnlargeImage?.(ad.thumbnailUrl, ad.adName)}
-                        >
-                            <img src={ad.thumbnailUrl} alt={ad.adName} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="space-y-1 min-w-0">
-                            <h5 className="text-[10px] font-bold text-foreground truncate leading-tight">{ad.adName}</h5>
-                            <p className="text-[8px] font-mono text-muted-foreground truncate uppercase">ID: {ad.adId.slice(0, 10)}...</p>
-                        </div>
-                    </div>
-
-                    {/* Enrich button — pulls fresh metrics from Meta Insights API.
-                        Adds outbound_clicks, purchase actions, ROAS rankings,
-                        retention curve (video), etc. After this lands the next
-                        Re-analyze has way more KPIs to diagnose against. */}
-                    {!isReanalyzing && (
-                        <button
-                            onClick={handleEnrichMetrics}
-                            disabled={isEnriching}
-                            className={cn(
-                                "w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-md transition-all duration-200 border text-[11px] font-black uppercase tracking-wider",
-                                isEnriching
-                                    ? "bg-emerald-600/10 border-emerald-600/20 text-emerald-600 cursor-wait"
-                                    : "bg-card hover:bg-emerald-600 hover:text-white border-border hover:border-emerald-600 text-foreground active:scale-[0.98] shadow-sm cursor-pointer"
-                            )}
-                            title="Pull fresh Phase-2 metrics from Meta Insights API: outbound_clicks, purchase actions, ROAS rankings, video retention. Unlocks real per-stage funnel diagnosis."
-                        >
-                            {isEnriching ? (
-                                <>
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    <span>Fetching from Meta…</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Download className="h-3.5 w-3.5" />
-                                    <span>Enrich Metrics</span>
-                                </>
-                            )}
-                        </button>
-                    )}
-
-                    {/* Re-analyze button — runs the v2 prop-firm-aware analyzer.
-                        During the wait it expands into a live progress card so
-                        you can see which phase the analyzer is in instead of
-                        staring at a frozen spinner for 30-90s. */}
-                    {isReanalyzing && reanalyzeStep ? (
-                        <div className="w-full rounded-md border border-sky-500/30 bg-sky-500/5 p-3 space-y-2.5">
-                            <div className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-sky-500 shrink-0" />
-                                    <span className="text-[10px] font-black text-sky-500 uppercase tracking-widest truncate">
-                                        {reanalyzeStep.label}
-                                    </span>
-                                </div>
-                                <span className="text-[9px] font-mono font-bold text-muted-foreground tabular-nums shrink-0">
-                                    {Math.round(reanalyzeElapsed)}s
-                                </span>
-                            </div>
-                            <div className="h-1 w-full bg-sky-500/10 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-sky-500 rounded-full transition-all duration-500 ease-linear"
-                                    style={{ width: `${Math.min(98, reanalyzeStep.pct)}%` }}
-                                />
-                            </div>
-                            <p className="text-[8px] font-medium text-muted-foreground leading-relaxed italic">
-                                Don't close this tab — the page will refresh automatically when complete.
-                            </p>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={handleReanalyze}
-                            disabled={isReanalyzing}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl transition-all duration-200 border text-[11px] font-black uppercase tracking-wider bg-card hover:bg-sky-600 hover:text-white border-border hover:border-sky-600 text-foreground active:scale-[0.98] shadow-sm cursor-pointer"
-                            title="Re-run the analyzer using the 5-lens × 5-funnel framework. Scores 5 psychology lenses (consumer / behavioral econ / advertising / neuromarketing / behavioral psych) and maps levers to 5 funnel stages (hook / hold / CTR / CVR / fatigue) — diagnosing which lever broke at which stage."
-                        >
-                            <RefreshCcw className="h-3.5 w-3.5" />
-                            <span>Re-analyze</span>
-                        </button>
-                    )}
-
                 </div>
             </div>
 
@@ -1312,9 +1275,6 @@ export default function MetaAdDetailView({
                         <div className="sticky top-0 z-40 pb-3 pt-2 mb-4 lg:mb-6">
                             <div className="bg-white/90 dark:bg-[#09090b]/95 backdrop-blur-xl border border-border/50 dark:border-border shadow-sm rounded-xl p-3.5 md:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 transition-all duration-300 relative">
                                 <div className="flex items-center gap-3 min-w-0 flex-1 pr-10 sm:pr-0">
-                                    <div className={cn("flex flex-shrink-0 items-center justify-center w-9 h-9 md:w-10 md:h-10 border border-zinc-100 dark:border-border rounded-xl shadow-inner", activeTabObj.bgColor)}>
-                                        <ActiveTabIcon className={cn("h-4 w-4 md:h-5 md:w-5 transition-colors duration-300", activeTabObj.color)} />
-                                    </div>
                                     <div className="space-y-0.5 md:space-y-1 min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
                                             <Badge variant="outline" className={cn(
@@ -1344,8 +1304,10 @@ export default function MetaAdDetailView({
                                             <span className="text-[10px] md:text-xs font-bold font-mono tracking-tighter text-foreground">{formatCurrency(ad.spend)}</span>
                                         </div>
                                         <div className="flex flex-col pl-1">
-                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-500 mb-0.5">Efficiency</span>
-                                            <span className="text-[10px] md:text-xs font-bold font-mono tracking-tighter text-sky-600 dark:text-sky-400">{ad.ctr}% CTR</span>
+                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground dark:text-muted-foreground mb-0.5">ROAS</span>
+                                            <span className="text-[10px] md:text-xs font-bold font-mono tracking-tighter text-foreground">
+                                                {(Number(ad.spend) > 0 ? (Number(ad.purchaseValue || 0) / Number(ad.spend)) : 0).toFixed(2)}x
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -1367,6 +1329,33 @@ export default function MetaAdDetailView({
                                 onSelectMetric={onSelectMetric}
                                 activeAnalysis={activeAnalysis}
                             />
+                        )}
+                        {activeTab === 'footprint' && (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                <Card className="p-4 md:p-6 bg-card border-border rounded-xl">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="p-1.5 rounded-md bg-sky-500/10 text-sky-500"><BarChart3 className="h-3.5 w-3.5" /></div>
+                                        <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Design footprint</h4>
+                                    </div>
+                                    <div className="min-h-[360px]">
+                                        <ScoreRadarChart adData={ad} benchmark={benchmark} />
+                                    </div>
+                                </Card>
+                            </div>
+                        )}
+                        {activeTab === 'intelligence' && (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                <ScoresSection
+                                    adData={ad}
+                                    onSelectScore={onSelectScore || (() => { })}
+                                    selectedScoreName={activeAnalysis?.type === 'score' ? activeAnalysis.name : null}
+                                />
+                            </div>
+                        )}
+                        {activeTab === 'insights' && (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                <InsightsSection adData={ad} />
+                            </div>
                         )}
                         {activeTab === 'variants' && <VariantsTab ad={ad} />}
                     </div>

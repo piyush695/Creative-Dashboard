@@ -54,25 +54,28 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
   ].filter(r => r.text)
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex items-center gap-2 mb-2">
-        <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-        <h3 className="text-xl font-black text-foreground tracking-tight uppercase opacity-80">Intelligence Analysis</h3>
+    <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-500">
+      <div className="flex items-center gap-2">
+        <div className="p-1.5 rounded-md bg-purple-500/10 text-purple-500"><Sparkles className="h-3.5 w-3.5" /></div>
+        <div>
+          <h2 className="text-sm font-bold tracking-tight text-foreground">AI insights</h2>
+          <p className="text-xs text-muted-foreground">Key takeaways, strengths, gaps and recommended next steps.</p>
+        </div>
       </div>
 
       {/* Primary Key Insight */}
-      <Card className="relative overflow-hidden border border-border bg-card transition-colors group rounded-lg">
-        <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
-        <CardHeader className="pb-2 px-6 pt-6">
-          <div className="flex gap-4 items-center">
-            <div className="p-3 rounded-lg bg-primary/10 shadow-inner">
-              <Lightbulb className="h-6 w-6 text-primary transition-transform group-hover:rotate-12 duration-500" />
+      <Card className="relative overflow-hidden border border-border bg-card transition-colors group rounded-xl">
+        <div className="absolute top-0 left-0 w-1 h-full bg-sky-500" />
+        <CardHeader className="pb-2 px-5 pt-5">
+          <div className="flex gap-3 items-center">
+            <div className="p-1.5 rounded-md bg-sky-500/10">
+              <Lightbulb className="h-4 w-4 text-sky-500" />
             </div>
-            <CardTitle className="text-lg font-black uppercase tracking-widest text-foreground">Strategic Intelligence</CardTitle>
+            <CardTitle className="text-sm font-semibold tracking-tight text-foreground">Strategic intelligence</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="px-6 pb-6">
-          <p className="text-base md:text-lg text-foreground/80 leading-relaxed font-black tracking-tight">
+        <CardContent className="px-5 pb-5">
+          <p className="text-[13px] md:text-sm text-muted-foreground leading-relaxed">
             {typeof insight === 'object' ? JSON.stringify(insight) : insight}
           </p>
         </CardContent>
@@ -89,7 +92,7 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
               <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-500/20">
                 <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <CardTitle className="text-base font-black uppercase tracking-wider text-foreground dark:text-zinc-100">What's Working</CardTitle>
+              <CardTitle className="text-[13px] font-semibold tracking-tight text-foreground">What's working</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="px-6 pb-6">
@@ -114,7 +117,7 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
               <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/20">
                 <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               </div>
-              <CardTitle className="text-base font-black uppercase tracking-wider text-foreground dark:text-zinc-100">Areas to Improve</CardTitle>
+              <CardTitle className="text-[13px] font-semibold tracking-tight text-foreground">Areas to improve</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="px-6 pb-6">
@@ -135,8 +138,8 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
         <Card className="border border-border bg-card relative overflow-hidden group rounded-lg">
           <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[150%] bg-primary opacity-[0.05] dark:opacity-[0.1] blur-[100px] pointer-events-none transition-all duration-1000" />
           <CardHeader className="px-6 pt-6 pb-4">
-            <CardTitle className="text-xl font-black uppercase tracking-[0.3em] text-primary">Creative Blueprint</CardTitle>
-            <CardDescription className="text-muted-foreground/70 font-black uppercase tracking-[0.2em] text-[10px]">Iterative Optimization Framework</CardDescription>
+            <CardTitle className="text-sm font-semibold tracking-tight text-foreground">Creative blueprint</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">Iterative optimization framework</CardDescription>
           </CardHeader>
           <CardContent className="px-6 pb-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -174,9 +177,9 @@ export default function InsightsSection({ adData }: InsightsSectionProps) {
 
       {/* Actionable Recommendations */}
       <div className="space-y-4 pt-4">
-        <h4 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground inline-flex items-center gap-2">
-          Recommended Optimization Steps <TrendingUp className="h-3.5 w-3.5" />
-        </h4>
+        <h3 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground inline-flex items-center gap-2">
+          Recommended optimization steps <TrendingUp className="h-3.5 w-3.5" />
+        </h3>
         <div className="space-y-4">
           {recommendations.map((rec, idx) => (
             <div key={idx} className="flex flex-col gap-4 p-5 rounded-lg bg-card border border-border hover:bg-accent transition-colors group/rec">

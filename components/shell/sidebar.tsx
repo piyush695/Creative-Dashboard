@@ -94,7 +94,7 @@ function SidebarBody({
   onAddPlatform: () => void;
 }) {
   const isActive = useIsActive();
-  const { enabledPlatforms, isAdmin } = usePlatforms();
+  const { enabledPlatforms } = usePlatforms();
 
   // Sections start collapsed for a cleaner look — they expand only when the
   // user clicks the header. (On the narrow rail, items always show as icons.)
@@ -165,16 +165,14 @@ function SidebarBody({
                   onNavigate={onNavigate}
                 />
               ))}
-              {isAdmin && (
-                <AddPlatformButton
-                  collapsed={collapsed}
-                  onClick={() => {
-                    // Close the mobile drawer (if open) before the picker opens.
-                    onNavigate?.();
-                    onAddPlatform();
-                  }}
-                />
-              )}
+              <AddPlatformButton
+                collapsed={collapsed}
+                onClick={() => {
+                  // Close the mobile drawer (if open) before the picker opens.
+                  onNavigate?.();
+                  onAddPlatform();
+                }}
+              />
             </ul>
           )}
         </div>

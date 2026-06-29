@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HolaPrime — Dashboard Wireframes</title>
+<style>
+  :root{
+    --ink:#1f2328; --muted:#6b7280; --faint:#9aa1ab;
+    --line:#e5e7eb; --line2:#d7dbe0; --surface:#ffffff; --bg:#eef0f3;
+    --skel:#e7eaee; --dash:#c3cad3; --accent:#4285F4;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  /* ---- viewer chrome (screen only) ---- */
+  .bar{position:sticky;top:0;z-index:50;background:#0f1216;color:#fff;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 18px;}
+  .bar h1{font-size:15px;font-weight:600;margin:0;letter-spacing:.2px}
+  .bar .sp{flex:1}
+  .seg{display:flex;background:#1c2128;border-radius:8px;padding:3px}
+  .seg button{background:none;border:none;color:#aab2bd;font-size:13px;
+    padding:6px 12px;border-radius:6px;cursor:pointer}
+  .seg button.on{background:#2b333d;color:#fff}
+  .bar .pbtn{background:#2b6cf0;border:none;color:#fff;font-size:13px;
+    padding:7px 14px;border-radius:7px;cursor:pointer}
+  .hint{max-width:1180px;margin:14px auto 0;padding:0 18px;color:#5b6470;font-size:12.5px}
+  /* ---- stage ---- */
+  .stage{max-width:1180px;margin:0 auto;padding:18px;display:flex;flex-direction:column;gap:28px}
+  .blk{}
+  .blk .cap{font-size:12px;font-weight:600;letter-spacing:.12em;color:#7a828d;
+    text-transform:uppercase;margin:0 0 8px 2px}
+  .row{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+  /* device frames */
+  .frame{background:var(--surface);border:1px solid var(--line2);border-radius:14px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .desktop{flex:1;min-width:640px}
+  .mobile{width:330px;flex:none}
+  /* app shell */
+  .app{display:flex;min-height:560px}
+  .sb{width:208px;flex:none;background:#f7f8fa;border-right:1px solid var(--line);
+    display:flex;flex-direction:column;padding:0}
+  .brand{height:56px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:0}
+  .brand b{font-size:15px;font-weight:700;line-height:1}
+  .brand span{font-size:7.5px;letter-spacing:.16em;color:var(--faint);text-transform:uppercase;margin-top:2px}
+  .nav{padding:10px 8px;display:flex;flex-direction:column;gap:2px;flex:1}
+  .grp{font-size:10px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;
+    padding:12px 8px 4px;display:flex;align-items:center;gap:6px}
+  .item{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;
+    font-size:13px;color:#41474f;cursor:default}
+  .item.on{background:#e9f0fe;color:#1a56d6;font-weight:600}
+  .item .ic{width:16px;height:16px;flex:none;color:inherit}
+  .dot{width:15px;height:15px;border-radius:5px;flex:none;display:inline-block}
+  .sb .foot{border-top:1px solid var(--line);padding:8px}
+  .collapse{display:flex;align-items:center;gap:8px;color:var(--faint);font-size:12px;padding:8px 9px}
+  /* main */
+  .main{flex:1;display:flex;flex-direction:column;background:var(--surface);min-width:0}
+  .top{height:56px;border-bottom:1px solid var(--line);display:flex;align-items:center;
+    gap:12px;padding:0 16px}
+  .srch{flex:1;height:34px;border:1px solid var(--line);border-radius:8px;display:flex;
+    align-items:center;gap:8px;padding:0 11px;color:var(--faint);font-size:13px}
+  .content{padding:18px;display:flex;flex-direction:column;gap:16px;overflow:hidden}
+  /* page header */
+  .ph{display:flex;align-items:center;gap:10px}
+  .ph h2{margin:0;font-size:18px;font-weight:700}
+  .live{font-size:10px;color:#0a7d4f;border:1px solid #bfe6d2;background:#eafaf1;
+    border-radius:6px;padding:2px 7px;display:inline-flex;align-items:center;gap:4px}
+  .live i{width:6px;height:6px;border-radius:50%;background:#12b76a;display:inline-block}
+  .range{margin-left:auto;display:flex;gap:6px}
+  .range span{font-size:12px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;color:var(--muted)}
+  .range span.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .sub{font-size:12.5px;color:var(--muted);margin:-6px 0 2px}
+  /* metric cards */
+  .metrics{display:grid;gap:10px}
+  .m6{grid-template-columns:repeat(3,1fr)}
+  .m4{grid-template-columns:repeat(4,1fr)}
+  .mc{background:#f7f8fa;border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+  .mc .l{font-size:11.5px;color:var(--muted)}
+  .mc .v{font-size:21px;font-weight:700;margin-top:3px;letter-spacing:-.2px}
+  .mc .s{height:7px;border-radius:4px;background:var(--skel);margin-top:9px}
+  /* tabs */
+  .tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);overflow-x:auto}
+  .tab{background:none;border:none;border-bottom:2px solid transparent;padding:9px 2px;
+    font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+  .tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+  .panel{padding-top:14px}
+  /* generic blocks */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .card h4{margin:0 0 2px;font-size:13px;font-weight:600}
+  .card .cs{font-size:11.5px;color:var(--muted);margin:0 0 10px}
+  .grid2{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+  .dashbox{border:1.5px dashed var(--dash);border-radius:8px;display:flex;align-items:center;
+    justify-content:center;color:var(--faint)}
+  .sk{background:var(--skel);border-radius:4px}
+  .listrow{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+  .pin{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none}
+  .barrow{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .barrow span{width:74px;font-size:12px;color:var(--muted);flex:none}
+  .fill{height:11px;border-radius:5px;background:var(--accent);opacity:.65}
+  .thead,.trow{display:grid;gap:10px;align-items:center}
+  .thead{font-size:10px;letter-spacing:.05em;color:var(--faint);text-transform:uppercase;
+    padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .trow{padding:12px 0;border-bottom:1px solid var(--line)}
+  .adgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .donut-leg{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
+  .donut-leg i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:0}
+  /* mobile tweaks */
+  .mobile .app{min-height:620px}
+  .mobile .content{padding:14px}
+  .mobile .metrics{grid-template-columns:repeat(2,1fr)}
+  .mobile .grid2{grid-template-columns:1fr}
+  .mobile .adgrid{grid-template-columns:repeat(2,1fr)}
+  .mobile .mtop{height:52px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 12px}
+  .mobile .mtop .srch{height:32px}
+  @media print{
+    .bar,.hint{display:none}
+    body{background:#fff}
+    .stage{max-width:none}
+    .frame{box-shadow:none;break-inside:avoid}
+    .row{flex-wrap:nowrap}
+  }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <h1>HolaPrime · Dashboard wireframes</h1>
+    <div class="seg" id="pageSeg">
+      <button data-p="overview" class="on">Overview</button>
+      <button data-p="google">Google</button>
+      <button data-p="meta">Meta</button>
+      <button data-p="adroll">AdRoll</button>
+    </div>
+    <div class="seg" id="vpSeg">
+      <button data-v="both" class="on">Both</button>
+      <button data-v="desktop">Desktop</button>
+      <button data-v="mobile">Mobile</button>
+    </div>
+    <span class="sp"></span>
+    <button class="pbtn" onclick="window.print()">Save as PDF / print</button>
+  </div>
+  <p class="hint">Low-fidelity wireframes for review. The sidebar matches the live dashboard; Google, Meta and AdRoll all share one platform layout and tab structure (Overview · Campaigns · Ads &amp; assets · Keywords). Click the tabs inside any frame to preview each view. Use “Save as PDF / print” to export.</p>
+  <div class="stage" id="stage"></div>
+
+<script>
+const ICON = {
+  dash:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+  chart:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  spark:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z"/></svg>',
+  book:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',
+  gear:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>',
+  user:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
+  search:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>',
+  bell:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa1ab" stroke-width="2"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 004 0"/></svg>',
+  menu:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#41474f" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>',
+  chev:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa1ab" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>',
+  layout:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></svg>',
+  trend:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v5h-5"/></svg>',
+  photo:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-7 7"/></svg>',
+  key:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>',
+  collapse:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>'
+};
+
+const PLATFORMS = {
+  google:{name:'Google Ads', short:'Google overview', accent:'#4285F4',
+    metrics:[['Interactions','24,892'],['Impressions','1.2M'],['Avg. CPC','$0.84'],['Conversions','3,410'],['Conv. value','$1.6M'],['Account ROAS','8.6x']]},
+  meta:{name:'Meta Ads', short:'Meta overview', accent:'#0668E1',
+    metrics:[['Reach','842K'],['Impressions','2.1M'],['CPM','$6.20'],['Results','5,120'],['Purchase value','$1.9M'],['ROAS','7.2x']]},
+  adroll:{name:'AdRoll', short:'AdRoll overview', accent:'#0DBDFF',
+    metrics:[['Clicks','18,430'],['Impressions','980K'],['eCPC','$0.51'],['Conversions','2,180'],['Attributed rev','$1.1M'],['ROAS','5.4x']]}
+};
+const TABS=[['Overview',ICON.layout],['Campaigns',ICON.trend],['Ads & assets',ICON.photo],['Keywords',ICON.key]];
+const NAVDOT={meta:'#0668E1',google:'#4285F4',adroll:'#0DBDFF'};
+
+function sidebar(active){
+  const navItem=(key,label)=>`<div class="item ${active===key?'on':''}"><span class="dot" style="background:${NAVDOT[key]}"></span>${label}</div>`;
+  return `<aside class="sb">
+    <div class="brand"><b>hola prime</b><span>Creative Analyzer</span></div>
+    <div class="nav">
+      <div class="item ${active==='overview'?'on':''}">${ICON.dash}Dashboard</div>
+      <div class="grp">Analytics ${ICON.chev}</div>
+      ${navItem('meta','Meta Ads')}
+      ${navItem('google','Google Ads')}
+      ${navItem('adroll','AdRoll')}
+      <div class="grp">Creative Studio ${ICON.chev}</div>
+      <div class="item">${ICON.spark}Studio</div>
+      <div class="item">${ICON.book}Saved</div>
+    </div>
+    <div class="foot">
+      <div class="item">${ICON.gear}Settings</div>
+      <div class="item">${ICON.user}Profile</div>
+      <div class="collapse">${ICON.collapse}Collapse</div>
+    </div>
+  </aside>`;
+}
+
+function topbar(){
+  return `<div class="top"><div class="srch">${ICON.search}Search ads by name or ID…</div>${ICON.bell}</div>`;
+}
+
+function metricCards(list){
+  return `<div class="metrics m6">`+list.map(m=>`<div class="mc"><div class="l">${m[0]}</div><div class="v">${m[1]}</div><div class="s"></div></div>`).join('')+`</div>`;
+}
+
+function chartCard(accent){
+  return `<div class="card"><h4>Performance snapshot</h4><p class="cs">Revenue vs spend · last 7 days</p>
+    <svg viewBox="0 0 340 130" width="100%" height="130" preserveAspectRatio="none">
+      <polyline points="0,110 55,92 110,100 165,66 220,74 285,44 340,30" fill="none" stroke="${accent}" stroke-width="2.5"/>
+      <polyline points="0,122 55,118 110,112 165,108 220,104 285,96 340,90" fill="none" stroke="#c3cad3" stroke-width="2" stroke-dasharray="5 4"/>
+    </svg>
+    <div style="display:flex;gap:16px;font-size:11.5px;color:#6b7280;margin-top:4px">
+      <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${accent};margin-right:5px"></i>Revenue</span>
+      <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#c3cad3;margin-right:5px"></i>Spend</span>
+    </div></div>`;
+}
+function topCampaigns(){
+  const r=(w,v)=>`<div class="listrow"><span class="pin"></span><div class="sk" style="height:9px;flex:1;width:${w}%"></div><span style="font-size:12px;color:#6b7280">${v}</span></div>`;
+  return `<div class="card"><h4>Top campaigns</h4><div style="margin-top:8px">${r(80,'9.1x')+r(65,'7.4x')+r(72,'6.0x')+r(55,'4.8x')}</div></div>`;
+}
+function formats(accent){
+  const b=(l,w)=>`<div class="barrow"><span>${l}</span><div class="fill" style="width:${w}%;background:${accent}"></div></div>`;
+  return `<div class="card"><h4>Format performance</h4><div style="margin-top:8px">${b('Video',82)+b('Image',56)+b('Carousel',38)}</div></div>`;
+}
+function tableBlock(cols, rows){
+  const tmpl=cols.map(c=>c[1]).join(' ');
+  const head=`<div class="thead" style="grid-template-columns:${tmpl}">`+cols.map(c=>`<span style="${c[2]||''}">${c[0]}</span>`).join('')+`</div>`;
+  let body='';
+  for(let i=0;i<rows;i++){
+    let cells='';
+    cols.forEach((c,idx)=>{
+      const right= idx>0;
+      const w= 40+((i+idx)*11)%50;
+      cells+=`<div class="sk" style="height:9px;width:${w}%;${right?'justify-self:end':''}"></div>`;
+    });
+    body+=`<div class="trow" style="grid-template-columns:${tmpl}">${cells}</div>`;
+  }
+  return head+body;
+}
+function adsGrid(){
+  let g='';for(let i=0;i<6;i++){g+=`<div class="card" style="padding:10px"><div class="dashbox" style="aspect-ratio:16/9;margin-bottom:8px">${ICON.photo}</div><div class="sk" style="height:8px;width:80%;margin-bottom:6px"></div><div class="sk" style="height:8px;width:55%"></div></div>`;}
+  return `<div class="adgrid">${g}</div>`;
+}
+
+function tabPanels(accent){
+  const overview=`<div class="grid2">${chartCard(accent)}${topCampaigns()}</div><div style="margin-top:12px">${formats(accent)}</div>`;
+  const campaigns=`<div class="card">${tableBlock([['Campaign','2fr'],['Spend','1fr','text-align:right'],['Conv.','1fr','text-align:right'],['ROAS','1fr','text-align:right']],5)}</div>`;
+  const ads=adsGrid();
+  const keywords=`<div class="card">${tableBlock([['Term','2fr'],['Cost','1fr','text-align:right'],['CTR','1fr','text-align:right']],6)}</div>`;
+  const map={'Overview':overview,'Campaigns':campaigns,'Ads & assets':ads,'Keywords':keywords};
+  return TABS.map((t,i)=>`<div class="panel tp" data-tab="${t[0]}" style="${i?'display:none':''}">${map[t[0]]}</div>`).join('');
+}
+
+function platformContent(pid){
+  const p=PLATFORMS[pid];
+  const tabbar=`<div class="tabs">`+TABS.map((t,i)=>`<button class="tab ${i?'':'on'}" data-tab="${t[0]}">${t[1]}${t[0]}</button>`).join('')+`</div>`;
+  return `<div class="content" style="--accent:${p.accent}">
+    <div class="ph"><h2>${p.short}</h2><span class="live"><i></i>Live</span>
+      <div class="range"><span class="on" style="background:${p.accent};border-color:${p.accent}">7D</span><span>30D</span><span>90D</span></div></div>
+    ${metricCards(p.metrics)}
+    ${tabbar}
+    ${tabPanels(p.accent)}
+  </div>`;
+}
+
+function overviewContent(){
+  const ac='#2b6cf0';
+  const kpis=[['Active assets','24,892'],['Cross-platform spend','$1.2M'],['Revenue','$1.6M'],['ROAS','8.6x']];
+  const donut=`<div class="card"><h4>Creative status</h4>
+    <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
+      <svg viewBox="0 0 100 100" width="104" height="104">
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#eceef2" stroke-width="13"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#12b76a" stroke-width="13" stroke-dasharray="119 120" transform="rotate(-90 50 50)"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#f5a524" stroke-width="13" stroke-dasharray="72 167" transform="rotate(53 50 50)"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#f04438" stroke-width="13" stroke-dasharray="48 191" transform="rotate(161 50 50)"/>
+      </svg>
+      <div class="donut-leg"><span><i style="background:#12b76a"></i>High ROAS</span><span><i style="background:#f5a524"></i>Testing</span><span><i style="background:#f04438"></i>Fatigue</span></div>
+    </div></div>`;
+  return `<div class="content" style="--accent:${ac}">
+    <div class="ph"><h2>Overview</h2><span class="live"><i></i>Live</span>
+      <div class="range"><span class="on" style="background:${ac};border-color:${ac}">7D</span><span>30D</span><span>90D</span></div></div>
+    <p class="sub">Multi-channel creative performance across Meta, Google, and AdRoll.</p>
+    <div class="metrics m4">`+kpis.map(m=>`<div class="mc"><div class="l">${m[0]}</div><div class="v">${m[1]}</div><div class="s"></div></div>`).join('')+`</div>
+    <div class="grid2">${chartCard(ac)}${donut}</div>
+    <div class="card"><h4>Platform breakdown</h4><div style="margin-top:8px">
+      <div class="barrow"><span>Meta</span><div class="fill" style="width:74%;background:#0668E1"></div></div>
+      <div class="barrow"><span>Google</span><div class="fill" style="width:88%;background:#4285F4"></div></div>
+      <div class="barrow"><span>AdRoll</span><div class="fill" style="width:46%;background:#0DBDFF"></div></div>
+    </div></div>
+  </div>`;
+}
+
+function pageContent(page){ return page==='overview'?overviewContent():platformContent(page); }
+
+function desktopFrame(page){
+  return `<div class="frame desktop"><div class="app">${sidebar(page)}<div class="main">${topbar()}${pageContent(page)}</div></div></div>`;
+}
+function mobileFrame(page){
+  return `<div class="frame mobile"><div class="app"><div class="main">
+    <div class="mtop">${ICON.menu}<div class="srch" style="flex:1">${ICON.search}Search…</div>${ICON.bell}</div>
+    ${pageContent(page)}
+  </div></div></div>`;
+}
+
+let CUR='overview', VP='both';
+function render(){
+  const showD = VP!=='mobile', showM = VP!=='desktop';
+  let html='';
+  if(showD) html+=`<div class="blk"><p class="cap">Desktop · ${label(CUR)}</p><div class="row">${desktopFrame(CUR)}</div></div>`;
+  if(showM) html+=`<div class="blk"><p class="cap">Mobile · ${label(CUR)}</p><div class="row">${mobileFrame(CUR)}</div></div>`;
+  const stage=document.getElementById('stage');
+  stage.innerHTML=html;
+  stage.querySelectorAll('.frame').forEach(wireTabs);
+}
+function label(p){return p==='overview'?'Main dashboard overview':PLATFORMS[p].name;}
+function wireTabs(frame){
+  frame.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const t=btn.dataset.tab, scope=btn.closest('.content');
+      scope.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+      scope.querySelectorAll('.tp').forEach(p=>p.style.display=p.dataset.tab===t?'':'none');
+    });
+  });
+}
+document.getElementById('pageSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  CUR=b.dataset.p; document.querySelectorAll('#pageSeg button').forEach(x=>x.classList.toggle('on',x===b)); render();
+});
+document.getElementById('vpSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  VP=b.dataset.v; document.querySelectorAll('#vpSeg button').forEach(x=>x.classList.toggle('on',x===b)); render();
+});
+render();
+</script>
+</body>
+</html>

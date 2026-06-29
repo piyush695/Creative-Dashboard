@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HolaPrime — Studio Chat · Wireframe &amp; Concept</title>
+<style>
+  :root{
+    --ink:#1c1f26; --muted:#6b7280; --faint:#9aa1ab;
+    --line:#e7e8ec; --line2:#dcdee3; --surface:#ffffff; --bg:#f4f4f2;
+    --skel:#eceef1;
+    --accent:#2f6bf6; --accent-soft:#eaf0fe; --accent-ink:#1a4fd0;
+    --bubble:#eef2fb;
+    --radius:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 10px 28px -14px rgba(16,24,40,.14);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+
+  .bar{position:sticky;top:0;z-index:50;background:#0f1216;color:#fff;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:13px 20px;}
+  .bar h1{font-size:14.5px;font-weight:600;margin:0;letter-spacing:.2px}
+  .bar .tag{font-size:11px;color:#aab2bd;border:1px solid #2b333d;border-radius:999px;padding:3px 10px}
+  .bar .sp{flex:1}
+  .bar .pbtn{background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:600;padding:8px 15px;border-radius:8px;cursor:pointer}
+  .bar .pbtn:hover{filter:brightness(1.06)}
+
+  .wrap{max-width:1240px;margin:0 auto;padding:22px 20px 80px}
+  .lead h2{font-size:22px;margin:0 0 6px;letter-spacing:-.2px}
+  .lead p{margin:0;color:var(--muted);font-size:13.5px;max-width:780px;line-height:1.6}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:14px 2px 0;color:var(--muted);font-size:12px}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .pin{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;flex:none}
+
+  .secttl{display:flex;align-items:baseline;gap:10px;margin:34px 2px 14px}
+  .secttl b{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#525a64}
+  .secttl span{font-size:12.5px;color:var(--faint)}
+
+  .frame{background:var(--surface);border:1px solid var(--line2);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+  .frame .chrome{height:34px;background:#fbfbfc;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;padding:0 13px}
+  .frame .chrome i{width:10px;height:10px;border-radius:50%;background:#e2e4e8;display:inline-block}
+  .frame .chrome .url{flex:1;margin-left:10px;height:20px;border-radius:6px;background:#f1f2f4;display:flex;align-items:center;padding:0 10px;font-size:11px;color:var(--faint)}
+
+  .row{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+  .desktop{width:100%}
+  .mobile{width:340px;flex:none}
+
+  /* app shell */
+  .app{display:flex;min-height:640px}
+  .sb{width:196px;flex:none;background:#fafafa;border-right:1px solid var(--line);display:flex;flex-direction:column}
+  .brand{height:54px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:0 16px}
+  .brand b{font-size:14px;font-weight:800;line-height:1;letter-spacing:-.2px}
+  .brand span{font-size:7px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase;margin-top:3px}
+  .nav{padding:10px 9px;display:flex;flex-direction:column;gap:2px;flex:1}
+  .grp{font-size:9.5px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;padding:13px 9px 5px}
+  .item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;font-size:12.5px;color:#454b53}
+  .item.on{background:var(--accent-soft);color:var(--accent-ink);font-weight:650}
+  .item .ic{width:15px;height:15px;border-radius:5px;background:#d6dbe2;flex:none}
+  .item.on .ic{background:var(--accent)}
+  .sb .foot{border-top:1px solid var(--line);padding:9px;display:flex;flex-direction:column;gap:2px}
+
+  /* main column */
+  .main{flex:1;display:flex;flex-direction:column;background:var(--surface);min-width:0}
+  .top{height:54px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px}
+  .srch{flex:1;max-width:420px;height:34px;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;gap:9px;padding:0 12px;color:var(--faint);font-size:12.5px}
+  .srch .mag{width:13px;height:13px;border:1.6px solid var(--faint);border-radius:50%;flex:none}
+  .ico{width:30px;height:30px;border-radius:8px;background:#f1f2f4;flex:none}
+  .ava{width:30px;height:30px;border-radius:50%;background:#dfe3ea;flex:none}
+
+  /* studio header: tabs + new chat */
+  .shead{padding:14px 18px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .shead .ttl h3{margin:0;font-size:17px;font-weight:750;letter-spacing:-.2px}
+  .shead .ttl p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+  .hactions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .seg{display:flex;background:#f3f4f6;border:1px solid var(--line);border-radius:11px;padding:4px;gap:3px}
+  .seg button{background:none;border:none;font-size:12.5px;font-weight:600;color:var(--muted);padding:7px 14px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .seg button.on{background:var(--accent);color:#fff;box-shadow:0 1px 2px rgba(47,107,246,.35)}
+  .seg .gi{width:12px;height:12px;border-radius:4px;background:currentColor;opacity:.5}
+  .seg button.on .gi{opacity:.9;background:#fff}
+
+  /* studio workspace = chats rail + chat thread */
+  .ws{display:flex;flex:1;min-height:0;border-top:1px solid var(--line);margin-top:14px}
+
+  /* chats rail */
+  .chats{width:222px;flex:none;border-right:1px solid var(--line);background:#fcfcfd;display:flex;flex-direction:column}
+  .newchat{margin:12px;height:38px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:650;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 1px 2px rgba(47,107,246,.4)}
+  .chsearch{margin:0 12px 8px;height:32px;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--faint);font-size:12px}
+  .chgrp{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:10px 14px 4px}
+  .chitem{margin:1px 8px;padding:9px 10px;border-radius:9px;cursor:pointer}
+  .chitem:hover{background:#f3f5f9}
+  .chitem.on{background:var(--accent-soft)}
+  .chitem b{font-size:12.5px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chitem.on b{color:var(--accent-ink)}
+  .chitem small{font-size:10.5px;color:var(--faint)}
+
+  /* thread */
+  .thread{flex:1;display:flex;flex-direction:column;min-width:0}
+  .scroll{flex:1;overflow:auto;padding:20px 22px 6px;display:flex;flex-direction:column;gap:20px;background:#fff}
+  .day{align-self:center;font-size:10.5px;color:var(--faint);background:#f3f4f6;border-radius:999px;padding:3px 10px}
+
+  .msg{display:flex;gap:11px;max-width:840px}
+  .msg.user{align-self:flex-end;flex-direction:row-reverse}
+  .who{width:28px;height:28px;border-radius:8px;flex:none}
+  .who.ai{background:linear-gradient(135deg,#2f6bf6,#56a0ff);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
+  .who.me{background:#dfe3ea;border-radius:50%}
+  .ubub{background:var(--bubble);border:1px solid #dde6fb;border-radius:14px 14px 4px 14px;padding:11px 14px;font-size:13px;color:#27303f;line-height:1.5;max-width:560px}
+  .abody{flex:1;min-width:0}
+  .acap{font-size:12px;color:var(--muted);margin:4px 0 10px;line-height:1.5}
+  .acap b{color:var(--ink)}
+
+  /* generated creatives inside chat */
+  .genrow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:560px}
+  .genrow.two{grid-template-columns:repeat(2,1fr);max-width:300px}
+  .gencard{aspect-ratio:4/5;border-radius:12px;border:1px solid var(--line);overflow:hidden;position:relative;
+    background:linear-gradient(135deg,#eef2f8,#e3e9f3)}
+  .gencard::after{content:"✦";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#b9c3d6;font-size:22px}
+  .gentools{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .gt{font-size:11px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+  .gt .gi{width:11px;height:11px;border-radius:3px;background:var(--faint)}
+  .gt.acc{border-color:#cfe0ff;background:var(--accent-soft);color:var(--accent-ink)}
+
+  /* typing / thinking row */
+  .think{display:inline-flex;gap:6px;align-items:center;color:var(--muted);font-size:12px}
+  .think i{width:6px;height:6px;border-radius:50%;background:#c4ccd8;display:inline-block}
+
+  /* composer */
+  .composer{border-top:1px solid var(--line);padding:14px 18px;background:#fff}
+  .cbox{max-width:840px;margin:0 auto;border:1px solid var(--line2);border-radius:16px;background:#fff;box-shadow:var(--shadow);padding:10px 12px}
+  .cinput{font-size:13px;color:var(--faint);min-height:44px;line-height:1.5;padding:4px 2px}
+  .crow{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .attach{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--accent);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+  .chip{height:28px;border:1px solid #cfe0ff;background:var(--accent-soft);color:var(--accent-ink);border-radius:999px;font-size:11.5px;font-weight:600;padding:0 11px;display:inline-flex;align-items:center;gap:7px}
+  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .csp{flex:1}
+  .send{width:36px;height:36px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 2px rgba(47,107,246,.4)}
+  .cfoot{max-width:840px;margin:7px auto 0;font-size:10.5px;color:var(--faint);text-align:center}
+
+  /* new-chat empty state */
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:30px}
+  .empty .spark{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,#2f6bf6,#56a0ff);display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px}
+  .empty h3{margin:0;font-size:22px;letter-spacing:-.3px}
+  .empty p{margin:0;color:var(--muted);font-size:13px}
+  .examples{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:620px;margin-top:4px}
+  .ex{border:1px solid var(--line);border-radius:11px;background:#fafafb;padding:10px 13px;font-size:12px;color:#3b4149;text-align:left;max-width:280px;line-height:1.45}
+  .ex b{display:block;font-size:11px;color:var(--accent-ink);margin-bottom:2px}
+
+  /* annotations + spec */
+  .notes{margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .note{display:flex;gap:11px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+  .note b{font-size:13px}.note p{margin:3px 0 0;font-size:11.5px;color:var(--muted);line-height:1.55}
+  .spec{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .spec h4{margin:0 0 10px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#525a64}
+  .spec li{font-size:12.5px;color:#3b4149;line-height:1.75}
+  .spec li b{color:var(--ink)}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .pill{font-size:11px;border:1px solid var(--line2);border-radius:999px;padding:4px 11px;color:var(--muted);background:#fafafb}
+  .pill.acc{background:var(--accent-soft);border-color:#cfe0ff;color:var(--accent-ink);font-weight:600}
+
+  @media (max-width:980px){ .notes{grid-template-columns:1fr} }
+  @media print{ .bar{position:static} .bar .pbtn{display:none} body{background:#fff} .frame{box-shadow:none} }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <h1>HolaPrime · Studio — Chat workflow</h1>
+    <span class="tag">Wireframe &amp; concept — not implemented</span>
+    <span class="sp"></span>
+    <button class="pbtn" onclick="window.print()">⬇ Save as PDF</button>
+  </div>
+
+  <div class="wrap">
+    <div class="lead">
+      <h2>Studio as a conversation</h2>
+      <p>
+        Generation becomes a <b>chat thread</b>, like Claude. You describe a creative, the assistant replies with
+        generated variations <b>inside the conversation</b>. Type again and the next creative continues in the
+        <b>same thread</b> — keeping context, not starting over. A <b>+ New chat</b> button and a left
+        <b>conversation list</b> let you jump between sessions. The 3 tabs (Custom · Top Ads · Ad Library) stay;
+        “Custom” is now this chat.
+      </p>
+      <div class="legend">
+        <span><i class="pin">1</i> Conversation list + New chat</span>
+        <span><i class="pin">2</i> Chat thread with inline creatives</span>
+        <span><i class="pin">3</i> Continue in same thread</span>
+        <span><i class="pin">4</i> Composer (+ attach · Direct mode · send)</span>
+      </div>
+    </div>
+
+    <!-- ============ DESKTOP — ACTIVE CHAT ============ -->
+    <div class="secttl"><b>Desktop view</b><span>1280 px · active conversation with two exchanges</span></div>
+    <div class="frame desktop">
+      <div class="chrome"><i></i><i></i><i></i><span class="url">app.holaprime.com / studio</span></div>
+      <div class="app">
+        <!-- global sidebar -->
+        <aside class="sb">
+          <div class="brand"><b>hola prime</b><span>Creative Analyzer</span></div>
+          <nav class="nav">
+            <div class="item"><span class="ic"></span> Dashboard</div>
+            <div class="grp">Analytics</div>
+            <div class="item"><span class="ic"></span> Meta Ads</div>
+            <div class="item"><span class="ic"></span> Google Ads</div>
+            <div class="item"><span class="ic"></span> AdRoll</div>
+            <div class="grp">Creative Studio</div>
+            <div class="item on"><span class="ic"></span> Studio</div>
+            <div class="item"><span class="ic"></span> Saved</div>
+          </nav>
+          <div class="foot">
+            <div class="item"><span class="ic"></span> Settings</div>
+            <div class="item"><span class="ic"></span> Profile</div>
+          </div>
+        </aside>
+
+        <div class="main">
+          <div class="top">
+            <div class="srch"><span class="mag"></span> Search ads by name or ID…</div>
+            <div style="flex:1"></div>
+            <span class="ico"></span><span class="ico"></span><span class="ava"></span>
+          </div>
+
+          <div class="shead">
+            <div class="ttl"><h3>Studio</h3><p>Generate on-brand creatives with AI.</p></div>
+            <div class="hactions">
+              <div class="seg">
+                <button class="on"><span class="gi"></span> Custom</button>
+                <button><span class="gi"></span> Top Ads</button>
+                <button><span class="gi"></span> Ad Library</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ws">
+            <!-- 1: conversation list -->
+            <aside class="chats">
+              <button class="newchat">＋ New chat</button>
+              <div class="chsearch"><span style="width:12px;height:12px;border:1.5px solid var(--faint);border-radius:50%"></span> Search chats…</div>
+              <div class="chgrp">Today</div>
+              <div class="chitem on"><b>Summer sale — bold promo set</b><small>4 creatives · just now</small></div>
+              <div class="chitem"><b>UGC testimonial concepts</b><small>2 creatives · 1h ago</small></div>
+              <div class="chgrp">Yesterday</div>
+              <div class="chitem"><b>Forex challenge — hook A/B</b><small>6 creatives</small></div>
+              <div class="chitem"><b>Carousel — bestsellers</b><small>3 creatives</small></div>
+              <div class="chgrp">Previous 7 days</div>
+              <div class="chitem"><b>Black-week teaser</b><small>5 creatives</small></div>
+            </aside>
+
+            <!-- 2 + 3: chat thread -->
+            <div class="thread">
+              <div class="scroll">
+                <span class="day">Today</span>
+
+                <!-- exchange 1 -->
+                <div class="msg user">
+                  <span class="who me"></span>
+                  <div class="ubub">A bold “Mid Season Sale — up to 45% off” promo for our forex challenge. Dark, energetic, neon accents. 4:5.</div>
+                </div>
+                <div class="msg">
+                  <span class="who ai">✦</span>
+                  <div class="abody">
+                    <div class="acap">Here are <b>4 variations</b> · Direct mode · 4:5</div>
+                    <div class="genrow">
+                      <div class="gencard"></div><div class="gencard"></div><div class="gencard"></div><div class="gencard"></div>
+                    </div>
+                    <div class="gentools">
+                      <span class="gt acc"><span class="gi"></span> Save to Saved</span>
+                      <span class="gt"><span class="gi"></span> Download</span>
+                      <span class="gt"><span class="gi"></span> Variations</span>
+                      <span class="gt"><span class="gi"></span> Use as source</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- exchange 2 — same thread continuation -->
+                <div class="msg user">
+                  <span class="who me"></span>
+                  <div class="ubub">Love #2. Make two more like it but swap the headline to “Last 12 hours”.</div>
+                </div>
+                <div class="msg">
+                  <span class="who ai">✦</span>
+                  <div class="abody">
+                    <div class="acap">Refined from variation #2 — <b>2 new variations</b></div>
+                    <div class="genrow two">
+                      <div class="gencard"></div><div class="gencard"></div>
+                    </div>
+                    <div class="gentools">
+                      <span class="gt acc"><span class="gi"></span> Save to Saved</span>
+                      <span class="gt"><span class="gi"></span> Download</span>
+                      <span class="gt"><span class="gi"></span> Variations</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="msg">
+                  <span class="who ai">✦</span>
+                  <div class="abody"><span class="think">Generating <i></i><i></i><i></i></span></div>
+                </div>
+              </div>
+
+              <!-- 4: composer -->
+              <div class="composer">
+                <div class="cbox">
+                  <div class="cinput">Reply to continue this creative… describe a tweak, a new angle, or a fresh idea.</div>
+                  <div class="crow">
+                    <button class="attach">＋</button>
+                    <span class="chip"><span class="dot"></span> Direct mode</span>
+                    <span class="csp"></span>
+                    <button class="send">↑</button>
+                  </div>
+                </div>
+                <div class="cfoot">Creatives generate inside this chat · Shift+Enter for a new line</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="note"><span class="pin">1</span><div><b>Conversations + New chat</b><p>Left rail lists past sessions grouped by date. “＋ New chat” starts a fresh thread anytime; the current one is highlighted.</p></div></div>
+      <div class="note"><span class="pin">2</span><div><b>Creatives live in the chat</b><p>Each assistant reply shows the generated variations as cards, with Save / Download / Variations / Use-as-source actions.</p></div></div>
+      <div class="note"><span class="pin">3</span><div><b>Same-thread continuation</b><p>Follow-up prompts refine within the same conversation — context is kept, no separate workflow is spun up.</p></div></div>
+    </div>
+
+    <!-- ============ DESKTOP — NEW CHAT EMPTY STATE ============ -->
+    <div class="secttl"><b>Desktop view</b><span>“New chat” empty state — centered composer, example starters</span></div>
+    <div class="frame desktop">
+      <div class="chrome"><i></i><i></i><i></i><span class="url">app.holaprime.com / studio · new chat</span></div>
+      <div class="app" style="min-height:520px">
+        <aside class="sb">
+          <div class="brand"><b>hola prime</b><span>Creative Analyzer</span></div>
+          <nav class="nav">
+            <div class="item"><span class="ic"></span> Dashboard</div>
+            <div class="grp">Creative Studio</div>
+            <div class="item on"><span class="ic"></span> Studio</div>
+            <div class="item"><span class="ic"></span> Saved</div>
+          </nav>
+          <div class="foot"><div class="item"><span class="ic"></span> Settings</div><div class="item"><span class="ic"></span> Profile</div></div>
+        </aside>
+        <div class="main">
+          <div class="top"><div class="srch"><span class="mag"></span> Search…</div><div style="flex:1"></div><span class="ico"></span><span class="ava"></span></div>
+          <div class="shead">
+            <div class="ttl"><h3>Studio</h3><p>Generate on-brand creatives with AI.</p></div>
+            <div class="hactions">
+              <div class="seg"><button class="on">Custom</button><button>Top Ads</button><button>Ad Library</button></div>
+            </div>
+          </div>
+          <div class="ws">
+            <aside class="chats">
+              <button class="newchat">＋ New chat</button>
+              <div class="chgrp">Recent</div>
+              <div class="chitem"><b>Summer sale — bold promo</b><small>4 creatives</small></div>
+              <div class="chitem"><b>UGC testimonial concepts</b><small>2 creatives</small></div>
+            </aside>
+            <div class="thread">
+              <div class="empty">
+                <div class="spark">✦</div>
+                <h3>What should we create today?</h3>
+                <p>Describe a creative and I’ll generate it right here. Keep chatting to refine in the same thread.</p>
+                <div class="examples">
+                  <div class="ex"><b>Promo</b>“Mid Season Sale — 45% off” for our forex challenge, dark + neon, 4:5</div>
+                  <div class="ex"><b>UGC</b>Authentic testimonial style, trader at a desk, warm tone, square</div>
+                  <div class="ex"><b>From a top ad</b>Make 3 variations of my best performer with a new headline</div>
+                </div>
+              </div>
+              <div class="composer">
+                <div class="cbox">
+                  <div class="cinput">Describe the creative you want to generate…</div>
+                  <div class="crow">
+                    <button class="attach">＋</button>
+                    <span class="chip"><span class="dot"></span> Direct mode</span>
+                    <span class="csp"></span>
+                    <button class="send">↑</button>
+                  </div>
+                </div>
+                <div class="cfoot">＋ attach images / video · reference a Top Ad · Direct mode sends your prompt straight to the model</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ MOBILE ============ -->
+    <div class="secttl"><b>Mobile view</b><span>390 px · full-width thread + fixed composer, and the chats drawer</span></div>
+    <div class="row">
+      <!-- mobile chat -->
+      <div class="frame mobile">
+        <div class="chrome"><i></i><i></i><i></i><span class="url">studio</span></div>
+        <div style="display:flex;flex-direction:column;background:#fff;height:600px">
+          <div class="top" style="padding:0 12px;gap:9px">
+            <span class="ico" style="width:28px;height:28px"></span>
+            <b style="font-size:14px;flex:1">Studio</b>
+            <button class="attach" style="width:30px;height:30px;font-size:16px">＋</button>
+          </div>
+          <div style="display:flex;gap:8px;padding:10px 12px 0">
+            <div class="seg" style="flex:1"><button class="on" style="flex:1">Custom</button><button style="flex:1">Top Ads</button><button style="flex:1">Library</button></div>
+          </div>
+          <div class="scroll" style="padding:14px 12px 6px;gap:16px">
+            <div class="msg user"><span class="who me" style="width:24px;height:24px"></span><div class="ubub" style="font-size:12px">Mid Season Sale promo, dark + neon, 4:5</div></div>
+            <div class="msg"><span class="who ai" style="width:24px;height:24px">✦</span>
+              <div class="abody">
+                <div class="acap" style="font-size:11px">4 variations · Direct mode</div>
+                <div class="genrow two" style="max-width:100%"><div class="gencard"></div><div class="gencard"></div><div class="gencard"></div><div class="gencard"></div></div>
+                <div class="gentools"><span class="gt acc">Save</span><span class="gt">Download</span><span class="gt">Variations</span></div>
+              </div>
+            </div>
+            <div class="msg user"><span class="who me" style="width:24px;height:24px"></span><div class="ubub" style="font-size:12px">Swap headline to “Last 12 hours”</div></div>
+          </div>
+          <div class="composer" style="padding:10px 12px">
+            <div class="cbox" style="padding:8px 10px">
+              <div class="cinput" style="min-height:28px;font-size:12.5px">Reply to continue…</div>
+              <div class="crow">
+                <button class="attach">＋</button>
+                <span class="chip">Direct</span>
+                <span class="csp"></span>
+                <button class="send">↑</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- mobile chats drawer -->
+      <div class="frame mobile">
+        <div class="chrome"><i></i><i></i><i></i><span class="url">studio · chats</span></div>
+        <div style="position:relative;background:#fff;height:600px">
+          <div style="position:absolute;inset:0;background:rgba(15,18,22,.35)"></div>
+          <div style="position:absolute;left:0;top:0;bottom:0;width:80%;background:#fff;border-right:1px solid var(--line2);box-shadow:var(--shadow);display:flex;flex-direction:column">
+            <button class="newchat" style="margin:14px">＋ New chat</button>
+            <div class="chsearch" style="margin:0 14px 8px"><span style="width:12px;height:12px;border:1.5px solid var(--faint);border-radius:50%"></span> Search chats…</div>
+            <div class="chgrp">Today</div>
+            <div class="chitem on"><b>Summer sale — bold promo</b><small>4 creatives · now</small></div>
+            <div class="chitem"><b>UGC testimonial concepts</b><small>2 creatives · 1h</small></div>
+            <div class="chgrp">Yesterday</div>
+            <div class="chitem"><b>Forex challenge — hook A/B</b><small>6 creatives</small></div>
+            <div class="chitem"><b>Carousel — bestsellers</b><small>3 creatives</small></div>
+            <div class="chgrp">Previous 7 days</div>
+            <div class="chitem"><b>Black-week teaser</b><small>5 creatives</small></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- spec -->
+      <div class="spec" style="flex:1;min-width:280px">
+        <h4>Design spec</h4>
+        <ul style="margin:0;padding-left:18px">
+          <li><b>Thread:</b> user prompts as right-aligned bubbles, AI replies with inline creative cards.</li>
+          <li><b>Continuation:</b> follow-ups refine in the same thread; assistant keeps prior context.</li>
+          <li><b>New chat:</b> top of the conversation rail (desktop) / drawer (mobile); resets to empty state.</li>
+          <li><b>Conversation list:</b> grouped Today / Yesterday / Previous 7 days; searchable; rename + delete on hover.</li>
+          <li><b>Composer:</b> ＋ attach (image / video / Top-Ad reference), Direct-mode chip, send. Sticky at bottom.</li>
+          <li><b>Per-creative actions:</b> Save to Saved, Download, Variations, Use as source.</li>
+          <li><b>Tabs preserved:</b> Custom (chat) · Top Ads · Ad Library. History rolls into the conversation list.</li>
+        </ul>
+        <div class="pills">
+          <span class="pill acc">Chat thread</span>
+          <span class="pill acc">New chat</span>
+          <span class="pill acc">Inline creatives</span>
+          <span class="pill">＋ attach</span>
+          <span class="pill">Direct mode</span>
+          <span class="pill">Saved</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- migration -->
+    <div class="secttl"><b>Migration map</b><span>how today’s pieces fit the chat model</span></div>
+    <div class="spec">
+      <ul style="margin:0;padding-left:18px">
+        <li><b>Custom / Studio prompt</b> → the chat <b>composer</b>; each submit becomes a message + an AI reply with creatives.</li>
+        <li><b>Generated results</b> → rendered <b>inside the thread</b> instead of a separate canvas area.</li>
+        <li><b>History</b> → becomes the <b>conversation list</b> (each chat = a session of generations).</li>
+        <li><b>＋ Create</b> (from the previous concept) → the composer’s <b>＋ attach</b> (image / video / content / URL / Top Ad).</li>
+        <li><b>Direct mode</b> → a compact chip in the composer; unchanged behaviour.</li>
+        <li><b>Top Ads · Ad Library · Saved</b> → unchanged.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

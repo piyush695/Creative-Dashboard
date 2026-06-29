@@ -114,13 +114,12 @@ import { usePlatforms } from "@/components/providers/platforms-provider";
 import { isKnownPlatform } from "@/lib/platforms";
 import { AddAdDialog } from "@/components/add-ad-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { fetchAdsFromMongo, fetchGoogleAdsFromMongo, fetchAdDetailById, fetchMetaFacets, fetchMetaAdsAll } from "@/actions/ads";
+import { fetchAdsFromMongo, fetchGoogleAdsFromMongo, fetchAdDetailById, fetchMetaFacets, fetchMetaAdsAll } from "@/server/actions/ads";
 import ScoreRadarChart from "@/components/score-radar-chart";
 import { EnlargedImageModal } from "@/components/enlarged-image-modal";
 import GoogleAdsView from "@/components/google-ads-view";
 import AdrollView from "@/components/adroll-view";
 import { RealtimeNativeView } from "@/components/realtime-native-view";
-import AdDetailTabs from "@/components/ad-detail-tabs";
 import MetaAdDetailView from "@/components/meta-ad-detail-view";
 import MetaAdsView from "@/components/meta-ads-view";
 import {
@@ -147,7 +146,7 @@ import {
   updateEnabledPlatforms,
   getConnectedPlatforms,
   getEnabledPlatforms,
-} from "@/actions/profile-actions";
+} from "@/server/actions/profile-actions";
 
 const ACCOUNT_LIST = [
   // Meta accounts — all 19 visible to the token (per check-meta-api-access.js probe)
@@ -401,6 +400,13 @@ function DashboardContent() {
       setSelectedPlatform(platform);
       setSearchQuery("");
       setSelectedAccountId("all");
+      // Explicit "back to platform home" — drop the persisted tab/page/scroll so
+      // the platform view remounts to a clean default state.
+      try {
+        sessionStorage.removeItem(`pv:${platform}`);
+      } catch {
+        // ignore — sessionStorage may be unavailable
+      }
       setPlatformResetKey((k) => k + 1);
     },
     [setSelectedPlatform, setSelectedAccountId],
@@ -1188,7 +1194,7 @@ function DashboardContent() {
         <main className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent scroll-smooth transition-all duration-300 relative z-10">
           <div
             className={cn(
-              "flex items-center justify-between h-10 md:h-11 py-1 border-b border-border bg-background/50 dark:bg-black/40 backdrop-blur-xl z-10 transition-all duration-300",
+              "flex items-center justify-between h-10 md:h-11 py-1 border-b border-border bg-background/80 backdrop-blur-xl z-10 transition-all duration-300",
               "px-4 md:px-6",
               // On the bare Dashboard home the breadcrumb is hidden and there are no
               // bar actions — collapse the whole row so it leaves no empty strip.
@@ -1347,7 +1353,14 @@ function DashboardContent() {
             className={cn(
               "pb-8 space-y-6 md:space-y-8 transition-all duration-300 flex-1 flex flex-col",
               "px-4 md:px-6",
-              (selectedPlatform === "google" || selectedPlatform === "adroll") &&
+              // Every analytics platform view (Meta / Google / AdRoll / All) gets
+              // the same top spacing so the title doesn't sit at different heights
+              // across platforms. Overlay views (profile/settings/guide/all-ads)
+              // and the Dashboard home keep the larger pt-6.
+              (selectedPlatform === "google" ||
+                selectedPlatform === "adroll" ||
+                selectedPlatform === "meta" ||
+                selectedPlatform === "all") &&
                 !isProfileOpen &&
                 !isSettingsOpen &&
                 !isGuideOpen &&
@@ -1356,12 +1369,16 @@ function DashboardContent() {
                 : "pt-6",
               !isReducedMotionEnabled &&
               "animate-in fade-in slide-in-from-bottom-4 duration-700",
-              // Only add right padding for the analysis sidebar if we're actually looking at an ad analysis/details view
+              // Reserve side-by-side space for the analysis panel ONLY on very wide
+              // screens (2xl+), where 380px fits without starving the content. Below
+              // that the panel renders as an overlay with a backdrop (see
+              // AnalysisSidebar), so the content keeps its full width instead of being
+              // crushed into a narrow column on laptops/tablets.
               !isGuideOpen &&
               activeAnalysis &&
               !(mounted ? isMobile : false) &&
               selectedAdId &&
-              "md:pr-[300px] xl:pr-[340px] 2xl:pr-[380px]",
+              "2xl:pr-[380px]",
             )}
           >
             {activeView === "ai-studio" ? (
@@ -2258,7 +2275,11 @@ function DashboardContent() {
                 )}
                 {(selectedPlatform === "all" ||
                   selectedPlatform === "meta") && (
-                    <div className="md:hidden space-y-4">
+                  // display:contents keeps both children as a single sibling at
+                  // the space-y wrapper level, so the hidden mobile-search no
+                  // longer pushes the section down with a phantom space-y margin.
+                  <div className="contents">
+                    <div className="md:hidden space-y-4 mb-4">
                       <div className="relative group z-[60]">
                         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                         <Input
@@ -2392,10 +2413,7 @@ function DashboardContent() {
                           )}
                       </div>
                     </div>
-                  )}
 
-                {(selectedPlatform === "all" ||
-                  selectedPlatform === "meta") && (
                     <section
                       className={cn(
                         "flex-1 flex flex-col min-h-0",
@@ -2434,6 +2452,9 @@ function DashboardContent() {
                           key={`meta-${platformResetKey}`}
                           metaAds={[]/* grid is server-paged inside MetaAdsView; no full array needed */}
                           selectedAccountId={selectedAccountId}
+                          accountStats={accountStats}
+                          totalAds={ads.filter((a) => a.platform === "meta" || !a.platform).length}
+                          onSelectAccount={(id) => setSelectedAccountId(id)}
                           searchQuery={searchQuery}
                           onSearchChange={setSearchQuery}
                           onSelectAd={(ad) => {
@@ -2452,6 +2473,7 @@ function DashboardContent() {
                         />
                       )}
                     </section>
+                  </div>
                   )}
 
                 {selectedPlatform === "adroll" ? (
@@ -2498,8 +2520,10 @@ function DashboardContent() {
                 ) : selectedPlatform === "google" ? (
                   <div className="flex-1 w-full min-h-0 flex flex-col">
                     {selectedAdData ? (
-                      <AdDetailTabs
-                        adData={selectedAdData}
+                      // Use the same standardized Analysis view as Meta & AdRoll
+                      // so the detail experience is uniform across all platforms.
+                      <MetaAdDetailView
+                        ad={selectedAdData}
                         benchmark={benchmarkScores}
                         onClose={() => {
                           setSelectedAdId(null);
@@ -2516,12 +2540,16 @@ function DashboardContent() {
                         }
                         activeAnalysis={activeAnalysis}
                         onTabChange={() => setActiveAnalysis(null)}
+                        onReanalyzed={() => loadData(false)}
                       />
                     ) : (
                       <GoogleAdsView
                         key={`google-${platformResetKey}`}
                         googleAds={googleAds}
                         selectedAccountId={selectedAccountId}
+                        accountStats={accountStats}
+                        totalAds={googleAds.length}
+                        onSelectAccount={(id) => setSelectedAccountId(id)}
                         searchQuery={searchQuery}
                         onSearchChange={setSearchQuery}
                         onViewLibrary={() => setIsViewAllAdsOpen(true)}

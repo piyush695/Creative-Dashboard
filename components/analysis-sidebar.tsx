@@ -167,7 +167,21 @@ export default function AnalysisSidebar({ activeDetail, onClose, onNavigate, adD
 
     return (
         <>
-            {!isMobile && DesktopPanel}
+            {!isMobile && (
+                <>
+                    {/* Backdrop scrim — shown only when the panel overlays content
+                        (below 2xl). At 2xl+ the page reserves side-by-side space so no
+                        scrim is needed. Click anywhere on it to close. */}
+                    {isDetailVisible && (
+                        <div
+                            onClick={onClose}
+                            aria-hidden="true"
+                            className="fixed inset-0 z-[490] bg-black/30 backdrop-blur-[1px] 2xl:hidden animate-in fade-in duration-300"
+                        />
+                    )}
+                    {DesktopPanel}
+                </>
+            )}
             {isMobile && MobilePopup}
         </>
     )

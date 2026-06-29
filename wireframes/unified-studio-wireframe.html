@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HolaPrime — Unified Creative Studio · Wireframe & Concept</title>
+<style>
+  :root{
+    --ink:#1c1f26; --muted:#6b7280; --faint:#9aa1ab;
+    --line:#e7e8ec; --line2:#dcdee3; --surface:#ffffff; --bg:#f4f4f2;
+    --skel:#eceef1; --dash:#cfd4db;
+    --accent:#2f6bf6; --accent-soft:#eaf0fe; --accent-ink:#1a4fd0;
+    --ok:#12b76a; --okbg:#eafaf1; --okline:#bfe6d2;
+    --radius:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 8px 24px -12px rgba(16,24,40,.12);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+
+  /* ---- viewer chrome (screen only) ---- */
+  .bar{position:sticky;top:0;z-index:50;background:#0f1216;color:#fff;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:13px 20px;}
+  .bar h1{font-size:14.5px;font-weight:600;margin:0;letter-spacing:.2px}
+  .bar .tag{font-size:11px;color:#aab2bd;border:1px solid #2b333d;border-radius:999px;padding:3px 10px}
+  .bar .sp{flex:1}
+  .bar .pbtn{background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:600;
+    padding:8px 15px;border-radius:8px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+  .bar .pbtn:hover{filter:brightness(1.06)}
+
+  .wrap{max-width:1220px;margin:0 auto;padding:22px 20px 80px}
+  .lead{margin:8px 2px 26px}
+  .lead h2{font-size:22px;margin:0 0 6px;letter-spacing:-.2px}
+  .lead p{margin:0;color:var(--muted);font-size:13.5px;max-width:760px;line-height:1.6}
+
+  .secttl{display:flex;align-items:baseline;gap:10px;margin:34px 2px 14px}
+  .secttl b{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#525a64}
+  .secttl span{font-size:12.5px;color:var(--faint)}
+
+  /* device frames */
+  .frame{background:var(--surface);border:1px solid var(--line2);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+  .frame .chrome{height:34px;background:#fbfbfc;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;padding:0 13px}
+  .frame .chrome i{width:10px;height:10px;border-radius:50%;background:#e2e4e8;display:inline-block}
+  .frame .chrome .url{flex:1;margin-left:10px;height:20px;border-radius:6px;background:#f1f2f4;display:flex;align-items:center;padding:0 10px;font-size:11px;color:var(--faint)}
+
+  .row{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+  .desktop{flex:1;min-width:680px}
+  .mobile{width:340px;flex:none}
+
+  /* app shell */
+  .app{display:flex;min-height:600px}
+  .sb{width:202px;flex:none;background:#fafafa;border-right:1px solid var(--line);display:flex;flex-direction:column}
+  .brand{height:54px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:0 16px}
+  .brand b{font-size:14px;font-weight:800;line-height:1;letter-spacing:-.2px}
+  .brand span{font-size:7px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase;margin-top:3px}
+  .nav{padding:10px 9px;display:flex;flex-direction:column;gap:2px;flex:1}
+  .grp{font-size:9.5px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;padding:13px 9px 5px}
+  .item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;font-size:12.5px;color:#454b53}
+  .item.on{background:var(--accent-soft);color:var(--accent-ink);font-weight:650}
+  .item .ic{width:15px;height:15px;border-radius:5px;background:#d6dbe2;flex:none}
+  .item.on .ic{background:var(--accent)}
+  .sb .foot{border-top:1px solid var(--line);padding:9px;display:flex;flex-direction:column;gap:2px}
+
+  /* main */
+  .main{flex:1;display:flex;flex-direction:column;background:var(--surface);min-width:0}
+  .top{height:54px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px}
+  .srch{flex:1;max-width:430px;height:34px;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;gap:9px;padding:0 12px;color:var(--faint);font-size:12.5px}
+  .srch .mag{width:13px;height:13px;border:1.6px solid var(--faint);border-radius:50%;flex:none}
+  .ico{width:30px;height:30px;border-radius:8px;background:#f1f2f4;flex:none}
+  .ava{width:30px;height:30px;border-radius:50%;background:#dfe3ea;flex:none}
+
+  /* studio header */
+  .shead{padding:16px 18px 0;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+  .shead .ttl h3{margin:0;font-size:18px;font-weight:750;letter-spacing:-.2px}
+  .shead .ttl p{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+  .actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+  /* segmented tabs (the 3 unified tabs) */
+  .seg{display:flex;background:#f3f4f6;border:1px solid var(--line);border-radius:11px;padding:4px;gap:3px}
+  .seg button{background:none;border:none;font-size:12.5px;font-weight:600;color:var(--muted);padding:7px 15px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .seg button.on{background:var(--accent);color:#fff;box-shadow:0 1px 2px rgba(47,107,246,.35)}
+  .seg .gi{width:13px;height:13px;border-radius:4px;background:currentColor;opacity:.55}
+  .seg button.on .gi{opacity:.9;background:#fff}
+
+  /* + create button */
+  .plus{width:38px;height:38px;border-radius:10px;background:var(--accent);color:#fff;border:none;
+    display:inline-flex;align-items:center;justify-content:center;font-size:21px;font-weight:500;cursor:pointer;
+    box-shadow:0 1px 2px rgba(47,107,246,.4);position:relative}
+  .ghost{height:38px;border:1px solid var(--line);background:#fff;border-radius:10px;color:var(--muted);
+    font-size:12.5px;font-weight:600;padding:0 13px;display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+  .ghost .gi{width:13px;height:13px;border-radius:4px;background:var(--faint)}
+
+  /* + dropdown menu */
+  .menu{position:absolute;top:46px;right:0;width:248px;background:#fff;border:1px solid var(--line2);
+    border-radius:14px;box-shadow:var(--shadow);padding:7px;z-index:20}
+  .menu .mh{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:8px 10px 5px}
+  .mi{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;cursor:pointer}
+  .mi:hover{background:#f5f7fb}
+  .mi .mic{width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent-ink);
+    display:flex;align-items:center;justify-content:center;flex:none;font-size:14px}
+  .mi b{font-size:12.5px;font-weight:650;display:block;line-height:1.2}
+  .mi small{font-size:10.5px;color:var(--faint)}
+  .msep{height:1px;background:var(--line);margin:5px 6px}
+
+  /* studio body: two columns */
+  .sbody{display:flex;gap:0;padding:16px 18px 18px;min-height:430px}
+  .lpane{width:300px;flex:none;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;background:#fcfcfd}
+  .lpane .plab{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);display:flex;align-items:center;gap:6px}
+  .ta{border:1px solid var(--line);border-radius:11px;background:#fff;min-height:120px;padding:12px;font-size:12.5px;color:var(--faint);line-height:1.55}
+
+  /* assets row populated by + */
+  .assets{display:flex;gap:8px;flex-wrap:wrap}
+  .asset{width:54px;height:54px;border-radius:10px;background:#eef1f5;border:1px solid var(--line);position:relative;overflow:hidden}
+  .asset.vid::after{content:"▶";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;background:rgba(0,0,0,.28)}
+  .asset.add{display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:20px;border-style:dashed;border-color:var(--accent);background:var(--accent-soft);cursor:pointer}
+  .hintln{font-size:10.5px;color:var(--faint);margin-top:-4px}
+
+  .toggle{border:1px solid var(--accent);background:var(--accent-soft);border-radius:11px;padding:11px 12px;display:flex;gap:10px;align-items:flex-start}
+  .chk{width:16px;height:16px;border-radius:5px;background:var(--accent);flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px}
+  .toggle b{font-size:12px;display:block}
+  .toggle small{font-size:10.5px;color:var(--muted);line-height:1.5;display:block;margin-top:2px}
+  .gen{margin-top:auto;height:42px;border-radius:11px;background:var(--accent);color:#fff;border:none;font-size:13.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+
+  /* right canvas */
+  .canvas{flex:1;margin-left:16px;border:1px dashed var(--line2);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);background:repeating-linear-gradient(45deg,#fcfcfd,#fcfcfd 12px,#fafafb 12px,#fafafb 24px)}
+  .canvas .spark{width:54px;height:54px;border-radius:14px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:24px}
+  .canvas b{font-size:15px;color:var(--ink)}
+  .canvas small{font-size:12px}
+
+  /* annotations */
+  .pin{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;
+    background:var(--accent);color:#fff;font-size:11px;font-weight:700;flex:none}
+  .notes{margin-top:18px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .note{display:flex;gap:11px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;box-shadow:0 1px 2px rgba(16,24,40,.03)}
+  .note b{font-size:13px}
+  .note p{margin:3px 0 0;font-size:12px;color:var(--muted);line-height:1.55}
+
+  /* spec card */
+  .spec{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.03)}
+  .spec h4{margin:0 0 10px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#525a64}
+  .spec ul{margin:0;padding-left:18px}
+  .spec li{font-size:12.5px;color:#3b4149;line-height:1.7}
+  .spec li b{color:var(--ink)}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .pill{font-size:11px;border:1px solid var(--line2);border-radius:999px;padding:4px 11px;color:var(--muted);background:#fafafb}
+  .pill.acc{background:var(--accent-soft);border-color:#cfe0ff;color:var(--accent-ink);font-weight:600}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:6px 2px 0;color:var(--muted);font-size:12px}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+
+  @media (max-width:760px){
+    .desktop{min-width:0;width:100%}
+    .notes{grid-template-columns:1fr}
+  }
+  @media print{
+    .bar{position:static}
+    .bar .pbtn{display:none}
+    body{background:#fff}
+    .frame{box-shadow:none}
+    .row{gap:18px}
+  }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <h1>HolaPrime · Unified Creative Studio</h1>
+    <span class="tag">Wireframe &amp; concept — not implemented</span>
+    <span class="sp"></span>
+    <button class="pbtn" onclick="window.print()">⬇ Save as PDF</button>
+  </div>
+
+  <div class="wrap">
+    <div class="lead">
+      <h2>Merging “Custom” + “Studio” into one focused workspace</h2>
+      <p>
+        The old <b>Custom</b> and <b>Studio</b> tabs collapse into a single <b>Custom</b> workspace.
+        Source assets (the former Studio job) are no longer a separate tab — they are added inline through a
+        single <b>+ Create</b> action. The section now exposes just three tabs:
+        <b>Custom · Top Ads · Ad Library</b>. Layout is Claude-inspired: one clear input column, one large
+        result canvas, minimal chrome, content-first.
+      </p>
+      <div class="legend">
+        <span><i class="pin">1</i> 3-tab control</span>
+        <span><i class="pin">2</i> + Create menu (upload / add)</span>
+        <span><i class="pin">3</i> Inline source assets</span>
+        <span><i class="pin">4</i> Result canvas</span>
+      </div>
+    </div>
+
+    <!-- ============ DESKTOP ============ -->
+    <div class="secttl"><b>Desktop view</b><span>1280 px · default state with the + Create menu open</span></div>
+    <div class="frame desktop">
+      <div class="chrome"><i></i><i></i><i></i><span class="url">app.holaprime.com / studio</span></div>
+      <div class="app">
+        <!-- sidebar -->
+        <aside class="sb">
+          <div class="brand"><b>hola prime</b><span>Creative Analyzer</span></div>
+          <nav class="nav">
+            <div class="item"><span class="ic"></span> Dashboard</div>
+            <div class="grp">Analytics</div>
+            <div class="item"><span class="ic"></span> Meta Ads</div>
+            <div class="item"><span class="ic"></span> Google Ads</div>
+            <div class="item"><span class="ic"></span> AdRoll</div>
+            <div class="grp">Creative Studio</div>
+            <div class="item on"><span class="ic"></span> Studio</div>
+            <div class="item"><span class="ic"></span> Saved</div>
+          </nav>
+          <div class="foot">
+            <div class="item"><span class="ic"></span> Settings</div>
+            <div class="item"><span class="ic"></span> Profile</div>
+          </div>
+        </aside>
+
+        <!-- main -->
+        <div class="main">
+          <div class="top">
+            <div class="srch"><span class="mag"></span> Search ads by name or ID…</div>
+            <div style="flex:1"></div>
+            <span class="ico"></span><span class="ico"></span><span class="ava"></span>
+          </div>
+
+          <div class="shead">
+            <div class="ttl">
+              <h3>Studio</h3>
+              <p>Generate on-brand creatives with AI.</p>
+            </div>
+            <div class="actions">
+              <!-- 1: three unified tabs -->
+              <div class="seg">
+                <button class="on"><span class="gi"></span> Custom</button>
+                <button><span class="gi"></span> Top Ads</button>
+                <button><span class="gi"></span> Ad Library</button>
+              </div>
+              <!-- 2: + create with menu open -->
+              <button class="plus">+
+                <div class="menu" onclick="event.stopPropagation()">
+                  <div class="mh">Create</div>
+                  <div class="mi"><span class="mic">🖼</span><div><b>Upload image</b><small>PNG, JPG, WebP · up to 20&nbsp;MB</small></div></div>
+                  <div class="mi"><span class="mic">🎬</span><div><b>Upload video</b><small>MP4, MOV · up to 100&nbsp;MB</small></div></div>
+                  <div class="mi"><span class="mic">✍</span><div><b>Add content</b><small>Paste copy, brief or notes</small></div></div>
+                  <div class="msep"></div>
+                  <div class="mi"><span class="mic">🔗</span><div><b>Import from URL</b><small>Image, video or landing page</small></div></div>
+                  <div class="mi"><span class="mic">⭐</span><div><b>Use a Top Ad as reference</b><small>Pick from best performers</small></div></div>
+                </div>
+              </button>
+              <button class="ghost"><span class="gi"></span> History</button>
+            </div>
+          </div>
+
+          <div class="sbody">
+            <!-- left: prompt + assets + direct mode + generate -->
+            <div class="lpane">
+              <div class="plab">Prompt <span style="color:var(--accent)">●</span></div>
+              <div class="ta">What should this creative communicate? Audience, offer, tone…</div>
+
+              <!-- 3: inline source assets (added via +) -->
+              <div class="plab">Source assets <span style="color:var(--faint);letter-spacing:0;text-transform:none">· optional</span></div>
+              <div class="assets">
+                <div class="asset"></div>
+                <div class="asset vid"></div>
+                <div class="asset add">+</div>
+              </div>
+              <div class="hintln">Added from <b>+ Create</b>. Drag to reorder · click to remove.</div>
+
+              <div class="toggle">
+                <span class="chk">✓</span>
+                <div><b>Direct mode (recommended)</b>
+                  <small>ON — your prompt goes straight to the image model. No brief generation, no text overlay. One generation, full control.</small></div>
+              </div>
+
+              <button class="gen">Generate ✦</button>
+            </div>
+
+            <!-- 4: result canvas -->
+            <div class="canvas">
+              <div class="spark">✦</div>
+              <b>Ready to generate</b>
+              <small>Write a brief on the left and hit Generate.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- annotations -->
+    <div class="notes">
+      <div class="note"><span class="pin">1</span><div><b>Three tabs only</b><p>Custom · Top Ads · Ad Library. The standalone “Studio” tab is removed — its source-asset flow moves into Custom via the + menu.</p></div></div>
+      <div class="note"><span class="pin">2</span><div><b>+ Create menu</b><p>Click or hover the + to upload an image or video, add content/copy, import from a URL, or pull a Top Ad as reference.</p></div></div>
+      <div class="note"><span class="pin">3</span><div><b>Inline source assets</b><p>Uploads appear as removable thumbnail chips above Direct mode — the old Studio “Source assets” panel, now part of one workflow.</p></div></div>
+      <div class="note"><span class="pin">4</span><div><b>Content-first canvas</b><p>A single large result area (empty state → generations grid). Minimal chrome, Claude-style focus on the output.</p></div></div>
+    </div>
+
+    <!-- ============ MOBILE ============ -->
+    <div class="secttl"><b>Mobile view</b><span>390 px · tabs scroll horizontally, + sits beside them, panels stack</span></div>
+    <div class="row">
+      <div class="frame mobile">
+        <div class="chrome"><i></i><i></i><i></i><span class="url">studio</span></div>
+        <div style="display:flex;flex-direction:column;background:#fff">
+          <!-- mobile topbar -->
+          <div class="top" style="padding:0 12px;gap:9px">
+            <span class="ico" style="width:28px;height:28px"></span>
+            <div class="srch" style="height:32px"><span class="mag"></span> Search…</div>
+            <span class="ava" style="width:28px;height:28px"></span>
+          </div>
+
+          <div style="padding:14px 13px 0">
+            <h3 style="margin:0;font-size:17px;font-weight:750">Studio</h3>
+            <p style="margin:3px 0 0;font-size:12px;color:var(--muted)">Generate on-brand creatives with AI.</p>
+          </div>
+
+          <!-- mobile tabs + plus -->
+          <div style="display:flex;align-items:center;gap:8px;padding:12px 13px 0">
+            <div class="seg" style="flex:1;overflow:auto">
+              <button class="on" style="flex:1">Custom</button>
+              <button style="flex:1">Top Ads</button>
+              <button style="flex:1">Library</button>
+            </div>
+            <button class="plus" style="width:38px;height:38px;flex:none">+</button>
+          </div>
+
+          <!-- prompt panel -->
+          <div style="padding:13px">
+            <div class="lpane" style="width:100%">
+              <div class="plab">Prompt <span style="color:var(--accent)">●</span></div>
+              <div class="ta" style="min-height:96px">What should this creative communicate? Audience, offer, tone…</div>
+              <div class="plab">Source assets</div>
+              <div class="assets">
+                <div class="asset" style="width:48px;height:48px"></div>
+                <div class="asset vid" style="width:48px;height:48px"></div>
+                <div class="asset add" style="width:48px;height:48px">+</div>
+              </div>
+              <div class="toggle">
+                <span class="chk">✓</span>
+                <div><b>Direct mode</b><small>Prompt goes straight to the image model.</small></div>
+              </div>
+              <button class="gen">Generate ✦</button>
+            </div>
+          </div>
+
+          <!-- result canvas -->
+          <div style="padding:0 13px 16px">
+            <div class="canvas" style="margin:0;min-height:200px">
+              <div class="spark">✦</div>
+              <b>Ready to generate</b>
+              <small>Write a brief and tap Generate.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- mobile + sheet -->
+      <div class="frame mobile">
+        <div class="chrome"><i></i><i></i><i></i><span class="url">studio · + create</span></div>
+        <div style="position:relative;background:#fff;min-height:560px">
+          <div style="filter:blur(1.5px);opacity:.5;padding:14px 13px">
+            <h3 style="margin:0;font-size:17px;font-weight:750">Studio</h3>
+            <div class="seg" style="margin-top:12px"><button class="on" style="flex:1">Custom</button><button style="flex:1">Top Ads</button><button style="flex:1">Library</button></div>
+            <div class="ta" style="margin-top:14px;min-height:120px">What should this creative communicate?…</div>
+          </div>
+          <!-- bottom sheet -->
+          <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line2);border-radius:18px 18px 0 0;box-shadow:0 -10px 30px -12px rgba(16,24,40,.18);padding:8px 10px 16px">
+            <div style="width:38px;height:4px;border-radius:99px;background:#e2e4e8;margin:6px auto 8px"></div>
+            <div class="mh" style="font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:4px 8px 6px">Create</div>
+            <div class="mi"><span class="mic">🖼</span><div><b>Upload image</b><small>PNG, JPG, WebP</small></div></div>
+            <div class="mi"><span class="mic">🎬</span><div><b>Upload video</b><small>MP4, MOV</small></div></div>
+            <div class="mi"><span class="mic">✍</span><div><b>Add content</b><small>Paste copy, brief or notes</small></div></div>
+            <div class="msep"></div>
+            <div class="mi"><span class="mic">🔗</span><div><b>Import from URL</b><small>Image, video or page</small></div></div>
+            <div class="mi"><span class="mic">⭐</span><div><b>Use a Top Ad as reference</b><small>Pick from best performers</small></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- spec sidebar -->
+      <div class="spec" style="flex:1;min-width:300px">
+        <h4>Design spec</h4>
+        <ul>
+          <li><b>Tabs:</b> Custom · Top Ads · Ad Library (segmented control, blue active pill).</li>
+          <li><b>+ Create:</b> dropdown on desktop, bottom sheet on mobile. Opens on click <em>and</em> hover (desktop).</li>
+          <li><b>Menu items:</b> Upload image, Upload video, Add content, Import from URL, Use a Top Ad as reference.</li>
+          <li><b>Source assets:</b> thumbnails with remove + reorder, replacing the old “Studio” source panel.</li>
+          <li><b>Direct mode:</b> unchanged toggle, kept on the Custom tab.</li>
+          <li><b>Generate + History + Saved:</b> all preserved — nothing is removed functionally.</li>
+        </ul>
+        <div class="pills">
+          <span class="pill acc">Custom</span>
+          <span class="pill acc">Top Ads</span>
+          <span class="pill acc">Ad Library</span>
+          <span class="pill">+ Create</span>
+          <span class="pill">Direct mode</span>
+          <span class="pill">History</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- what maps where -->
+    <div class="secttl"><b>Migration map</b><span>where today’s pieces land in the merged section</span></div>
+    <div class="spec">
+      <ul>
+        <li><b>Custom tab</b> → stays as the primary prompt workspace (prompt + Direct mode + Generate).</li>
+        <li><b>Studio tab</b> → <b>removed as a tab</b>; its “Source assets” upload becomes the <b>+ Create</b> actions inside Custom.</li>
+        <li><b>Top Ads tab</b> → unchanged, second tab.</li>
+        <li><b>Ad Library tab</b> → unchanged, third tab.</li>
+        <li><b>History</b> → stays as a secondary action button (not a tab).</li>
+        <li><b>Saved</b> → stays in the left sidebar under Creative Studio.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

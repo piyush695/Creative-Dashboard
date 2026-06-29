@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchAds as fetchGoogleAds, fetchCampaigns as fetchGoogleCampaigns, fetchAdAssets } from "@/lib/realtime-services/googleAdsService";
-import { analyzeAd } from "@/lib/realtime-services/claudeAnalyzer";
-import { connectDB, saveAnalysis } from "@/lib/realtime-services/mongoService";
-import { saveMetaAnalysis } from "@/lib/realtime-services/saveMetaAnalysis";
-import { enrichAndSaveForAd } from "@/lib/realtime-services/metaInsightsEnrich";
-import clientPromise from "@/lib/mongodb-client";
+import { fetchAds as fetchGoogleAds, fetchCampaigns as fetchGoogleCampaigns, fetchAdAssets } from "@/server/realtime-services/googleAdsService";
+import { analyzeAd } from "@/server/realtime-services/claudeAnalyzer";
+import { connectDB, saveAnalysis } from "@/server/realtime-services/mongoService";
+import { saveMetaAnalysis } from "@/server/realtime-services/saveMetaAnalysis";
+import { enrichAndSaveForAd } from "@/server/realtime-services/metaInsightsEnrich";
+import clientPromise from "@/server/mongodb-client";
 import fs from "fs";
 
 const jsonResponse = (data: any, status = 200) => NextResponse.json(data, { status });

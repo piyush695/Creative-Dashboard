@@ -6,9 +6,9 @@
  *
  * Wraps the (dashboard) layout so the sidebar nav, the Add Platform picker,
  * platform filters, the connect dialog and the settings page all read the same
- * globally-configured set and stay consistent. Enable/disable is admin-only and
- * persisted server-side (see actions/platform-actions.ts), so changes survive
- * refreshes and new sessions.
+ * globally-configured set and stay consistent. Enable/disable is available to
+ * any signed-in user and persisted server-side (see actions/platform-actions.ts),
+ * so changes survive refreshes and new sessions.
  */
 
 import {
@@ -19,11 +19,10 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useSession } from "next-auth/react";
 import {
   getEnabledPlatforms,
   setEnabledPlatforms as setEnabledPlatformsAction,
-} from "@/actions/platform-actions";
+} from "@/server/actions/platform-actions";
 import {
   PLATFORM_CATALOG,
   DEFAULT_ENABLED_PLATFORMS,
@@ -41,15 +40,13 @@ interface PlatformsContextValue {
   availablePlatforms: PlatformDef[];
   /** Full catalog. */
   catalog: PlatformDef[];
-  /** Whether the current user may add/enable/disable platforms. */
-  isAdmin: boolean;
   /** Still loading the initial config. */
   loading: boolean;
-  /** Replace the entire enabled set (admin only). Returns success. */
+  /** Replace the entire enabled set. Returns success. */
   setEnabled: (ids: string[]) => Promise<boolean>;
-  /** Enable one platform (admin only). */
+  /** Enable one platform. */
   enable: (id: string) => Promise<boolean>;
-  /** Disable one platform (admin only). */
+  /** Disable one platform. */
   disable: (id: string) => Promise<boolean>;
   /** Re-fetch from the server. */
   refresh: () => Promise<void>;
@@ -58,9 +55,6 @@ interface PlatformsContextValue {
 const PlatformsContext = createContext<PlatformsContextValue | null>(null);
 
 export function PlatformsProvider({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession();
-  const isAdmin = (session?.user as any)?.role === "Admin";
-
   const [enabledIds, setEnabledIds] = useState<string[]>(DEFAULT_ENABLED_PLATFORMS);
   const [loading, setLoading] = useState(true);
 
@@ -113,14 +107,13 @@ export function PlatformsProvider({ children }: { children: React.ReactNode }) {
       enabledPlatforms: getPlatforms(enabledIds),
       availablePlatforms: getAvailableToAdd(enabledIds),
       catalog: PLATFORM_CATALOG,
-      isAdmin,
       loading,
       setEnabled,
       enable,
       disable,
       refresh,
     }),
-    [enabledIds, isAdmin, loading, setEnabled, enable, disable, refresh]
+    [enabledIds, loading, setEnabled, enable, disable, refresh]
   );
 
   return <PlatformsContext.Provider value={value}>{children}</PlatformsContext.Provider>;

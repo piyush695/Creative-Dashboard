@@ -51,7 +51,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { setTheme, theme } = useTheme();
-  const { catalog, enabledIds, setEnabled, isAdmin } = usePlatforms();
+  const { catalog, enabledIds, setEnabled } = usePlatforms();
   const { notificationIconEnabled, setNotificationIconEnabled } = useUiSettings();
   const [mounted, setMounted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -100,15 +100,15 @@ export default function SettingsPage() {
     // Apply the notification-icon visibility — only now does the header update.
     setNotificationIconEnabled(prefs.notifications);
 
-    // Commit staged platform changes (admins only; no-op when unchanged).
-    if (isAdmin && platformsDirty) {
+    // Commit staged platform changes (no-op when unchanged).
+    if (platformsDirty) {
       setSaving(true);
       const ok = await setEnabled(platformDraft);
       setSaving(false);
       if (!ok) {
         toast({
           title: "Couldn't save platforms",
-          description: "Only administrators can manage platforms.",
+          description: "Something went wrong while saving. Please try again.",
           variant: "destructive",
         });
         return;
@@ -270,71 +270,69 @@ export default function SettingsPage() {
         {/* Brand Kit — brand info + logo knowledge base used by the Creative Studio */}
         <BrandKitSettings />
 
-        {/* Platform Management — admin only. Enabling/disabling here applies
-            globally and hides the platform across the whole dashboard. */}
-        {isAdmin && (
-          <Card className="card-premium rounded-xl">
-            <CardHeader className="space-y-1 px-5 pb-4 pt-5">
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                Platform Management
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Enable or disable advertising platforms, then click{" "}
-                <span className="font-medium text-foreground">Save changes</span> to apply.
-                Disabled platforms are hidden everywhere — navigation, filters and selectors
-                — for all users.
-              </CardDescription>
-              {platformsDirty && (
-                <p className="text-[11px] font-medium text-amber-500">
-                  You have unsaved platform changes.
-                </p>
-              )}
-            </CardHeader>
-            <CardContent className="px-5 pb-5">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {catalog.map((platform) => {
-                  const Icon = platform.icon;
-                  const isEnabled = platformDraft.includes(platform.id);
-                  return (
-                    <div
-                      key={platform.id}
-                      className={cn(
-                        "flex items-center justify-between gap-3 rounded-md border p-3 transition-colors",
-                        isEnabled ? "border-border bg-background/40" : "border-border bg-muted/30 opacity-70"
-                      )}
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-card", platform.color)}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="truncate text-sm font-medium">{platform.label}</p>
-                            {!platform.implemented && (
-                              <span className="rounded-sm border border-border bg-muted px-1 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
-                                Soon
-                              </span>
-                            )}
-                          </div>
-                          <p className="truncate text-[11px] text-muted-foreground">
-                            {isEnabled ? "Active" : "Disabled"}
-                          </p>
-                        </div>
+        {/* Platform Management — enabling/disabling here applies globally and
+            hides the platform across the whole dashboard. */}
+        <Card className="card-premium rounded-xl">
+          <CardHeader className="space-y-1 px-5 pb-4 pt-5">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              Platform Management
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Enable or disable advertising platforms, then click{" "}
+              <span className="font-medium text-foreground">Save changes</span> to apply.
+              Disabled platforms are hidden everywhere — navigation, filters and selectors
+              — for all users.
+            </CardDescription>
+            {platformsDirty && (
+              <p className="text-[11px] font-medium text-amber-500">
+                You have unsaved platform changes.
+              </p>
+            )}
+          </CardHeader>
+          <CardContent className="px-5 pb-5">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {catalog.map((platform) => {
+                const Icon = platform.icon;
+                const isEnabled = platformDraft.includes(platform.id);
+                return (
+                  <div
+                    key={platform.id}
+                    className={cn(
+                      "flex items-center justify-between gap-3 rounded-md border p-3 transition-colors",
+                      isEnabled ? "border-border bg-background/40" : "border-border bg-muted/30 opacity-70"
+                    )}
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-card", platform.color)}>
+                        <Icon className="h-4 w-4" />
                       </div>
-                      <Switch
-                        checked={isEnabled}
-                        disabled={saving}
-                        onCheckedChange={(v) => togglePlatformDraft(platform.id, v)}
-                        aria-label={`${isEnabled ? "Disable" : "Enable"} ${platform.label}`}
-                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate text-sm font-medium">{platform.label}</p>
+                          {!platform.implemented && (
+                            <span className="rounded-sm border border-border bg-muted px-1 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+                              Soon
+                            </span>
+                          )}
+                        </div>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          {isEnabled ? "Active" : "Disabled"}
+                        </p>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                    <Switch
+                      checked={isEnabled}
+                      disabled={saving}
+                      onCheckedChange={(v) => togglePlatformDraft(platform.id, v)}
+                      aria-label={`${isEnabled ? "Disable" : "Enable"} ${platform.label}`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Accessibility — placeholder for future */}
         <Card className="card-premium rounded-xl">

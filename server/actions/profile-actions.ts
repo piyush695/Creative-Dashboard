@@ -1,0 +1,116 @@
+"use server"
+
+import clientPromise from "@/server/mongodb-client"
+import { auth } from "@/server/auth"
+
+export async function updateProfile(data: { name: string; email: string }) {
+    const session = await auth()
+
+    if (!session?.user?.email) {
+        return { error: "Not authenticated" }
+    }
+
+    // Google/OAuth accounts are managed by the identity provider. Profile edits
+    // are restricted to credentials-based accounts. Enforce server-side so the
+    // client-side restriction can't be bypassed.
+    if ((session.user as any).provider === "google") {
+        return { error: "Profile is managed by your Google account and cannot be edited here." }
+    }
+
+    const { name } = data
+
+    if (!name || name.trim().length === 0) {
+        return { error: "Name is required" }
+    }
+
+    try {
+        const client = await clientPromise
+        const db = client.db(process.env.MONGODB_DB || "reddit_data")
+
+        await db.collection("users").updateOne(
+            { email: session.user.email },
+            {
+                $set: {
+                    name: name.trim(),
+                    updatedAt: new Date()
+                }
+            }
+        )
+
+        return { success: true }
+    } catch (error) {
+        console.error("Profile update error:", error)
+        return { error: "Failed to update profile" }
+    }
+}
+
+export async function updateConnectedPlatforms(platforms: string[]) {
+    const session = await auth()
+    if (!session?.user?.email) return { error: "Not authenticated" }
+
+    try {
+        const client = await clientPromise
+        const db = client.db(process.env.MONGODB_DB || "reddit_data")
+        await db.collection("users").updateOne(
+            { email: session.user.email },
+            { $set: { connectedPlatforms: platforms, updatedAt: new Date() } }
+        )
+        return { success: true }
+    } catch (error) {
+        console.error("Update platforms error:", error)
+        return { error: "Failed to update platforms" }
+    }
+}
+
+export async function getConnectedPlatforms() {
+    const session = await auth()
+    if (!session?.user?.email) return { error: "Not authenticated" }
+
+    try {
+        const client = await clientPromise
+        const db = client.db(process.env.MONGODB_DB || "reddit_data")
+        const user = await db.collection("users").findOne({ email: session.user.email })
+        const platforms = user?.connectedPlatforms || []
+        // Ensure at least meta and google are there if nothing is set
+        const finalPlatforms = platforms.length > 0 ? platforms : ["meta", "google"]
+        return { success: true, platforms: finalPlatforms }
+    } catch (error) {
+        console.error("Get platforms error:", error)
+        return { error: "Failed to get platforms" }
+    }
+}
+export async function updateEnabledPlatforms(platforms: string[]) {
+    const session = await auth()
+    if (!session?.user?.email) return { error: "Not authenticated" }
+
+    try {
+        const client = await clientPromise
+        const db = client.db(process.env.MONGODB_DB || "reddit_data")
+        await db.collection("users").updateOne(
+            { email: session.user.email },
+            { $set: { enabledPlatforms: platforms, updatedAt: new Date() } }
+        )
+        return { success: true }
+    } catch (error) {
+        console.error("Update enabled platforms error:", error)
+        return { error: "Failed to update enabled platforms" }
+    }
+}
+
+export async function getEnabledPlatforms() {
+    const session = await auth()
+    if (!session?.user?.email) return { error: "Not authenticated" }
+
+    try {
+        const client = await clientPromise
+        const db = client.db(process.env.MONGODB_DB || "reddit_data")
+        const user = await db.collection("users").findOne({ email: session.user.email })
+        const platforms = user?.enabledPlatforms || []
+        // Default to meta and youtube if nothing is set or empty
+        const finalPlatforms = platforms.length > 0 ? platforms : ["meta", "youtube"]
+        return { success: true, platforms: finalPlatforms }
+    } catch (error) {
+        console.error("Get enabled platforms error:", error)
+        return { error: "Failed to get enabled platforms" }
+    }
+}

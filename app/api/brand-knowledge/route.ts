@@ -15,8 +15,8 @@ import {
   saveBrandKnowledge,
   type BrandDocument,
   type BrandLogo,
-} from '@/lib/ai-studio/brand-knowledge';
-import { parseDocumentToText } from '@/lib/ai-studio/doc-parser';
+} from '@/server/ai-studio/brand-knowledge';
+import { parseDocumentToText } from '@/server/ai-studio/doc-parser';
 
 const MAX_LOGO_BYTES = 3 * 1024 * 1024;   // 3 MB
 const MAX_DOC_BYTES = 25 * 1024 * 1024;   // 25 MB

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Loader2, Lock, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { verifyCurrentPassword, updatePassword } from "@/actions/auth-actions"
+import { verifyCurrentPassword, updatePassword } from "@/server/actions/auth-actions"
 import { signOut } from "next-auth/react"
 
 interface ChangePasswordDialogProps {

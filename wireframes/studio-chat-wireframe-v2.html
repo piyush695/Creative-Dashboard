@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HolaPrime — Studio Chat v2 · Wireframe &amp; Concept</title>
+<style>
+  :root{
+    --ink:#1c1f26; --muted:#6b7280; --faint:#9aa1ab;
+    --line:#e7e8ec; --line2:#dcdee3; --surface:#ffffff; --bg:#f4f4f2;
+    --accent:#2f6bf6; --accent-soft:#eaf0fe; --accent-ink:#1a4fd0;
+    --bubble:#eef2fb;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 10px 28px -14px rgba(16,24,40,.14);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+
+  .bar{position:sticky;top:0;z-index:50;background:#0f1216;color:#fff;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:13px 20px;}
+  .bar h1{font-size:14.5px;font-weight:600;margin:0;letter-spacing:.2px}
+  .bar .tag{font-size:11px;color:#aab2bd;border:1px solid #2b333d;border-radius:999px;padding:3px 10px}
+  .bar .sp{flex:1}
+  .bar .pbtn{background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:600;padding:8px 15px;border-radius:8px;cursor:pointer}
+  .bar .pbtn:hover{filter:brightness(1.06)}
+
+  .wrap{max-width:1240px;margin:0 auto;padding:22px 20px 80px}
+  .lead h2{font-size:22px;margin:0 0 6px;letter-spacing:-.2px}
+  .lead p{margin:0;color:var(--muted);font-size:13.5px;max-width:800px;line-height:1.6}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:14px 2px 0;color:var(--muted);font-size:12px}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .pin{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;flex:none}
+
+  .secttl{display:flex;align-items:baseline;gap:10px;margin:34px 2px 14px}
+  .secttl b{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#525a64}
+  .secttl span{font-size:12.5px;color:var(--faint)}
+
+  .frame{background:var(--surface);border:1px solid var(--line2);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+  .frame .chrome{height:34px;background:#fbfbfc;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;padding:0 13px}
+  .frame .chrome i{width:10px;height:10px;border-radius:50%;background:#e2e4e8;display:inline-block}
+  .frame .chrome .url{flex:1;margin-left:10px;height:20px;border-radius:6px;background:#f1f2f4;display:flex;align-items:center;padding:0 10px;font-size:11px;color:var(--faint)}
+
+  .row{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+  .desktop{width:100%}
+  .mobile{width:340px;flex:none}
+
+  /* app shell */
+  .app{display:flex;min-height:660px}
+
+  /* ===== ONE left sidebar = nav + integrated chats ===== */
+  .sb{width:248px;flex:none;background:#fafafa;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  .brand{height:54px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:0 16px;flex:none}
+  .brand b{font-size:14px;font-weight:800;line-height:1;letter-spacing:-.2px}
+  .brand span{font-size:7px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase;margin-top:3px}
+  .nav{padding:9px 9px 4px;display:flex;flex-direction:column;gap:2px;flex:none}
+  .grp{font-size:9.5px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;padding:11px 9px 5px;display:flex;align-items:center;justify-content:space-between}
+  .grp .vall{font-size:9.5px;color:var(--accent);letter-spacing:.04em;text-transform:none;font-weight:600;cursor:pointer}
+  .item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:9px;font-size:12.5px;color:#454b53}
+  .item.on{background:var(--accent-soft);color:var(--accent-ink);font-weight:650}
+  .item .ic{width:15px;height:15px;border-radius:5px;background:#d6dbe2;flex:none}
+  .item.on .ic{background:var(--accent)}
+
+  /* integrated chat block inside the sidebar */
+  .chatblock{display:flex;flex-direction:column;min-height:0;flex:1;border-top:1px solid var(--line);margin-top:6px}
+  .newchat{margin:10px 9px 8px;height:36px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-size:12.5px;font-weight:650;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 1px 2px rgba(47,107,246,.4);flex:none}
+  .sbsearch{margin:0 9px 6px;height:32px;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--faint);font-size:12px;background:#fff;flex:none}
+  .sbsearch .mag{width:12px;height:12px;border:1.5px solid var(--faint);border-radius:50%;flex:none}
+  .recents{flex:1;overflow:auto;padding:2px 5px 8px}
+  .chgrp{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:9px 9px 3px}
+  .chitem{margin:1px 0;padding:7px 9px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px}
+  .chitem:hover{background:#eef0f3}
+  .chitem.on{background:var(--accent-soft)}
+  .chitem .cdot{width:6px;height:6px;border-radius:50%;background:#c4ccd8;flex:none}
+  .chitem.on .cdot{background:var(--accent)}
+  .chitem b{font-size:12px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#3b424b}
+  .chitem.on b{color:var(--accent-ink);font-weight:650}
+  .sb .foot{border-top:1px solid var(--line);padding:8px 9px;display:flex;flex-direction:column;gap:2px;flex:none}
+
+  /* main column */
+  .main{flex:1;display:flex;flex-direction:column;background:var(--surface);min-width:0}
+  .top{height:54px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px}
+  .srch{flex:1;max-width:420px;height:34px;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;gap:9px;padding:0 12px;color:var(--faint);font-size:12.5px}
+  .srch .mag{width:13px;height:13px;border:1.6px solid var(--faint);border-radius:50%;flex:none}
+  .ico{width:30px;height:30px;border-radius:8px;background:#f1f2f4;flex:none}
+  .ava{width:30px;height:30px;border-radius:50%;background:#dfe3ea;flex:none}
+
+  .shead{padding:14px 18px 12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .shead .ttl h3{margin:0;font-size:17px;font-weight:750;letter-spacing:-.2px}
+  .shead .ttl p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+  .hactions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .seg{display:flex;background:#f3f4f6;border:1px solid var(--line);border-radius:11px;padding:4px;gap:3px}
+  .seg button{background:none;border:none;font-size:12.5px;font-weight:600;color:var(--muted);padding:7px 14px;border-radius:8px;cursor:pointer}
+  .seg button.on{background:var(--accent);color:#fff;box-shadow:0 1px 2px rgba(47,107,246,.35)}
+
+  /* thread */
+  .thread{flex:1;display:flex;flex-direction:column;min-width:0}
+  .scroll{flex:1;overflow:auto;padding:20px 22px 6px;display:flex;flex-direction:column;gap:18px;background:#fff}
+  .day{align-self:center;font-size:10.5px;color:var(--faint);background:#f3f4f6;border-radius:999px;padding:3px 10px}
+  .msg{display:flex;gap:11px;max-width:860px;width:100%}
+  .msg.user{align-self:flex-end;flex-direction:row-reverse}
+  .who{width:28px;height:28px;border-radius:8px;flex:none}
+  .who.ai{background:linear-gradient(135deg,#2f6bf6,#56a0ff);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
+  .who.me{background:#dfe3ea;border-radius:50%}
+  .ubub{background:var(--bubble);border:1px solid #dde6fb;border-radius:14px 14px 4px 14px;padding:11px 14px;font-size:13px;color:#27303f;line-height:1.5;max-width:560px}
+  .abody{flex:1;min-width:0}
+  .acap{font-size:12px;color:var(--muted);margin:4px 0 10px}.acap b{color:var(--ink)}
+  .genrow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:560px}
+  .genrow.two{grid-template-columns:repeat(2,1fr);max-width:300px}
+  .gencard{aspect-ratio:4/5;border-radius:12px;border:1px solid var(--line);overflow:hidden;position:relative;background:linear-gradient(135deg,#eef2f8,#e3e9f3)}
+  .gencard::after{content:"✦";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#b9c3d6;font-size:22px}
+  .gentools{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .gt{font-size:11px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;color:var(--muted)}
+  .gt.acc{border-color:#cfe0ff;background:var(--accent-soft);color:var(--accent-ink)}
+
+  /* composer */
+  .composer{border-top:1px solid var(--line);padding:14px 18px;background:#fff}
+  .cbox{max-width:860px;margin:0 auto;border:1px solid var(--line2);border-radius:16px;background:#fff;box-shadow:var(--shadow);padding:10px 12px}
+  .cinput{font-size:13px;color:var(--faint);min-height:40px;line-height:1.5;padding:4px 2px}
+  .crow{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .attach{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--accent);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+  .chip{height:28px;border:1px solid #cfe0ff;background:var(--accent-soft);color:var(--accent-ink);border-radius:999px;font-size:11.5px;font-weight:600;padding:0 11px;display:inline-flex;align-items:center;gap:7px}
+  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .csp{flex:1}
+  .send{width:36px;height:36px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 2px rgba(47,107,246,.4)}
+
+  /* ===== History page ===== */
+  .hpage{flex:1;display:flex;flex-direction:column;background:#fff;min-width:0}
+  .htop{padding:16px 22px 14px;border-bottom:1px solid var(--line)}
+  .htop h3{margin:0;font-size:19px;font-weight:750;letter-spacing:-.2px}
+  .htop p{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+  .hcontrols{display:flex;gap:10px;margin-top:13px;flex-wrap:wrap;align-items:center}
+  .hsearch{flex:1;min-width:220px;max-width:460px;height:38px;border:1px solid var(--line2);border-radius:10px;display:flex;align-items:center;gap:9px;padding:0 12px;color:var(--faint);font-size:13px;background:#fff}
+  .hsearch .mag{width:14px;height:14px;border:1.6px solid var(--faint);border-radius:50%;flex:none}
+  .filters{display:flex;gap:6px}
+  .filt{font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--muted);background:#fafafb;cursor:pointer}
+  .filt.on{background:var(--accent-soft);border-color:#cfe0ff;color:var(--accent-ink);font-weight:600}
+  .hlist{flex:1;overflow:auto;padding:16px 22px 22px;display:flex;flex-direction:column;gap:12px}
+  .hgrp{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:6px 2px 2px}
+  .hcard{border:1px solid var(--line);border-radius:14px;padding:13px 14px;display:flex;gap:16px;align-items:center;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.03)}
+  .hcard:hover{border-color:#cfe0ff;box-shadow:var(--shadow)}
+  .hmeta{flex:1;min-width:0}
+  .hmeta b{font-size:14px;font-weight:650;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hmeta .sub{font-size:11.5px;color:var(--muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
+  .hmeta .sub span{display:inline-flex;align-items:center;gap:5px}
+  .hthumbs{display:flex;gap:7px;flex:none}
+  .hthumb{width:46px;height:58px;border-radius:8px;border:1px solid var(--line);background:linear-gradient(135deg,#eef2f8,#e3e9f3);position:relative}
+  .hthumb.more{display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:12px;font-weight:600;background:#f3f4f6}
+  .hopen{font-size:11.5px;border:1px solid var(--line);border-radius:9px;padding:8px 12px;color:var(--accent-ink);background:var(--accent-soft);border-color:#cfe0ff;font-weight:600;flex:none}
+
+  /* annotations + spec */
+  .notes{margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .note{display:flex;gap:11px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+  .note b{font-size:12.5px}.note p{margin:3px 0 0;font-size:11.5px;color:var(--muted);line-height:1.5}
+  .spec{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .spec h4{margin:0 0 10px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#525a64}
+  .spec li{font-size:12.5px;color:#3b4149;line-height:1.75}.spec li b{color:var(--ink)}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .pill{font-size:11px;border:1px solid var(--line2);border-radius:999px;padding:4px 11px;color:var(--muted);background:#fafafb}
+  .pill.acc{background:var(--accent-soft);border-color:#cfe0ff;color:var(--accent-ink);font-weight:600}
+
+  @media (max-width:980px){ .notes{grid-template-columns:1fr 1fr} }
+  @media print{ .bar{position:static} .bar .pbtn{display:none} body{background:#fff} .frame{box-shadow:none} }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <h1>HolaPrime · Studio Chat — v2</h1>
+    <span class="tag">Wireframe &amp; concept — not implemented</span>
+    <span class="sp"></span>
+    <button class="pbtn" onclick="window.print()">⬇ Save as PDF</button>
+  </div>
+
+  <div class="wrap">
+    <div class="lead">
+      <h2>One sidebar · chats built in · a real History page</h2>
+      <p>
+        The awkward second rail is gone. <b>Recent chats now live inside the left Studio sidebar</b>
+        (New chat → search → titled list), exactly like Claude / ChatGPT. The main area is a clean,
+        full-width conversation. A dedicated <b>History</b> page lists every past conversation with its
+        generated creatives, with full-text <b>chat search</b> and date grouping.
+      </p>
+      <div class="legend">
+        <span><i class="pin">1</i> New chat + search in sidebar</span>
+        <span><i class="pin">2</i> Titled chat list (date-grouped)</span>
+        <span><i class="pin">3</i> Full-width conversation</span>
+        <span><i class="pin">4</i> Dedicated History page</span>
+      </div>
+    </div>
+
+    <!-- ============ DESKTOP — STUDIO CHAT (integrated sidebar) ============ -->
+    <div class="secttl"><b>Desktop · Studio chat</b><span>chats live in the one left sidebar — no second rail</span></div>
+    <div class="frame desktop">
+      <div class="chrome"><i></i><i></i><i></i><span class="url">app.holaprime.com / studio</span></div>
+      <div class="app">
+        <aside class="sb">
+          <div class="brand"><b>hola prime</b><span>Creative Analyzer</span></div>
+          <nav class="nav">
+            <div class="item"><span class="ic"></span> Dashboard</div>
+            <div class="grp">Analytics</div>
+            <div class="item"><span class="ic"></span> Meta Ads</div>
+            <div class="item"><span class="ic"></span> Google Ads</div>
+            <div class="item"><span class="ic"></span> AdRoll</div>
+            <div class="grp">Creative Studio</div>
+            <div class="item on"><span class="ic"></span> Studio</div>
+            <div class="item"><span class="ic"></span> Saved</div>
+            <div class="item"><span class="ic"></span> History</div>
+          </nav>
+
+          <!-- 1 + 2: integrated chats -->
+          <div class="chatblock">
+            <button class="newchat">＋ New chat</button>
+            <div class="sbsearch"><span class="mag"></span> Search chats…</div>
+            <div class="recents">
+              <div class="chgrp">Today</div>
+              <div class="chitem on"><span class="cdot"></span><b>Summer sale — bold promo set</b></div>
+              <div class="chitem"><span class="cdot"></span><b>UGC testimonial concepts</b></div>
+              <div class="chgrp">Yesterday</div>
+              <div class="chitem"><span class="cdot"></span><b>Forex challenge — hook A/B</b></div>
+              <div class="chitem"><span class="cdot"></span><b>Carousel — bestsellers</b></div>
+              <div class="chgrp">Previous 7 days</div>
+              <div class="chitem"><span class="cdot"></span><b>Black-week teaser</b></div>
+              <div class="chitem"><span class="cdot"></span><b>Instagram story — 45% off</b></div>
+              <div class="chitem"><span class="cdot"></span><b>Retargeting — cart reminder</b></div>
+            </div>
+          </div>
+
+          <div class="foot">
+            <div class="item"><span class="ic"></span> Settings</div>
+            <div class="item"><span class="ic"></span> Profile</div>
+          </div>
+        </aside>
+
+        <div class="main">
+          <div class="top">
+            <div class="srch"><span class="mag"></span> Search ads by name or ID…</div>
+            <div style="flex:1"></div>
+            <span class="ico"></span><span class="ico"></span><span class="ava"></span>
+          </div>
+
+          <div class="shead">
+            <div class="ttl"><h3>Summer sale — bold promo set</h3><p>Custom · chat conversation</p></div>
+            <div class="hactions">
+              <div class="seg"><button class="on">Custom</button><button>Top Ads</button><button>Ad Library</button></div>
+            </div>
+          </div>
+
+          <!-- 3: full-width conversation -->
+          <div class="thread">
+            <div class="scroll">
+              <span class="day">Today</span>
+              <div class="msg user"><span class="who me"></span><div class="ubub">A bold “Mid Season Sale — up to 45% off” promo for our forex challenge. Dark, energetic, neon accents. 4:5.</div></div>
+              <div class="msg"><span class="who ai">✦</span>
+                <div class="abody">
+                  <div class="acap">Here are <b>4 variations</b> · Direct mode · 4:5</div>
+                  <div class="genrow"><div class="gencard"></div><div class="gencard"></div><div class="gencard"></div><div class="gencard"></div></div>
+                  <div class="gentools"><span class="gt acc">Save</span><span class="gt">Download</span><span class="gt">Variations</span><span class="gt">Use as source</span></div>
+                </div>
+              </div>
+              <div class="msg user"><span class="who me"></span><div class="ubub">Love #2. Two more like it, headline “Last 12 hours”.</div></div>
+              <div class="msg"><span class="who ai">✦</span>
+                <div class="abody">
+                  <div class="acap">Refined from #2 — <b>2 new variations</b></div>
+                  <div class="genrow two"><div class="gencard"></div><div class="gencard"></div></div>
+                  <div class="gentools"><span class="gt acc">Save</span><span class="gt">Download</span><span class="gt">Variations</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="composer">
+              <div class="cbox">
+                <div class="cinput">Reply to continue this creative…</div>
+                <div class="crow"><button class="attach">＋</button><span class="chip"><span class="dot"></span> Direct mode</span><span class="csp"></span><button class="send">↑</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="note"><span class="pin">1</span><div><b>New chat + search</b><p>Both sit at the top of the chat block in the single left sidebar.</p></div></div>
+      <div class="note"><span class="pin">2</span><div><b>Titled, grouped list</b><p>Every chat shows its title, grouped Today / Yesterday / Previous 7 days; active is highlighted.</p></div></div>
+      <div class="note"><span class="pin">3</span><div><b>No second rail</b><p>The main area is now a clean, full-width conversation — less clutter.</p></div></div>
+      <div class="note"><span class="pin">4</span><div><b>History entry</b><p>“History” in the Creative Studio group opens the full archive (next frame).</p></div></div>
+    </div>
+
+    <!-- ============ DESKTOP — HISTORY PAGE ============ -->
+    <div class="secttl"><b>Desktop · History page</b><span>every past conversation + its generated creatives, searchable</span></div>
+    <div class="frame desktop">
+      <div class="chrome"><i></i><i></i><i></i><span class="url">app.holaprime.com / studio / history</span></div>
+      <div class="app" style="min-height:620px">
+        <aside class="sb">
+          <div class="brand"><b>hola prime</b><span>Creative Analyzer</span></div>
+          <nav class="nav">
+            <div class="item"><span class="ic"></span> Dashboard</div>
+            <div class="grp">Analytics</div>
+            <div class="item"><span class="ic"></span> Meta Ads</div>
+            <div class="item"><span class="ic"></span> Google Ads</div>
+            <div class="item"><span class="ic"></span> AdRoll</div>
+            <div class="grp">Creative Studio</div>
+            <div class="item"><span class="ic"></span> Studio</div>
+            <div class="item"><span class="ic"></span> Saved</div>
+            <div class="item on"><span class="ic"></span> History</div>
+          </nav>
+          <div class="chatblock">
+            <button class="newchat">＋ New chat</button>
+            <div class="sbsearch"><span class="mag"></span> Search chats…</div>
+            <div class="recents">
+              <div class="chgrp">Today</div>
+              <div class="chitem"><span class="cdot"></span><b>Summer sale — bold promo set</b></div>
+              <div class="chitem"><span class="cdot"></span><b>UGC testimonial concepts</b></div>
+              <div class="chgrp">Yesterday</div>
+              <div class="chitem"><span class="cdot"></span><b>Forex challenge — hook A/B</b></div>
+            </div>
+          </div>
+          <div class="foot"><div class="item"><span class="ic"></span> Settings</div><div class="item"><span class="ic"></span> Profile</div></div>
+        </aside>
+
+        <div class="hpage">
+          <div class="htop">
+            <h3>History</h3>
+            <p>All your Studio conversations and the creatives generated in each.</p>
+            <div class="hcontrols">
+              <div class="hsearch"><span class="mag"></span> Search conversations &amp; prompts…</div>
+              <div class="filters">
+                <span class="filt on">All</span>
+                <span class="filt">This week</span>
+                <span class="filt">This month</span>
+                <span class="filt">Saved only</span>
+              </div>
+            </div>
+          </div>
+          <div class="hlist">
+            <div class="hgrp">Today</div>
+            <div class="hcard">
+              <div class="hmeta">
+                <b>Summer sale — bold promo set</b>
+                <div class="sub"><span>🕑 just now</span><span>🖼 6 creatives</span><span>● Direct mode</span></div>
+              </div>
+              <div class="hthumbs"><div class="hthumb"></div><div class="hthumb"></div><div class="hthumb"></div><div class="hthumb more">+3</div></div>
+              <button class="hopen">Open chat →</button>
+            </div>
+            <div class="hcard">
+              <div class="hmeta">
+                <b>UGC testimonial concepts</b>
+                <div class="sub"><span>🕑 1h ago</span><span>🖼 2 creatives</span></div>
+              </div>
+              <div class="hthumbs"><div class="hthumb"></div><div class="hthumb"></div></div>
+              <button class="hopen">Open chat →</button>
+            </div>
+
+            <div class="hgrp">Yesterday</div>
+            <div class="hcard">
+              <div class="hmeta">
+                <b>Forex challenge — hook A/B</b>
+                <div class="sub"><span>🕑 Tue</span><span>🖼 6 creatives</span><span>★ 2 saved</span></div>
+              </div>
+              <div class="hthumbs"><div class="hthumb"></div><div class="hthumb"></div><div class="hthumb"></div><div class="hthumb more">+3</div></div>
+              <button class="hopen">Open chat →</button>
+            </div>
+            <div class="hcard">
+              <div class="hmeta">
+                <b>Carousel — bestsellers</b>
+                <div class="sub"><span>🕑 Tue</span><span>🖼 3 creatives</span></div>
+              </div>
+              <div class="hthumbs"><div class="hthumb"></div><div class="hthumb"></div><div class="hthumb"></div></div>
+              <button class="hopen">Open chat →</button>
+            </div>
+
+            <div class="hgrp">Previous 7 days</div>
+            <div class="hcard">
+              <div class="hmeta">
+                <b>Black-week teaser</b>
+                <div class="sub"><span>🕑 Sat</span><span>🖼 5 creatives</span></div>
+              </div>
+              <div class="hthumbs"><div class="hthumb"></div><div class="hthumb"></div><div class="hthumb"></div><div class="hthumb more">+2</div></div>
+              <button class="hopen">Open chat →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ MOBILE ============ -->
+    <div class="secttl"><b>Mobile</b><span>sidebar (nav + chats) as a drawer · full-width chat · History stacked</span></div>
+    <div class="row">
+      <!-- mobile chat -->
+      <div class="frame mobile">
+        <div class="chrome"><i></i><i></i><i></i><span class="url">studio</span></div>
+        <div style="display:flex;flex-direction:column;background:#fff;height:600px">
+          <div class="top" style="padding:0 12px;gap:9px">
+            <span class="ico" style="width:28px;height:28px"></span>
+            <b style="font-size:14px;flex:1">Summer sale — bold promo</b>
+            <button class="attach" style="width:30px;height:30px;font-size:16px">＋</button>
+          </div>
+          <div style="display:flex;gap:8px;padding:10px 12px 0">
+            <div class="seg" style="flex:1"><button class="on" style="flex:1">Custom</button><button style="flex:1">Top Ads</button><button style="flex:1">Library</button></div>
+          </div>
+          <div class="scroll" style="padding:14px 12px 6px;gap:14px">
+            <div class="msg user"><span class="who me" style="width:24px;height:24px"></span><div class="ubub" style="font-size:12px">Mid Season Sale promo, dark + neon, 4:5</div></div>
+            <div class="msg"><span class="who ai" style="width:24px;height:24px">✦</span>
+              <div class="abody"><div class="acap" style="font-size:11px">4 variations</div>
+                <div class="genrow two" style="max-width:100%"><div class="gencard"></div><div class="gencard"></div><div class="gencard"></div><div class="gencard"></div></div>
+                <div class="gentools"><span class="gt acc">Save</span><span class="gt">Download</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="composer" style="padding:10px 12px">
+            <div class="cbox" style="padding:8px 10px">
+              <div class="cinput" style="min-height:26px;font-size:12.5px">Reply to continue…</div>
+              <div class="crow"><button class="attach">＋</button><span class="chip">Direct</span><span class="csp"></span><button class="send">↑</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- mobile drawer (nav + chats merged) -->
+      <div class="frame mobile">
+        <div class="chrome"><i></i><i></i><i></i><span class="url">studio · menu</span></div>
+        <div style="position:relative;background:#fff;height:600px">
+          <div style="position:absolute;inset:0;background:rgba(15,18,22,.35)"></div>
+          <div style="position:absolute;left:0;top:0;bottom:0;width:82%;background:#fafafa;border-right:1px solid var(--line2);box-shadow:var(--shadow);display:flex;flex-direction:column">
+            <div class="brand"><b>hola prime</b><span>Creative Analyzer</span></div>
+            <nav class="nav">
+              <div class="item"><span class="ic"></span> Dashboard</div>
+              <div class="grp">Creative Studio</div>
+              <div class="item on"><span class="ic"></span> Studio</div>
+              <div class="item"><span class="ic"></span> Saved</div>
+              <div class="item"><span class="ic"></span> History</div>
+            </nav>
+            <div class="chatblock">
+              <button class="newchat">＋ New chat</button>
+              <div class="sbsearch"><span class="mag"></span> Search chats…</div>
+              <div class="recents">
+                <div class="chgrp">Today</div>
+                <div class="chitem on"><span class="cdot"></span><b>Summer sale — bold promo</b></div>
+                <div class="chitem"><span class="cdot"></span><b>UGC testimonial concepts</b></div>
+                <div class="chgrp">Yesterday</div>
+                <div class="chitem"><span class="cdot"></span><b>Forex challenge — hook A/B</b></div>
+                <div class="chitem"><span class="cdot"></span><b>Carousel — bestsellers</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- mobile history -->
+      <div class="frame mobile">
+        <div class="chrome"><i></i><i></i><i></i><span class="url">studio · history</span></div>
+        <div style="display:flex;flex-direction:column;background:#fff;height:600px">
+          <div class="htop" style="padding:14px 13px 12px">
+            <h3 style="font-size:17px">History</h3>
+            <p style="font-size:11.5px">Past conversations &amp; creatives.</p>
+            <div class="hsearch" style="margin-top:10px;height:34px"><span class="mag"></span> Search…</div>
+            <div class="filters" style="margin-top:9px;overflow:auto"><span class="filt on">All</span><span class="filt">This week</span><span class="filt">Saved</span></div>
+          </div>
+          <div class="hlist" style="padding:12px 13px">
+            <div class="hcard" style="flex-direction:column;align-items:stretch;gap:10px">
+              <div class="hmeta"><b>Summer sale — bold promo</b><div class="sub"><span>now</span><span>🖼 6</span></div></div>
+              <div class="hthumbs"><div class="hthumb"></div><div class="hthumb"></div><div class="hthumb"></div><div class="hthumb more">+3</div></div>
+            </div>
+            <div class="hcard" style="flex-direction:column;align-items:stretch;gap:10px">
+              <div class="hmeta"><b>UGC testimonial concepts</b><div class="sub"><span>1h</span><span>🖼 2</span></div></div>
+              <div class="hthumbs"><div class="hthumb"></div><div class="hthumb"></div></div>
+            </div>
+            <div class="hcard" style="flex-direction:column;align-items:stretch;gap:10px">
+              <div class="hmeta"><b>Forex challenge — hook A/B</b><div class="sub"><span>Tue</span><span>🖼 6</span><span>★ 2</span></div></div>
+              <div class="hthumbs"><div class="hthumb"></div><div class="hthumb"></div><div class="hthumb"></div><div class="hthumb more">+3</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- spec + migration -->
+    <div class="secttl"><b>Design spec &amp; migration</b><span>what changed from v1 and how today’s pieces map</span></div>
+    <div class="spec">
+      <h4>What changed in v2</h4>
+      <ul style="margin:0 0 6px;padding-left:18px">
+        <li><b>Second rail removed</b> — recent chats now live in the single left Studio sidebar (New chat → search → titled list).</li>
+        <li><b>Dedicated History page</b> — every conversation as a card with title, date, creative count, saved badge, thumbnail strip, and “Open chat”.</li>
+        <li><b>Chat search</b> — quick search in the sidebar (titles) and full search in History (titles + prompts).</li>
+        <li><b>Titled chat list</b> — clear names, date-grouped, active highlighted; hover for rename / delete.</li>
+        <li><b>Full-width conversation</b> — main area is just the thread + composer; cleaner and more focused.</li>
+      </ul>
+      <h4 style="margin-top:14px">Mapping</h4>
+      <ul style="margin:0;padding-left:18px">
+        <li><b>Custom/Studio prompt</b> → composer · <b>results</b> → inline in thread · <b>＋ Create</b> → composer ＋ attach.</li>
+        <li><b>History (old button)</b> → both the sidebar chat list <em>and</em> the dedicated History page.</li>
+        <li><b>Top Ads · Ad Library · Saved · Direct mode</b> → unchanged.</li>
+      </ul>
+      <div class="pills">
+        <span class="pill acc">One sidebar</span>
+        <span class="pill acc">In-sidebar chats</span>
+        <span class="pill acc">History page</span>
+        <span class="pill acc">Chat search</span>
+        <span class="pill">New chat</span>
+        <span class="pill">Full-width thread</span>
+        <span class="pill">Direct mode</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

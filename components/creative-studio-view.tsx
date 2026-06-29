@@ -2216,7 +2216,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                            {v.score?.overall && (
                              <span className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold ${
                                v.score.overall >= 8 ? 'bg-emerald-500/20 text-emerald-500' :
-                               v.score.overall >= 6 ? 'bg-amber-500/20 text-amber-500' :
+                               v.score.overall >= 4 ? 'bg-sky-500/20 text-sky-500' :
                                'bg-rose-500/20 text-rose-500'
                              }`}>{v.score.overall}/10</span>
                            )}
