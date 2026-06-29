@@ -52,9 +52,6 @@ export default function DashboardHeader() {
                                         <span className="text-sm font-bold text-zinc-900 leading-none">
                                             {session.user.name}
                                         </span>
-                                        <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 mt-1 bg-white px-1.5 py-0.5 rounded-md border border-zinc-200 shadow-sm">
-                                            {(session.user as any).role || "Viewer"}
-                                        </span>
                                     </div>
 
                                     <Avatar className="h-10 w-10 border-2 border-white shadow-md transition-transform group-hover:scale-105">

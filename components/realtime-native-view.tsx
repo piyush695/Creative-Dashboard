@@ -1273,8 +1273,8 @@ function ReportContent({ data, platform }: { data: any, platform?: string }) {
     // ── Detect schema type ──────────────────────────────────────────────────────
     const isAdrollNativeSchema = data.overall_score !== undefined || data.design_score !== undefined || data.retargeting_specific_analysis !== undefined;
 
-    const sc = (s: number) => s >= 8 ? 'text-emerald-500' : s >= 5 ? 'text-amber-500' : 'text-rose-500';
-    const scBg = (s: number) => s >= 8 ? 'bg-emerald-500' : s >= 5 ? 'bg-amber-500' : 'bg-rose-500';
+    const sc = (s: number) => s >= 8 ? 'text-emerald-500' : s >= 5 ? 'text-sky-500' : 'text-rose-500';
+    const scBg = (s: number) => s >= 8 ? 'bg-emerald-500' : s >= 5 ? 'bg-sky-500' : 'bg-rose-500';
 
     // ── ADROLL NATIVE SCHEMA ────────────────────────────────────────────────────
     if (isAdrollNativeSchema) {

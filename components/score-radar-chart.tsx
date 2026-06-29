@@ -140,14 +140,14 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
     const isDark = mounted && (theme === 'dark' || theme === 'system')
     const gridColor = isDark ? "#3f3f46" : "#e4e4e7"
     const axisTextColor = isDark ? "#a1a1aa" : "#71717a"
-    const activeTextColor = "#ea580c"
+    const activeTextColor = "#0ea5e9"
     const tooltipBg = isDark ? "#27272a" : "#ffffff"
     const tooltipBorder = isDark ? "#52525b" : "#e4e4e7"
 
     // Helper for Status Badge
     const getStatus = (score: number) => {
         if (score >= 8) return { label: 'Excellent', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100/50 dark:bg-emerald-900/20', icon: CheckCircle2 }
-        if (score >= 5) return { label: 'Average', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100/50 dark:bg-amber-900/20', icon: AlertCircle }
+        if (score >= 5) return { label: 'Average', color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-100/50 dark:bg-sky-900/20', icon: AlertCircle }
         return { label: 'Needs Improvement', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100/50 dark:bg-red-900/20', icon: XCircle }
     }
 
@@ -160,7 +160,7 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                 onMouseEnter={() => setHoveredSubject(payload.value)}
                 onMouseLeave={() => setHoveredSubject(null)}
             >
-                <circle cx={x} cy={y - 4} r={isHovered ? 16 : 0} fill={isDark ? "#ea580c" : "#ea580c"} opacity={isHovered ? 0.1 : 0} className="transition-all duration-300" />
+                <circle cx={x} cy={y - 4} r={isHovered ? 16 : 0} fill={isDark ? "#0ea5e9" : "#0ea5e9"} opacity={isHovered ? 0.1 : 0} className="transition-all duration-300" />
                 <Text
                     x={x}
                     y={y}
@@ -186,8 +186,8 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
             padding: "8px 12px",
             boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
         },
-        itemStyle: { color: "#ea580c", fontWeight: "bold", fontSize: "11px", textTransform: "uppercase" as const, letterSpacing: "0.05em" },
-        cursor: { stroke: '#ea580c', strokeWidth: 1, strokeDasharray: "4 4", fill: isDark ? "rgba(234, 88, 12, 0.1)" : "rgba(234, 88, 12, 0.1)" }
+        itemStyle: { color: "#0ea5e9", fontWeight: "bold", fontSize: "11px", textTransform: "uppercase" as const, letterSpacing: "0.05em" },
+        cursor: { stroke: '#0ea5e9', strokeWidth: 1, strokeDasharray: "4 4", fill: isDark ? "rgba(14, 165, 233, 0.1)" : "rgba(14, 165, 233, 0.1)" }
     }
 
     const handleMouseMove = (state: any) => {
@@ -293,7 +293,7 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                         <XAxis dataKey="subject" tick={{ fill: axisTextColor, fontSize: 10, fontWeight: 500 }} axisLine={false} tickLine={false} dy={10} />
                         <YAxis hide />
                         <Tooltip {...commonTooltipProps} />
-                        <Line type="monotone" dataKey="score" stroke="#ea580c" strokeWidth={3} dot={{ r: 4, fill: "#ea580c" }} activeDot={{ r: 6 }} name="Current Score" />
+                        <Line type="monotone" dataKey="score" stroke="#0ea5e9" strokeWidth={3} dot={{ r: 4, fill: "#0ea5e9" }} activeDot={{ r: 6 }} name="Current Score" />
                         {showBenchmark && (
                             <Line type="monotone" dataKey="benchmark" stroke="#71717a" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3, fill: "#71717a" }} name="Industry Avg" />
                         )}
@@ -304,8 +304,8 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                     <AreaChart data={data} {...commonProps}>
                         <defs>
                             <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#ea580c" stopOpacity={0.3} />
-                                <stop offset="95%" stopColor="#ea580c" stopOpacity={0} />
+                                <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3} />
+                                <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
                             </linearGradient>
                             <linearGradient id="colorBenchmark" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#71717a" stopOpacity={0.3} />
@@ -316,7 +316,7 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                         <XAxis dataKey="subject" tick={{ fill: axisTextColor, fontSize: 10, fontWeight: 500 }} axisLine={false} tickLine={false} dy={10} />
                         <YAxis hide />
                         <Tooltip {...commonTooltipProps} />
-                        <Area type="monotone" dataKey="score" stroke="#ea580c" fillOpacity={1} fill="url(#colorScore)" name="Current Score" />
+                        <Area type="monotone" dataKey="score" stroke="#0ea5e9" fillOpacity={1} fill="url(#colorScore)" name="Current Score" />
                         {showBenchmark && (
                             <Area type="monotone" dataKey="benchmark" stroke="#71717a" fillOpacity={1} fill="url(#colorBenchmark)" name="Industry Avg" />
                         )}
@@ -386,11 +386,11 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                         <Radar
                             name="Current Score"
                             dataKey="score"
-                            stroke="#ea580c"
+                            stroke="#0ea5e9"
                             strokeWidth={2}
-                            fill="#ea580c"
+                            fill="#0ea5e9"
                             fillOpacity={showBenchmark ? 0.2 : 0.4}
-                            activeDot={{ r: 4, fill: "#ea580c", strokeWidth: 0 }}
+                            activeDot={{ r: 4, fill: "#0ea5e9", strokeWidth: 0 }}
                         />
                         {showBenchmark && (
                             <Radar
@@ -417,7 +417,7 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
     const StatusIcon = status ? status.icon : null
 
     return (
-        <div className="w-full h-auto min-h-[350px] flex flex-col md:flex-row bg-white dark:bg-[#18181b] rounded-xl border border-border p-1 relative overflow-hidden shadow-sm transition-colors duration-300 group/container">
+        <div className="w-full h-auto min-h-[350px] flex flex-col md:flex-row bg-card rounded-xl border border-border p-1 relative overflow-hidden shadow-sm transition-colors duration-300 group/container">
 
             {/* Subtle Background Gradeint */}
             <div className="absolute inset-0 bg-gradient-to-br from-zinc-50/0 via-zinc-50/0 to-zinc-50/0 dark:from-white/0 dark:via-white/0 dark:to-white/[0.02] pointer-events-none" />
@@ -535,7 +535,7 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                 {/* Custom Legend for clearer visibility */}
                 <div className="flex items-center justify-center gap-4 pb-4 pt-2">
                     <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-sm bg-[#ea580c]" />
+                        <div className="w-2 h-2 rounded-sm bg-[#0ea5e9]" />
                         <span className="text-[10px] font-bold uppercase text-muted-foreground">Current Score</span>
                     </div>
                     {showBenchmark && (
@@ -561,8 +561,8 @@ export default function ScoreRadarChart({ adData, benchmark }: ScoreRadarChartPr
                             {/* Header Section */}
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h5 className="text-[#ea580c] font-bold uppercase tracking-widest text-[9px] mb-1.5 flex items-center gap-1.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-[#ea580c] animate-pulse" />
+                                    <h5 className="text-[#0ea5e9] font-bold uppercase tracking-widest text-[9px] mb-1.5 flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#0ea5e9] animate-pulse" />
                                         Attribute Focus
                                     </h5>
                                     <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight leading-none">{activeData.label}</h3>

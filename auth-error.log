@@ -1,0 +1,211 @@
+[2026-06-24T04:52:33.861Z] WARN
+"debug-enabled"
+---
+[2026-06-24T05:21:23.766Z] WARN
+"debug-enabled"
+---
+[2026-06-24T05:22:24.462Z] WARN
+"debug-enabled"
+---
+[2026-06-24T05:24:06.543Z] WARN
+"debug-enabled"
+---
+[2026-06-24T06:19:55.133Z] WARN
+"debug-enabled"
+---
+[2026-06-24T06:36:24.627Z] WARN
+"debug-enabled"
+---
+[2026-06-24T07:41:46.622Z] WARN
+"debug-enabled"
+---
+[2026-06-24T07:51:30.749Z] WARN
+"debug-enabled"
+---
+[2026-06-24T08:04:52.259Z] WARN
+"debug-enabled"
+---
+[2026-06-24T08:06:37.821Z] WARN
+"debug-enabled"
+---
+[2026-06-24T08:07:08.556Z] WARN
+"debug-enabled"
+---
+[2026-06-24T09:59:51.044Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:04:49.405Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:05:04.821Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:11:18.966Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:14:05.820Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:26:03.357Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:28:11.694Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:28:31.728Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:44:21.676Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:44:53.291Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:45:17.792Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:46:34.898Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:50:26.291Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:51:19.199Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:51:25.785Z] WARN
+"debug-enabled"
+---
+[2026-06-24T10:51:47.500Z] WARN
+"debug-enabled"
+---
+[2026-06-24T11:22:23.145Z] WARN
+"debug-enabled"
+---
+[2026-06-24T11:22:44.834Z] WARN
+"debug-enabled"
+---
+[2026-06-24T11:31:36.191Z] WARN
+"debug-enabled"
+---
+[2026-06-24T11:32:03.080Z] WARN
+"debug-enabled"
+---
+[2026-06-24T11:57:03.949Z] WARN
+"debug-enabled"
+---
+[2026-06-24T11:57:23.479Z] WARN
+"debug-enabled"
+---
+[2026-06-24T12:07:13.503Z] WARN
+"debug-enabled"
+---
+[2026-06-24T12:49:17.849Z] WARN
+"debug-enabled"
+---
+[2026-06-24T12:49:35.495Z] WARN
+"debug-enabled"
+---
+[2026-06-25T06:06:34.227Z] WARN
+"debug-enabled"
+---
+[2026-06-25T06:29:16.456Z] ERROR
+InvalidCheck: pkceCodeVerifier value could not be parsed. Read more at https://errors.authjs.dev#invalidcheck
+InvalidCheck: pkceCodeVerifier value could not be parsed. Read more at https://errors.authjs.dev#invalidcheck
+    at parseCookie (C:\Users\Algomill\Downloads\Creative_Dashboard\.next\dev\server\chunks\node_modules_@auth_core_889cc73b._.js:3312:15)
+    at Object.use (C:\Users\Algomill\Downloads\Creative_Dashboard\.next\dev\server\chunks\node_modules_@auth_core_889cc73b._.js:3340:30)
+    at handleOAuth (C:\Users\Algomill\Downloads\Creative_Dashboard\.next\dev\server\chunks\node_modules_@auth_core_889cc73b._.js:3570:218)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Module.callback (C:\Users\Algomill\Downloads\Creative_Dashboard\.next\dev\server\chunks\node_modules_@auth_core_889cc73b._.js:4085:41)
+    at async AuthInternal (C:\Users\Algomill\Downloads\Creative_Dashboard\.next\dev\server\chunks\node_modules_@auth_core_889cc73b._.js:5123:24)
+    at async Auth (C:\Users\Algomill\Downloads\Creative_Dashboard\.next\dev\server\chunks\node_modules_@auth_core_889cc73b._.js:5370:34)
+    at async AppRouteRouteModule.do (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:37789)
+    at async AppRouteRouteModule.handle (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:45045)
+    at async responseGenerator (C:\Users\Algomill\Downloads\Creative_Dashboard\.next\dev\server\chunks\node_modules_next_830cf173._.js:16104:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:187851)
+    at async handleResponse (C:\Users\Algomill\Downloads\Creative_Dashboard\.next\dev\server\chunks\node_modules_next_830cf173._.js:16166:32)
+    at async handler (C:\Users\Algomill\Downloads\Creative_Dashboard\.next\dev\server\chunks\node_modules_next_830cf173._.js:16219:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\base-server.js:1413:9)
+    at async DevServer.renderPageComponent (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\base-server.js:1465:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\base-server.js:1515:32)
+    at async DevServer.pipeImpl (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\base-server.js:1021:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\next-server.js:394:17)
+    at async DevServer.handleRequestImpl (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\base-server.js:912:17)
+    at async C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\dev\next-dev-server.js:382:20
+    at async Span.traceAsyncFn (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\dev\next-dev-server.js:378:24)
+    at async invokeRender (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\lib\router-server.js:240:21)
+    at async handleRequest (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\lib\router-server.js:436:24)
+    at async requestHandlerImpl (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\lib\router-server.js:484:13)
+    at async Server.requestListener (C:\Users\Algomill\Downloads\Creative_Dashboard\node_modules\next\dist\server\lib\start-server.js:226:13)
+cause: {"stack":"InvalidCheck: pkceCodeVerifier cookie was missing. Read more at https://errors.authjs.dev#invalidcheck\n    at parseCookie (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\.next\\dev\\server\\chunks\\node_modules_@auth_core_889cc73b._.js:3303:27)\n    at Object.use (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\.next\\dev\\server\\chunks\\node_modules_@auth_core_889cc73b._.js:3340:30)\n    at handleOAuth (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\.next\\dev\\server\\chunks\\node_modules_@auth_core_889cc73b._.js:3570:218)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async Module.callback (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\.next\\dev\\server\\chunks\\node_modules_@auth_core_889cc73b._.js:4085:41)\n    at async AuthInternal (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\.next\\dev\\server\\chunks\\node_modules_@auth_core_889cc73b._.js:5123:24)\n    at async Auth (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\.next\\dev\\server\\chunks\\node_modules_@auth_core_889cc73b._.js:5370:34)\n    at async AppRouteRouteModule.do (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\compiled\\next-server\\app-route-turbo.runtime.dev.js:5:37789)\n    at async AppRouteRouteModule.handle (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\compiled\\next-server\\app-route-turbo.runtime.dev.js:5:45045)\n    at async responseGenerator (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\.next\\dev\\server\\chunks\\node_modules_next_830cf173._.js:16104:38)\n    at async AppRouteRouteModule.handleResponse (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\compiled\\next-server\\app-route-turbo.runtime.dev.js:1:187851)\n    at async handleResponse (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\.next\\dev\\server\\chunks\\node_modules_next_830cf173._.js:16166:32)\n    at async handler (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\.next\\dev\\server\\chunks\\node_modules_next_830cf173._.js:16219:13)\n    at async DevServer.renderToResponseWithComponentsImpl (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\base-server.js:1413:9)\n    at async DevServer.renderPageComponent (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\base-server.js:1465:24)\n    at async DevServer.renderToResponseImpl (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\base-server.js:1515:32)\n    at async DevServer.pipeImpl (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\base-server.js:1021:25)\n    at async NextNodeServer.handleCatchallRenderRequest (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\next-server.js:394:17)\n    at async DevServer.handleRequestImpl (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\base-server.js:912:17)\n    at async C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\dev\\next-dev-server.js:382:20\n    at async Span.traceAsyncFn (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\trace\\trace.js:157:20)\n    at async DevServer.handleRequest (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\dev\\next-dev-server.js:378:24)\n    at async invokeRender (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\lib\\router-server.js:240:21)\n    at async handleRequest (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\lib\\router-server.js:436:24)\n    at async requestHandlerImpl (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\lib\\router-server.js:484:13)\n    at async Server.requestListener (C:\\Users\\Algomill\\Downloads\\Creative_Dashboard\\node_modules\\next\\dist\\server\\lib\\start-server.js:226:13)","message":"pkceCodeVerifier cookie was missing. Read more at https://errors.authjs.dev#invalidcheck","name":"InvalidCheck","type":"InvalidCheck","kind":"error"}
+---
+[2026-06-25T06:29:33.871Z] WARN
+"debug-enabled"
+---
+[2026-06-25T08:32:54.963Z] WARN
+"debug-enabled"
+---
+[2026-06-25T08:35:25.390Z] WARN
+"debug-enabled"
+---
+[2026-06-25T08:35:36.787Z] WARN
+"debug-enabled"
+---
+[2026-06-25T08:38:58.857Z] WARN
+"debug-enabled"
+---
+[2026-06-25T09:54:50.828Z] WARN
+"debug-enabled"
+---
+[2026-06-25T10:09:50.235Z] WARN
+"debug-enabled"
+---
+[2026-06-25T10:25:35.510Z] WARN
+"debug-enabled"
+---
+[2026-06-25T10:26:32.876Z] WARN
+"debug-enabled"
+---
+[2026-06-25T11:00:26.776Z] WARN
+"debug-enabled"
+---
+[2026-06-25T13:06:28.035Z] WARN
+"debug-enabled"
+---
+[2026-06-25T13:10:36.212Z] WARN
+"debug-enabled"
+---
+[2026-06-25T13:53:01.857Z] WARN
+"debug-enabled"
+---
+[2026-06-26T05:57:45.610Z] WARN
+"debug-enabled"
+---
+[2026-06-26T07:03:11.318Z] WARN
+"debug-enabled"
+---
+[2026-06-26T11:50:59.059Z] WARN
+"debug-enabled"
+---
+[2026-06-26T11:51:20.946Z] WARN
+"debug-enabled"
+---
+[2026-06-26T11:56:06.820Z] WARN
+"debug-enabled"
+---
+[2026-06-26T13:06:08.694Z] WARN
+"debug-enabled"
+---
+[2026-06-26T13:06:24.508Z] WARN
+"debug-enabled"
+---
+[2026-06-26T13:08:28.462Z] WARN
+"debug-enabled"
+---
+[2026-06-26T13:10:55.580Z] WARN
+"debug-enabled"
+---
+[2026-06-26T14:03:52.240Z] WARN
+"debug-enabled"
+---

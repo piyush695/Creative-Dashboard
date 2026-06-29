@@ -1,31 +1,31 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb-client';
+import clientPromise from '@/server/mongodb-client';
 import Anthropic from '@anthropic-ai/sdk';
-import { extractWinningPatterns, filterPatternsBySelection } from '@/lib/ai-studio/patterns';
-import { buildGenerationPrompt } from '@/lib/ai-studio/prompts';
-import { extractAndRepairJson } from '@/lib/ai-studio/parser';
-import { generateImage } from '@/lib/ai-studio/imagegen';
-import { scoreVariants } from '@/lib/ai-studio/scorer';
-import { saveGeneration, buildMemoryContext } from '@/lib/ai-studio/memory';
-import { analyzeCompetitorAd, buildCompetitorContext } from '@/lib/ai-studio/competitor';
-import { uploadVariantImages } from '@/lib/ai-studio/storage';
-import { buildRefinement } from '@/lib/ai-studio/refine';
-import { listTemplates, saveTemplate, getTemplate, updateTemplateStats, deleteTemplate, seedDefaultTemplates, autoCreateTemplate } from '@/lib/ai-studio/templates';
-import { linkPerformance, buildPerformanceInsights } from '@/lib/ai-studio/performance';
-import { runAgenticPipeline } from '@/lib/ai-studio/agent';
-import { pickDiverseParadigms, type ConceptParadigm } from '@/lib/ai-studio/brand';
-import { runCreativeDirector } from '@/lib/ai-studio/director';
+import { extractWinningPatterns, filterPatternsBySelection } from '@/server/ai-studio/patterns';
+import { buildGenerationPrompt } from '@/server/ai-studio/prompts';
+import { extractAndRepairJson } from '@/server/ai-studio/parser';
+import { generateImage } from '@/server/ai-studio/imagegen';
+import { scoreVariants } from '@/server/ai-studio/scorer';
+import { saveGeneration, buildMemoryContext } from '@/server/ai-studio/memory';
+import { analyzeCompetitorAd, buildCompetitorContext } from '@/server/ai-studio/competitor';
+import { uploadVariantImages } from '@/server/ai-studio/storage';
+import { buildRefinement } from '@/server/ai-studio/refine';
+import { listTemplates, saveTemplate, getTemplate, updateTemplateStats, deleteTemplate, seedDefaultTemplates, autoCreateTemplate } from '@/server/ai-studio/templates';
+import { linkPerformance, buildPerformanceInsights } from '@/server/ai-studio/performance';
+import { runAgenticPipeline } from '@/server/ai-studio/agent';
+import { pickDiverseParadigms, type ConceptParadigm } from '@/server/ai-studio/brand';
+import { runCreativeDirector } from '@/server/ai-studio/director';
 // text-overlay RE-ENABLED — image model generates visual base only, all text composited
 // in code with real fonts. Eliminates Gemini/OpenAI text rendering errors entirely.
-import { applyTextOverlay, extractOverlayConfig } from '@/lib/ai-studio/text-overlay';
-import { generateCrossPlatform, getAvailablePlatforms } from '@/lib/ai-studio/crossplatform';
-import { generateImageOpenAI } from '@/lib/ai-studio/imagegen-openai';
-import { generateForAllPersonas, getAvailablePersonas } from '@/lib/ai-studio/personas';
+import { applyTextOverlay, extractOverlayConfig } from '@/server/ai-studio/text-overlay';
+import { generateCrossPlatform, getAvailablePlatforms } from '@/server/ai-studio/crossplatform';
+import { generateImageOpenAI } from '@/server/ai-studio/imagegen-openai';
+import { generateForAllPersonas, getAvailablePersonas } from '@/server/ai-studio/personas';
 // Cache module available but not used in main generation flows (generation must always be fresh)
-// import { getCached, setCache } from '@/lib/ai-studio/cache';
-import { recordFeedback, buildPreferenceContext, getPreferenceSummary } from '@/lib/ai-studio/preferences';
-import { getFullBrandContext } from '@/lib/ai-studio/adlibrary';
-import { getStoredAdContext } from '@/lib/ai-studio/ad-library-db';
+// import { getCached, setCache } from '@/server/ai-studio/cache';
+import { recordFeedback, buildPreferenceContext, getPreferenceSummary } from '@/server/ai-studio/preferences';
+import { getFullBrandContext } from '@/server/ai-studio/adlibrary';
+import { getStoredAdContext } from '@/server/ai-studio/ad-library-db';
 
 // ─── Text fidelity helpers — used to combat Gemini text-rendering errors ───
 // Gemini's image model frequently introduces character doubling ("sstep"),

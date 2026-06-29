@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, LayoutDashboard } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,30 +9,22 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
 
 /**
- * Universal dashboard breadcrumb.
+ * Section-rooted dashboard breadcrumb.
  *
- * Hierarchy: Dashboard ▸ Platform ▸ Page. The behavior is fully data-driven —
- * any platform present in `platformMeta` automatically gets a crumb and the
- * standard "click the platform name → jump straight to that platform's root
- * page" shortcut, with no per-platform code. Add a platform to `platformMeta`
- * and it inherits the navigation system for free.
+ * The first crumb reflects the user's current sidebar section, not a generic
+ * "Dashboard" root:
+ *   Analytics ▸ Meta
+ *   Analytics ▸ Google ▸ Analysis
+ *   Creative Studio ▸ Studio ▸ History
+ *   Settings / Profile (single)
  *
- * - Ancestor segments (Dashboard, Platform) are links.
- * - The platform segment ALWAYS returns to the platform's main/root page,
- *   never an intermediate level, via `onGoToPlatformRoot`.
- * - The deepest segment is the non-clickable current page (or, for Meta/All,
- *   an inline account switcher).
+ * Section crumbs are context labels (not links); the platform crumb links back
+ * to its root; the deepest crumb is the current page. The ad-account switcher
+ * no longer lives here — it sits in the platform header next to Live status
+ * (see components/account-switcher.tsx). Pure data-driven so platforms inherit
+ * it with no extra code.
  */
 
 export interface BreadcrumbAccount {
@@ -44,7 +35,6 @@ export interface BreadcrumbAccount {
 
 export interface DashboardBreadcrumbState {
   selectedPlatform: string;
-  /** Label/icon registry. Any key here automatically gets breadcrumb support. */
   platformMeta: Record<string, { label: string; icon?: any }>;
   isProfileOpen: boolean;
   isSettingsOpen: boolean;
@@ -61,255 +51,98 @@ export interface DashboardBreadcrumbState {
 }
 
 export interface DashboardBreadcrumbProps extends DashboardBreadcrumbState {
-  /** Navigate to the dashboard home/root. */
   onGoHome: () => void;
-  /** Navigate to a platform's root/main page (clears any nested sub-state). */
   onGoToPlatformRoot: (platform: string) => void;
-  /** Switch the active ad account (Meta/All current-page switcher). */
   onSelectAccount: (id: string) => void;
 }
 
-type Leaf = { kind: "page" | "account"; label: string } | null;
+type Segment =
+  | { kind: "section"; label: string }
+  | { kind: "platform"; label: string }
+  | { kind: "page"; label: string };
 
 export interface BreadcrumbModel {
-  platformLabel: string;
-  isTopLevelView: boolean;
-  topLevelLabel: string;
-  leaf: Leaf;
-  showPlatformCrumb: boolean;
+  segments: Segment[];
   /** True on the bare dashboard home where the breadcrumb adds no value. */
   isRoot: boolean;
 }
 
-/**
- * Single source of truth for the breadcrumb hierarchy. Pure and platform
- * agnostic so the page and the component never drift.
- */
+/** Single source of truth for the breadcrumb path. Pure + platform agnostic. */
 export function computeBreadcrumb(s: DashboardBreadcrumbState): BreadcrumbModel {
   const platformLabel =
-    s.selectedPlatform === "home"
-      ? "Home"
-      : s.selectedPlatform === "all"
-        ? "All Platforms"
-        : s.platformMeta[s.selectedPlatform]?.label || s.selectedPlatform;
+    s.selectedPlatform === "all"
+      ? "All platforms"
+      : s.platformMeta[s.selectedPlatform]?.label || s.selectedPlatform;
 
-  // Global destinations that sit directly under Dashboard (not platform-scoped).
-  const isTopLevelView =
-    s.isProfileOpen ||
-    s.isSettingsOpen ||
-    s.isGuideOpen ||
-    s.activeView === "ai-studio" ||
-    s.activeView === "saved-creatives" ||
-    s.activeView === "history";
+  // Account-level destinations (single crumb).
+  if (s.isProfileOpen) return { segments: [{ kind: "page", label: "Profile" }], isRoot: false };
+  if (s.isSettingsOpen) return { segments: [{ kind: "page", label: "Settings" }], isRoot: false };
+  if (s.isGuideOpen) return { segments: [{ kind: "page", label: "Help" }], isRoot: false };
 
-  const topLevelLabel = s.isProfileOpen
-    ? "Profile"
-    : s.isSettingsOpen
-      ? "Settings"
-      : s.isGuideOpen
-        ? "Guide"
-        : s.activeView === "ai-studio"
-          ? "AI Studio"
-          : s.activeView === "saved-creatives"
-            ? "Creative Vault"
-            : s.activeView === "history"
-              ? "Generation History"
-              : "";
+  // Creative Studio section.
+  if (s.activeView === "ai-studio") {
+    const segments: Segment[] = [{ kind: "section", label: "Creative Studio" }, { kind: "page", label: "Studio" }];
+    if (s.isStudioHistoryOpen) segments.push({ kind: "page", label: "History" });
+    return { segments, isRoot: false };
+  }
+  if (s.activeView === "saved-creatives")
+    return { segments: [{ kind: "section", label: "Creative Studio" }, { kind: "page", label: "Saved" }], isRoot: false };
+  if (s.activeView === "history")
+    return { segments: [{ kind: "section", label: "Creative Studio" }, { kind: "page", label: "Generation history" }], isRoot: false };
 
-  const accountLabel =
-    s.selectedAccountId === "all"
-      ? "All Accounts"
-      : s.accountStats.find((a) => a.id === s.selectedAccountId)?.name || "All Accounts";
+  // Bare dashboard home — collapses the whole bar.
+  if (s.selectedPlatform === "home") return { segments: [{ kind: "page", label: "Dashboard" }], isRoot: true };
 
-  const campaignLabel =
-    s.selectedRealtimeCampaign === "all"
-      ? "All Campaigns"
-      : s.realtimeCampaigns.find((c) => c.id === s.selectedRealtimeCampaign)?.name ||
-        s.realtimeCampaigns.find((c) => c.id === s.selectedRealtimeCampaign)?.campaignName ||
-        "Campaign";
+  // Analytics section ▸ platform ▸ current. The account switcher used to be the
+  // trailing crumb here; it now lives in the platform header next to Live.
+  const segments: Segment[] = [{ kind: "section", label: "Analytics" }, { kind: "platform", label: platformLabel }];
+  if (s.isViewAllAdsOpen) segments.push({ kind: "page", label: "All ads" });
+  else if (s.selectedAdId) segments.push({ kind: "page", label: "Analysis" });
 
-  // Deepest segment (current page). `account` renders an inline account switcher;
-  // everything else is a static current-page label.
-  const leaf: Leaf = isTopLevelView
-    ? { kind: "page", label: topLevelLabel }
-    : s.selectedPlatform === "home"
-      ? null
-      : s.isViewAllAdsOpen
-        ? { kind: "page", label: "All Ads" }
-        : s.selectedAdId
-          ? { kind: "page", label: "Analysis" }
-          : s.selectedPlatform === "meta" || s.selectedPlatform === "all"
-            ? { kind: "account", label: accountLabel }
-            : { kind: "page", label: campaignLabel };
-
-  const showPlatformCrumb = !isTopLevelView && s.selectedPlatform !== "home";
-  const isRoot = !showPlatformCrumb && !isTopLevelView && !leaf;
-
-  return { platformLabel, isTopLevelView, topLevelLabel, leaf, showPlatformCrumb, isRoot };
+  return { segments, isRoot: false };
 }
 
 export function DashboardBreadcrumb(props: DashboardBreadcrumbProps) {
-  const { platformLabel, isTopLevelView, topLevelLabel, leaf, showPlatformCrumb, isRoot } =
-    computeBreadcrumb(props);
-
-  // Nothing meaningful to show on the bare dashboard home.
+  const { segments, isRoot } = computeBreadcrumb(props);
   if (isRoot) return null;
+
+  const last = segments.length - 1;
 
   return (
     <Breadcrumb className="min-w-0">
       <BreadcrumbList className="flex-nowrap gap-1 text-xs sm:gap-1.5">
-        {/* Root */}
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <button
-              onClick={props.onGoHome}
-              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
-              title="Go to dashboard home"
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </button>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-
-        {/* Platform — always a shortcut to the platform's root page */}
-        {showPlatformCrumb && (
-          <>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <button
-                  onClick={() => props.onGoToPlatformRoot(props.selectedPlatform)}
-                  className="text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
-                  title={`Go to ${platformLabel} home`}
-                >
-                  {platformLabel}
-                </button>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-          </>
-        )}
-
-        {/* Top-level destination (Profile / Settings / AI Studio / …) */}
-        {isTopLevelView && (
-          <>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="max-w-[140px] truncate font-medium sm:max-w-none">
-                {topLevelLabel}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </>
-        )}
-
-        {/* Platform-scoped current page */}
-        {!isTopLevelView && leaf && (
-          <>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              {leaf.kind === "account" ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+        {segments.map((seg, i) => {
+          const isLast = i === last;
+          // Platform crumb shows the selected platform's icon next to its name.
+          const PlatformIcon =
+            seg.kind === "platform" ? props.platformMeta[props.selectedPlatform]?.icon : undefined;
+          return (
+            <React.Fragment key={`${seg.kind}-${i}`}>
+              {i > 0 && <BreadcrumbSeparator />}
+              <BreadcrumbItem>
+                {seg.kind === "section" ? (
+                  <span className="font-medium text-muted-foreground">{seg.label}</span>
+                ) : seg.kind === "platform" && !isLast ? (
+                  <BreadcrumbLink asChild>
                     <button
-                      className="group inline-flex items-center gap-1 text-[12px] font-medium text-foreground transition-colors hover:text-sky-500"
-                      title="Switch ad account"
-                      aria-label="Switch ad account"
+                      onClick={() => props.onGoToPlatformRoot(props.selectedPlatform)}
+                      className="flex items-center gap-1.5 font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      title={`Go to ${seg.label} home`}
                     >
-                      <span className="max-w-[110px] truncate sm:max-w-[150px] lg:max-w-none">
-                        {leaf.label}
-                      </span>
-                      <ChevronDown className="h-3 w-3 shrink-0 opacity-50 transition-opacity group-hover:opacity-100" />
+                      {PlatformIcon && <PlatformIcon className="h-3.5 w-3.5 shrink-0" />}
+                      {seg.label}
                     </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-72 max-h-[60vh] overflow-y-auto rounded-md p-1.5">
-                    <DropdownMenuLabel className="px-2 py-1.5 text-[9px] uppercase tracking-widest text-muted-foreground">
-                      Switch Account
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => props.onSelectAccount("all")}
-                      className={cn(
-                        "flex items-center justify-between rounded-md cursor-pointer p-2",
-                        props.selectedAccountId === "all" && "bg-primary/10 text-primary",
-                      )}
-                    >
-                      <span className="text-[12px] font-semibold">All Accounts</span>
-                      <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                        {props.totalMetaAds}
-                      </span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {props.accountStats.length === 0 ? (
-                      <div className="px-2 py-3 text-[10px] italic text-muted-foreground">
-                        No accounts configured.
-                      </div>
-                    ) : (
-                      (() => {
-                        const withAds = props.accountStats.filter((a) => a.count > 0);
-                        const empty = props.accountStats.filter((a) => a.count === 0);
-                        return (
-                          <>
-                            {withAds.map((acc) => (
-                              <DropdownMenuItem
-                                key={acc.id}
-                                onClick={() => props.onSelectAccount(acc.id)}
-                                className={cn(
-                                  "flex items-center justify-between rounded-md cursor-pointer p-2",
-                                  props.selectedAccountId === acc.id && "bg-primary/10 text-primary",
-                                )}
-                              >
-                                <span className="text-[12px] truncate pr-2">{acc.name}</span>
-                                <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                                  {acc.count}
-                                </span>
-                              </DropdownMenuItem>
-                            ))}
-                            {empty.length > 0 && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuLabel className="px-2 py-1.5 text-[9px] uppercase tracking-widest text-muted-foreground/70">
-                                  Not Synced Yet ({empty.length})
-                                </DropdownMenuLabel>
-                                {empty.map((acc) => (
-                                  <DropdownMenuItem
-                                    key={acc.id}
-                                    onClick={() => props.onSelectAccount(acc.id)}
-                                    className={cn(
-                                      "flex items-center justify-between rounded-md cursor-pointer p-2 opacity-60",
-                                      props.selectedAccountId === acc.id && "bg-primary/10 text-primary opacity-100",
-                                    )}
-                                  >
-                                    <span className="text-[12px] truncate pr-2">{acc.name}</span>
-                                    <span className="shrink-0 font-mono text-[9px] italic text-muted-foreground">
-                                      0 ads
-                                    </span>
-                                  </DropdownMenuItem>
-                                ))}
-                              </>
-                            )}
-                          </>
-                        );
-                      })()
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <BreadcrumbPage className="max-w-[130px] truncate font-medium sm:max-w-[200px] lg:max-w-none">
-                  {leaf.label}
-                </BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
-          </>
-        )}
-
-        {/* AI Studio ▸ History */}
-        {props.activeView === "ai-studio" && props.isStudioHistoryOpen && (
-          <>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="text-[11px] uppercase tracking-wider">History</BreadcrumbPage>
-            </BreadcrumbItem>
-          </>
-        )}
+                  </BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage className="flex items-center gap-1.5 max-w-[140px] truncate font-medium text-foreground sm:max-w-[220px] lg:max-w-none">
+                    {PlatformIcon && <PlatformIcon className="h-3.5 w-3.5 shrink-0" />}
+                    {seg.label}
+                  </BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+            </React.Fragment>
+          );
+        })}
       </BreadcrumbList>
     </Breadcrumb>
   );

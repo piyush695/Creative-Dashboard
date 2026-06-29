@@ -24,7 +24,7 @@ import {
     Monitor
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { updateProfile } from "@/actions/profile-actions"
+import { updateProfile } from "@/server/actions/profile-actions"
 
 interface ProfileViewProps {
     onOpenPasswordChange?: () => void
@@ -171,11 +171,6 @@ export default function ProfileView({ onOpenPasswordChange, onBack }: ProfileVie
                             <div className="-mt-8 mb-6">
                                 <h2 className="text-xl font-semibold text-foreground tracking-tight">{session.user?.name}</h2>
                                 <p className="text-muted-foreground text-xs font-medium mt-1 truncate">{session.user?.email}</p>
-                                <div className="mt-4">
-                                    <span className="px-2.5 py-1 bg-muted text-muted-foreground text-[11px] font-medium uppercase tracking-wider rounded-md border border-border">
-                                        {(session.user as any).role || "Viewer"}
-                                    </span>
-                                </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4 py-4 border-t border-zinc-100 dark:border-border/50">
                                 <div className="space-y-1">

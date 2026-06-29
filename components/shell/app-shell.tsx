@@ -6,8 +6,8 @@ import { Topbar } from "./topbar";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import Footer from "@/components/footer";
 import { AddPlatformDialog } from "@/components/add-platform-dialog";
-import { usePlatforms } from "@/components/providers/platforms-provider";
 import { useUiSettings } from "@/components/providers/ui-settings-provider";
+import { usePathname } from "next/navigation";
 
 // Bumped to :v2 so the default flip to expanded isn't overridden by a stale
 // collapsed preference saved under the old key. New explicit choices persist here.
@@ -19,8 +19,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [addPlatformOpen, setAddPlatformOpen] = useState(false);
-  const { isAdmin } = usePlatforms();
   const { contentZoom } = useUiSettings();
+  // Footer appears on the Main Dashboard overview only — hidden on inner pages.
+  const pathname = usePathname();
 
   // Opening the platform picker must close the mobile drawer first — otherwise
   // the dialog would stack on top of the off-canvas Sheet and get clipped.
@@ -79,9 +80,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </SheetContent>
       </Sheet>
 
-      {/* Platform picker lives at the shell level (admin only) so it's never
-          nested inside — and clipped by — the mobile navigation drawer. */}
-      {isAdmin && <AddPlatformDialog open={addPlatformOpen} onOpenChange={setAddPlatformOpen} />}
+      {/* Platform picker lives at the shell level so it's never nested inside —
+          and clipped by — the mobile navigation drawer. */}
+      <AddPlatformDialog open={addPlatformOpen} onOpenChange={setAddPlatformOpen} />
 
       <div suppressHydrationWarning className="relative z-10 flex min-w-0 flex-1 flex-col">
         <Topbar onMenuClick={() => setMobileOpen(true)} />
@@ -89,7 +90,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {/* Content zoom scales ONLY this inner content (CSS `zoom` reflows
               within the fixed main container); the shell/topbar are unaffected. */}
           <div suppressHydrationWarning className="flex-1" style={{ zoom: contentZoom } as CSSProperties}>{children}</div>
-          <Footer />
+          {pathname === "/" && <Footer />}
         </main>
       </div>
     </div>

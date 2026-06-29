@@ -76,3 +76,32 @@
 [2026-06-17T07:42:20.517Z] [DEBUG_SVC] Campaign Thumbnails: 303 rows
 [2026-06-17T07:42:20.546Z] GET campaigns | platform=google
 [2026-06-17T07:42:20.549Z] [DEBUG_SVC] Campaign Thumbnails: 303 rows
+[2026-06-25T06:29:52.344Z] GET campaigns | platform=adroll
+[2026-06-25T06:29:52.472Z] GET campaigns | platform=adroll
+[2026-06-25T06:29:55.026Z] GET ads | platform=adroll
+[2026-06-25T06:29:57.010Z] GET ads/TFZIZOPRR5AJLM37QIACDW/assets | platform=adroll
+[2026-06-25T06:39:38.560Z] POST ads/120246607033400733/enrich
+[2026-06-25T06:39:38.563Z] Enriching Meta ad: 120246607033400733 (Phase-2 metrics from Insights API)
+[2026-06-25T06:39:54.561Z] POST ads/120246607033400733/reanalyze
+[2026-06-25T06:39:54.624Z] Re-analyzing META ad: 120246607033400733 (v2 prompt) | image: yes
+[2026-06-25T06:39:56.761Z] ERROR in POST ads/120246607033400733/reanalyze: 400 {"type":"error","error":{"type":"invalid_request_error","message":"messages.0.content.0.image.source.base64: The image was specified using the image/png media type, but the image appears to be a image/jpeg image"},"request_id":"req_011CcPX7CMLAtVvFPTczwDWR"}
+[2026-06-25T06:41:23.748Z] POST ads/120246607033400733/reanalyze
+[2026-06-25T06:41:23.793Z] Re-analyzing META ad: 120246607033400733 (v2 prompt) | image: yes
+[2026-06-25T06:41:25.600Z] ERROR in POST ads/120246607033400733/reanalyze: 400 {"type":"error","error":{"type":"invalid_request_error","message":"messages.0.content.0.image.source.base64: The image was specified using the image/png media type, but the image appears to be a image/jpeg image"},"request_id":"req_011CcPXDkG8VSfeDSct2WN4z"}
+[2026-06-25T06:41:33.058Z] POST ads/120246607033400733/reanalyze
+[2026-06-25T06:41:33.106Z] Re-analyzing META ad: 120246607033400733 (v2 prompt) | image: yes
+[2026-06-25T06:41:34.494Z] ERROR in POST ads/120246607033400733/reanalyze: 400 {"type":"error","error":{"type":"invalid_request_error","message":"messages.0.content.0.image.source.base64: The image was specified using the image/png media type, but the image appears to be a image/jpeg image"},"request_id":"req_011CcPXEQFPZ9eeE415uv1E5"}
+[2026-06-25T06:46:00.948Z] GET campaigns | platform=google
+[2026-06-25T06:46:03.237Z] [DEBUG_SVC] Campaign Thumbnails: 304 rows
+[2026-06-25T06:46:03.304Z] GET campaigns | platform=google
+[2026-06-25T06:46:03.306Z] [DEBUG_SVC] Campaign Thumbnails: 304 rows
+[2026-06-25T06:46:31.184Z] GET campaigns | platform=google
+[2026-06-25T06:46:31.187Z] [DEBUG_SVC] Campaign Thumbnails: 304 rows
+[2026-06-25T06:46:31.226Z] GET campaigns | platform=google
+[2026-06-25T06:46:31.229Z] [DEBUG_SVC] Campaign Thumbnails: 304 rows
+[2026-06-25T06:47:19.338Z] GET campaigns | platform=google
+[2026-06-25T06:47:21.827Z] [DEBUG_SVC] Campaign Thumbnails: 304 rows
+[2026-06-25T06:47:21.949Z] GET campaigns | platform=google
+[2026-06-25T06:47:21.951Z] [DEBUG_SVC] Campaign Thumbnails: 304 rows
+[2026-06-25T10:15:43.523Z] POST ads/52562371366995/enrich
+[2026-06-25T10:15:43.526Z] Enriching Meta ad: 52562371366995 (Phase-2 metrics from Insights API)

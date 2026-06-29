@@ -29,6 +29,9 @@ interface SampleAdsProps {
   onSelect: (id: string) => void
   onEnlargeImage?: (url: string, title: string) => void
   extraActions?: React.ReactNode
+  /** Hide the "Your Ads" title, view-mode selector and the search hint pill.
+   *  Used by the Meta section, which always renders the grid + its own pager. */
+  hideToolbar?: boolean
 }
 
 const PlatformIcon = ({ platform, className }: { platform?: AdData['platform'], className?: string }) => {
@@ -134,7 +137,7 @@ const AdGridCard = ({
               ad.performanceLabel === "TOP_PERFORMER"
                 ? "bg-emerald-500 text-white"
                 : ad.performanceLabel === "AVERAGE"
-                  ? "bg-amber-500 text-white"
+                  ? "bg-sky-500 text-white"
                   : "bg-zinc-800 text-white"
             )}
           >
@@ -312,7 +315,7 @@ const AdListCard = ({
                   ad.performanceLabel === "TOP_PERFORMER"
                     ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400"
                     : ad.performanceLabel === "AVERAGE"
-                      ? "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400"
+                      ? "bg-sky-500/10 text-sky-600 border-sky-500/20 dark:text-sky-400"
                       : "bg-muted text-muted-foreground border-border"
                 )}
               >
@@ -451,7 +454,7 @@ const AdTableRow = ({
           className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tight whitespace-nowrap border", ad.performanceLabel === "TOP_PERFORMER"
             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400"
             : ad.performanceLabel === "AVERAGE"
-              ? "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400"
+              ? "bg-sky-500/10 text-sky-600 border-sky-500/20 dark:text-sky-400"
               : "bg-destructive/10 text-destructive border-destructive/20"
             )}
         >
@@ -478,13 +481,15 @@ export default function SampleAds({
   selectedAdId,
   onSelect,
   onEnlargeImage,
-  extraActions
+  extraActions,
+  hideToolbar = false
 }: SampleAdsProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list" | "table">("grid")
   const adList = Array.isArray(ads) ? ads : []
 
   return (
     <div className="space-y-4">
+      {!hideToolbar && (
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
           <h3 className="text-base sm:text-lg font-black tracking-tight text-zinc-900 dark:text-zinc-50 whitespace-nowrap uppercase">Your Ads</h3>
@@ -528,6 +533,7 @@ export default function SampleAds({
           </div>
         )}
       </div>
+      )}
 
       {adList.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 border border-dashed border-border rounded-xl bg-card/50 text-muted-foreground animate-in fade-in duration-500">

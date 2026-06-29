@@ -48,7 +48,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { getEnabledPlatforms, updateEnabledPlatforms } from "@/actions/profile-actions"
+import { getEnabledPlatforms, updateEnabledPlatforms } from "@/server/actions/profile-actions"
 import { PlatformType } from "@/lib/types"
 
 interface SettingsViewProps {

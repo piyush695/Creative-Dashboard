@@ -19,9 +19,9 @@ const MANAGED_IN_SETTINGS_MESSAGE =
   "This integration is currently managed through the Settings section and cannot be modified here. Please visit Settings to make any changes.";
 
 /**
- * Admin-only picker for adding a platform to the Analyze section. Lists every
- * catalog platform that isn't already enabled; selecting one enables it
- * globally (persisted), after which it appears in the sidebar nav for everyone.
+ * Picker for adding a platform to the Analyze section. Lists every catalog
+ * platform that isn't already enabled; selecting one enables it globally
+ * (persisted), after which it appears in the sidebar nav for everyone.
  */
 export function AddPlatformDialog({
   open,

@@ -25,7 +25,7 @@ import {
   Check,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { updateProfile } from "@/actions/profile-actions";
+import { updateProfile } from "@/server/actions/profile-actions";
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 
 export default function ProfilePage() {
@@ -91,7 +91,6 @@ export default function ProfilePage() {
       .slice(0, 2)
       .toUpperCase() || "U";
 
-  const role = (session.user as any).role || "Viewer";
   const userId = (session.user as any).id || "—";
   const provider = (session.user as any).provider || "Credentials";
 
@@ -121,9 +120,6 @@ export default function ProfilePage() {
                 <p className="mt-0.5 text-xs text-muted-foreground">{session.user?.email}</p>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                  {role}
-                </span>
                 <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-500">
                   <BadgeCheck className="h-3 w-3" /> Verified
                 </span>

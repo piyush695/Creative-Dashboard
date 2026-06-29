@@ -15,7 +15,7 @@ import {
   sendPasswordResetCode,
   verifyResetOTP,
   resetPassword,
-} from "@/actions/auth-actions";
+} from "@/server/actions/auth-actions";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";

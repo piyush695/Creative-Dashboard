@@ -8,17 +8,17 @@ import {
   getKnownCompetitors,
   HOLA_PRIME_BRAND_DNA,
   buildBrandDNAContext,
-} from "@/lib/ai-studio/adlibrary";
+} from "@/server/ai-studio/adlibrary";
 import {
   upsertAds,
   getTopPerformingAds,
   getAdsByBrand,
   getAdById,
   getAdLibraryStats,
-} from "@/lib/ai-studio/ad-library-db";
-import { syncAdLibrary } from "@/lib/ai-studio/ad-library-sync";
-import { syncLocalAdLibrary } from "@/lib/ai-studio/ad-library-local-sync";
-import { summarizePatterns, buildPatternContext } from "@/lib/ai-studio/ad-pattern-extractor";
+} from "@/server/ai-studio/ad-library-db";
+import { syncAdLibrary } from "@/server/ai-studio/ad-library-sync";
+import { syncLocalAdLibrary } from "@/server/ai-studio/ad-library-local-sync";
+import { summarizePatterns, buildPatternContext } from "@/server/ai-studio/ad-pattern-extractor";
 
 /**
  * GET /api/adlibrary
