@@ -157,9 +157,15 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   // ── A/B test toggle: use stored ad library as reference for generation ──
   // Default ON. Flip OFF to test whether the library is helping or constraining.
   const [useStoredAds, setUseStoredAds] = useState<boolean>(true)
-  // ── Direct mode: bypass brief generation + text overlay, send prompt straight to image model ──
-  // Default ON for the Custom tab — gives the user full control over what the image model sees.
+  // ── Direct mode: fast single-image path (prompt is always auto-enhanced first) ──
+  // Default ON for the Custom tab. OFF runs the full 3-variant pipeline instead.
   const [directMode, setDirectMode] = useState<boolean>(true)
+  // ── Brand logo overlay: composite the uploaded Brand Kit logo onto the result ──
+  // Default OFF; the logo is only placed when the user turns this on.
+  const [useLogo, setUseLogo] = useState<boolean>(false)
+  const [logoPosition, setLogoPosition] = useState<"top-left" | "top-right" | "bottom-left" | "bottom-right">("top-left")
+  // ── Perfect text: render visual-only then composite text in code (zero typos) ──
+  const [cleanText, setCleanText] = useState<boolean>(false)
   // ── Library sync state (Phase 1: Meta Ad Library -> MongoDB) ──
   const [libraryStats, setLibraryStats] = useState<{
     totalAds: number
@@ -431,7 +437,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
     try {
       let body: any = {}
       if (targetTab === "custom") {
-        body = { prompt: currentTabState.prompt, type: "custom", reference: referenceOverride, useStoredAds, directMode }
+        body = { prompt: currentTabState.prompt, type: "custom", reference: referenceOverride || base64File, useStoredAds, directMode, useLogo, logoPosition, cleanText }
       } else if (targetTab === "studio") {
         body = { prompt: currentTabState.prompt, reference: referenceOverride || base64File || previewUrl, type: studioSubTab }
       } else {
@@ -590,7 +596,6 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
               <div className="bg-muted/40 p-0.5 rounded-lg border border-border flex w-full sm:w-auto">
                 <button onClick={() => setActiveMainTab("custom")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all cursor-pointer", activeMainTab === "custom" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Custom</button>
                 <button onClick={() => setActiveMainTab("top-ads")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all cursor-pointer", activeMainTab === "top-ads" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Top Ads</button>
-                <button onClick={() => setActiveMainTab("studio")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all cursor-pointer", activeMainTab === "studio" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Studio</button>
                 <button onClick={() => setActiveMainTab("ad-library")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all cursor-pointer", activeMainTab === "ad-library" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
                   <span className="flex items-center gap-1">
                     <Database className="w-3.5 h-3.5" />
@@ -746,7 +751,61 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                   placeholder="What should this creative communicate? Audience, offer, tone…"
                   className="w-full flex-1 min-h-[120px] bg-muted/20 border border-border rounded-xl p-4 text-sm outline-none focus:ring-1 focus:ring-primary/30 transition-all leading-relaxed placeholder:opacity-30 custom-scrollbar resize-none text-foreground/80"
                 />
-                {/* Direct mode: bypass pipeline, send prompt straight to image model */}
+                {/* Optional reference attachment (image or video) — merged in from Studio */}
+                <div className="shrink-0 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Reference (optional)</span>
+                    <div className="flex gap-0.5 bg-muted p-0.5 rounded-md border border-border">
+                      <button type="button" onClick={() => setStudioSubTab("image")} className={cn("px-2 py-0.5 rounded text-[10px] font-medium transition-all", studioSubTab === "image" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Image</button>
+                      <button type="button" onClick={() => setStudioSubTab("video")} className={cn("px-2 py-0.5 rounded text-[10px] font-medium transition-all", studioSubTab === "video" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Video</button>
+                    </div>
+                  </div>
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className={cn("w-full h-20 bg-muted/30 border border-dashed rounded-lg flex items-center justify-center cursor-pointer transition-all hover:bg-muted/50 relative overflow-hidden", previewUrl ? "border-primary/30" : "border-border")}
+                  >
+                    {previewUrl ? (
+                      studioSubTab === "image" ? (
+                        <img src={previewUrl} className="w-full h-full object-cover" alt="Ref" />
+                      ) : (
+                        <video src={previewUrl} className="w-full h-full object-cover" autoPlay muted loop />
+                      )
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                        <UploadCloud className="w-5 h-5 opacity-40" />
+                        <p className="text-[10px] font-medium opacity-60">Attach reference {studioSubTab}</p>
+                      </div>
+                    )}
+                    {previewUrl && (
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setPreviewUrl(null); setBase64File(null); }} className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center border border-white/20 hover:bg-destructive/20 transition-all text-white">
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept={studioSubTab === "image" ? "image/*" : "video/*"}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        setPreviewUrl(URL.createObjectURL(file))
+                        const reader = new FileReader()
+                        reader.onloadend = () => setBase64File(reader.result as string)
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                  />
+                </div>
+                {/* Auto-enhance banner — every prompt is expanded into a full brand brief */}
+                <div className="shrink-0 flex items-start gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2.5">
+                  <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                  <div className="text-[10px] text-muted-foreground leading-snug">
+                    <span className="font-medium text-foreground">Auto-enhance is always on.</span> Your prompt — even one line — is expanded into a full, brand-aware ad brief before generating. Add brand info in <span className="font-medium text-foreground">Settings → Brand Kit</span>.
+                  </div>
+                </div>
+                {/* Direct mode: fast single image vs full 3-variant pipeline */}
                 <div className="shrink-0 rounded-md border border-primary/40 bg-primary/5 p-2.5">
                   <label className="flex items-start gap-2.5 cursor-pointer">
                     <input
@@ -757,12 +816,69 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                     />
                     <div className="flex-1 min-w-0">
                       <div className="text-[11px] font-medium text-foreground leading-tight">
-                        Direct mode (recommended)
+                        Fast mode (recommended)
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
                         {directMode
-                          ? "ON — your prompt goes straight to the image model. No brief generation, no text overlay. One generation, full control."
-                          : "OFF — full pipeline: Claude brief → 3 variants → text overlay. More processing, more chances for noise."}
+                          ? "ON — one enhanced image, fast. Your prompt is auto-expanded into a full brief, then rendered."
+                          : "OFF — full pipeline: Claude brief → 3 concept variants → text overlay. Slower, more options."}
+                      </div>
+                    </div>
+                  </label>
+                </div>
+                {/* Brand logo overlay — places the uploaded Brand Kit logo on the result */}
+                <div className="shrink-0 rounded-md border border-border bg-card/60 p-2.5">
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useLogo}
+                      onChange={(e) => setUseLogo(e.target.checked)}
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] font-medium text-foreground leading-tight">
+                        Add brand logo
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                        {useLogo
+                          ? "ON — your uploaded logo is composited onto the ad. Set it in Settings → Brand Kit."
+                          : "OFF — no logo is placed on the generated image."}
+                      </div>
+                    </div>
+                  </label>
+                  {useLogo && (
+                    <div className="mt-2 flex items-center gap-2 pl-6">
+                      <span className="text-[10px] text-muted-foreground">Position</span>
+                      <select
+                        value={logoPosition}
+                        onChange={(e) => setLogoPosition(e.target.value as typeof logoPosition)}
+                        className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-[10px] outline-none focus:ring-1 focus:ring-primary/30"
+                      >
+                        <option value="top-left">Top left</option>
+                        <option value="top-right">Top right</option>
+                        <option value="bottom-left">Bottom left</option>
+                        <option value="bottom-right">Bottom right</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+                {/* Perfect text — render visual-only, then composite text in code (zero typos) */}
+                <div className="shrink-0 rounded-md border border-border bg-card/60 p-2.5">
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={cleanText}
+                      onChange={(e) => setCleanText(e.target.checked)}
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] font-medium text-foreground leading-tight">
+                        Perfect text (zero typos)
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                        {cleanText
+                          ? "ON — text is drawn in code with real fonts. Flawless spelling, cleaner layout (less integrated into the concept art)."
+                          : "OFF — the image model writes the text into the concept (more integrated look, but it may misspell a word)."}
                       </div>
                     </div>
                   </label>

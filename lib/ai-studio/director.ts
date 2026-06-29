@@ -22,7 +22,7 @@ function getClient() {
   return _client;
 }
 
-const DIRECTOR_MODEL = 'claude-sonnet-4-20250514';
+const DIRECTOR_MODEL = 'claude-sonnet-4-6';
 
 export interface ConceptPrompt {
   paradigm: string;

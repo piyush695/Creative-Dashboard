@@ -25,7 +25,7 @@ function getClient() {
   return _client;
 }
 
-const MODEL = "claude-sonnet-4-20250514";
+const MODEL = "claude-sonnet-4-6";
 
 const SYSTEM_PROMPT = `You are an ad creative analyst. Given a single ad image and its copy, you extract a structured JSON description of WHY this ad likely works. Be specific, observational, and concise. Do NOT moralize, do NOT add caveats. Return ONLY raw JSON — no markdown, no preamble.`;
 

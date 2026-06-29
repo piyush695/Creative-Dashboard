@@ -610,7 +610,7 @@ Return ONLY valid JSON matching this exact structure:
     });
 
     const response = await getClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 4000,
       system: 'You are a brand identity analyst. Extract precise brand DNA from real advertisements. Respond with ONLY valid JSON — no markdown, no code fences.',
       messages: [{ role: 'user', content }]

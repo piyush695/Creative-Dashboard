@@ -22,7 +22,7 @@ import Anthropic from '@anthropic-ai/sdk';
 let _client: Anthropic | null = null;
 function getClient() { if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); return _client; }
 
-const SCORER_MODEL = 'claude-sonnet-4-20250514';
+const SCORER_MODEL = 'claude-sonnet-4-6';
 
 export interface CreativeScore {
   overall: number;              // 1-10 (weighted average)

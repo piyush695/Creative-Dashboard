@@ -36,6 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { usePlatforms } from "@/components/providers/platforms-provider";
 import { useUiSettings } from "@/components/providers/ui-settings-provider";
+import BrandKitSettings from "@/components/brand-kit-settings";
 
 type ThemeMode = "light" | "dark" | "system";
 
@@ -265,6 +266,9 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Brand Kit — brand info + logo knowledge base used by the Creative Studio */}
+        <BrandKitSettings />
 
         {/* Platform Management — admin only. Enabling/disabling here applies
             globally and hides the platform across the whole dashboard. */}

@@ -77,7 +77,7 @@ Return ONLY valid JSON:
     });
 
     const response = await getClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 3000,
       system: 'You are a creative refinement specialist. Produce targeted improvements to existing ad creatives. Respond with ONLY valid JSON.',
       messages: [{ role: 'user', content }]

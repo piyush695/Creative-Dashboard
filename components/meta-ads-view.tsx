@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
     Activity, DollarSign, MousePointer2, TrendingUp, Check, Eye, Info,
     LayoutDashboard, RefreshCw, Layers, Percent, Users, BarChart3, PieChart as PieChartIcon, 
-    List, ShoppingCart, Zap, ChevronDown, MoreVertical, Filter, ArrowUpRight, Search, 
+    List, ShoppingCart, Zap, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreVertical, Filter, ArrowUpRight, Search,
     BarChart2, Calendar, LayoutGrid, Clock, CalendarIcon, X, Layout
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -31,6 +31,7 @@ import {
     Sector,
 } from "recharts"
 import SampleAds from "./sample-ads"
+import { fetchMetaAdsPage, fetchMetaAdsAll } from "@/actions/ads"
 
 interface MetaAdsViewProps {
     metaAds: AdData[]
@@ -68,6 +69,8 @@ export default function MetaAdsView({
     const [mounted, setMounted] = useState(false)
     const [showOverview, setShowOverview] = useState(defaultShowOverview)
     const [isDark, setIsDark] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
+    const adsPerPage = 12
 
     useEffect(() => {
         setMounted(true)
@@ -82,18 +85,66 @@ export default function MetaAdsView({
         setShowOverview(defaultShowOverview);
     }, [defaultShowOverview]);
 
-    // --- Core data filtered by account + search ---
-    const filteredAds = useMemo(() => {
-        return metaAds.filter(ad => {
-            const matchesAccount = selectedAccountId === "all" || ad.adAccountId === selectedAccountId
-            const term = searchQuery.toLowerCase().trim()
-            const matchesSearch = !term ||
-                (ad.adName?.toLowerCase() || "").includes(term) ||
-                (ad.campaignName?.toLowerCase() || "").includes(term) ||
-                (ad.adId?.toLowerCase() || "").includes(term)
-            return matchesAccount && matchesSearch
+    // --- Server-side pagination ---------------------------------------------
+    // The grid pulls ONE page (12 docs) straight from MongoDB instead of holding
+    // the whole ~24k collection in the browser. Search is debounced so we don't
+    // fire a query on every keystroke.
+    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery)
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(searchQuery), 300)
+        return () => clearTimeout(t)
+    }, [searchQuery])
+
+    const [gridAds, setGridAds] = useState<AdData[]>([])
+    const [gridTotal, setGridTotal] = useState(0)
+    const [gridLoading, setGridLoading] = useState(true)
+
+    // Snap back to page 1 whenever the filter changes (account/search switch).
+    useEffect(() => { setCurrentPage(1) }, [selectedAccountId, debouncedSearch])
+
+    // Fetch the current page from the server.
+    useEffect(() => {
+        let cancelled = false
+        setGridLoading(true)
+        fetchMetaAdsPage({
+            accountId: selectedAccountId,
+            search: debouncedSearch,
+            page: currentPage,
+            perPage: adsPerPage,
         })
-    }, [metaAds, selectedAccountId, searchQuery])
+            .then(res => { if (!cancelled) { setGridAds(res.ads); setGridTotal(res.total) } })
+            .finally(() => { if (!cancelled) setGridLoading(false) })
+        return () => { cancelled = true }
+    }, [selectedAccountId, debouncedSearch, currentPage])
+
+    const totalAdPages = Math.max(1, Math.ceil(gridTotal / adsPerPage))
+    // Never strand the user on a page that no longer exists.
+    useEffect(() => { if (currentPage > totalAdPages) setCurrentPage(1) }, [currentPage, totalAdPages])
+    // Jump-to-page box — Prev/Next alone is impractical across ~2k pages.
+    const [pageInput, setPageInput] = useState("1")
+    useEffect(() => { setPageInput(String(currentPage)) }, [currentPage])
+    const goToPage = (raw: string) => {
+        const n = Math.min(totalAdPages, Math.max(1, parseInt(raw || "1", 10) || 1))
+        setCurrentPage(n)
+        setPageInput(String(n))
+    }
+
+    // --- Overview data (KPIs + charts) --------------------------------------
+    // Loaded on demand only when the Overview opens, since those aggregates
+    // genuinely need every matching ad. `filteredAds` feeds all the KPI/chart
+    // memos below, exactly as before.
+    const [overviewAds, setOverviewAds] = useState<AdData[]>([])
+    const [overviewLoading, setOverviewLoading] = useState(false)
+    useEffect(() => {
+        if (!showOverview) return
+        let cancelled = false
+        setOverviewLoading(true)
+        fetchMetaAdsAll({ accountId: selectedAccountId, search: debouncedSearch })
+            .then(all => { if (!cancelled) setOverviewAds(all) })
+            .finally(() => { if (!cancelled) setOverviewLoading(false) })
+        return () => { cancelled = true }
+    }, [showOverview, selectedAccountId, debouncedSearch])
+    const filteredAds = overviewAds
 
     // --- Aggregate KPIs ---
     const totalSpend      = filteredAds.reduce((s, a) => s + Number(a.spend || 0), 0)
@@ -750,22 +801,12 @@ export default function MetaAdsView({
                         </div>
 
                         <SampleAds
-                            ads={[...filteredAds]
-                                .filter((ad, index, self) => index === self.findIndex((t) => t.adId === ad.adId))
-                                .sort((a, b) => {
-                                const revA = Number(a.purchaseValue) || 0;
-                                const spA = Number(a.spend) || 0;
-                                const roasA = spA > 0 ? revA / spA : 0;
-                                const revB = Number(b.purchaseValue) || 0;
-                                const spB = Number(b.spend) || 0;
-                                const roasB = spB > 0 ? revB / spB : 0;
-                                return roasB - roasA;
-                            }).slice(0, 10)}
-                            hasAdsInAccount={metaAds.length > 0}
+                            ads={gridAds}
+                            hasAdsInAccount={gridTotal > 0 || gridLoading}
                             searchQuery={searchQuery}
                             selectedAdId={null}
                             onSelect={(id) => {
-                                const ad = filteredAds.find(a => a.id === id);
+                                const ad = gridAds.find(a => a.id === id);
                                 if (ad && onSelectAd) {
                                   onSelectAd(ad);
                                 }
@@ -781,6 +822,57 @@ export default function MetaAdsView({
                                  </button>
                             }
                         />
+
+                        {totalAdPages > 1 && (
+                            <div className="flex items-center justify-center gap-1.5 mt-5 pb-2 flex-wrap">
+                                <button
+                                    onClick={() => setCurrentPage(1)}
+                                    disabled={currentPage === 1}
+                                    title="First page"
+                                    className="flex items-center justify-center h-8 w-8 rounded-lg border border-border bg-card text-foreground transition-colors hover:bg-muted disabled:opacity-40 disabled:pointer-events-none"
+                                >
+                                    <ChevronsLeft className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="flex items-center gap-1 h-8 px-3 rounded-lg border border-border bg-card text-[11px] font-bold uppercase tracking-wider text-foreground transition-colors hover:bg-muted disabled:opacity-40 disabled:pointer-events-none"
+                                >
+                                    <ChevronLeft className="h-3.5 w-3.5" /> Prev
+                                </button>
+                                <span className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground tabular-nums px-1">
+                                    Page
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={pageInput}
+                                        onChange={(e) => setPageInput(e.target.value.replace(/[^0-9]/g, ""))}
+                                        onKeyDown={(e) => { if (e.key === "Enter") goToPage(pageInput) }}
+                                        onBlur={() => goToPage(pageInput)}
+                                        className="w-14 h-8 text-center rounded-lg border border-border bg-card text-foreground tabular-nums focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                    />
+                                    / {totalAdPages.toLocaleString()}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalAdPages, p + 1))}
+                                    disabled={currentPage === totalAdPages}
+                                    className="flex items-center gap-1 h-8 px-3 rounded-lg border border-border bg-card text-[11px] font-bold uppercase tracking-wider text-foreground transition-colors hover:bg-muted disabled:opacity-40 disabled:pointer-events-none"
+                                >
+                                    Next <ChevronRight className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(totalAdPages)}
+                                    disabled={currentPage === totalAdPages}
+                                    title="Last page"
+                                    className="flex items-center justify-center h-8 w-8 rounded-lg border border-border bg-card text-foreground transition-colors hover:bg-muted disabled:opacity-40 disabled:pointer-events-none"
+                                >
+                                    <ChevronsRight className="h-3.5 w-3.5" />
+                                </button>
+                                <span className="text-[11px] font-bold text-muted-foreground tabular-nums ml-2">
+                                    {gridLoading ? "loading…" : `${gridTotal.toLocaleString()} ads`}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

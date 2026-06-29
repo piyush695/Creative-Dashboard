@@ -284,3 +284,147 @@ export async function applyLogoOverlay(
     return imageDataUri; // Return original on failure — never block generation
   }
 }
+
+/**
+ * Composite a USER-UPLOADED brand logo (from the Brand Knowledge Base) onto a
+ * generated image. Unlike applyLogoOverlay (which uses the hardcoded Hola Prime
+ * PNG), this takes the logo the team uploaded in Settings → Brand Kit. SVG logos
+ * are rasterised by sharp at high density for crisp edges; PNG/JPEG/WebP logos
+ * are used as-is (alpha preserved).
+ *
+ * Non-blocking: returns the original image on any failure.
+ *
+ * @param imageDataUri  The generated image (data URI).
+ * @param logo          { dataUri } — the uploaded logo as a data URI or http(s) URL.
+ * @param opts.position Corner to place the logo in (default 'top-left').
+ * @param opts.widthPct Logo width as a fraction of image width (default 0.17).
+ * @param opts.shadow   Add a soft radial shadow behind the logo (default true).
+ */
+export async function applyBrandLogoOverlay(
+  imageDataUri: string,
+  logo: { dataUri: string; format?: string },
+  opts: {
+    position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+    widthPct?: number;
+    shadow?: boolean;
+  } = {},
+): Promise<string> {
+  if (!imageDataUri || !imageDataUri.startsWith('data:')) return imageDataUri;
+  if (!logo || !logo.dataUri) return imageDataUri;
+
+  const position = opts.position || 'top-left';
+  const widthPct = opts.widthPct ?? 0.17;
+  const shadow = opts.shadow ?? true;
+
+  try {
+    // ── Decode the base image ──
+    const imgComma = imageDataUri.indexOf(',');
+    const imageBuffer = Buffer.from(imageDataUri.substring(imgComma + 1), 'base64');
+    const metadata = await sharp(imageBuffer).metadata();
+    const width = metadata.width || 1080;
+    const height = metadata.height || 1920;
+
+    // ── Load the uploaded logo (data URI or remote URL) ──
+    let rawLogoBuffer: Buffer;
+    if (logo.dataUri.startsWith('data:')) {
+      const lComma = logo.dataUri.indexOf(',');
+      rawLogoBuffer = Buffer.from(logo.dataUri.substring(lComma + 1), 'base64');
+    } else {
+      const res = await fetch(logo.dataUri);
+      if (!res.ok) throw new Error(`logo fetch failed: HTTP ${res.status}`);
+      rawLogoBuffer = Buffer.from(await res.arrayBuffer());
+    }
+
+    // Fit the logo into a compact corner band (band-tall, ≤28% wide) so it sits
+    // cleanly in the corner and never bleeds into the headline.
+    const bandH = Math.round(height * 0.05);
+    const maxLogoW = Math.round(width * 0.28);
+
+    // High density makes SVG rasterisation crisp; ignored for raster formats.
+    let logoBuffer = await sharp(rawLogoBuffer, { density: 384 })
+      .resize({ width: maxLogoW, height: bandH, fit: 'inside', withoutEnlargement: false })
+      .ensureAlpha()
+      .png()
+      .toBuffer();
+
+    const logoMeta = await sharp(logoBuffer).metadata();
+    const lw = logoMeta.width || maxLogoW;
+    const lh = logoMeta.height || bandH;
+
+    // ── Position: compact corner aligned with the top branding line ──
+    const padX = Math.round(width * 0.06);
+    const padY = Math.round(height * 0.035);
+    const left = position.endsWith('right')
+      ? Math.max(0, width - lw - padX)
+      : padX;
+    const top = position.startsWith('bottom')
+      ? Math.max(0, height - lh - padY)
+      : padY;
+
+    // ── AUTO-CONTRAST: recolor the logo so it stays visible on the background ──
+    // Sample the brightness behind the logo. On a dark background, recolor the
+    // logo's DARK pixels to white; on a light background, recolor its LIGHT pixels
+    // to near-black. Mid/coloured pixels (e.g. the iridescent globe) are left alone.
+    try {
+      const region = await sharp(imageBuffer)
+        .extract({
+          left,
+          top,
+          width: Math.max(1, Math.min(lw, width - left)),
+          height: Math.max(1, Math.min(lh, height - top)),
+        })
+        .stats();
+      const bgMean = region.channels.slice(0, 3).reduce((a, c) => a + c.mean, 0) / 3;
+      const bgDark = bgMean < 115;
+
+      const rawLogo = await sharp(logoBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+      const { data, info } = rawLogo;
+      const ch = info.channels;
+      let recoloured = 0;
+      for (let i = 0; i < data.length; i += ch) {
+        if (data[i + 3] < 12) continue; // transparent
+        const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        if (bgDark && lum < 115) {
+          data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; recoloured++;
+        } else if (!bgDark && lum > 150) {
+          data[i] = 12; data[i + 1] = 12; data[i + 2] = 12; recoloured++;
+        }
+      }
+      if (recoloured > 0) {
+        logoBuffer = await sharp(data, { raw: { width: info.width, height: info.height, channels: ch } }).png().toBuffer();
+        console.log(`[LogoOverlay] Auto-contrast: bg ${bgDark ? 'dark' : 'light'} (mean ${bgMean.toFixed(0)}) → recoloured ${recoloured} logo px to ${bgDark ? 'white' : 'dark'}`);
+      }
+    } catch (e: any) {
+      console.warn('[LogoOverlay] Auto-contrast skipped:', e.message);
+    }
+
+    const composites: sharp.OverlayOptions[] = [];
+
+    if (shadow) {
+      const bgW = lw + 80;
+      const bgH = lh + 80;
+      const shadowSvg = `<svg width="${bgW}" height="${bgH}" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="s" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="black" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="black" stop-opacity="0"/>
+        </radialGradient></defs>
+        <rect width="${bgW}" height="${bgH}" fill="url(#s)"/>
+      </svg>`;
+      composites.push({
+        input: Buffer.from(shadowSvg),
+        top: Math.max(0, top - 40),
+        left: Math.max(0, left - 40),
+        blend: 'over',
+      });
+    }
+
+    composites.push({ input: logoBuffer, top, left, blend: 'over' });
+
+    const result = await sharp(imageBuffer).composite(composites).png().toBuffer();
+    console.log(`[LogoOverlay] ✓ Brand-kit logo composited (${position}, ${lw}x${lh}px, ${logo.format || 'image'})`);
+    return `data:image/png;base64,${result.toString('base64')}`;
+  } catch (err: any) {
+    console.error('[LogoOverlay] ✗ Brand-kit logo overlay failed (non-blocking):', err.message);
+    return imageDataUri;
+  }
+}

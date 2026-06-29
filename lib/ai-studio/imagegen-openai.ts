@@ -19,7 +19,7 @@
  * transparently.
  */
 
-import OpenAI from "openai";
+import OpenAI, { toFile } from "openai";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 
@@ -179,6 +179,57 @@ export async function generateImageOpenAI(
     size: requestBody.size,
     quality: requestBody.quality,
   };
+}
+
+/**
+ * Image-to-image: transform a REFERENCE image with a text prompt via
+ * gpt-image-1's edits endpoint. Used when the user attaches a reference in the
+ * Studio so the output is visually grounded in their image. Returns null on
+ * failure so the caller can fall back to text-to-image.
+ */
+export async function editImageOpenAI(params: {
+  prompt: string;
+  imageDataUri: string;
+  size?: OpenAIImageSize;
+  quality?: OpenAIImageQuality;
+}): Promise<OpenAIResult | null> {
+  if (!OPENAI_API_KEY) return null;
+  if (!params.imageDataUri || !params.imageDataUri.startsWith("data:image")) {
+    console.log("[OpenAI] editImage: reference is not an image data URI — skipping edit");
+    return null;
+  }
+  try {
+    const comma = params.imageDataUri.indexOf(",");
+    const semi = params.imageDataUri.indexOf(";");
+    const mime = params.imageDataUri.substring(5, semi > 5 ? semi : params.imageDataUri.indexOf(",")) || "image/png";
+    const buf = Buffer.from(params.imageDataUri.substring(comma + 1), "base64");
+    const ext = mime.includes("png") ? "png" : mime.includes("webp") ? "webp" : (mime.includes("jpeg") || mime.includes("jpg")) ? "jpg" : "png";
+    const file = await toFile(buf, `reference.${ext}`, { type: mime });
+
+    const size = params.size ?? ("1024x1536" as const);
+    const quality = params.quality ?? ("high" as const);
+    console.log(`[OpenAI] images.edit (gpt-image-1, ${size}, ${quality}, ref ${Math.round(buf.length / 1024)}KB, prompt ${params.prompt.length} chars)`);
+
+    const resp: any = await getClient().images.edit({
+      model: "gpt-image-1",
+      image: file as any,
+      prompt: params.prompt,
+      size,
+      quality,
+    } as any);
+
+    const b64 = resp?.data?.[0]?.b64_json;
+    if (!b64) {
+      console.error("[OpenAI] images.edit returned no b64_json");
+      return null;
+    }
+    const dataUri = `data:image/png;base64,${b64}`;
+    console.log("[OpenAI] ✓ images.edit complete (reference-grounded)");
+    return { dataUri, url: dataUri, provider: "openai", model: "gpt-image-1", size: String(size), quality: String(quality) };
+  } catch (err: any) {
+    console.warn("[OpenAI] images.edit failed:", err?.status, (err?.message || String(err)).substring(0, 240));
+    return null;
+  }
 }
 
 /**

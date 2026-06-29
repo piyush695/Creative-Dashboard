@@ -8,7 +8,7 @@ import { generateImage } from '@/lib/ai-studio/imagegen';
 import { scoreVariants } from '@/lib/ai-studio/scorer';
 import { saveGeneration, buildMemoryContext } from '@/lib/ai-studio/memory';
 import { analyzeCompetitorAd, buildCompetitorContext } from '@/lib/ai-studio/competitor';
-import { uploadVariantImages } from '@/lib/ai-studio/storage';
+import { uploadVariantImages, uploadToCloudinary } from '@/lib/ai-studio/storage';
 import { buildRefinement } from '@/lib/ai-studio/refine';
 import { listTemplates, saveTemplate, getTemplate, updateTemplateStats, deleteTemplate, seedDefaultTemplates, autoCreateTemplate } from '@/lib/ai-studio/templates';
 import { linkPerformance, buildPerformanceInsights } from '@/lib/ai-studio/performance';
@@ -19,13 +19,16 @@ import { runCreativeDirector } from '@/lib/ai-studio/director';
 // in code with real fonts. Eliminates Gemini/OpenAI text rendering errors entirely.
 import { applyTextOverlay, extractOverlayConfig } from '@/lib/ai-studio/text-overlay';
 import { generateCrossPlatform, getAvailablePlatforms } from '@/lib/ai-studio/crossplatform';
-import { generateImageOpenAI } from '@/lib/ai-studio/imagegen-openai';
+import { generateImageOpenAI, editImageOpenAI } from '@/lib/ai-studio/imagegen-openai';
 import { generateForAllPersonas, getAvailablePersonas } from '@/lib/ai-studio/personas';
 // Cache module available but not used in main generation flows (generation must always be fresh)
 // import { getCached, setCache } from '@/lib/ai-studio/cache';
 import { recordFeedback, buildPreferenceContext, getPreferenceSummary } from '@/lib/ai-studio/preferences';
 import { getFullBrandContext } from '@/lib/ai-studio/adlibrary';
 import { getStoredAdContext } from '@/lib/ai-studio/ad-library-db';
+import { enhanceImagePrompt } from '@/lib/ai-studio/prompt-enhancer';
+import { buildBrandKnowledgeContext, getBrandLogo } from '@/lib/ai-studio/brand-knowledge';
+import { applyBrandLogoOverlay } from '@/lib/ai-studio/logo-overlay';
 
 // ─── Text fidelity helpers — used to combat Gemini text-rendering errors ───
 // Gemini's image model frequently introduces character doubling ("sstep"),
@@ -87,7 +90,7 @@ function getAnthropicClient(): Anthropic {
 
 // Model fallback: best → fast. Opus 4 for brief quality, Sonnet 4 reliable fallback.
 const ANTHROPIC_MODELS = [
-  'claude-sonnet-4-20250514',      // Primary — fast + high quality
+  'claude-sonnet-4-6',      // Primary — fast + high quality
   'claude-haiku-4-5-20251001',     // Fallback — fastest
 ];
 
@@ -480,9 +483,18 @@ export async function POST(request: Request) {
       // Inject all intelligence contexts into the prompt builder.
       // Stored ad context goes at the end so it can override stale memory/
       // performance signals with fresh real-world ad patterns.
+      // ── BRAND KNOWLEDGE BASE (Settings → Brand Kit) — always injected ──
+      let patternBrandKb = '';
+      try {
+        patternBrandKb = await buildBrandKnowledgeContext();
+        if (patternBrandKb) console.log('[Studio] Top Ads mode: brand knowledge base injected');
+      } catch (e: any) {
+        console.warn('[Studio] Brand knowledge fetch failed (non-blocking):', e.message);
+      }
+
       const enrichedBody = {
         ...body,
-        _memoryContext: memoryContext + performanceContext + brandContext + storedAdContext,
+        _memoryContext: memoryContext + performanceContext + brandContext + storedAdContext + patternBrandKb,
         _competitorContext: competitorContext,
         _preferenceContext: preferenceContext,
         _storedAdImageUrls: storedAdImageUrls,
@@ -964,89 +976,220 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
     }
 
     if (type === 'custom' || type === 'image' || type === 'video') {
-      // ── DIRECT MODE: literal passthrough to OpenAI gpt-image-1 ──
-      // ZERO modifications to the user's prompt. ZERO post-processing. Bypasses:
-      //   - Claude brief generation
-      //   - paradigm picking + 3 variants
-      //   - text manifest + fidelity blocks + premium craft directive
-      //   - generateImage() wrapper (which would add BRANDING INSTRUCTION + run
-      //     sanitizePromptForImageGen + apply logo overlay)
-      //   - text overlay compositor
-      //
-      // Result: user prompt → OpenAI SDK → image. Exact same flow as pasting
-      // the prompt into ChatGPT directly. No additional layers.
-      //
-      // Triggered when body.directMode === true (UI default is ON for Custom tab).
-      // Requires OPENAI_API_KEY. Falls back to error if not configured (no
-      // silent fallback to other providers — direct means direct).
-      if (body.directMode === true && type === 'custom') {
+      // ── ENHANCED FAST MODE (Custom tab default) ──
+      // The user's prompt — however short — is ALWAYS auto-expanded into a full,
+      // brand-aware, agency-grade image brief (lib/ai-studio/prompt-enhancer.ts)
+      // before it hits gpt-image-1. This is what makes a 3-word prompt produce a
+      // top-tier prop-firm ad. The brand knowledge base (Settings → Brand Kit)
+      // feeds voice/offers/colours into the expansion. A single fast generation
+      // (no 3-variant pipeline). Logo is composited only when the "Add brand
+      // logo" toggle is on (body.useLogo), pulling the uploaded logo from the KB.
+      // Force this fast path (never the slow full pipeline) when an IMAGE
+      // reference is attached, so reference edits always get the clean result —
+      // even if the user left Fast mode off.
+      const hasImageRef = typeof body.reference === 'string' && body.reference.startsWith('data:image');
+      if (type === 'custom' && (body.directMode === true || hasImageRef)) {
         const rawPrompt = (userPrompt || '').trim();
         if (!rawPrompt) {
-          return NextResponse.json({ error: 'Direct mode requires a non-empty prompt.' }, { status: 400 });
+          return NextResponse.json({ error: 'Please enter a prompt to generate from.' }, { status: 400 });
         }
         if (!process.env.OPENAI_API_KEY) {
           return NextResponse.json(
-            { error: 'Direct mode requires OPENAI_API_KEY in .env. Add the key and restart the dev server.' },
+            { error: 'Image generation requires OPENAI_API_KEY in .env. Add the key and restart the dev server.' },
             { status: 400 },
           );
         }
-        console.log('═══════════════════════════════════════════════════════════════');
-        console.log('[Studio Direct Mode] VERBATIM PROMPT SENT TO openai.images.generate():');
-        console.log('───────────────────────────────────────────────────────────────');
-        console.log(rawPrompt);
-        console.log('───────────────────────────────────────────────────────────────');
-        console.log(`[Studio Direct Mode] Length: ${rawPrompt.length} chars. NOTHING is appended, prepended, or modified before this hits OpenAI.`);
-        console.log('═══════════════════════════════════════════════════════════════');
+
+        // ── Clean-text mode: render a VISUAL-ONLY plate, then composite perfect,
+        //    real-font text in code (zero image-model typos). Toggle: body.cleanText
+        //    (UI checkbox); default can be forced on via STUDIO_CLEAN_TEXT_DEFAULT=on.
+        const cleanText = body.cleanText !== undefined
+          ? body.cleanText === true
+          : process.env.STUDIO_CLEAN_TEXT_DEFAULT === 'on';
+
+        // ── Brand logo. Used when "Add brand logo" is on (concept mode), AND
+        //    always in clean-text mode so the clean ad still carries the real logo. ──
+        const wantsLogo = body.useLogo === true;
+        const logoPosition = body.logoPosition || 'top-left';
+        const brandLogo = (wantsLogo || cleanText) ? await getBrandLogo() : null;
+        const hasBrandLogo = !!(brandLogo && brandLogo.dataUri);
+        const logoWillBeComposited = wantsLogo && hasBrandLogo;
+        if (wantsLogo && !hasBrandLogo) {
+          console.warn('[Studio] "Add brand logo" was on but no logo is uploaded in Settings → Brand Kit.');
+        }
+
+        // ── Brand knowledge base → prompt context ──
+        let brandKbContext = '';
+        try {
+          brandKbContext = await buildBrandKnowledgeContext();
+        } catch (e: any) {
+          console.warn('[Studio] Brand knowledge fetch failed (non-blocking):', e.message);
+        }
+
+        // ── ALWAYS ENHANCE: short prompt → full brand-aware image brief ──
+        const enhanced = await enhanceImagePrompt(rawPrompt, {
+          brandContext: brandKbContext,
+          tone: body.tone,
+          logoWillBeComposited,
+          logoPosition,
+          directionHint: body.directionHint, // optional: force a specific creative direction (QA/testing)
+        });
+        console.log(
+          `[Studio] Always-enhance: "${rawPrompt.slice(0, 60)}" → ${enhanced.imagePrompt.length} chars ` +
+          `(concept: "${enhanced.concept || '—'}", logo: ${logoWillBeComposited ? logoPosition : 'off'})`,
+        );
+
+        // If the user attached an IMAGE reference, transform it (image-to-image)
+        // so the result is grounded in their image while keeping the brilliant
+        // brief, clean auto-contrast logo and no double-text. Video refs can't be
+        // edited by the image model, so they're ignored (text-to-image instead).
+        const refImage = (typeof body.reference === 'string' && body.reference.startsWith('data:image'))
+          ? body.reference
+          : null;
 
         try {
-          // Call the OpenAI client directly. No wrapper, no overlay, no sanitizer.
-          // Just: { model, prompt, size, quality } → openai.images.generate()
-          const directResult = await generateImageOpenAI({
-            prompt: rawPrompt,
-            size: '1024x1536',  // portrait, closest to 9:16 — only thing we choose
-            quality: 'high',
-            output_format: 'png',
-          });
+          let directResult: any = null;
+
+          if (refImage) {
+            // Use a CONCISE transform instruction (not the full from-scratch
+            // concept) so the model refreshes the reference cleanly instead of
+            // cramming a whole new ad on top (which causes overlapping/duplicate text).
+            const editPrompt = [
+              `Transform this advertisement into a new version. NEW MESSAGE: ${rawPrompt}.`,
+              enhanced.headline ? `Headline reads: "${enhanced.headline}".` : '',
+              `Keep the reference image's overall composition, lighting and premium dark style; refresh the text to match the new message.`,
+              `The CTA button must read "${enhanced.cta || 'Buy Challenge'}". Keep "#WeAreTraders" top-right and a tiny legal disclaimer at the very bottom. Leave the top-left corner clear with NO logo.`,
+              `CRITICAL: render every piece of text exactly ONCE — crisp, clean and readable. NO duplicated words, NO overlapping or stacked text, NO garbled letters.`,
+            ].filter(Boolean).join(' ');
+            console.log(`[Studio] Reference image attached → gpt-image-1 image-to-image (edit prompt ${editPrompt.length} chars)`);
+            directResult = await editImageOpenAI({
+              prompt: editPrompt,
+              imageDataUri: refImage,
+              size: '1024x1536',
+              quality: 'high',
+            });
+            if (!directResult) console.warn('[Studio] Edit returned nothing — falling back to text-to-image');
+          }
+
+          if (!directResult) {
+            // Text-to-image. Clean-text uses the TEXT-FREE plate (so composited text
+            // doesn't collide); concept mode uses the full concept prompt. Force a
+            // dark plate so the white composited text always has contrast.
+            const DARK_PLATE = 'The background MUST be a deep, near-black premium dark scene (almost pure black, #000000–#0A0A0F, with only subtle dark gradients or faint neon glow). NEVER light, white, pale, grey, or pastel. ';
+            const genPrompt = (!refImage && cleanText)
+              ? DARK_PLATE + VISUAL_ONLY_DIRECTIVE + (enhanced.visualPrompt && enhanced.visualPrompt.length > 40
+                  ? enhanced.visualPrompt
+                  : enhanced.imagePrompt)
+              : enhanced.imagePrompt;
+            directResult = await generateImageOpenAI({
+              prompt: genPrompt,
+              size: '1024x1536',  // portrait, closest to 9:16
+              quality: 'high',
+              output_format: 'png',
+            });
+          }
 
           if (!directResult?.dataUri) {
             return NextResponse.json(
-              { error: 'OpenAI gpt-image-1 returned no result. Check OPENAI_API_KEY + billing at platform.openai.com.' },
+              { error: 'gpt-image-1 returned no result. Check OPENAI_API_KEY + billing at platform.openai.com.' },
               { status: 500 },
             );
           }
 
-          const directCreativeId = `direct-${Date.now()}`;
+          let finalImageUrl = directResult.dataUri;
+
+          if (!refImage && cleanText) {
+            // ── Zero-typo path: composite perfect, real-font text in code ──
+            try {
+              const ov = enhanced.overlay || {};
+              finalImageUrl = await applyTextOverlay(finalImageUrl, {
+                headline: ov.headline || enhanced.headline || '',
+                subheadline: ov.subheadline || '',
+                price: ov.price || '',
+                bullets: Array.isArray(ov.bullets) ? ov.bullets : [],
+                cta: ov.cta || enhanced.cta || 'Buy Challenge',
+                urgencyText: ov.urgencyText || '',
+                promoCode: ov.promoCode || '',
+                disclaimer: ov.disclaimer
+                  || 'HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON THEIR PERFORMANCE THROUGH SUCH DEMO HOLA PRIME ACCOUNTS.',
+                layout: 'standard',
+                darkBackground: true,
+                tagline: '#WeAreTraders',
+                // If we have the uploaded logo, suppress the compositor's bundled
+                // logo and composite the real (transparent) one below instead.
+                drawLogo: !hasBrandLogo,
+              });
+              console.log('[Studio] ✓ Clean-text overlay applied (zero-typo composition)');
+              if (hasBrandLogo) {
+                finalImageUrl = await applyBrandLogoOverlay(finalImageUrl, brandLogo!, {
+                  position: wantsLogo ? logoPosition : 'top-left',
+                });
+              }
+            } catch (overlayErr: any) {
+              console.warn('[Studio] Clean-text overlay failed (non-blocking):', overlayErr.message);
+            }
+          } else if (logoWillBeComposited) {
+            // ── Concept mode: composite the uploaded brand logo if requested ──
+            try {
+              finalImageUrl = await applyBrandLogoOverlay(finalImageUrl, brandLogo!, { position: logoPosition });
+            } catch (logoErr: any) {
+              console.warn('[Studio] Brand logo overlay failed (non-blocking):', logoErr.message);
+            }
+          }
+
+          // ── Store a short Cloudinary URL instead of a ~2MB base64 data URI, so
+          //    history/saves stay tiny and never fill the database. Falls back to
+          //    the data URI if Cloudinary isn't configured or the upload fails. ──
+          try {
+            const uploaded = await uploadToCloudinary(finalImageUrl, {
+              folder: 'creative-studio/fast',
+              publicId: `gen-${Date.now()}`,
+            });
+            if (uploaded?.url) {
+              finalImageUrl = uploaded.url;
+              console.log('[Studio] ✓ Uploaded to Cloudinary (storing URL, not base64)');
+            }
+          } catch (upErr: any) {
+            console.warn('[Studio] Cloudinary upload failed (keeping data URI):', upErr.message);
+          }
+
+          const directCreativeId = `gen-${Date.now()}`;
           const responsePayload = {
             creative: {
               creativeId: directCreativeId,
-              creativeConcept: { title: 'Direct generation', rationale: 'Verbatim prompt → gpt-image-1. No pipeline.' },
-              copywriting: {
-                headline: { primary: rawPrompt.slice(0, 80) },
-                cta: { primary: 'Buy Challenge' },
+              creativeConcept: {
+                title: enhanced.concept || 'Enhanced generation',
+                rationale: 'Your prompt was auto-expanded into a full brand-aware brief, then rendered by gpt-image-1.',
               },
+              copywriting: {
+                headline: { primary: enhanced.headline || rawPrompt.slice(0, 80) },
+                cta: { primary: enhanced.cta || 'Buy Challenge' },
+              },
+              enhancedPrompt: enhanced.imagePrompt,
               variants: [
                 {
-                  id: 'direct',
-                  label: 'Direct',
-                  description: 'Verbatim prompt passthrough',
-                  paradigm: 'Direct',
-                  imageUrl: directResult.dataUri,
+                  id: 'enhanced',
+                  label: enhanced.concept || 'Enhanced',
+                  description: 'Prompt auto-enhanced → gpt-image-1' + (logoWillBeComposited ? ' + brand logo' : ''),
+                  paradigm: 'Enhanced',
+                  imageUrl: finalImageUrl,
                   score: { overall: 9.0, content: 9, design: 9, color: 9, impact: 9 }, // placeholder — unscored
                 },
               ],
-              imageUrl: directResult.dataUri,
+              imageUrl: finalImageUrl,
               provider: 'openai',
               model: directResult.model,
               directMode: true,
+              logoApplied: logoWillBeComposited,
             },
             saved: false,
           };
 
-          console.log(`[Studio] ✓ Direct mode complete — gpt-image-1 (${directResult.size}, ${directResult.quality}, ${rawPrompt.length} chars in)`);
+          console.log(`[Studio] ✓ Enhanced generation complete — gpt-image-1 (${directResult.size}, ${directResult.quality})`);
           return NextResponse.json(responsePayload);
         } catch (err: any) {
-          console.error('[Studio] Direct mode generation failed:', err.message);
-          return NextResponse.json({ error: err.message || 'Direct generation failed' }, { status: 500 });
+          console.error('[Studio] Enhanced generation failed:', err.message);
+          return NextResponse.json({ error: err.message || 'Generation failed' }, { status: 500 });
         }
       }
 
@@ -1100,6 +1243,16 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
         }
       } else {
         console.log('[Studio] Custom mode: useStoredAds=false — skipping reference library (A/B test)');
+      }
+
+      // ── BRAND KNOWLEDGE BASE: uploaded brand info (Settings → Brand Kit) ──
+      // Always injected so generated copy/visuals reflect the team's own brand.
+      let customBrandKb = '';
+      try {
+        customBrandKb = await buildBrandKnowledgeContext();
+        if (customBrandKb) console.log('[Studio] Custom mode: brand knowledge base injected');
+      } catch (e: any) {
+        console.warn('[Studio] Brand knowledge fetch failed (non-blocking):', e.message);
       }
 
       const noBrandDNARule = customWantsBrandDNA ? '' : `
@@ -1220,7 +1373,7 @@ When generating a brief for an offer/promo angle, this is the CRAFT BAR. Match i
 
 Brand: Hola Prime (#WeAreTraders). Funded challenges \$2K to \$100K. USPs: 1-step process, 5% profit target, no time limits, fast withdrawals, no activation fees, high profit splits.
 
-${customBrandContext}${customStoredAdContext}${noBrandDNARule}
+${customBrandContext}${customStoredAdContext}${customBrandKb}${noBrandDNARule}
 
 # USER REQUEST
 

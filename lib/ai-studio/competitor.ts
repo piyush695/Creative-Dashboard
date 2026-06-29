@@ -14,7 +14,7 @@ import Anthropic from '@anthropic-ai/sdk';
 let _client: Anthropic | null = null;
 function getClient() { if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); return _client; }
 
-const ANALYZER_MODEL = 'claude-sonnet-4-20250514';
+const ANALYZER_MODEL = 'claude-sonnet-4-6';
 
 export interface CompetitorInsight {
   competitor: string;

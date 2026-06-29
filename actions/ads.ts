@@ -343,6 +343,99 @@ export async function fetchAdsFromMongo(opts?: { analyzedOnly?: boolean }): Prom
     }
 }
 
+// ─── Server-side pagination for the Meta grid ───────────────────────────────
+// The grid used to receive the entire creative_data collection (~24k docs) in
+// the browser and paginate client-side — heavy payload + heavy in-memory work.
+// These actions push the paging/filtering/counting into MongoDB so the browser
+// only ever holds the ~12 docs it is currently showing.
+
+function escapeRegex(s: string): string {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildMetaFilter(accountId?: string, search?: string): Record<string, any> {
+    const filter: Record<string, any> = {};
+    if (accountId && accountId !== "all") filter.adAccountId = accountId;
+    const term = (search || "").trim();
+    if (term) {
+        const rx = new RegExp(escapeRegex(term), "i");
+        filter.$or = [{ adName: rx }, { adId: rx }, { campaignName: rx }];
+    }
+    return filter;
+}
+
+// One page of meta ads + the total matching count (for the pager). Newest first.
+export async function fetchMetaAdsPage(opts: {
+    accountId?: string;
+    search?: string;
+    page?: number;
+    perPage?: number;
+}): Promise<{ ads: AdData[]; total: number }> {
+    try {
+        const { accountId = "all", search = "", page = 1, perPage = 12 } = opts || {};
+        const client = await clientPromise;
+        const db = client.db(process.env.MONGODB_DB || "reddit_data");
+        const coll = db.collection("creative_data");
+        const filter = buildMetaFilter(accountId, search);
+        const skip = (Math.max(1, page) - 1) * perPage;
+        const [docs, total] = await Promise.all([
+            coll.find(filter, { projection: CREATIVE_LIST_PROJECTION })
+                .sort({ _id: -1 })
+                .skip(skip)
+                .limit(perPage)
+                .toArray(),
+            coll.countDocuments(filter),
+        ]);
+        return { ads: docs.map(normalizeMetaDoc), total };
+    } catch (e) {
+        console.error("fetchMetaAdsPage failed:", e);
+        return { ads: [], total: 0 };
+    }
+}
+
+// The full filtered set — used on demand by the Overview (KPIs + charts need
+// aggregates across all matching ads) and capped lookups (search dropdown).
+export async function fetchMetaAdsAll(opts?: {
+    accountId?: string;
+    search?: string;
+    limit?: number;
+}): Promise<AdData[]> {
+    try {
+        const { accountId = "all", search = "", limit = 0 } = opts || {};
+        const client = await clientPromise;
+        const db = client.db(process.env.MONGODB_DB || "reddit_data");
+        const coll = db.collection("creative_data");
+        const filter = buildMetaFilter(accountId, search);
+        let cursor = coll.find(filter, { projection: CREATIVE_LIST_PROJECTION }).sort({ _id: -1 });
+        if (limit > 0) cursor = cursor.limit(limit);
+        const docs = await cursor.toArray();
+        return docs.map(normalizeMetaDoc);
+    } catch (e) {
+        console.error("fetchMetaAdsAll failed:", e);
+        return [];
+    }
+}
+
+// Cheap per-account counts (and grand total) via aggregation, so the account
+// switcher badges + breadcrumb totals don't require loading every doc.
+export async function fetchMetaFacets(): Promise<{ total: number; byAccount: Record<string, number> }> {
+    try {
+        const client = await clientPromise;
+        const db = client.db(process.env.MONGODB_DB || "reddit_data");
+        const coll = db.collection("creative_data");
+        const [total, grouped] = await Promise.all([
+            coll.estimatedDocumentCount(),
+            coll.aggregate([{ $group: { _id: "$adAccountId", count: { $sum: 1 } } }]).toArray(),
+        ]);
+        const byAccount: Record<string, number> = {};
+        for (const g of grouped as any[]) if (g._id) byAccount[String(g._id)] = g.count;
+        return { total, byAccount };
+    } catch (e) {
+        console.error("fetchMetaFacets failed:", e);
+        return { total: 0, byAccount: {} };
+    }
+}
+
 // Fetch a single full document (no projection) for the detail panel. Hydrates
 // the heavy analysis fields the list query intentionally drops.
 export async function fetchAdDetailById(id: string, platform?: string): Promise<AdData | null> {

@@ -27,6 +27,8 @@ export interface TextOverlayConfig {
   darkBackground?: boolean;
   logoText?: string;
   tagline?: string;
+  /** When false, the compositor draws NO logo (caller composites its own). Default true. */
+  drawLogo?: boolean;
 }
 
 // ─── Helpers ───
@@ -128,19 +130,30 @@ export async function applyTextOverlay(
       console.warn('[TextOverlay] Failed to calculate brightness for logo');
     }
 
-    // ── Logo (top-left) ──
+    // ── Brand band (logo top-left + tagline top-right share ONE line) ──
+    // The logo is fit into a compact corner band so it never bleeds into the
+    // headline, and the tagline is vertically centered on that same band so the
+    // two read as one aligned branding row.
+    const drawLogo = config.drawLogo !== false;
+    const brandTop = Math.round(height * 0.035);
+    const brandLogoH = Math.round(height * 0.05);
+    const brandCenterY = brandTop + Math.round(brandLogoH / 2);
     const logoPath = path.join(process.cwd(), 'public', 'holaprime-logo.png');
     let hasLogoImage = false;
     let logoImageBuffer: Buffer | null = null;
+    let logoImgW = 0, logoImgH = 0;
     try {
-      if (fs.existsSync(logoPath)) {
+      if (drawLogo && fs.existsSync(logoPath)) {
         hasLogoImage = true;
-        const logoTargetWidth = Math.round(width * 0.22); // ~22% of image width for good visibility
+        // Fit inside a compact corner box (band-tall, ≤28% wide), preserving aspect.
         logoImageBuffer = await sharp(logoPath)
-          .resize({ width: logoTargetWidth, withoutEnlargement: true })
+          .resize({ width: Math.round(width * 0.28), height: brandLogoH, fit: 'inside', withoutEnlargement: true })
           .png()  // Explicitly output PNG to preserve transparency (alpha channel)
           .toBuffer();
-        console.log(`[TextOverlay] Logo loaded: ${logoTargetWidth}px wide`);
+        const lm = await sharp(logoImageBuffer).metadata();
+        logoImgW = lm.width || brandLogoH;
+        logoImgH = lm.height || brandLogoH;
+        console.log(`[TextOverlay] Logo loaded: ${logoImgW}x${logoImgH}px (corner band)`);
       }
     } catch(e) {
       console.warn('[TextOverlay] Failed to load logo image:', e);
@@ -148,15 +161,14 @@ export async function applyTextOverlay(
     }
 
     if (hasLogoImage) {
-      // If we're using the user's image logo on a bright background, we want a white pill behind it to ensure visibility, assuming it might be a white-text logo.
+      // White pill behind the logo on bright backgrounds — sized to the actual logo.
       if (isBrightBackground) {
-         const bgW = Math.round(width * 0.24);
-         const bgH = Math.round(height * 0.08);
-         svgParts.push(`<rect x="${padding - 15}" y="${padding - 15}" width="${bgW}" height="${bgH}" rx="12" fill="#FFFFFF" filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.1))"/>`);
+         const m = Math.round(height * 0.012);
+         svgParts.push(`<rect x="${padding - m}" y="${brandTop - m}" width="${logoImgW + 2 * m}" height="${logoImgH + 2 * m}" rx="12" fill="#FFFFFF" filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.1))"/>`);
       }
-    } else {
-      // Draw exact vector recreation of Hola Prime logo
-      const scale = logoSize / 30; // base font size in our SVG is 44, scale appropriately
+    } else if (drawLogo) {
+      // Draw exact vector recreation of Hola Prime logo, scaled to the brand band
+      const scale = brandLogoH / 95; // vector logo base height ≈ 95 units
       const fgColor = isBrightBackground ? '#000000' : '#FFFFFF';
       
       let bgRect = '';
@@ -166,7 +178,7 @@ export async function applyTextOverlay(
       }
 
       const svgLogo = `
-        <g transform="translate(${padding}, ${padding}) scale(${scale})">
+        <g transform="translate(${padding}, ${brandTop}) scale(${scale})">
           ${bgRect}
           <defs>
             <radialGradient id="globeGra" cx="35%" cy="35%" r="65%">
@@ -205,11 +217,13 @@ export async function applyTextOverlay(
     // ── Tagline (top-right) ──
     const tagline = config.tagline !== undefined ? config.tagline : '#WeAreTraders';
     if (tagline) {
-      svgParts.push(txt(width - padding, padding + logoSize, tagline, logoSize, { weight: '400', anchor: 'end' }));
+      const tagSize = Math.round(height * 0.02);
+      const tagBaselineY = brandCenterY + Math.round(tagSize * 0.36); // center on the logo band
+      svgParts.push(txt(width - padding, tagBaselineY, tagline, tagSize, { weight: '400', anchor: 'end' }));
     }
 
-    // ── Attention Grabber ──
-    let yPos = Math.round(height * 0.13);
+    // ── Attention Grabber ── (start below the logo/tagline branding zone)
+    let yPos = Math.round(height * 0.16);
     if (config.attentionGrabber) {
       svgParts.push(txt(centerX, yPos, config.attentionGrabber, subheadSize, { weight: '400', fill: '#C8CDD5' }));
       yPos += Math.round(subheadSize * 2);
@@ -232,11 +246,14 @@ export async function applyTextOverlay(
       yPos += Math.round(subheadSize * 2);
     }
 
-    // ── Price (HERO — oversized, centered) ──
+    // ── Price (HERO — oversized, centered, AUTO-FIT so it never overflows) ──
     if (config.price) {
-      const priceY = Math.max(yPos + priceSize, Math.round(height * 0.42));
-      svgParts.push(txt(centerX, priceY, config.price, priceSize, { weight: '900' }));
-      yPos = priceY + Math.round(priceSize * 0.7);
+      const maxPriceW = width * 0.88;
+      // Bold sans char ≈ 0.6 × font size wide; shrink the hero to fit the canvas.
+      const fitSize = Math.min(priceSize, Math.floor(maxPriceW / Math.max(1, config.price.length * 0.6)));
+      const priceY = Math.max(yPos + fitSize, Math.round(height * 0.42));
+      svgParts.push(txt(centerX, priceY, config.price, fitSize, { weight: '900' }));
+      yPos = priceY + Math.round(fitSize * 0.7);
     }
 
     // ── Urgency / Discount text ──
@@ -311,7 +328,7 @@ ${svgParts.join('\n')}
     if (hasLogoImage && logoImageBuffer) {
       composites.push({
         input: logoImageBuffer,
-        top: padding,
+        top: brandTop,
         left: padding,
         blend: 'over',  // Proper alpha compositing
       });

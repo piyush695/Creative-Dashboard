@@ -19,7 +19,7 @@ import { extractAndRepairJson } from './parser';
 let _client: Anthropic | null = null;
 function getClient() { if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); return _client; }
 
-const AGENT_MODEL = 'claude-sonnet-4-20250514';
+const AGENT_MODEL = 'claude-sonnet-4-6';
 const MIN_QUALITY_SCORE = 8;  // Auto-retry if below this (target: 8+ for professional quality)
 const MAX_RETRIES = 3;         // Maximum self-correction loops
 

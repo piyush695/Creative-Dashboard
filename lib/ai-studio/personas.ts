@@ -104,7 +104,7 @@ export async function generateForPersona(
   try {
     // Generate persona-specific brief
     const response = await getClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: 'You are an elite creative strategist. Generate a persona-targeted ad brief. Respond with ONLY valid JSON.',
       messages: [{

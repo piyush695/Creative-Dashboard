@@ -1084,6 +1084,22 @@ export default function MetaAdDetailView({
         }
     }
 
+    // Auto-analyze on open — when a selected ad hasn't been analyzed yet, kick
+    // off the analyzer automatically so clicking any ad gives a live, real-time
+    // result without a manual "Re-analyze". Already-analyzed ads show instantly
+    // (the button still forces a fresh run). Guarded by adId so it fires once
+    // per ad and never loops after the result lands.
+    const autoAnalyzedRef = useRef<string | null>(null)
+    useEffect(() => {
+        if (!ad?.adId) return
+        const hasAnalysis = !!(ad.scoreOverall || ad.compositeRating || ad.analysisDate)
+        if (hasAnalysis) { autoAnalyzedRef.current = ad.adId; return }
+        if (autoAnalyzedRef.current === ad.adId || isReanalyzing) return
+        autoAnalyzedRef.current = ad.adId
+        handleReanalyze()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ad?.adId, ad?.scoreOverall, ad?.compositeRating, ad?.analysisDate])
+
     const reanalyzeStep = isReanalyzing ? reanalyzeStepFor(reanalyzeElapsed) : null
 
     // Pull fresh Phase-2 metrics from Meta Insights API (outbound_clicks,

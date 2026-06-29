@@ -114,7 +114,7 @@ import { usePlatforms } from "@/components/providers/platforms-provider";
 import { isKnownPlatform } from "@/lib/platforms";
 import { AddAdDialog } from "@/components/add-ad-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { fetchAdsFromMongo, fetchGoogleAdsFromMongo, fetchAdDetailById } from "@/actions/ads";
+import { fetchAdsFromMongo, fetchGoogleAdsFromMongo, fetchAdDetailById, fetchMetaFacets, fetchMetaAdsAll } from "@/actions/ads";
 import ScoreRadarChart from "@/components/score-radar-chart";
 import { EnlargedImageModal } from "@/components/enlarged-image-modal";
 import GoogleAdsView from "@/components/google-ads-view";
@@ -227,6 +227,17 @@ function DashboardContent() {
   const [selectedAccountId, setSelectedAccountIdState] = useState<string>("all");
   const [ads, setAds] = useState<AdData[]>([]);
   const [googleAds, setGoogleAds] = useState<AdData[]>([]);
+  // Meta is paged server-side, so the browser no longer holds the full catalog.
+  // These hold the cheap aggregation counts + the on-demand server results that
+  // the (secondary) global-search dropdown and "View All Ads" library need.
+  const [metaFacets, setMetaFacets] = useState<{ total: number; byAccount: Record<string, number> }>({ total: 0, byAccount: {} });
+  const [metaSearchResults, setMetaSearchResults] = useState<AdData[]>([]);
+  const [metaDiscoveryAds, setMetaDiscoveryAds] = useState<AdData[]>([]);
+  // The clicked ad object (from the server-paged grid) so the detail panel can
+  // open instantly even though the ad isn't in the lightly-loaded `ads` array.
+  const [selectedAdObject, setSelectedAdObject] = useState<AdData | null>(null);
+  // Bumped after a (re)analysis so the open detail re-fetches its full doc.
+  const [detailRefreshKey, setDetailRefreshKey] = useState(0);
   const [recentHistory, setRecentHistory] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlatform, setSelectedPlatformState] = useState<string>("home");
@@ -748,7 +759,11 @@ function DashboardContent() {
     return accounts
       .map((account) => ({
         ...account,
-        count: platformAds.filter((ad) => ad.adAccountId === account.id).length,
+        // Meta counts come from the server-side aggregation (the full catalog
+        // isn't in the browser anymore); google/other count from loaded ads.
+        count: account.platform === "meta"
+          ? (metaFacets.byAccount[account.id] || 0)
+          : platformAds.filter((ad) => ad.adAccountId === account.id).length,
       }))
       .sort((a, b) => {
         // Populated accounts first (desc by count), then empty accounts (alpha)
@@ -757,7 +772,7 @@ function DashboardContent() {
         if (a.count !== b.count) return b.count - a.count;
         return a.name.localeCompare(b.name);
       });
-  }, [ads, accounts, selectedPlatform]);
+  }, [ads, accounts, selectedPlatform, metaFacets]);
 
   // 2. Load data from MongoDB with real-time polling
   const loadData = async (isManual = false) => {
@@ -765,62 +780,34 @@ function DashboardContent() {
     if (isManual) setIsSyncing(true);
 
     try {
-      const prevCount = ads.length;
-      const hadData = prevCount > 0;
+      // Light load only. We pull the analyzed meta creatives (a handful — needed
+      // by the score/benchmark panels) + all adroll (tiny, returned by the same
+      // call) + the small google catalog. The full ~24k meta catalog is NO
+      // LONGER loaded into the browser: the grid pages it server-side via
+      // fetchMetaAdsPage, and account/total counts come from fetchMetaFacets.
+      // This is what keeps the dashboard fast regardless of how many ads exist.
+      const [lightMeta, gData, facets] = await Promise.all([
+        fetchAdsFromMongo({ analyzedOnly: true }),
+        fetchGoogleAdsFromMongo(),
+        fetchMetaFacets(),
+      ]);
 
-      // Google catalog is tiny — fetch once and reuse across both phases.
-      const gData = await fetchGoogleAdsFromMongo();
-
-      // ── Phase 1: instant first paint ──
-      // Ship only the scored creatives (a handful of docs) so the grid is
-      // interactive immediately instead of waiting on the full ~28K-row
-      // catalog. Skipped on manual refresh when data already exists, to
-      // avoid a visible shrink/expand flicker in the grid.
-      if (!hadData) {
-        const fastMeta = await fetchAdsFromMongo({ analyzedOnly: true });
-        const fast = [...fastMeta, ...gData];
-        setAds(fast);
-        setGoogleAds(fast.filter(ad => ad.platform === 'google' || ad.platform === 'youtube'));
-        setLastRefreshTime(new Date());
-        setIsLoading(false);
-      }
-
-      // ── Phase 2: full catalog ──
-      // Loads in the background relative to first paint. Keeps search,
-      // per-account browsing and count badges accurate across all ads.
-      const fullMeta = await fetchAdsFromMongo();
-      const data = [...fullMeta, ...gData];
-      const newCount = data.length;
-
-      if (prevCount > 0 && newCount > prevCount) {
-        setNewEntriesCount(newCount - prevCount);
-        if (isManual) {
-          toast({
-            title: "Scan Complete",
-            description: `Found ${newCount - prevCount} new entries since last check.`,
-            duration: 5000,
-          });
-        }
-      } else if (isManual) {
-        toast({
-          title: "Dashboard Up to Date",
-          description: "No new entries found in the database.",
-          duration: 5000,
-        });
-      }
-
+      const data = [...lightMeta, ...gData];
       setAds(data);
-      // Filter for all Google platforms including YouTube
       setGoogleAds(data.filter(ad => ad.platform === 'google' || ad.platform === 'youtube'));
+      setMetaFacets(facets);
       setLastRefreshTime(new Date());
+      setIsLoading(false);
 
-      // Show refresh text for 5 seconds only on manual refresh
       if (isManual) {
         setShowRefreshText(true);
         setTimeout(() => setShowRefreshText(false), 5000);
+        toast({
+          title: "Dashboard Refreshed",
+          description: `${facets.total.toLocaleString()} ads available.`,
+          duration: 4000,
+        });
       }
-
-      setIsLoading(false);
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -960,8 +947,10 @@ function DashboardContent() {
     selectedRealtimeCampaign,
   ]);
 
-  // Memoized Discovery Hub Ads
-  const filteredDiscoveryAds = useMemo(() => {
+  // Memoized Discovery Hub Ads — for meta we page in the full filtered set on
+  // demand from the server (the catalog isn't held in the browser anymore);
+  // other platforms are tiny so they filter the loaded array directly.
+  const clientDiscoveryAds = useMemo(() => {
     return ads.filter((ad) => {
       // Platform filter
       if (selectedPlatform === "meta") {
@@ -987,8 +976,20 @@ function DashboardContent() {
     });
   }, [ads, selectedPlatform, discoverySearchQuery, discoveryAccountFilter]);
 
-  // Memoized Global Sidebar Search Results
-  const searchDropdownResults = useMemo(() => {
+  // Pull the meta library from the server, but only while "View All Ads" is open.
+  useEffect(() => {
+    if (!isViewAllAdsOpen || selectedPlatform !== "meta") return;
+    let cancelled = false;
+    fetchMetaAdsAll({ accountId: discoveryAccountFilter, search: discoverySearchQuery })
+      .then((r) => { if (!cancelled) setMetaDiscoveryAds(r); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isViewAllAdsOpen, selectedPlatform, discoveryAccountFilter, discoverySearchQuery]);
+
+  const filteredDiscoveryAds = selectedPlatform === "meta" ? metaDiscoveryAds : clientDiscoveryAds;
+
+  // Memoized Global Sidebar Search Results (client-side for tiny platforms).
+  const clientSearchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     return ads
       .filter(
@@ -1006,7 +1007,23 @@ function DashboardContent() {
               .includes(searchQuery.toLowerCase())),
       )
       .slice(0, 10);
-  }, [ads, searchQuery, selectedPlatform]);
+  }, [ads, searchQuery, selectedPlatform, selectedAccountId]);
+
+  // For meta, search the full catalog server-side (debounced) since the browser
+  // no longer holds it; other platforms are fully loaded so the memo is complete.
+  useEffect(() => {
+    if (selectedPlatform !== "meta") return;
+    if (!searchQuery.trim()) { setMetaSearchResults([]); return; }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      fetchMetaAdsAll({ accountId: selectedAccountId, search: searchQuery, limit: 10 })
+        .then((r) => { if (!cancelled) setMetaSearchResults(r); })
+        .catch(() => {});
+    }, 250);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [selectedPlatform, searchQuery, selectedAccountId]);
+
+  const searchDropdownResults = selectedPlatform === "meta" ? metaSearchResults : clientSearchResults;
 
   // Memoized Discovery Label for the filter button
   const discoveryLabel = useMemo(() => {
@@ -1053,15 +1070,18 @@ function DashboardContent() {
     updateHistory(id);
   };
 
-  const baseSelectedAd = ads.find((ad) => ad.id === selectedAdId) || null;
+  const baseSelectedAd =
+    ads.find((ad) => ad.id === selectedAdId) ||
+    (selectedAdObject && selectedAdObject.id === selectedAdId ? selectedAdObject : null);
   const baseSelectedPlatform = baseSelectedAd?.platform;
 
-  // The list query drops heavy analysis fields for speed. When an ad is opened,
-  // lazily fetch its full document so the detail panel hydrates on demand. The
-  // panel renders instantly from the light object and fills in once this resolves.
+  // The grid is paged server-side, so the selected meta ad usually isn't in the
+  // lightly-loaded `ads` array. Fetch the full document BY ID whenever an ad is
+  // open (not gated on it being in `ads`). The panel shows instantly from the
+  // clicked object and fills in the full analysis once this resolves.
   const [hydratedDetail, setHydratedDetail] = useState<AdData | null>(null);
   useEffect(() => {
-    if (!selectedAdId || !baseSelectedAd) {
+    if (!selectedAdId) {
       setHydratedDetail(null);
       return;
     }
@@ -1075,13 +1095,11 @@ function DashboardContent() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAdId, baseSelectedPlatform]);
+  }, [selectedAdId, baseSelectedPlatform, detailRefreshKey]);
 
-  const selectedAdData = baseSelectedAd
-    ? hydratedDetail && hydratedDetail.id === selectedAdId
-      ? { ...baseSelectedAd, ...hydratedDetail }
-      : baseSelectedAd
-    : null;
+  const selectedAdData = (hydratedDetail && hydratedDetail.id === selectedAdId)
+    ? { ...(baseSelectedAd || {}), ...hydratedDetail }
+    : baseSelectedAd;
 
   const recentAds = recentHistory
     .map((id) => ads.find((ad) => ad.id === id))
@@ -1157,7 +1175,7 @@ function DashboardContent() {
     selectedAdId,
     selectedAccountId,
     accountStats,
-    totalMetaAds: ads.filter((a) => a.platform === "meta" || !a.platform).length,
+    totalMetaAds: metaFacets.total,
     selectedRealtimeCampaign,
     realtimeCampaigns,
   };
@@ -2409,16 +2427,17 @@ function DashboardContent() {
                           }
                           activeAnalysis={activeAnalysis}
                           onTabChange={() => setActiveAnalysis(null)}
-                          onReanalyzed={() => loadData(false)}
+                          onReanalyzed={() => { setDetailRefreshKey((k) => k + 1); loadData(false); }}
                         />
                       ) : (
                         <MetaAdsView
                           key={`meta-${platformResetKey}`}
-                          metaAds={ads.filter(a => selectedPlatform === "meta" ? a.platform === "meta" || !a.platform : true)}
+                          metaAds={[]/* grid is server-paged inside MetaAdsView; no full array needed */}
                           selectedAccountId={selectedAccountId}
                           searchQuery={searchQuery}
                           onSearchChange={setSearchQuery}
                           onSelectAd={(ad) => {
+                            setSelectedAdObject(ad);
                             setSelectedAdId(ad.id);
                             updateHistory(ad.id);
                           }}
@@ -2456,7 +2475,7 @@ function DashboardContent() {
                         }
                         activeAnalysis={activeAnalysis}
                         onTabChange={() => setActiveAnalysis(null)}
-                        onReanalyzed={() => loadData(false)}
+                        onReanalyzed={() => { setDetailRefreshKey((k) => k + 1); loadData(false); }}
                       />
                     ) : (
                       <AdrollView
