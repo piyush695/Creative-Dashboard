@@ -729,8 +729,20 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
           prompt: promptOverride || body.prompt
         })
       })
-      
-      const data = await response.json()
+
+      // Gateways (Cloud Run timeout, proxies) return PLAIN TEXT, not JSON —
+      // parse defensively so the user sees a readable error, not
+      // "Unexpected token 'u' ... is not valid JSON" (live failure).
+      const rawText = await response.text()
+      let data: any
+      try {
+        data = JSON.parse(rawText)
+      } catch {
+        const gatewayMsg = /upstream request timeout/i.test(rawText)
+          ? "The generation took longer than the server allows and was cut off. Please try again — a retry usually completes faster."
+          : `Server returned an unexpected response (${response.status}): ${rawText.slice(0, 120)}`
+        data = { error: gatewayMsg }
+      }
       
       if (data.creative) {
         // Completion is terminal: once generation returns, we finish at 100% and
