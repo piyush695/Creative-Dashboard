@@ -350,3 +350,35 @@ cause: {"stack":"InvalidCheck: pkceCodeVerifier cookie was missing. Read more at
 [2026-07-02T12:23:59.736Z] WARN
 "debug-enabled"
 ---
+[2026-07-03T10:08:51.970Z] WARN
+"debug-enabled"
+---
+[2026-07-03T10:09:01.183Z] ERROR
+AccessDenied: AccessDenied. Read more at https://errors.authjs.dev#accessdenied
+AccessDenied: AccessDenied. Read more at https://errors.authjs.dev#accessdenied
+    at handleAuthorized (C:\Users\PC\Downloads\Creative_Merged\.next\dev\server\chunks\node_modules_@auth_core_889cc73b._.js:4508:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Module.callback (C:\Users\PC\Downloads\Creative_Merged\.next\dev\server\chunks\node_modules_@auth_core_889cc73b._.js:4114:30)
+    at async AuthInternal (C:\Users\PC\Downloads\Creative_Merged\.next\dev\server\chunks\node_modules_@auth_core_889cc73b._.js:5123:24)
+    at async Auth (C:\Users\PC\Downloads\Creative_Merged\.next\dev\server\chunks\node_modules_@auth_core_889cc73b._.js:5370:34)
+    at async AppRouteRouteModule.do (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:37789)
+    at async AppRouteRouteModule.handle (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:45045)
+    at async responseGenerator (C:\Users\PC\Downloads\Creative_Merged\.next\dev\server\chunks\node_modules_next_e34a5586._.js:16107:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:187851)
+    at async handleResponse (C:\Users\PC\Downloads\Creative_Merged\.next\dev\server\chunks\node_modules_next_e34a5586._.js:16169:32)
+    at async handler (C:\Users\PC\Downloads\Creative_Merged\.next\dev\server\chunks\node_modules_next_e34a5586._.js:16222:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\base-server.js:1413:9)
+    at async DevServer.renderPageComponent (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\base-server.js:1465:24)
+    at async DevServer.renderToResponseImpl (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\base-server.js:1515:32)
+    at async DevServer.pipeImpl (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\base-server.js:1021:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\next-server.js:394:17)
+    at async DevServer.handleRequestImpl (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\base-server.js:912:17)
+    at async C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\dev\next-dev-server.js:382:20
+    at async Span.traceAsyncFn (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\dev\next-dev-server.js:378:24)
+    at async invokeRender (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\lib\router-server.js:240:21)
+    at async handleRequest (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\lib\router-server.js:436:24)
+    at async requestHandlerImpl (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\lib\router-server.js:484:13)
+    at async Server.requestListener (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\lib\start-server.js:226:13)
+
+---

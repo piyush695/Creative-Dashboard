@@ -55,7 +55,13 @@ function deriveDisplay(result: any, variantIdx: number) {
   const idTail = String(result?.generationId || result?.id || "").slice(-6)
   const fileName = `holaprime-creative${idTail ? `-${idTail}` : ""}.png`
 
-  return { variants, hasVariants, activeVariant, imageUrl, headline, hookText, bodyText, ctaText, scoreNum, tier, fileName }
+  // Pipeline transparency: which engine ran, what the compliance gate stripped,
+  // and the vision verifier's (agent 5) verdict on the finished creative.
+  const engine = result?.engine || null
+  const gated = activeVariant?.gated || null
+  const verification = activeVariant?.verification || null
+
+  return { variants, hasVariants, activeVariant, imageUrl, headline, hookText, bodyText, ctaText, scoreNum, tier, fileName, engine, gated, verification }
 }
 
 function scoreColor(n: number | null): string {
@@ -239,6 +245,39 @@ function AssistantMessage({
               </>
             )}
           </div>
+
+          {/* Pipeline chips: engine · compliance gate · agent-5 QA verdict */}
+          {(d.engine || d.gated || d.verification) && (
+            <div className="flex flex-wrap items-center gap-1.5 border-t border-border px-3.5 py-2">
+              {d.engine && (
+                <span className={cn(
+                  "rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+                  d.engine === "template"
+                    ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-400"
+                    : "border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-400"
+                )}>
+                  {d.engine === "template" ? "Design Engine" : "AI Image"}
+                </span>
+              )}
+              {Array.isArray(d.gated) && d.gated.length > 0 && (
+                <span
+                  className="rounded-full border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-[10px] font-semibold text-orange-400"
+                  title={d.gated.map((g: any) => `${g.field}: "${g.token}" → ${g.action}`).join("\n")}
+                >🛡 {d.gated.length} claim{d.gated.length > 1 ? "s" : ""} stripped</span>
+              )}
+              {d.verification && (
+                <span
+                  className={cn(
+                    "rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+                    d.verification.pass
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                      : "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                  )}
+                  title={d.verification.pass ? "Vision QA: subject, text, legibility and figures all verified" : (d.verification.issues || []).join("\n")}
+                >{d.verification.pass ? "✓ QA verified" : "⚠ QA issues"}</span>
+              )}
+            </div>
+          )}
 
           {/* Score — relocated from the image overlay to below the creative,
               in place of the removed headline/description content. */}

@@ -193,7 +193,7 @@ TOP-PROP-FIRM CRAFT BAR (benchmark = the best FTMO / FundedNext / prop-firm ads 
 - SOCIAL PROOF AT SCALE when it fits: cumulative payouts, number of funded traders, verified testimonials — the "everyone's getting paid" signal that de-risks the click.
 - ASPIRATIONAL BUT BELIEVABLE: real funded-trader moments + lifestyle (relief, freedom, vindication) beat generic luxury. A person must feel real, never cheesy stock.
 - PREMIUM RESTRAINT: confident and uncluttered, generous negative space, ONE hero focal point, a crisp accent. It looks expensive because it's disciplined, not busy.
-- ONE unmistakable CTA, and a hook that lands the emotion in the first 0.5 seconds.
+- ONE unmistakable CTA, and a hook that lands the emotion in the first 0.5 seconds. The hook MUST be built on CONTRAST — before/after, doubt/proof, them/us, the old way/this way, watching/doing. Flat statements don't stop thumbs; tension does.
 
 ART DIRECTION — MANDATORY (name EACH of these EXPLICITLY inside every imagePrompt AND visualPrompt; a brief that leaves any of them generic is INCOMPLETE — this is what separates a real art-directed ad from a merely described one):
 - FOCAL POINT + HIERARCHY: state the ONE hero the eye must hit first, and rank everything else as explicitly SUBORDINATE (secondary, tertiary). One hero only — never two elements competing for attention.

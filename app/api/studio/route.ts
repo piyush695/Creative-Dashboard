@@ -32,7 +32,8 @@ import { buildBrandKnowledgeContext, getBrandLogo } from '@/server/ai-studio/bra
 import { applyBrandLogoOverlay, applyLogoOverlay } from '@/server/ai-studio/logo-overlay';
 import { classifyPromptEngine } from '@/server/ai-studio/engine-router';
 import { generateTemplateVariations } from '@/server/ai-studio/template-pipeline';
-import { gateOverlayCopy, gateBriefCopy, gateImagePrompt, formatViolations, FIXED_DISCLAIMER } from '@/server/ai-studio/claim-gate';
+import { gateOverlayCopy, gateBriefCopy, gateImagePrompt, formatViolations, FIXED_DISCLAIMER, extractClaimTokens, APPROVED_BRAND_FACTS, activeOfferTexts } from '@/server/ai-studio/claim-gate';
+import { verifyCreative, verifierEnabled } from '@/server/ai-studio/creative-verifier';
 import { requireSession } from '@/server/api-auth';
 
 // ─── Text fidelity helpers — used to combat Gemini text-rendering errors ───
@@ -1199,10 +1200,14 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
 
         try {
           const variants: any[] = [];
+          // Agent-5 (verifier) bookkeeping: QA feedback per variation for the
+          // single retry, and which variations already used their retry.
+          const qaNotes: Record<number, string> = {};
+          const qaRetried = new Set<number>();
           for (let vi = 0; vi < variations; vi++) {
           // ── ALWAYS ENHANCE — called PER variation so the enhancer's family rotation
           //    yields a DISTINCT concept for each of the (up to 4) variations. ──
-          const enhanced = await enhanceImagePrompt(rawPrompt, {
+          const enhanced = await enhanceImagePrompt(rawPrompt + (qaNotes[vi] || ''), {
             brandContext: brandKbContext,
             tone: body.tone,
             logoWillBeComposited,
@@ -1357,6 +1362,43 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             }
           }
 
+          // ── AGENT 5 — VERIFY: vision QA of the finished creative against what
+          //    the upstream agents promised (subject, no baked text, legibility,
+          //    figures). Clean-text AI renders only — reference edits/integrated
+          //    mode already carry bakedTextWarning, and the Design Engine lane is
+          //    deterministic + structurally gated. One retry with QA feedback. ──
+          let verification: any = null;
+          if (!refImage && cleanText && verifierEnabled()) {
+            try {
+              const ovr = enhanced.overlay || {};
+              verification = await verifyCreative(finalImageUrl, {
+                userPrompt: rawPrompt,
+                expectedSubject: routingPublic.archetypeHint === 'photographic' ? rawPrompt : undefined,
+                expectedTexts: [
+                  ovr.headline || enhanced.headline, ovr.subheadline, ovr.price,
+                  ...(Array.isArray(ovr.bullets) ? ovr.bullets : []),
+                  ovr.cta || enhanced.cta, ovr.promoCode, ovr.urgencyText,
+                  '#WeAreTraders', 'Trustpilot', 'hola prime',
+                ].filter(Boolean),
+                allowedFigures: [
+                  ...extractClaimTokens(rawPrompt),
+                  ...APPROVED_BRAND_FACTS,
+                  ...activeOfferTexts(),
+                ],
+              });
+              if (!verification.pass && !qaRetried.has(vi)) {
+                qaRetried.add(vi);
+                qaNotes[vi] = `\n\nQA FEEDBACK — the previous attempt FAILED verification, fix these: ${verification.issues.join('; ')}. ${verification.retryHint || ''}`;
+                console.warn(`[Verifier] Variation ${vi + 1} FAILED QA (${verification.issues.join(' | ')}) — retrying once.`);
+                vi--; // re-run this variation with the feedback folded in
+                continue;
+              }
+              console.log(`[Verifier] Variation ${vi + 1}: ${verification.pass ? '✓ verified' : '⚠ shipped with issues (retry exhausted)'}`);
+            } catch (vErr: any) {
+              console.warn('[Verifier] skipped (non-blocking):', vErr?.message);
+            }
+          }
+
           // ── Store a short Cloudinary URL instead of a ~2MB base64 data URI. ──
           try {
             const uploaded = await uploadToCloudinary(finalImageUrl, {
@@ -1371,6 +1413,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
           variants.push({
             id: `enhanced-${vi + 1}`,
             label: enhanced.concept || `Variation ${vi + 1}`,
+            verification,
             description: 'Prompt auto-enhanced → gpt-image-1' + (logoWillBeComposited ? ' + brand logo' : ''),
             paradigm: 'Enhanced',
             imageUrl: finalImageUrl,
