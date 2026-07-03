@@ -28,8 +28,18 @@ export const DISCLAIMER =
   'HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. ' +
   'CLIENTS MAY EARN MONETARY REWARDS BASED ON THEIR PERFORMANCE THROUGH SUCH DEMO HOLA PRIME ACCOUNTS.';
 
+// Emoji / pictographs / flags / variation selectors — the bundled fonts have no
+// glyphs for these, so they render as tofu boxes (□□ seen live 2026-07-03 when
+// the director emitted a 🇺🇸 after "July 4th Sale"). Stripped at this choke
+// point so NO SVG text can ever carry them.
+const NON_RENDERABLE =
+  /[\u{1F000}-\u{1FAFF}\u{2190}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{1F1E6}-\u{1F1FF}\u{E000}-\u{F8FF}]/gu;
+
 export function esc(s: string): string {
-  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  return (s || '')
+    .replace(NON_RENDERABLE, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
 
 export function wrap(text: string, maxChars: number): string[] {

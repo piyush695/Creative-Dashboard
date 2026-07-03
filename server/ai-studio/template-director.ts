@@ -104,7 +104,11 @@ export async function directCreative(brief: string): Promise<DirectorResult> {
     if (!parsed || !parsed.copy) return heuristicFallback(brief);
     const c = parsed.copy;
     const archetype = (['giant-number', 'testimonial', 'benefit-stack', 'photographic'].includes(parsed.archetype) ? parsed.archetype : 'giant-number') as Archetype;
-    const clean = (s?: string) => (s || '').replace(/\n+/g, ' ').replace(/~~/g, '').trim();
+    // Also strip emoji/pictographs here (belt — esc() strips at render too) so
+    // text-fitting maths counts only glyphs the bundled fonts can draw.
+    const clean = (s?: string) => (s || '')
+      .replace(/[\u{1F000}-\u{1FAFF}\u{2190}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{1F1E6}-\u{1F1FF}\u{E000}-\u{F8FF}]/gu, '')
+      .replace(/\n+/g, ' ').replace(/~~/g, '').replace(/\s{2,}/g, ' ').trim();
     const heroText = clean(c.hero);
     const headline = clean(c.headline);
     const spec: CreativeSpec = {

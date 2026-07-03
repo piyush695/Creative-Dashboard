@@ -50,6 +50,11 @@ export interface CreativeSpec {
   ctaStyle?: 'solid' | 'outline';
   badge?: boolean;                 // ZERO PAYOUT DENIAL stamp
   testimonial?: { name: string; handle: string; verified?: boolean; title: string; body: string; highlight: string; date: string };
+  /** Composition arrangement for giant-number (rotated per request so two offer
+   *  briefs don't wear the identical suit — the live "same design language" bug). */
+  layoutVariant?: 'editorial' | 'centered' | 'poster';
+  /** Deterministic variety seed: shifts sphere positions/hues per generation. */
+  seed?: number;
 }
 
 function resolveAccent(a?: string): string {
@@ -81,21 +86,40 @@ function glossySphere(id: string, cx: number, cy: number, r: number, hue: string
   <path d="M ${cx - r * 0.72} ${cy - r * 0.66} A ${r} ${r} 0 0 1 ${cx + r * 0.55} ${cy - r * 0.8}" fill="none" stroke="${hue}" stroke-width="${Math.max(3, r * 0.035)}" stroke-linecap="round" opacity="0.55" filter="url(#glow)"/>`;
 }
 
+// Sphere hues rotate through the brand's iridescent family so consecutive
+// generations don't share the identical glow.
+const SPHERE_HUES = ['#B23BE0', '#6A3BF0', '#2A9BC4'];
+
 function background(spec: CreativeSpec): string {
   const base = `<rect x="0" y="0" width="${W}" height="${H}" fill="#05060A"/>`;
+  const seed = Math.abs(Math.round(spec.seed ?? 0));
+  const hue = SPHERE_HUES[seed % SPHERE_HUES.length];
   if (spec.background === 'solid') {
     const c = spec.solidColor || '#0b2a12';
     return `<radialGradient id="sol" cx="70%" cy="45%" r="85%"><stop offset="0%" stop-color="${c}"/><stop offset="100%" stop-color="#04060a"/></radialGradient><rect width="${W}" height="${H}" fill="url(#sol)"/>`;
   }
   if (spec.background === 'orb') {
-    // One big iridescent sphere rising from the bottom-centre.
-    return base + glossySphere('orb', W * 0.5, H * 1.06, W * 0.5, '#B23BE0');
+    // One big iridescent sphere — position rotates per seed so two orb creatives
+    // in a row don't share the identical horizon.
+    const orbPresets: [number, number, number][] = [
+      [W * 0.5, H * 1.06, W * 0.5],    // rising from bottom-centre
+      [W * 1.02, H * 0.55, W * 0.44],  // half-orb on the right edge
+      [W * 0.14, H * -0.08, W * 0.4],  // crescent overhead top-left
+    ];
+    const [cx, cy, r] = orbPresets[seed % orbPresets.length];
+    return base + glossySphere('orb', cx, cy, r, hue);
   }
-  // 'black' — near-black with a large rim-lit sphere pushed into the top-right corner
-  // + a smaller one bottom-left, so the rim glow stays in the corners (not a swoosh).
+  // 'black' — near-black with rim-lit spheres kept to the corners; the corner
+  // pairing rotates per seed.
+  const blackPresets: [number, number, number, number, number, number][] = [
+    [W * 1.04, H * 0.02, W * 0.36, W * -0.02, H * 1.02, W * 0.28], // TR + BL (classic)
+    [W * -0.04, H * 0.06, W * 0.3, W * 1.02, H * 0.95, W * 0.34],  // TL + BR
+    [W * 1.06, H * 0.5, W * 0.3, W * 0.12, H * 1.08, W * 0.26],    // R-edge + bottom
+  ];
+  const [x1, y1, r1, x2, y2, r2] = blackPresets[seed % blackPresets.length];
   return base +
-    glossySphere('bR', W * 1.04, H * 0.02, W * 0.36, '#C42AC4') +
-    glossySphere('bL', W * -0.02, H * 1.02, W * 0.28, '#6A3BF0');
+    glossySphere('bR', x1, y1, r1, hue) +
+    glossySphere('bL', x2, y2, r2, SPHERE_HUES[(seed + 1) % SPHERE_HUES.length]);
 }
 
 // bold **token** emphasis inside a subline (returns [ {t, bold} ])
@@ -106,6 +130,11 @@ function splitEmphasis(s: string): { t: string; bold: boolean }[] {
 // ─── Archetype layouts (return SVG parts positioned on the 1080² canvas) ───
 
 function layoutGiantNumber(spec: CreativeSpec, accent: string): string {
+  // Three compositions for the same content slots — rotated per request by the
+  // pipeline so consecutive offer briefs don't produce the identical layout.
+  if (spec.layoutVariant === 'centered') return giantNumberCentered(spec, accent);
+  if (spec.layoutVariant === 'poster') return giantNumberPoster(spec, accent);
+  // 'editorial' (default): left-aligned stack.
   const p: string[] = [];
   const pad = Math.round(W * 0.075);
   const maxW = W - pad * 2;
@@ -155,7 +184,93 @@ function layoutGiantNumber(spec: CreativeSpec, accent: string): string {
   return p.join('\n');
 }
 
-function codePill(spec: CreativeSpec, accent: string, x: number, y: number): string {
+// ── giant-number: CENTERED composition — everything on the vertical axis ──
+function giantNumberCentered(spec: CreativeSpec, accent: string): string {
+  const p: string[] = [];
+  const cx = W / 2;
+  const maxW = W * 0.86;
+  const heroFill = spec.heroStyle === 'chrome' ? 'url(#chrome)' : spec.heroStyle === 'white' ? '#fff' : 'url(#gloss)';
+
+  let y = Math.round(H * 0.21);
+  if (spec.eyebrow) {
+    const eSize = fitOne(spec.eyebrow, maxW, Math.round(H * 0.042), 0.6, 0.7);
+    p.push(T(cx, y, spec.eyebrow.toUpperCase(), eSize, { anchor: 'middle', weight: 600, fill: '#eef1f5', spacing: 3 }));
+  }
+  const hero = spec.hero || spec.headline || '';
+  const heroY = y + Math.round(H * 0.17);
+  let sy = heroY + Math.round(H * 0.085);
+  if (hero) {
+    const hSize = fitOne(hero, maxW, Math.round(H * 0.185), 0.66, 0.4);
+    p.push(T(cx, heroY, hero, hSize, { anchor: 'middle', weight: 900, fill: heroFill, spacing: Math.round(-hSize * 0.035) }));
+  }
+  if (spec.strikePrice) {
+    const sp = spec.strikePrice.replace(/[~*]/g, '').trim();
+    const ss = Math.round(H * 0.046);
+    const sw = sp.length * ss * 0.55;
+    p.push(T(cx, sy, sp, ss, { anchor: 'middle', weight: 700, fill: '#E0201B' }));
+    p.push(`<line x1="${cx - sw / 2 - 6}" y1="${sy - ss * 0.3}" x2="${cx + sw / 2 + 6}" y2="${sy - ss * 0.3}" stroke="#E0201B" stroke-width="4"/>`);
+    sy += Math.round(H * 0.058);
+  }
+  if (spec.subline) {
+    const sub = spec.subline.replace(/\*\*/g, '');
+    const sSize = fitOne(sub, maxW, Math.round(H * 0.046), 0.55, 0.55);
+    p.push(T(cx, sy, sub, sSize, { anchor: 'middle', weight: 500, fill: '#fff' }));
+    sy += Math.round(H * 0.03);
+  }
+  if (spec.promoCode) p.push(codePill(spec, accent, cx, sy + Math.round(H * 0.035), 'middle'));
+  else if (spec.ctaLabel) p.push(ctaBlock(spec, accent, sy + Math.round(H * 0.035)));
+  return p.join('\n');
+}
+
+// ── giant-number: POSTER composition — accent eyebrow pill, oversized hero ──
+function giantNumberPoster(spec: CreativeSpec, accent: string): string {
+  const p: string[] = [];
+  const cx = W / 2;
+  const maxW = W * 0.9;
+  const heroFill = spec.heroStyle === 'white' ? '#fff' : spec.heroStyle === 'accent' ? 'url(#gloss)' : 'url(#chrome)';
+
+  if (spec.eyebrow) {
+    const eSize = Math.round(H * 0.028);
+    const label = spec.eyebrow.toUpperCase();
+    const w = Math.min(maxW, label.length * eSize * 0.62 + eSize * 2.4);
+    const h = Math.round(eSize * 2.2);
+    const yTop = Math.round(H * 0.155);
+    p.push(`<rect x="${cx - w / 2}" y="${yTop}" width="${w}" height="${h}" rx="${h / 2}" fill="none" stroke="${accent}" stroke-width="2"/>`);
+    p.push(T(cx, yTop + h / 2 + eSize * 0.35, label, eSize, { anchor: 'middle', weight: 700, fill: accent, spacing: 2 }));
+  }
+  const hero = spec.hero || spec.headline || '';
+  const heroY = Math.round(H * 0.46);
+  let sy = heroY + Math.round(H * 0.09);
+  if (hero) {
+    const hSize = fitOne(hero, maxW, Math.round(H * 0.23), 0.66, 0.35);
+    p.push(T(cx, heroY, hero, hSize, { anchor: 'middle', weight: 900, fill: heroFill, spacing: Math.round(-hSize * 0.04) }));
+  }
+  // strike + subline share one centred line (poster keeps the lower half airy)
+  {
+    const sp = (spec.strikePrice || '').replace(/[~*]/g, '').trim();
+    const sub = (spec.subline || '').replace(/\*\*/g, '');
+    const ss = Math.round(H * 0.042);
+    const joined = [sp, sub].filter(Boolean).join('   ');
+    if (joined) {
+      const size = fitOne(joined, maxW, ss, 0.56, 0.6);
+      const total = joined.length * size * 0.56;
+      let x = cx - total / 2;
+      if (sp) {
+        p.push(T(x, sy, sp, size, { weight: 700, fill: '#E0201B' }));
+        const sw = sp.length * size * 0.56;
+        p.push(`<line x1="${x - 4}" y1="${sy - size * 0.3}" x2="${x + sw}" y2="${sy - size * 0.3}" stroke="#E0201B" stroke-width="4"/>`);
+        x += sw + size * 1.6;
+      }
+      if (sub) p.push(T(x, sy, sub, size, { weight: 500, fill: '#fff' }));
+      sy += Math.round(H * 0.028);
+    }
+  }
+  if (spec.promoCode) p.push(codePill(spec, accent, cx, sy + Math.round(H * 0.04), 'middle'));
+  else if (spec.ctaLabel) p.push(ctaBlock(spec, accent, sy + Math.round(H * 0.04)));
+  return p.join('\n');
+}
+
+function codePill(spec: CreativeSpec, accent: string, x: number, y: number, anchor: 'start' | 'middle' = 'start'): string {
   const code = spec.promoCode || '';
   if (!code) return ''; // no code → no pill, ever (empty chrome is a rendering bug)
   const size = Math.round(H * 0.03);
@@ -164,13 +279,14 @@ function codePill(spec: CreativeSpec, accent: string, x: number, y: number): str
   const codeW = code.length * size * 0.6;
   const w = Math.round(preW + codeW + size * 2);
   const h = Math.round(size * 2.3);
+  const left = anchor === 'middle' ? Math.round(x - w / 2) : x;
   const parts = [
-    `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h / 2}" fill="#12121f" stroke="${accent}" stroke-width="1.5"/>`,
-    T(x + size * 0.9, y + h / 2 + size * 0.35, pre, size, { weight: 500, fill: '#e6e9ee' }),
-    T(x + size * 0.9 + preW, y + h / 2 + size * 0.35, code, size, { weight: 700, fill: accent }),
+    `<rect x="${left}" y="${y}" width="${w}" height="${h}" rx="${h / 2}" fill="#12121f" stroke="${accent}" stroke-width="1.5"/>`,
+    T(left + size * 0.9, y + h / 2 + size * 0.35, pre, size, { weight: 500, fill: '#e6e9ee' }),
+    T(left + size * 0.9 + preW, y + h / 2 + size * 0.35, code, size, { weight: 700, fill: accent }),
   ];
-  const trailer = /to get started/i.test(spec.ctaLabel || '') ? 'to Get Started' : '';
-  if (trailer) parts.push(T(x + w + size * 0.6, y + h / 2 + size * 0.35, trailer, size, { weight: 400, fill: '#9aa1ac' }));
+  const trailer = anchor === 'start' && /to get started/i.test(spec.ctaLabel || '') ? 'to Get Started' : '';
+  if (trailer) parts.push(T(left + w + size * 0.6, y + h / 2 + size * 0.35, trailer, size, { weight: 400, fill: '#9aa1ac' }));
   return parts.join('\n');
 }
 

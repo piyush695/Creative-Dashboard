@@ -83,7 +83,15 @@ export async function generateTemplateVariations(
       try { r = await directCreative(prompt + directive); } catch { r = base; }
     }
 
-    let spec: CreativeSpec = { ...r.spec, accent, background: bg };
+    let spec: CreativeSpec = {
+      ...r.spec,
+      accent,
+      background: bg,
+      // Variety controls: seeded backgrounds + rotated giant-number composition,
+      // both offset per request so consecutive chats differ too.
+      seed: seq * 4 + i,
+      layoutVariant: (['editorial', 'centered', 'poster'] as const)[(seq + i) % 3],
+    };
     // Safety: the template lane must never try to render the photo archetype.
     if (spec.archetype === 'photographic') spec = { ...spec, archetype: 'giant-number' };
 
