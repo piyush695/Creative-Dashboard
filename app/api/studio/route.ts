@@ -1379,7 +1379,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                   ...(Array.isArray(ovr.bullets) ? ovr.bullets : []),
                   ovr.cta || enhanced.cta, ovr.promoCode, ovr.urgencyText,
                   '#WeAreTraders', 'Trustpilot', 'hola prime',
-                ].filter(Boolean),
+                ].filter((s): s is string => !!s),
                 allowedFigures: [
                   ...extractClaimTokens(rawPrompt),
                   ...APPROVED_BRAND_FACTS,
