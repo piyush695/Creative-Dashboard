@@ -44,16 +44,28 @@ function archetypePool(base: Archetype): Archetype[] {
   }
 }
 
+// Last look served by THIS instance — only used to avoid an immediate repeat
+// (twins back-to-back). Resetting on instance restart is harmless here.
+let _lastLook = -1;
+
 export async function generateTemplateVariations(
   prompt: string,
   count = 1,
 ): Promise<{ variants: TemplateVariant[]; base: DirectorResult }> {
   const n = Math.max(1, Math.min(4, Math.round(count) || 1));
-  // Variety offset must be RANDOM, not a module counter: on Cloud Run the
-  // counter reset to 0 on every instance start/deploy, so the first request
-  // always landed on the same composition + orb → the live "same creative
-  // again and again" bug (2026-07-03, twice). Randomness is stateless.
-  const seq = Math.floor(Math.random() * 999_983);
+  // Variety must be RANDOM (module counters reset per Cloud Run instance —
+  // live bug ×2) and layout/background draws must be INDEPENDENT: the earlier
+  // `(seq+i)%3` vs `(seq*4+i)%3` pair was congruent mod 3, locking layout and
+  // orb together → only 3 effective looks, twins everywhere (live bug ×3).
+  let layoutIdx = Math.floor(Math.random() * 3);
+  const bgSeed = Math.floor(Math.random() * 999_983);
+  let look = layoutIdx * 3 + (bgSeed % 3);
+  if (look === _lastLook) {
+    layoutIdx = (layoutIdx + 1 + Math.floor(Math.random() * 2)) % 3; // forced different layout
+    look = layoutIdx * 3 + (bgSeed % 3);
+  }
+  _lastLook = look;
+  const seq = bgSeed; // accent/angle rotation offset
   const base = await directCreative(prompt);
   let baseArch: Archetype = base.decision.archetype;
   if (baseArch === 'photographic') baseArch = 'giant-number'; // the template lane never renders photo
@@ -86,10 +98,9 @@ export async function generateTemplateVariations(
       ...r.spec,
       accent,
       background: bg,
-      // Variety controls: seeded backgrounds + rotated giant-number composition,
-      // both offset per request so consecutive chats differ too.
-      seed: seq * 4 + i,
-      layoutVariant: (['editorial', 'centered', 'poster'] as const)[(seq + i) % 3],
+      // Variety controls: independent draws (see above) + per-variation offsets.
+      seed: bgSeed + i * 7,
+      layoutVariant: (['editorial', 'centered', 'poster'] as const)[(layoutIdx + i) % 3],
     };
     // Safety: the template lane must never try to render the photo archetype.
     if (spec.archetype === 'photographic') spec = { ...spec, archetype: 'giant-number' };
