@@ -29,6 +29,11 @@ function logAuthError(code: string, ...rest: any[]) {
     }
 }
 
+// Per-instance cache for the session-callback's user-exists check (see the
+// session callback below for why). Keyed by userId.
+const _userCheckCache = new Map<string, { hasPassword: boolean; at: number }>()
+const USER_CHECK_TTL_MS = 60_000
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig,
     debug: true,
@@ -82,7 +87,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         ...authConfig.callbacks,
         async session({ session, token }) {
             if (session.user && token) {
-                // Critical: Validate user exists in DB every time session is checked
+                // Validate the user still exists in the DB — but CACHED per instance.
+                // The uncached findOne on EVERY session check was the dominant
+                // per-click latency in production (GET /api/auth/session ran
+                // 1.7–3.1s and fires on each interaction). 60s TTL: a deleted
+                // user's session dies within a minute (session maxAge is 12 min).
                 const userId = (token.id as string) || (token.sub as string)
 
                 if (!userId) {
@@ -90,16 +99,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 }
 
                 try {
-                    const client = await clientPromise
-                    const db = client.db(process.env.MONGODB_DB || "reddit_data")
+                    const cached = _userCheckCache.get(userId)
+                    let hasPassword: boolean
 
-                    if (!ObjectId.isValid(userId)) {
-                        return null as any
-                    }
-
-                    const user = await db.collection("users").findOne({ _id: new ObjectId(userId) })
-                    if (!user) {
-                        return null as any // Force invalid session if user is deleted
+                    if (cached && Date.now() - cached.at < USER_CHECK_TTL_MS) {
+                        hasPassword = cached.hasPassword
+                    } else {
+                        if (!ObjectId.isValid(userId)) {
+                            return null as any
+                        }
+                        const client = await clientPromise
+                        const db = client.db(process.env.MONGODB_DB || "reddit_data")
+                        const user = await db.collection("users").findOne(
+                            { _id: new ObjectId(userId) },
+                            { projection: { password: 1 } },
+                        )
+                        if (!user) {
+                            _userCheckCache.delete(userId)
+                            return null as any // Force invalid session if user is deleted
+                        }
+                        hasPassword = Boolean(user.password)
+                        _userCheckCache.set(userId, { hasPassword, at: Date.now() })
                     }
 
                     // Derive the auth provider reliably from the DB record rather
@@ -108,8 +128,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     // refreshes or pre-existing sessions. A local password means a
                     // credentials account; its absence means an OAuth/Google account
                     // whose profile + password are managed by the provider.
-                    const hasPassword = Boolean(user.password);
-
                     (session.user as any).id = userId;
                     (session.user as any).hasPassword = hasPassword;
                     (session.user as any).provider =
