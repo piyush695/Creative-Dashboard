@@ -44,9 +44,18 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/assets ./assets
 COPY --from=builder --chown=nextjs:nodejs /app/config ./config
 
+# Standalone server (server.js at /app → process.cwd() = /app, matching the
+# assets/config/public paths above)
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
 # The repo's fonts.conf carries Windows dev paths — replace with the container
-# layout. Cache goes to /tmp (always writable on Cloud Run).
+# layout. MUST run AFTER every COPY above: Next's output tracing bundles
+# assets/fonts/fonts.conf into the standalone output, so copying standalone
+# later would overwrite this file with the Windows version (fontconfig then
+# finds zero fonts → every glyph renders as a tofu box; happened live 2026-07-03).
 RUN printf '<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n<fontconfig>\n  <dir>/app/assets/fonts</dir>\n  <cachedir>/tmp/fontcache</cachedir>\n</fontconfig>\n' > ./assets/fonts/fonts.conf \
+  && find / -path /proc -prune -o -name "fonts.conf" -print 2>/dev/null | grep -v "^/etc" | while read f; do [ "$f" != "/app/assets/fonts/fonts.conf" ] && cp /app/assets/fonts/fonts.conf "$f" || true; done \
   && chown nextjs:nodejs ./assets/fonts/fonts.conf
 ENV FONTCONFIG_FILE=/app/assets/fonts/fonts.conf
 
@@ -54,11 +63,6 @@ ENV FONTCONFIG_FILE=/app/assets/fonts/fonts.conf
 # to the filesystem — give the runtime user ownership. NOTE: Cloud Run's FS is
 # in-memory and per-instance; these edits do not survive restarts/scale-out.
 RUN chown -R nextjs:nodejs ./public ./config
-
-# Standalone server (server.js at /app → process.cwd() = /app, matching the
-# assets/config/public paths above)
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
