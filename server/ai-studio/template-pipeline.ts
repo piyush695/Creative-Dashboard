@@ -44,17 +44,16 @@ function archetypePool(base: Archetype): Archetype[] {
   }
 }
 
-// Cross-REQUEST rotation offset. Without it, every 1-variation request (the
-// chat UI's default) started the rotation at the same point → LIVE MONOTONY BUG
-// 2026-07-03: every chat generation came out cyan-on-black giant-number.
-let _requestSeq = 0;
-
 export async function generateTemplateVariations(
   prompt: string,
   count = 1,
 ): Promise<{ variants: TemplateVariant[]; base: DirectorResult }> {
   const n = Math.max(1, Math.min(4, Math.round(count) || 1));
-  const seq = _requestSeq++;
+  // Variety offset must be RANDOM, not a module counter: on Cloud Run the
+  // counter reset to 0 on every instance start/deploy, so the first request
+  // always landed on the same composition + orb → the live "same creative
+  // again and again" bug (2026-07-03, twice). Randomness is stateless.
+  const seq = Math.floor(Math.random() * 999_983);
   const base = await directCreative(prompt);
   let baseArch: Archetype = base.decision.archetype;
   if (baseArch === 'photographic') baseArch = 'giant-number'; // the template lane never renders photo
