@@ -1,9 +1,7 @@
-# Install dependencies only when needed
+# ── deps: install Linux-native node_modules (sharp gets linux-musl binaries) ──
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-
-# Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* pnpm-lock.yaml* ./
 RUN \
   if [ -f package-lock.json ]; then npm ci --legacy-peer-deps; \
@@ -11,37 +9,54 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-# Rebuild the source code only when needed
+# ── builder ──
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Environment variables must be present at build time for some Next.js features
-# However, we don't want to bake secrets into the image.
-# We skip the specific secret injection here and rely on GCP runtime environment variables.
-# If your build fails because it needs these to pre-render, consider adding 
-# dummy values here or marking routes as dynamic.
-
-# Disable telemetry during the build
-ENV NEXT_TELEMETRY_DISABLED 1
+# Secrets are NOT baked in (.env is dockerignored) — runtime env comes from
+# Cloud Run service configuration.
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 
-# Production image, copy all the files and run next
+# ── runner ──
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Fontconfig runtime — sharp's bundled libvips renders the SVG text (Design
+# Engine + text overlay) but resolves fonts through fontconfig, which needs the
+# config infrastructure present in the image.
+RUN apk add --no-cache fontconfig
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
+# Output tracing only bundles build-time imports — these are read at RUNTIME:
+#   assets/fonts  → Montserrat/Poppins TTFs for the creative engines
+#   config/       → active-offers.json (compliance gate; API writes it)
+COPY --from=builder --chown=nextjs:nodejs /app/assets ./assets
+COPY --from=builder --chown=nextjs:nodejs /app/config ./config
+
+# The repo's fonts.conf carries Windows dev paths — replace with the container
+# layout. Cache goes to /tmp (always writable on Cloud Run).
+RUN printf '<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n<fontconfig>\n  <dir>/app/assets/fonts</dir>\n  <cachedir>/tmp/fontcache</cachedir>\n</fontconfig>\n' > ./assets/fonts/fonts.conf \
+  && chown nextjs:nodejs ./assets/fonts/fonts.conf
+ENV FONTCONFIG_FILE=/app/assets/fonts/fonts.conf
+
+# Brand Assets uploads (public/brand) and Active Offers edits (config/) write
+# to the filesystem — give the runtime user ownership. NOTE: Cloud Run's FS is
+# in-memory and per-instance; these edits do not survive restarts/scale-out.
+RUN chown -R nextjs:nodejs ./public ./config
+
+# Standalone server (server.js at /app → process.cwd() = /app, matching the
+# assets/config/public paths above)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
@@ -49,9 +64,8 @@ USER nextjs
 
 EXPOSE 3000
 
-ENV PORT 3000
-# set hostname to localhost
-ENV HOSTNAME "0.0.0.0"
+# Cloud Run injects PORT (8080) at runtime; server.js honors it. 3000 = local default.
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# server.js is created by next build from the standalone output
 CMD ["node", "server.js"]
