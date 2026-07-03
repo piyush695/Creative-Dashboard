@@ -7,23 +7,46 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Search,
   Calendar,
   Loader2,
-  RefreshCcw,
+  MessageSquare,
   Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
-import { getHistoryList } from "@/server/actions/studio-actions";
+import { getHistoryList, getConversationMessages } from "@/server/actions/studio-actions";
+import { buildChatMessagesFromTurns, type ChatMessage } from "@/components/studio/studio-shared";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 interface CreativeHistoryViewProps {
   onClose?: () => void;
-  onRegenerate?: (prompt: string, result?: any, tab?: string, generationOptions?: any) => void;
+  onRegenerate?: (payload: { tab: string; conversationId: string | null; messages: ChatMessage[] }) => void;
+}
+
+// Build the list of page controls: always show first + last, the current page
+// with a neighbor on each side, and "…" gaps where pages are skipped.
+function getPageItems(current: number, total: number): (number | "…")[] {
+  if (total <= 1) return [1];
+
+  const pages = new Set<number>([1, total, current, current - 1, current + 1]);
+  const sorted = Array.from(pages)
+    .filter((n) => n >= 1 && n <= total)
+    .sort((a, b) => a - b);
+
+  const items: (number | "…")[] = [];
+  let prev = 0;
+  for (const n of sorted) {
+    if (n - prev > 1) items.push("…");
+    items.push(n);
+    prev = n;
+  }
+  return items;
 }
 
 // ── Shared image cache for thumbnails ─────────────────────────────────────
@@ -161,6 +184,8 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [previewImagePopup, setPreviewImagePopup] = useState<{ url: string; title: string } | null>(null);
+  // Tracks which row is loading its full creative for "View Chat".
+  const [loadingId, setLoadingId] = useState<string | null>(null);
   const router = useRouter();
 
   const itemsPerPage = 10;
@@ -197,13 +222,30 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
     loadHistory();
   }, [loadHistory]);
 
-  const handleRegenerate = (entry: any) => {
+  const handleRegenerate = async (entry: any) => {
     const tab = entry.tab || "custom";
-    const prompt = entry.prompt || "";
-    const result = entry.result || null;
-    const generationOptions = entry.generationOptions || {};
+
     if (onRegenerate) {
-      onRegenerate(prompt, result, tab, generationOptions);
+      // Rebuild the WHOLE conversation thread (every turn), not just one creative.
+      setLoadingId(entry.creativeId || "__");
+      let messages: ChatMessage[] = [];
+      try {
+        const turns = await getConversationMessages(entry.conversationId || null, entry.creativeId);
+        messages = buildChatMessagesFromTurns(turns);
+      } catch {
+        /* fall through to the single-entry fallback below */
+      } finally {
+        setLoadingId(null);
+      }
+      if (messages.length === 0) {
+        if (entry.prompt) messages.push({ id: "hu-0", role: "user", text: entry.prompt });
+        messages.push({ id: "ha-0", role: "assistant", result: entry.result || {}, prompt: entry.prompt || "", creativeId: entry.creativeId });
+      }
+      // Continue under the entry's GROUP KEY (conversationId from the grouped
+      // list, or the creativeId for a legacy row). New creatives generated next
+      // save with this same id, so they update THIS entry instead of forking one.
+      const groupKey = entry.conversationId || entry.creativeId || null;
+      onRegenerate({ tab, conversationId: groupKey, messages });
     } else {
       // Standalone /history route — bounce to Studio with regenerate intent
       const params = new URLSearchParams();
@@ -273,7 +315,12 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
             setInputValue("");
             setSearchQuery("");
           }}
-          onExploreStudio={() => router.push("/studio")}
+          onExploreStudio={() => {
+            // History is an overlay inside the Studio page — closing it returns
+            // to the Studio chat. Only the standalone route needs a push.
+            if (onClose) onClose();
+            else router.push("/studio");
+          }}
         />
       ) : (
         <>
@@ -284,9 +331,7 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                 <tr>
                   <Th className="w-24">Preview</Th>
                   <Th>Headline</Th>
-                  <Th className="hidden lg:table-cell">Prompt</Th>
-                  <Th className="w-24 text-center">Score</Th>
-                  <Th className="w-36">Created</Th>
+                  <Th className="w-40">Created</Th>
                   <Th className="w-28 text-right">Action</Th>
                 </tr>
               </thead>
@@ -317,24 +362,16 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                           {entry.headline || "Untitled creative"}
                         </h3>
                         <div className="flex items-center gap-1.5">
-                          <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-                            {(entry.creativeId || "").slice(-8) || "—"}
-                          </span>
                           <span className="rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-primary">
                             {getTabLabel(entry.tab)}
                           </span>
+                          {entry.count > 1 && (
+                            <span className="rounded-md border border-border bg-muted/60 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                              {entry.count} creatives
+                            </span>
+                          )}
                         </div>
                       </div>
-                    </td>
-                    <td className="hidden max-w-[380px] px-4 py-3 lg:table-cell">
-                      <p className="line-clamp-2 text-xs text-muted-foreground">
-                        {entry.prompt || <span className="italic opacity-60">No prompt</span>}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex h-7 min-w-[40px] items-center justify-center rounded-md border border-border bg-muted/40 px-2 text-xs font-semibold tabular-nums">
-                        {entry.score || entry.result?.targetScore || "—"}
-                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -356,10 +393,15 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                         size="sm"
                         className="h-8 cursor-pointer gap-1.5"
                         onClick={() => handleRegenerate(entry)}
-                        title="Regenerate with this prompt"
+                        disabled={loadingId === entry.creativeId}
+                        title="Open this creative in chat"
                       >
-                        <RefreshCcw className="h-3.5 w-3.5" />
-                        Regenerate
+                        {loadingId === entry.creativeId ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <MessageSquare className="h-3.5 w-3.5" />
+                        )}
+                        View Chat
                       </Button>
                     </td>
                   </tr>
@@ -391,22 +433,41 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="line-clamp-1 text-sm font-medium text-foreground">{entry.headline || "Untitled"}</h3>
-                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                      {entry.prompt || "No prompt"}
-                    </p>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <span className="rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+                        {getTabLabel(entry.tab)}
+                      </span>
+                      {entry.count > 1 && (
+                        <span className="rounded-md border border-border bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          {entry.count}
+                        </span>
+                      )}
+                      {getEntryDate(entry) && (
+                        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {new Date(getEntryDate(entry)!).toLocaleDateString([], {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <span className="shrink-0 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs font-semibold tabular-nums">
-                    {entry.score || entry.result?.targetScore || "—"}
-                  </span>
                 </button>
                 <Button
                   variant="outline"
                   size="sm"
                   className="h-8 w-full cursor-pointer gap-1.5"
                   onClick={() => handleRegenerate(entry)}
+                  disabled={loadingId === entry.creativeId}
                 >
-                  <RefreshCcw className="h-3.5 w-3.5" />
-                  Regenerate
+                  {loadingId === entry.creativeId ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <MessageSquare className="h-3.5 w-3.5" />
+                  )}
+                  View Chat
                 </Button>
               </div>
             ))}
@@ -424,32 +485,48 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                   variant="outline"
                   size="icon"
                   className="h-8 w-8"
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                  aria-label="First page"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
                   aria-label="Previous page"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let n =
-                    page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i;
-                  if (n <= 0 || n > totalPages) return null;
-                  return (
+                {getPageItems(page, totalPages).map((item, i) =>
+                  item === "…" ? (
+                    <span
+                      key={`ellipsis-${i}`}
+                      className="flex h-8 min-w-8 items-center justify-center px-1 text-xs text-muted-foreground"
+                      aria-hidden="true"
+                    >
+                      …
+                    </span>
+                  ) : (
                     <button
-                      key={n}
+                      key={item}
                       type="button"
-                      onClick={() => setPage(n)}
+                      onClick={() => setPage(item)}
+                      aria-current={page === item ? "page" : undefined}
                       className={cn(
                         "h-8 min-w-8 cursor-pointer rounded-md px-2 text-xs font-medium transition-colors",
-                        page === n
+                        page === item
                           ? "bg-primary text-primary-foreground"
                           : "border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
                       )}
                     >
-                      {n}
+                      {item}
                     </button>
-                  );
-                })}
+                  ),
+                )}
                 <Button
                   variant="outline"
                   size="icon"
@@ -459,6 +536,16 @@ export default function CreativeHistoryView({ onClose, onRegenerate }: CreativeH
                   aria-label="Next page"
                 >
                   <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setPage(totalPages)}
+                  disabled={page === totalPages}
+                  aria-label="Last page"
+                >
+                  <ChevronsRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

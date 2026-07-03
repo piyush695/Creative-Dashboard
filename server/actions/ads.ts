@@ -353,13 +353,42 @@ function escapeRegex(s: string): string {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function buildMetaFilter(accountId?: string, search?: string): Record<string, any> {
+// A calendar window, as YYYY-MM-DD strings (or any ISO prefix). Filtering is by
+// AD CREATION date (`createdTime`) — the stored ads carry NO `analysisDate` and
+// NO per-day metrics, so "date selection" means "ads CREATED in this window" and
+// their metrics remain lifetime totals.
+export type MetaDateRange = { from?: string; to?: string };
+
+function ymd(d?: string): string | null {
+    if (!d) return null;
+    const s = String(d);
+    return s.length >= 10 ? s.slice(0, 10) : null;
+}
+// Exclusive upper bound = the day AFTER `to`, so an ad created at ANY time on the
+// `to` day is still included (createdTime is e.g. "2026-03-16T23:43:21+0800").
+function dayAfter(ymdStr: string): string {
+    const d = new Date(ymdStr + "T00:00:00Z");
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
+}
+
+function buildMetaFilter(accountId?: string, search?: string, dateRange?: MetaDateRange): Record<string, any> {
     const filter: Record<string, any> = {};
     if (accountId && accountId !== "all") filter.adAccountId = accountId;
     const term = (search || "").trim();
     if (term) {
         const rx = new RegExp(escapeRegex(term), "i");
         filter.$or = [{ adName: rx }, { adId: rx }, { campaignName: rx }];
+    }
+    const from = ymd(dateRange?.from);
+    const to = ymd(dateRange?.to);
+    if (from || to) {
+        // Lexical range on the ISO `createdTime` string == chronological at day
+        // granularity, and stays index-friendly (createdTime can be indexed).
+        const cond: Record<string, string> = {};
+        if (from) cond.$gte = from;
+        if (to) cond.$lt = dayAfter(to);
+        filter.createdTime = cond;
     }
     return filter;
 }
@@ -370,13 +399,14 @@ export async function fetchMetaAdsPage(opts: {
     search?: string;
     page?: number;
     perPage?: number;
+    dateRange?: MetaDateRange;
 }): Promise<{ ads: AdData[]; total: number }> {
     try {
-        const { accountId = "all", search = "", page = 1, perPage = 12 } = opts || {};
+        const { accountId = "all", search = "", page = 1, perPage = 12, dateRange } = opts || {};
         const client = await clientPromise;
         const db = client.db(process.env.MONGODB_DB || "reddit_data");
         const coll = db.collection("creative_data");
-        const filter = buildMetaFilter(accountId, search);
+        const filter = buildMetaFilter(accountId, search, dateRange);
         const skip = (Math.max(1, page) - 1) * perPage;
         const [docs, total] = await Promise.all([
             coll.find(filter, { projection: CREATIVE_LIST_PROJECTION })
@@ -433,6 +463,207 @@ export async function fetchMetaFacets(): Promise<{ total: number; byAccount: Rec
     } catch (e) {
         console.error("fetchMetaFacets failed:", e);
         return { total: 0, byAccount: {} };
+    }
+}
+
+export interface MetaOverview {
+    kpis: { spend: number; impressions: number; reach: number; clicks: number; conversions: number; convValue: number; ctr: number; cpc: number; cpm: number; roas: number };
+    series: { label: string; revenue: number; spend: number }[];
+    topCampaigns: { name: string; spend: number; count: number; clicks: number; impr: number; revenue: number; ctr: number; roas: number }[];
+    formats: { name: string; value: number }[];
+}
+
+// Roll up the WHOLE matching set (KPIs + chart + top campaigns + format split) in
+// ONE MongoDB aggregation, so the Overview never loads all docs into the browser.
+export async function fetchMetaOverview(opts?: { accountId?: string; search?: string; dateRange?: MetaDateRange }): Promise<MetaOverview> {
+    const EMPTY: MetaOverview = { kpis: { spend: 0, impressions: 0, reach: 0, clicks: 0, conversions: 0, convValue: 0, ctr: 0, cpc: 0, cpm: 0, roas: 0 }, series: [], topCampaigns: [], formats: [] };
+    try {
+        const { accountId = "all", search = "", dateRange } = opts || {};
+        const client = await clientPromise;
+        const db = client.db(process.env.MONGODB_DB || "reddit_data");
+        const coll = db.collection("creative_data");
+        const filter = buildMetaFilter(accountId, search, dateRange);
+        const num = (f: string) => ({ $convert: { input: `$${f}`, to: "double", onError: 0, onNull: 0 } });
+
+        const agg = await coll.aggregate([
+            { $match: filter },
+            { $facet: {
+                totals: [{ $group: { _id: null,
+                    spend: { $sum: num("spend") }, impressions: { $sum: num("impressions") },
+                    reach: { $sum: num("reach") }, clicks: { $sum: num("clicks") },
+                    conversions: { $sum: num("purchase_count") }, convValue: { $sum: num("purchase_value") } } }],
+                campaigns: [
+                    // Stored Meta docs carry campaignId but usually no campaignName,
+                    // so fall back to the id (distinct real campaigns) before "Unnamed".
+                    { $group: { _id: { $ifNull: ["$campaignName", { $ifNull: ["$campaignId", "Unnamed campaign"] }] },
+                        spend: { $sum: num("spend") }, clicks: { $sum: num("clicks") }, impr: { $sum: num("impressions") },
+                        revenue: { $sum: num("purchase_value") }, count: { $sum: 1 } } },
+                    { $sort: { spend: -1 } }, { $limit: 8 },
+                ],
+                formats: [
+                    { $group: { _id: { $ifNull: ["$adType", "Image"] }, value: { $sum: num("spend") } } },
+                    { $sort: { value: -1 } },
+                ],
+                daily: [
+                    { $match: { createdTime: { $type: "string", $ne: "" } } },
+                    { $group: { _id: { $substrBytes: ["$createdTime", 0, 10] },
+                        revenue: { $sum: num("purchase_value") }, spend: { $sum: num("spend") } } },
+                ],
+            } },
+        ]).toArray();
+
+        const f: any = agg[0] || {};
+        const t: any = (f.totals && f.totals[0]) || {};
+        const spend = t.spend || 0, impressions = t.impressions || 0, clicks = t.clicks || 0, convValue = t.convValue || 0;
+        const kpis = {
+            spend, impressions, reach: t.reach || impressions, clicks, conversions: t.conversions || 0, convValue,
+            ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
+            cpc: clicks > 0 ? spend / clicks : 0,
+            cpm: impressions > 0 ? (spend / impressions) * 1000 : 0,
+            roas: spend > 0 ? convValue / spend : 0,
+        };
+        const topCampaigns = (f.campaigns || []).map((c: any) => ({
+            name: c._id || "Unnamed campaign", spend: c.spend || 0, count: c.count || 0, clicks: c.clicks || 0, impr: c.impr || 0, revenue: c.revenue || 0,
+            ctr: c.impr > 0 ? (c.clicks / c.impr) * 100 : 0, roas: c.spend > 0 ? c.revenue / c.spend : 0,
+        }));
+        const formats = (f.formats || []).filter((x: any) => (x.value || 0) > 0).map((x: any) => ({ name: x._id || "Image", value: x.value || 0 }));
+        let series = (f.daily || [])
+            .map((d: any) => ({ day: d._id || "—", revenue: d.revenue || 0, spend: d.spend || 0 }))
+            .sort((a: any, b: any) => String(a.day).localeCompare(String(b.day)))
+            .slice(-14)
+            .map((d: any) => ({ label: d.day === "—" ? "—" : new Date(d.day + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }), revenue: d.revenue, spend: d.spend }));
+        if (series.length === 1) series = [{ ...series[0], label: "" }, series[0]];
+        return { kpis, series, topCampaigns, formats };
+    } catch (e) {
+        console.error("fetchMetaOverview failed:", e);
+        return EMPTY;
+    }
+}
+
+// Latest ad-creation date (YYYY-MM-DD) in the store — lets the dashboard anchor
+// its default date window to real data instead of an empty current month.
+export async function fetchMetaLatestDate(_opts?: { accountId?: string }): Promise<string | null> {
+    try {
+        const client = await clientPromise;
+        const coll = client.db(process.env.MONGODB_DB || "reddit_data").collection("creative_data");
+        const doc = await coll
+            .find({ createdTime: { $type: "string", $ne: "" } }, { projection: { createdTime: 1 } })
+            .sort({ createdTime: -1 }).limit(1).next();
+        return doc?.createdTime ? String(doc.createdTime).slice(0, 10) : null;
+    } catch (e) {
+        console.warn("fetchMetaLatestDate failed:", e);
+        return null;
+    }
+}
+
+// ── META AUDIENCE BREAKDOWNS (live Insights API) ───────────────────────────
+// Age/gender + placement + country breakdowns aren't stored on the creative
+// docs, so we pull them LIVE from the Meta Insights API for the selected
+// account(s) + date window. On-demand (only when the Audiences tab is open),
+// cached briefly. Requires a valid META_ACCESS_TOKEN with ads_read.
+export interface MetaAudienceSeg { label: string; spend: number; impressions: number; clicks: number }
+export interface MetaAudience {
+    byAge: MetaAudienceSeg[];
+    byGender: MetaAudienceSeg[];
+    placement: MetaAudienceSeg[];
+    byCountry: MetaAudienceSeg[];
+    totalSpend: number;
+    accounts: number;
+    campaigns?: { id: string; name: string }[]; // for the audience campaign selector
+    error?: string;
+}
+
+const _audCache = new Map<string, { at: number; data: MetaAudience }>();
+
+export async function fetchMetaAudience(opts?: { accountId?: string; dateRange?: MetaDateRange; campaignId?: string }): Promise<MetaAudience> {
+    const EMPTY: MetaAudience = { byAge: [], byGender: [], placement: [], byCountry: [], totalSpend: 0, accounts: 0 };
+    const token = process.env.META_ACCESS_TOKEN;
+    if (!token) return { ...EMPTY, error: "META_ACCESS_TOKEN not set in .env" };
+
+    const accountId = opts?.accountId || "all";
+    const campaignId = (opts?.campaignId || "").trim(); // "" = all campaigns
+    const from = ymd(opts?.dateRange?.from);
+    const to = ymd(opts?.dateRange?.to);
+    const cacheKey = `${accountId}|${from || ""}|${to || ""}|${campaignId}`;
+    const hit = _audCache.get(cacheKey);
+    if (hit && Date.now() - hit.at < 5 * 60 * 1000) return hit.data;
+
+    const V = "v24.0";
+    const timeParam = (from || to)
+        ? `&time_range=${encodeURIComponent(JSON.stringify({ since: from || "2015-01-01", until: to || from }))}`
+        : `&date_preset=maximum`;
+    // Restrict the breakdown query to one campaign when the selector picks one.
+    const filterParam = campaignId
+        ? `&filtering=${encodeURIComponent(JSON.stringify([{ field: "campaign.id", operator: "IN", value: [campaignId] }]))}`
+        : "";
+
+    try {
+        // Resolve target ad accounts. A specific account → just it; "all" → every
+        // account the token can see (capped so we never fan out unboundedly).
+        let acctIds: string[];
+        if (accountId !== "all") {
+            acctIds = [accountId];
+        } else {
+            const j: any = await (await fetch(`https://graph.facebook.com/${V}/me/adaccounts?fields=account_id&limit=200&access_token=${token}`)).json();
+            if (j.error) return { ...EMPTY, error: `Meta: ${j.error.message}` };
+            acctIds = (j.data || []).map((a: any) => a.account_id).filter(Boolean).slice(0, 25);
+        }
+        if (acctIds.length === 0) return EMPTY;
+
+        const merge = (map: Map<string, MetaAudienceSeg>, label: string, row: any) => {
+            const e = map.get(label) || { label, spend: 0, impressions: 0, clicks: 0 };
+            e.spend += +row.spend || 0; e.impressions += +row.impressions || 0; e.clicks += +row.clicks || 0;
+            map.set(label, e);
+        };
+        const ageMap = new Map<string, MetaAudienceSeg>(), genderMap = new Map<string, MetaAudienceSeg>();
+        const placementMap = new Map<string, MetaAudienceSeg>(), countryMap = new Map<string, MetaAudienceSeg>();
+        let totalSpend = 0;
+
+        const fetchBd = async (acct: string, bd: string) => {
+            // level=campaign when filtering to one campaign, else account-wide.
+            const level = campaignId ? "campaign" : "account";
+            const url = `https://graph.facebook.com/${V}/act_${acct}/insights?level=${level}&fields=spend,impressions,clicks&breakdowns=${encodeURIComponent(bd)}&limit=300${timeParam}${filterParam}&access_token=${token}`;
+            try { const j: any = await (await fetch(url)).json(); return j.error ? [] : (j.data || []); } catch { return []; }
+        };
+        // Campaign list for the selector (id → name), aggregated across the target accounts.
+        const campMap = new Map<string, string>();
+        const fetchCampaigns = async (acct: string) => {
+            try {
+                const j: any = await (await fetch(`https://graph.facebook.com/${V}/act_${acct}/campaigns?fields=id,name&limit=200&access_token=${token}`)).json();
+                for (const c of (j?.data || [])) if (c.id) campMap.set(c.id, c.name || c.id);
+            } catch { /* ignore */ }
+        };
+
+        await Promise.all(acctIds.map(async (acct) => {
+            const [ag, pl, co] = await Promise.all([
+                fetchBd(acct, "age,gender"),
+                fetchBd(acct, "publisher_platform,platform_position"),
+                fetchBd(acct, "country"),
+                fetchCampaigns(acct),
+            ]);
+            for (const r of ag) { merge(ageMap, r.age || "unknown", r); merge(genderMap, r.gender || "unknown", r); totalSpend += +r.spend || 0; }
+            for (const r of pl) merge(placementMap, `${r.publisher_platform || "?"} · ${r.platform_position || "?"}`, r);
+            for (const r of co) merge(countryMap, (r.country || "unknown"), r);
+        }));
+
+        const bySpend = (m: Map<string, MetaAudienceSeg>, limit?: number) => {
+            const a = [...m.values()].sort((x, y) => y.spend - x.spend);
+            return limit ? a.slice(0, limit) : a;
+        };
+        const data: MetaAudience = {
+            byAge: [...ageMap.values()].sort((a, b) => a.label.localeCompare(b.label)),
+            byGender: bySpend(genderMap),
+            placement: bySpend(placementMap, 10),
+            byCountry: bySpend(countryMap, 8),
+            totalSpend,
+            accounts: acctIds.length,
+            campaigns: [...campMap.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 200),
+        };
+        _audCache.set(cacheKey, { at: Date.now(), data });
+        return data;
+    } catch (e: any) {
+        console.error("fetchMetaAudience failed:", e);
+        return { ...EMPTY, error: e?.message || "fetch failed" };
     }
 }
 

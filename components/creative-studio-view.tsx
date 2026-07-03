@@ -59,6 +59,18 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { StudioComposer } from "@/components/studio/studio-composer"
+import { AttachmentModal } from "@/components/studio/attachment-modal"
+import { TopAdsModal } from "@/components/studio/top-ads-modal"
+import { StudioEmptyStage } from "@/components/studio/studio-empty-stage"
+import { StudioChatThread } from "@/components/studio/studio-chat"
+import {
+  kindOfFile,
+  STYLE_DIRECTIVES,
+  type StudioAttachment,
+  type ChatMessage,
+} from "@/components/studio/studio-shared"
+import { MessageSquarePlus } from "lucide-react"
 
 interface CreativeStudioViewProps {
   onClose?: () => void
@@ -109,6 +121,14 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
       });
       if (initialResult) setSelectedVariantIdx(0);
 
+      // Seed the Custom chat thread so the restored creative reads as a turn.
+      if (targetTab === 'custom' && initialResult) {
+        setCustomMessages([
+          { id: `u-${Date.now()}`, role: 'user', text: initialPrompt || 'Creative' },
+          { id: `a-${Date.now() + 1}`, role: 'assistant', result: initialResult, prompt: initialPrompt || '' },
+        ]);
+      }
+
       // For top-ads tab, jump to results step so user sees the generated creative
       if (targetTab === 'top-ads' && initialResult) {
         setTopAdsStep('results');
@@ -157,15 +177,235 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   // ── A/B test toggle: use stored ad library as reference for generation ──
   // Default ON. Flip OFF to test whether the library is helping or constraining.
   const [useStoredAds, setUseStoredAds] = useState<boolean>(true)
-  // ── Direct mode: fast single-image path (prompt is always auto-enhanced first) ──
-  // Default ON for the Custom tab. OFF runs the full 3-variant pipeline instead.
+  // ── Direct mode: bypass brief generation + text overlay, send prompt straight to image model ──
+  // Default ON for the Custom tab — gives the user full control over what the image model sees.
   const [directMode, setDirectMode] = useState<boolean>(true)
-  // ── Brand logo overlay: composite the uploaded Brand Kit logo onto the result ──
-  // Default OFF; the logo is only placed when the user turns this on.
-  const [useLogo, setUseLogo] = useState<boolean>(false)
-  const [logoPosition, setLogoPosition] = useState<"top-left" | "top-right" | "bottom-left" | "bottom-right">("top-left")
-  // ── Perfect text: render visual-only then composite text in code (zero typos) ──
-  const [cleanText, setCleanText] = useState<boolean>(false)
+
+  // ── Composer (chat-conversation redesign): attachments + generation options ──
+  const [attachments, setAttachments] = useState<StudioAttachment[]>([])
+  const [attachOpen, setAttachOpen] = useState(false)
+  const [genTypes, setGenTypes] = useState<string[]>(["Image"])
+  const [stylePreset, setStylePreset] = useState<string>("")
+  // Top Ads picker modal (replaces navigating to the Top Ads page). Selected ads
+  // become generation context for the Custom chat via the existing `selectedIds`.
+  const [topAdsModalOpen, setTopAdsModalOpen] = useState(false)
+
+  // ── Custom-tab chat thread: an accumulating conversation of user prompts and
+  // assistant creative responses (user right, AI left). Built on top of the
+  // existing generation pipeline — each turn is appended as a message. ──
+  const [customMessages, setCustomMessages] = useState<ChatMessage[]>([])
+  const [savedMsgIds, setSavedMsgIds] = useState<Set<string>>(new Set())
+  // One History entry per chat session: every creative generated before "New
+  // chat" shares this id, so History groups them into a single conversation.
+  const [conversationId, setConversationId] = useState<string>("")
+  useEffect(() => {
+    setConversationId(`conv-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`)
+  }, [])
+
+  // Download any image (data: or remote URL) — used by the chat Export action.
+  const exportImage = async (url: string, name: string) => {
+    if (!url) {
+      toast.info("No image to export")
+      return
+    }
+    try {
+      if (url.startsWith("data:")) {
+        const a = document.createElement("a")
+        a.href = url
+        a.download = name
+        a.click()
+      } else {
+        const resp = await fetch(url)
+        const blob = await resp.blob()
+        const blobUrl = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = blobUrl
+        a.download = name
+        a.click()
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000)
+      }
+      toast.success("Creative downloaded!")
+    } catch {
+      window.open(url)
+    }
+  }
+
+  // Save a single chat message's creative, then mark that message as saved.
+  const handleSaveMessage = async (m: ChatMessage) => {
+    const ok = await handleManualSave(m.result, m.prompt)
+    if (ok) setSavedMsgIds((prev) => new Set(prev).add(m.id))
+  }
+
+  const addFiles = (files: FileList | File[]) => {
+    Array.from(files).forEach((file) => {
+      const kind = kindOfFile(file)
+      const id = `att-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      const att: StudioAttachment = {
+        id,
+        name: file.name,
+        size: file.size,
+        kind,
+        url: kind === "image" || kind === "video" ? URL.createObjectURL(file) : null,
+        dataUrl: null,
+      }
+      setAttachments((prev) =>
+        prev.some((a) => a.name === file.name && a.size === file.size) ? prev : [...prev, att]
+      )
+      // Read base64 for images (used as a visual reference) AND documents (their
+      // text is extracted server-side and folded into the prompt). Videos are
+      // skipped — the image model can't consume them.
+      if (kind !== "video") {
+        const reader = new FileReader()
+        reader.onloadend = () =>
+          setAttachments((cur) =>
+            cur.map((a) => (a.id === id ? { ...a, dataUrl: reader.result as string } : a))
+          )
+        reader.readAsDataURL(file)
+      }
+    })
+  }
+  const removeAttachment = (id: string) =>
+    setAttachments((prev) => {
+      const target = prev.find((a) => a.id === id)
+      if (target?.url) URL.revokeObjectURL(target.url)
+      return prev.filter((a) => a.id !== id)
+    })
+  const clearAttachments = () =>
+    setAttachments((prev) => {
+      prev.forEach((a) => a.url && URL.revokeObjectURL(a.url))
+      return []
+    })
+  const toggleGenType = (t: string) =>
+    setGenTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]))
+
+  // Composer Generate / Refine — generates directly from the current composer
+  // prompt (+ style + first image attachment). Re-generation happens inline in
+  // the chat; no separate "Refine" sheet is shown. Each send appends a user
+  // message to the Custom chat thread; the assistant message is appended when
+  // the generation completes (see handleGenerate).
+  const handleComposerGenerate = () => {
+    const promptText = currentTabState.prompt.trim()
+    // Every attached image (base64) becomes a generation reference. The first
+    // one also feeds the legacy single-reference (non-direct) pipeline path.
+    const imageRefs = attachments
+      .filter((a) => a.kind === "image" && a.dataUrl)
+      .map((a) => a.dataUrl as string)
+    const imageRef = imageRefs[0]
+    // Document attachments (PDF/DOCX/TXT/HTML) — their text is extracted on the
+    // server and folded into the prompt so the file actually drives generation.
+    const docFiles = attachments
+      .filter((a) => (a.kind === "doc" || a.kind === "text" || a.kind === "html" || a.kind === "file") && a.dataUrl)
+      .map((a) => ({ name: a.name, dataUrl: a.dataUrl as string }))
+    // Allow generating from an attached image/document alone (no prompt, no Top Ads).
+    if (
+      activeMainTab === "custom" &&
+      !promptText &&
+      selectedIds.length === 0 &&
+      imageRefs.length === 0 &&
+      docFiles.length === 0
+    ) {
+      toast.error("Describe the ad, attach an image or document, or add Top Ads as context")
+      return
+    }
+    // Only videos can't be used — everything else is consumed.
+    const ignored = attachments.filter((a) => a.kind === "video").length
+    if (ignored > 0) {
+      toast.info(`${ignored} video attachment${ignored === 1 ? "" : "s"} ignored — the image model can't read video.`)
+    }
+    const directive = stylePreset && STYLE_DIRECTIVES[stylePreset] ? `\n\n${STYLE_DIRECTIVES[stylePreset]}` : ""
+
+    if (activeMainTab === "custom") {
+      // Snapshot attachments + selected Top Ads onto the turn so they render
+      // inline in the chat bubble (ChatGPT/Gemini style) even after we clear the
+      // composer. Use base64 for image previews — object URLs get revoked below.
+      const attachmentPreviews = attachments.map((a) => ({
+        id: a.id,
+        name: a.name,
+        kind: a.kind,
+        previewUrl: a.kind === "image" ? a.dataUrl : null,
+      }))
+      const contextAdPreviews = creatives
+        .filter((c) => selectedIds.includes(c.adId))
+        .map((c) => ({ id: c.adId, name: c.adName || "Top ad", thumbnailUrl: c.thumbnailUrl }))
+      setCustomMessages((prev) => [
+        ...prev,
+        {
+          id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          role: "user",
+          text:
+            promptText ||
+            (imageRefs.length > 0
+              ? "Remix attached image"
+              : docFiles.length > 0
+                ? "Create from attached document"
+                : "Regenerate"),
+          contextAdCount: selectedIds.length,
+          attachmentCount: imageRefs.length,
+          attachments: attachmentPreviews,
+          contextAds: contextAdPreviews,
+        },
+      ])
+    }
+
+    handleGenerate(
+      undefined,
+      directive ? `${currentTabState.prompt}${directive}` : undefined,
+      imageRef,
+      imageRefs,
+      docFiles,
+    )
+
+    // Clear the prompt AND the composer attachment after submitting — the
+    // reference moves into the sent message bubble (ChatGPT/Gemini behaviour) and
+    // should not linger in the input box. The generation already captured it via
+    // args, and the bubble snapshot keeps its base64 preview.
+    if (activeMainTab === "custom") {
+      updateTabState("custom", { prompt: "" })
+      clearAttachments()
+    }
+  }
+
+  // Apply a restored conversation into the Custom chat thread. Shared by the
+  // History "View chat" flow and the sidebar "Recent" deep-link.
+  const applyRestoredConversation = useCallback((convId: string | null, messages: ChatMessage[]) => {
+    setActiveMainTab("custom")
+    const msgs = messages || []
+    setCustomMessages(msgs)
+    // Continue the SAME conversation — new creatives append to this History entry
+    // (legacy single-creative rows start a fresh one).
+    setConversationId(convId || `conv-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`)
+    const lastAssistant = [...msgs].reverse().find((m) => m.role === "assistant")
+    updateTabState("custom", {
+      prompt: "",
+      result: lastAssistant?.result || null,
+      mode: lastAssistant ? "complete" : "standby",
+    })
+    setSelectedVariantIdx(0)
+    setIsHistoryOpen(false)
+    onHistoryChange?.(false)
+    // Start the reopened conversation with a clean composer — each reference
+    // lives in its own message bubble (the conversation record), not in the
+    // input box. This matches the "clear the attachment after submit" behaviour.
+    clearAttachments()
+  }, [onHistoryChange])
+
+  // New chat — reset the active tab's conversation (data persists in History DB).
+  const handleNewChat = () => {
+    updateTabState(activeMainTab, { prompt: "", result: null, mode: "standby", progress: 0, generationOptions: {} })
+    clearAttachments()
+    setSelectedVariantIdx(0)
+    setSelectedIds([])
+    if (activeMainTab === "custom") {
+      setCustomMessages([])
+      setSavedMsgIds(new Set())
+      // Start a brand-new conversation — subsequent creatives form a new History entry.
+      setConversationId(`conv-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`)
+    }
+    if (activeMainTab === "top-ads") {
+      setTopAdsStep("aspects")
+      setCurrentPreviewId(null)
+    }
+  }
   // ── Library sync state (Phase 1: Meta Ad Library -> MongoDB) ──
   const [libraryStats, setLibraryStats] = useState<{
     totalAds: number
@@ -247,9 +487,9 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   }
 
   // ── Auto-save generated creative to history DB ──
-  const autoSaveToHistory = async (tab: string, result: any) => {
+  const autoSaveToHistory = async (tab: string, result: any, creativeIdParam?: string, promptParam?: string, referenceImages?: string[]) => {
     try {
-      const creativeId = `creative-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      const creativeId = creativeIdParam || `creative-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       const primaryVariant = (result.variants || []).find((v: any) => v.imageUrl) || {}
       await fetch("/api/studio", {
         method: "POST",
@@ -257,11 +497,19 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
         body: JSON.stringify({
           type: 'save-history',
           creativeId,
+          // Custom-chat creatives share the session conversationId; other tabs
+          // fall back to per-creative grouping (conversationId defaults server-side).
+          conversationId: tab === 'custom' ? conversationId : undefined,
           tab,
-          prompt: tabStates[tab]?.prompt || '',
+          // The composer clears the prompt right after generating, so prefer the
+          // prompt captured at generation time over the (now-empty) tab state.
+          prompt: promptParam ?? tabStates[tab]?.prompt ?? '',
           generationOptions: tabStates[tab]?.generationOptions || {},
           result,
           imageUrl: primaryVariant.imageUrl || result.imageUrl || null,
+          // Persist any uploaded reference image(s) so they stay attached to the
+          // turn after a History reopen (server uploads base64 → Cloudinary).
+          referenceImages: referenceImages && referenceImages.length > 0 ? referenceImages : undefined,
         })
       })
       console.log('[Studio] Creative auto-saved to history:', creativeId)
@@ -286,8 +534,9 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   }, [])
 
   // ── Manual save to saved_creative collection ──
-  const handleManualSave = async (result: any) => {
-    if (!result) return
+  // Returns true on success so chat messages can mark themselves saved.
+  const handleManualSave = async (result: any, promptOverride?: string): Promise<boolean> => {
+    if (!result) return false
     setIsSaving(true)
     try {
       const creativeId = `saved-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -299,7 +548,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
           type: 'save-creative',
           creativeId,
           tab: activeMainTab,
-          prompt: currentTabState.prompt,
+          prompt: promptOverride ?? currentTabState.prompt,
           generationOptions: currentTabState.generationOptions || {},
           result,
           imageUrl: primaryVariant.imageUrl || result.imageUrl || null,
@@ -313,11 +562,13 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
       if (data.success) {
         setSavedIds(prev => new Set([...prev, creativeId]))
         toast.success("Creative saved to vault!")
+        return true
       } else {
         throw new Error(data.error || "Save failed")
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to save creative")
+      return false
     } finally {
       setIsSaving(false)
     }
@@ -391,11 +642,11 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
     })
   }
 
-  const handleGenerate = async (optionsOverride?: any, promptOverride?: string, referenceOverride?: string) => {
+  const handleGenerate = async (optionsOverride?: any, promptOverride?: string, referenceOverride?: string, referencesOverride?: string[], docFilesOverride?: { name: string; dataUrl: string }[]) => {
     const targetTab = activeMainTab
 
-    if (targetTab === "custom" && !currentTabState.prompt) {
-      toast.error("Please provide a prompt")
+    if (targetTab === "custom" && !currentTabState.prompt && selectedIds.length === 0 && !referenceOverride && !(docFilesOverride && docFilesOverride.length > 0)) {
+      toast.error("Describe the ad, attach an image or document, or add Top Ads as context")
       return
     }
     if (targetTab === "studio" && (!currentTabState.prompt || !previewUrl)) {
@@ -430,14 +681,32 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
         increment = 0.001 // Micro-crawl to keep it 'alive'
       }
       
-      cur = Math.min(cur + increment, 99.9)
+      // Cap the simulated progress well below 100 so the animation stays visibly
+      // "still working" for the whole (possibly long) generation instead of
+      // parking at 99.9% and reading as finished. It only snaps to 100% when the
+      // real creative arrives (see the completion handler below).
+      cur = Math.min(cur + increment, 92)
       updateTabState(targetTab, { progress: cur })
     }, 80)
 
     try {
       let body: any = {}
       if (targetTab === "custom") {
-        body = { prompt: currentTabState.prompt, type: "custom", reference: referenceOverride || base64File, useStoredAds, directMode, useLogo, logoPosition, cleanText }
+        // When the user has added Top Ads as context, generate from those winning
+        // patterns + the chat prompt (reuses the existing pattern-based pipeline).
+        if (selectedIds.length > 0) {
+          body = {
+            adIds: optionsOverride?.adIds || selectedIds,
+            selectedAspects,
+            type: "pattern-based",
+            prompt: currentTabState.prompt,
+            reference: referenceOverride,
+            useStoredAds,
+            ...(optionsOverride || {}),
+          }
+        } else {
+          body = { prompt: currentTabState.prompt, type: "custom", reference: referenceOverride, references: referencesOverride, docFiles: docFilesOverride, useStoredAds, directMode }
+        }
       } else if (targetTab === "studio") {
         body = { prompt: currentTabState.prompt, reference: referenceOverride || base64File || previewUrl, type: studioSubTab }
       } else {
@@ -464,26 +733,9 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
       const data = await response.json()
       
       if (data.creative) {
-        // Evaluate Quality Score
-        const variants = data.creative.variants || [];
-        const maxScore = variants.length > 0 ? Math.max(...variants.map((v: any) => v?.score?.overall || 0)) : 10; // default 10 if variants don't have scores
-        
-        // Auto-Regenerate if below 7.5 — capped at 1 retry (2 total attempts) to
-        // avoid the frustrating 4-attempt cycle. The hardened prompts make
-        // first-shot quality high enough that more retries are wasted compute.
-        if (maxScore < 7.5 && (optionsOverride?.retryCount || 0) < 1) {
-          toast.info(`Quality score (${maxScore}/10) below 7.5. Auto-regenerating once with sharper directives…`);
-
-          if (generationInterval.current) clearInterval(generationInterval.current);
-
-          // Retry with improved prompt instructions
-          handleGenerate({
-            ...optionsOverride,
-            retryCount: (optionsOverride?.retryCount || 0) + 1
-          }, `${promptOverride || currentTabState.prompt}\n\nCRITICAL FEEDBACK: The previous generation only scored ${maxScore}/10. You MUST improve clarity, persuasion, and structure. Automatically regenerate targeting a minimum score of 8/10. Make the messaging sharper and visuals more engaging.`);
-          return;
-        }
-
+        // Completion is terminal: once generation returns, we finish at 100% and
+        // show the final output. No score-based auto-regeneration — the automation
+        // must never restart itself from 0% (that caused the runaway regenerate).
         if (generationInterval.current) clearInterval(generationInterval.current)
         updateTabState(targetTab, { progress: 100 })
         
@@ -506,13 +758,29 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
 
           setSelectedVariantIdx(0)
           setLatestResults(prev => ({ ...prev, [targetTab]: data.creative }))
-          updateTabState(targetTab, { 
-            result: data.creative, 
-            mode: "complete", 
-            isGenerating: false 
+          updateTabState(targetTab, {
+            result: data.creative,
+            mode: "complete",
+            isGenerating: false
           })
-          // Auto-save to history database
-          autoSaveToHistory(targetTab, data.creative)
+          // Shared id links the chat turn to its History record (lazy image load).
+          const histCreativeId = `creative-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+          // Append the assistant turn to the Custom chat thread.
+          if (targetTab === 'custom') {
+            setCustomMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                role: 'assistant',
+                result: data.creative,
+                prompt: promptOverride || currentTabState.prompt,
+                creativeId: histCreativeId,
+              },
+            ])
+          }
+          // Auto-save to history database (same id as the chat turn). Pass the
+          // uploaded reference image(s) so they persist with the turn.
+          autoSaveToHistory(targetTab, data.creative, histCreativeId, promptOverride || currentTabState.prompt, referencesOverride)
         }, 500)
       } else {
         if (generationInterval.current) clearInterval(generationInterval.current)
@@ -523,7 +791,16 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
       if (generationInterval.current) clearInterval(generationInterval.current)
       updateTabState(targetTab, { isGenerating: false, mode: targetTab === 'top-ads' ? 'ad-details' : 'standby' })
       if (targetTab === 'top-ads') setTopAdsStep('generate')
-      toast.error(err.message || "Generation failed")
+      const message = err.message || "Generation failed"
+      toast.error(message)
+      // Surface the failure inline in the Custom chat so it's never a silent
+      // "nothing happened" — the user sees exactly why and can retry.
+      if (targetTab === 'custom') {
+        setCustomMessages(prev => [
+          ...prev,
+          { id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, role: 'assistant', error: message },
+        ])
+      }
     }
   }
 
@@ -583,42 +860,93 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
   return (
     <div className={cn("flex flex-col bg-background text-foreground font-sans", isHistoryOpen ? "min-h-full" : "h-full overflow-hidden")} suppressHydrationWarning>
 
-      {/* Studio sub-tabs — AppShell topbar already provides app-level header.
+      {/* Studio header — chat-conversation chrome. AppShell topbar already
+          provides the app-level header; this is the Studio-local topbar + tabs.
           Hidden entirely in History view (History has its own header + Back). */}
-      {!isHistoryOpen && (
-        <header className="px-4 md:px-6 py-3 border-b border-border bg-background z-20 shrink-0">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-3">
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <h1 className="text-base font-semibold tracking-tight">Studio</h1>
-              <p className="text-xs text-muted-foreground">Generate on-brand creatives with AI.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="bg-muted/40 p-0.5 rounded-lg border border-border flex w-full sm:w-auto">
-                <button onClick={() => setActiveMainTab("custom")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all cursor-pointer", activeMainTab === "custom" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Custom</button>
-                <button onClick={() => setActiveMainTab("top-ads")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all cursor-pointer", activeMainTab === "top-ads" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Top Ads</button>
-                <button onClick={() => setActiveMainTab("ad-library")} className={cn("flex-1 sm:flex-none px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-md transition-all cursor-pointer", activeMainTab === "ad-library" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
-                  <span className="flex items-center gap-1">
-                    <Database className="w-3.5 h-3.5" />
-                    Ad Library
-                  </span>
-                </button>
+      {!isHistoryOpen && (() => {
+        const subtitle =
+          activeMainTab === "custom" ? "Custom · chat conversation"
+          : activeMainTab === "top-ads" ? "Top ads · winning library"
+          : activeMainTab === "studio" ? "Reference studio · transform assets"
+          : "Ad library · brand & competitor intelligence"
+        const studioTabs: { id: string; label: string; icon?: typeof Database }[] = [
+          { id: "custom", label: "Custom" },
+          { id: "top-ads", label: "Top ads" },
+          { id: "ad-library", label: "Ad library", icon: Database },
+        ]
+        return (
+          <header className="z-20 shrink-0 border-b border-border bg-background/80 backdrop-blur-xl">
+            {/* Top row — identity + chat-level actions */}
+            <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-primary text-white shadow-sm">
+                <Sparkles className="h-4 w-4" />
               </div>
-              <button
-                onClick={toggleHistory}
-                className="px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold rounded-lg transition-all flex items-center gap-1.5 border cursor-pointer bg-muted/40 text-muted-foreground hover:text-foreground border-border hover:bg-muted/60"
-              >
-                <History className="w-3.5 h-3.5" />
-                History
-              </button>
-              {onClose && (
-                <button onClick={onClose} className="hidden sm:flex w-8 h-8 rounded-full bg-muted items-center justify-center hover:bg-muted/80 transition-colors border border-border shrink-0 cursor-pointer">
-                  <X className="w-4 h-4 text-muted-foreground" />
+              <div className="min-w-0">
+                <h1 className="truncate text-sm font-semibold tracking-tight">Studio</h1>
+                <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                {activeMainTab !== "ad-library" && (
+                  <button
+                    onClick={handleNewChat}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:brightness-105 active:translate-y-px"
+                  >
+                    <MessageSquarePlus className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">New chat</span>
+                  </button>
+                )}
+                <button
+                  onClick={toggleHistory}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-2 text-xs font-semibold text-primary transition-all hover:bg-primary/15"
+                >
+                  <History className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">History</span>
                 </button>
-              )}
+                {onClose && (
+                  <button
+                    onClick={onClose}
+                    aria-label="Close"
+                    className="grid h-9 w-9 place-items-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        </header>
-      )}
+            {/* Tabs row — source switcher */}
+            <nav
+              role="tablist"
+              aria-label="Creative sources"
+              className="flex items-center gap-1 overflow-x-auto px-2 sm:px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {studioTabs.map((t) => {
+                const Icon = t.icon
+                const selected = activeMainTab === t.id
+                return (
+                  <button
+                    key={t.id}
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() =>
+                      t.id === "top-ads" ? setTopAdsModalOpen(true) : setActiveMainTab(t.id)
+                    }
+                    className={cn(
+                      "relative flex items-center gap-1.5 whitespace-nowrap px-3 py-2.5 text-[13px] font-medium transition-colors",
+                      selected ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {Icon && <Icon className="h-3.5 w-3.5" />}
+                    {t.label}
+                    {selected && (
+                      <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-primary" />
+                    )}
+                  </button>
+                )
+              })}
+            </nav>
+          </header>
+        )
+      })()}
 
       {/* Main Container */}
         {/* History view — rendered in normal page flow (NOT an overlay) so it
@@ -627,28 +955,20 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
           <div className="w-full px-4 md:px-6 py-5">
             <CreativeHistoryView
               onClose={() => { setIsHistoryOpen(false); onHistoryChange?.(false); }}
-              onRegenerate={(prompt, result, tab, generationOptions) => {
-                const targetTab = tab || "custom";
-                setActiveMainTab(targetTab);
-                updateTabState(targetTab, {
-                  prompt: prompt || "",
-                  result: result || null,
-                  mode: result ? "complete" : "standby",
-                  generationOptions: generationOptions || undefined,
-                });
-                if (result) setSelectedVariantIdx(0);
-                setIsHistoryOpen(false);
-                onHistoryChange?.(false);
+              onRegenerate={({ conversationId: convId, messages }) => {
+                applyRestoredConversation(convId, messages || []);
               }}
             />
           </div>
         ) : (
+        <>
         <main className="flex-1 flex flex-col md:flex-row overflow-hidden w-full relative min-h-0">
 
-        {/* Sidebar — Hidden for Top Ads */}
+        {/* Brief sidebar — Custom uses the bottom composer instead; Top Ads
+            only shows it when there's an in-memory generation archive. */}
         <aside className={cn(
           "w-full md:w-[250px] border-b md:border-b-0 md:border-r border-border flex flex-col bg-card/50 transition-all duration-300 z-40 shrink-0",
-          // Only hide automatically for Top Ads if no history
+          activeMainTab === 'custom' && "hidden",
           activeMainTab === 'top-ads' && previousCreatives.length === 0 && "hidden"
         )}>
           <div className="p-4 shrink-0 border-b border-white/[0.04]">
@@ -751,61 +1071,7 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                   placeholder="What should this creative communicate? Audience, offer, tone…"
                   className="w-full flex-1 min-h-[120px] bg-muted/20 border border-border rounded-xl p-4 text-sm outline-none focus:ring-1 focus:ring-primary/30 transition-all leading-relaxed placeholder:opacity-30 custom-scrollbar resize-none text-foreground/80"
                 />
-                {/* Optional reference attachment (image or video) — merged in from Studio */}
-                <div className="shrink-0 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Reference (optional)</span>
-                    <div className="flex gap-0.5 bg-muted p-0.5 rounded-md border border-border">
-                      <button type="button" onClick={() => setStudioSubTab("image")} className={cn("px-2 py-0.5 rounded text-[10px] font-medium transition-all", studioSubTab === "image" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Image</button>
-                      <button type="button" onClick={() => setStudioSubTab("video")} className={cn("px-2 py-0.5 rounded text-[10px] font-medium transition-all", studioSubTab === "video" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Video</button>
-                    </div>
-                  </div>
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className={cn("w-full h-20 bg-muted/30 border border-dashed rounded-lg flex items-center justify-center cursor-pointer transition-all hover:bg-muted/50 relative overflow-hidden", previewUrl ? "border-primary/30" : "border-border")}
-                  >
-                    {previewUrl ? (
-                      studioSubTab === "image" ? (
-                        <img src={previewUrl} className="w-full h-full object-cover" alt="Ref" />
-                      ) : (
-                        <video src={previewUrl} className="w-full h-full object-cover" autoPlay muted loop />
-                      )
-                    ) : (
-                      <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                        <UploadCloud className="w-5 h-5 opacity-40" />
-                        <p className="text-[10px] font-medium opacity-60">Attach reference {studioSubTab}</p>
-                      </div>
-                    )}
-                    {previewUrl && (
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setPreviewUrl(null); setBase64File(null); }} className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center border border-white/20 hover:bg-destructive/20 transition-all text-white">
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept={studioSubTab === "image" ? "image/*" : "video/*"}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        setPreviewUrl(URL.createObjectURL(file))
-                        const reader = new FileReader()
-                        reader.onloadend = () => setBase64File(reader.result as string)
-                        reader.readAsDataURL(file)
-                      }
-                    }}
-                  />
-                </div>
-                {/* Auto-enhance banner — every prompt is expanded into a full brand brief */}
-                <div className="shrink-0 flex items-start gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2.5">
-                  <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                  <div className="text-[10px] text-muted-foreground leading-snug">
-                    <span className="font-medium text-foreground">Auto-enhance is always on.</span> Your prompt — even one line — is expanded into a full, brand-aware ad brief before generating. Add brand info in <span className="font-medium text-foreground">Settings → Brand Kit</span>.
-                  </div>
-                </div>
-                {/* Direct mode: fast single image vs full 3-variant pipeline */}
+                {/* Direct mode: bypass pipeline, send prompt straight to image model */}
                 <div className="shrink-0 rounded-md border border-primary/40 bg-primary/5 p-2.5">
                   <label className="flex items-start gap-2.5 cursor-pointer">
                     <input
@@ -816,69 +1082,12 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                     />
                     <div className="flex-1 min-w-0">
                       <div className="text-[11px] font-medium text-foreground leading-tight">
-                        Fast mode (recommended)
+                        Direct mode (recommended)
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
                         {directMode
-                          ? "ON — one enhanced image, fast. Your prompt is auto-expanded into a full brief, then rendered."
-                          : "OFF — full pipeline: Claude brief → 3 concept variants → text overlay. Slower, more options."}
-                      </div>
-                    </div>
-                  </label>
-                </div>
-                {/* Brand logo overlay — places the uploaded Brand Kit logo on the result */}
-                <div className="shrink-0 rounded-md border border-border bg-card/60 p-2.5">
-                  <label className="flex items-start gap-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={useLogo}
-                      onChange={(e) => setUseLogo(e.target.checked)}
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[11px] font-medium text-foreground leading-tight">
-                        Add brand logo
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
-                        {useLogo
-                          ? "ON — your uploaded logo is composited onto the ad. Set it in Settings → Brand Kit."
-                          : "OFF — no logo is placed on the generated image."}
-                      </div>
-                    </div>
-                  </label>
-                  {useLogo && (
-                    <div className="mt-2 flex items-center gap-2 pl-6">
-                      <span className="text-[10px] text-muted-foreground">Position</span>
-                      <select
-                        value={logoPosition}
-                        onChange={(e) => setLogoPosition(e.target.value as typeof logoPosition)}
-                        className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-[10px] outline-none focus:ring-1 focus:ring-primary/30"
-                      >
-                        <option value="top-left">Top left</option>
-                        <option value="top-right">Top right</option>
-                        <option value="bottom-left">Bottom left</option>
-                        <option value="bottom-right">Bottom right</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-                {/* Perfect text — render visual-only, then composite text in code (zero typos) */}
-                <div className="shrink-0 rounded-md border border-border bg-card/60 p-2.5">
-                  <label className="flex items-start gap-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={cleanText}
-                      onChange={(e) => setCleanText(e.target.checked)}
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[11px] font-medium text-foreground leading-tight">
-                        Perfect text (zero typos)
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
-                        {cleanText
-                          ? "ON — text is drawn in code with real fonts. Flawless spelling, cleaner layout (less integrated into the concept art)."
-                          : "OFF — the image model writes the text into the concept (more integrated look, but it may misspell a word)."}
+                          ? "ON — your prompt goes straight to the image model. No brief generation, no text overlay. One generation, full control."
+                          : "OFF — full pipeline: Claude brief → 3 variants → text overlay. More processing, more chances for noise."}
                       </div>
                     </div>
                   </label>
@@ -1323,9 +1532,44 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
           className="flex-1 bg-background relative flex flex-col min-w-0 min-h-0 overflow-y-auto custom-scrollbar scroll-smooth"
         >
           
-          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.015] pointer-events-none" 
-            style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '60px 60px' }} 
+          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.015] pointer-events-none"
+            style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '60px 60px' }}
           />
+
+          {/* Custom tab → chat conversation thread. Other tabs keep the
+              standby / ad-details / loading / complete viewport below. */}
+          {activeMainTab === "custom" ? (
+            <StudioChatThread
+              messages={customMessages}
+              isGenerating={currentTabState.isGenerating}
+              progress={currentTabState.progress}
+              isPaused={pausedTabsRef.current.has(activeMainTab)}
+              onTogglePause={() => {
+                if (pausedTabsRef.current.has(activeMainTab)) {
+                  pausedTabsRef.current.delete(activeMainTab)
+                } else {
+                  pausedTabsRef.current.add(activeMainTab)
+                }
+                forceUpdate({})
+              }}
+              onCancel={cancelProcess}
+              emptyState={
+                <StudioEmptyStage
+                  showStarters={false}
+                  description="Describe the ad you want or add a reference. Variations appear right here in the conversation."
+                  onPickStarter={(p) => updateTabState("custom", { prompt: p })}
+                />
+              }
+              savedMsgIds={savedMsgIds}
+              isSaving={isSaving}
+              onSave={handleSaveMessage}
+              onExport={exportImage}
+              onExpand={(url, title) => setPreviewImagePopup({ url, title })}
+              feedbackState={feedbackState}
+              onFeedback={handleFeedback}
+            />
+          ) : (
+          <>
 
           {/* STANDBY MODE */}
           {currentTabState.mode === "standby" && (
@@ -1531,17 +1775,27 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                 </div>
               )}
 
-              {activeMainTab !== "top-ads" && (
+              {activeMainTab === "custom" && (
+                <StudioEmptyStage
+                  showStarters={false}
+                  description="Describe the ad you want or add a reference. Variations appear right here in the conversation."
+                  onPickStarter={(p) => updateTabState("custom", { prompt: p })}
+                />
+              )}
+
+              {(activeMainTab === "studio" || activeMainTab === "ad-library") && (
                 <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 min-h-[400px]">
                   <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-border bg-muted text-primary">
-                    {activeMainTab === "custom" ? <Sparkles className="h-6 w-6" /> : <Settings2 className="h-6 w-6" />}
+                    {activeMainTab === "studio" ? <ImageIcon className="h-6 w-6" /> : <Database className="h-6 w-6" />}
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-lg font-semibold tracking-tight">Ready to generate</h3>
+                    <h3 className="text-lg font-semibold tracking-tight">
+                      {activeMainTab === "studio" ? "Transform a reference" : "Build your ad library"}
+                    </h3>
                     <p className="max-w-[320px] text-sm text-muted-foreground">
-                      {activeMainTab === "custom"
-                        ? "Write a brief on the left and hit Generate."
-                        : "Pick a source ad or template to start."}
+                      {activeMainTab === "studio"
+                        ? "Upload a reference and add an instruction on the left, then hit Generate."
+                        : "Sync ads from Meta or your uploads to power on-brand generation."}
                     </p>
                   </div>
                 </div>
@@ -2383,7 +2637,9 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                     </button>
                     <button
                       onClick={() => { 
-                        setRegenerateConfirm({ prompt: currentTabState.prompt, result: currentTabState.result, tab: activeMainTab })
+                        activeMainTab === "custom"
+                          ? handleComposerGenerate()
+                          : setRegenerateConfirm({ prompt: currentTabState.prompt, result: currentTabState.result, tab: activeMainTab })
                       }}
                       className="px-5 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-[11px] flex items-center gap-2 hover:opacity-90 transition-all font-sans shadow-md pointer-events-auto"
                     >
@@ -2418,7 +2674,9 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
                        </button>
                        <button
                          onClick={() => { 
-                           setRegenerateConfirm({ prompt: currentTabState.prompt, result: currentTabState.result, tab: activeMainTab })
+                           activeMainTab === "custom"
+                          ? handleComposerGenerate()
+                          : setRegenerateConfirm({ prompt: currentTabState.prompt, result: currentTabState.result, tab: activeMainTab })
                          }}
                          className="px-3 md:px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-[11px] flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
                        >
@@ -2527,6 +2785,9 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
             );
           })()}
 
+          </>
+          )}
+
         </section>
 
         {/* Global Image Popup Modal */}
@@ -2539,7 +2800,65 @@ export default function CreativeStudioView({ onClose, onHistoryChange, initialPr
         )}
 
       </main>
+
+        {/* Bottom composer — chat-conversation input for the Custom tab.
+            Stays visible during generation (Generate is disabled while busy). */}
+        {activeMainTab === "custom" && (
+          <StudioComposer
+            prompt={currentTabState.prompt}
+            onPromptChange={(v) => updateTabState("custom", { prompt: v })}
+            attachments={attachments}
+            onOpenAttachments={() => setAttachOpen(true)}
+            onRemoveAttachment={removeAttachment}
+            contextAds={creatives
+              .filter((c) => selectedIds.includes(c.adId))
+              .map((c) => ({ id: c.adId, name: c.adName || "Top ad", thumbnailUrl: c.thumbnailUrl }))}
+            onRemoveContextAd={(id) => setSelectedIds((prev) => prev.filter((x) => x !== id))}
+            genTypes={genTypes}
+            onToggleGenType={toggleGenType}
+            style={stylePreset}
+            onStyleChange={setStylePreset}
+            directMode={directMode}
+            onDirectModeChange={setDirectMode}
+            onGenerate={handleComposerGenerate}
+            isGenerating={currentTabState.isGenerating}
+            generateLabel="Generate"
+            placeholder={
+              customMessages.length > 0
+                ? "Reply with a new prompt to continue…"
+                : "Describe the ad creative — offer, tone, colors…"
+            }
+          />
         )}
+        </>
+        )}
+
+        {/* Attachment modal — opened from the composer "+" */}
+        <AttachmentModal
+          open={attachOpen}
+          onOpenChange={setAttachOpen}
+          attachments={attachments}
+          onAddFiles={addFiles}
+          onRemove={removeAttachment}
+          onClear={clearAttachments}
+        />
+
+        {/* Top Ads picker — opened from the "Top ads" tab. Selected ads become
+            context for the Custom chat; no navigation to a separate page. */}
+        <TopAdsModal
+          open={topAdsModalOpen}
+          onOpenChange={setTopAdsModalOpen}
+          creatives={creatives}
+          initialSelected={selectedIds}
+          onConfirm={(ids) => {
+            setSelectedIds(ids)
+            setActiveMainTab("custom")
+            if (ids.length > 0) {
+              toast.success(`${ids.length} top ad${ids.length === 1 ? "" : "s"} added as context`)
+            }
+          }}
+          onEnlarge={(url, title) => setPreviewImagePopup({ url, title })}
+        />
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {

@@ -112,7 +112,7 @@ const KPI_SPECS: Array<{
   { title: "ROAS", icon: TrendingUp, spark: [9, 8.4, 8.8, 8.2, 8.6, 8.1, 7.9], format: "x" },
 ];
 
-function buildKpis(
+export function buildKpis(
   spendLabel: string,
   rows: Record<TimeRange, Array<{ n: number; change: string; dir: Direction }>>,
 ): Record<TimeRange, KpiDatum[]> {

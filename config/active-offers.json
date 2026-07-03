@@ -1,0 +1,15 @@
+{
+  "_readme": "ACTIVE OFFERS — time-limited prices, promo codes and discount %s the compliance gate accepts in generated ad copy. The team edits this per campaign (Settings → Active Offers). 'expires' is an ISO date (inclusive, end of day) or null for open-ended; EXPIRED ENTRIES STOP VALIDATING IMMEDIATELY, so an expired code in copy gets stripped automatically. Evergreen brand facts do NOT belong here — they live in server/ai-studio/claim-gate.ts (APPROVED_BRAND_FACTS).",
+  "offers": [
+    {
+      "text": "$39",
+      "expires": null,
+      "note": "Challenge entry price - SET AN EXPIRY when the campaign is time-limited"
+    },
+    {
+      "text": "WELCOME20",
+      "expires": null,
+      "note": "Welcome promo code - SET AN EXPIRY when the campaign is time-limited"
+    }
+  ]
+}

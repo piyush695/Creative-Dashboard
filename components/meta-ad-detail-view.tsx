@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { useState } from "react"
 import {
     Sparkles,
     X,
@@ -658,27 +657,13 @@ function SummaryTab({ ad, formatCurrency, benchmark, onSelectMetric, activeAnaly
     if (!hasV3) {
         return (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
-                <Card className="p-4 md:p-5 bg-amber-500/5 border-amber-500/20 rounded-md">
-                    <div className="flex items-start gap-3">
-                        <div className="p-1.5 rounded-md bg-amber-500/15 text-amber-500 shrink-0">
-                            <Info className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest mb-1">Legacy Analysis</h4>
-                            <p className="text-[10px] md:text-[11px] text-muted-foreground leading-relaxed">
-                                This ad was analyzed with the previous prompt. Click <span className="font-bold text-foreground">Re-analyze</span> in the sidebar to upgrade it to the new <span className="font-bold text-foreground">5-lens × 5-funnel framework</span> — you'll get per-lens lever scores (5 psychology lenses) and per-stage diagnoses (which lever broke at which funnel stage).
-                            </p>
-                        </div>
-                    </div>
-                </Card>
-
-                {/* Show the legacy executive-summary card so the page isn't empty */}
+                {/* Show the executive-summary card so the page isn't empty */}
                 <Card className="p-3 md:p-5 bg-background border-border rounded-md shadow-sm">
                     <div className="flex items-center gap-2 mb-3">
                         <div className="p-1 rounded-lg bg-sky-600 flex items-center justify-center">
                             <Sparkles className="h-3.5 w-3.5 text-white" />
                         </div>
-                        <h3 className="font-bold text-sm md:text-base text-foreground tracking-tight">Executive Summary (legacy)</h3>
+                        <h3 className="font-bold text-sm md:text-base text-foreground tracking-tight">Executive Summary</h3>
                     </div>
                     <p className="text-muted-foreground text-[10px] md:text-sm leading-relaxed font-medium italic mb-3">
                         "{a.topInsight || a.verdictSummary || a.keyInsight || "No high-level insight available for this creative yet."}"
@@ -1010,11 +995,6 @@ export default function MetaAdDetailView({
     onReanalyzed
 }: MetaAdDetailViewProps) {
     const [activeTab, setActiveTab] = useState('summary')
-    const [isReanalyzing, setIsReanalyzing] = useState(false)
-    const [reanalyzeElapsed, setReanalyzeElapsed] = useState(0)
-    const reanalyzeTimerRef = useRef<NodeJS.Timeout | null>(null)
-    const [isEnriching, setIsEnriching] = useState(false)
-    const { toast } = useToast()
 
     if (!ad) return null
 
@@ -1030,161 +1010,6 @@ export default function MetaAdDetailView({
     const formatCurrency = (val: string | number) => {
         const num = typeof val === 'string' ? parseFloat(val) : val
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num)
-    }
-
-    const activeTabObj = tabs.find(t => t.id === activeTab) || tabs[0]
-    const ActiveTabIcon = activeTabObj.icon
-
-    // Cleanup the timer on unmount so we don't leak intervals if the user
-    // navigates away mid-analysis.
-    useEffect(() => {
-        return () => {
-            if (reanalyzeTimerRef.current) {
-                clearInterval(reanalyzeTimerRef.current)
-                reanalyzeTimerRef.current = null
-            }
-        }
-    }, [])
-
-    // Step labels for the progress UI during re-analysis. Times are based on
-    // an observed ~93s total runtime; if the request finishes faster we just
-    // skip ahead. If it's still running past the last step we show "Still
-    // working…" so the user knows it hasn't hung.
-    const reanalyzeStepFor = (elapsed: number): { label: string; pct: number } => {
-        if (elapsed < 2) return { label: "Loading ad data…", pct: 5 }
-        if (elapsed < 6) return { label: "Fetching image…", pct: 12 }
-        if (elapsed < 65) return { label: "Analyzing with Claude…", pct: 15 + Math.min(60, (elapsed - 6) * 1.1) }
-        if (elapsed < 85) return { label: "Parsing & sanitizing JSON…", pct: 82 }
-        if (elapsed < 95) return { label: "Saving to database…", pct: 92 }
-        return { label: `Still working… (${Math.round(elapsed)}s)`, pct: 97 }
-    }
-
-    // Re-analyze this Meta ad with the v2 prop-firm-aware analyzer.
-    // Hits POST /api/realtime/ads/:adId/reanalyze — server fetches the ad
-    // from creative_data, re-runs analyzeAd(), saves results back.
-    const handleReanalyze = async () => {
-        if (isReanalyzing || !ad.adId) return
-        setIsReanalyzing(true)
-        setReanalyzeElapsed(0)
-
-        // Start the live progress timer — ticks every 500ms so the elapsed
-        // counter and step label update smoothly without spamming React.
-        const start = Date.now()
-        reanalyzeTimerRef.current = setInterval(() => {
-            setReanalyzeElapsed((Date.now() - start) / 1000)
-        }, 500)
-
-        try {
-            toast({
-                title: "Re-analyzing creative",
-                description: "Running v2 analyzer. Watch the sidebar for live progress — typically 30-90 seconds.",
-                duration: 4000,
-            })
-
-            const res = await fetch(`/api/realtime/ads/${ad.adId}/reanalyze`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({}),
-            })
-
-            const payload = await res.json()
-            if (!res.ok || !payload.success) {
-                throw new Error(payload.error || `HTTP ${res.status}`)
-            }
-
-            const elapsedSec = Math.round((Date.now() - start) / 1000)
-            toast({
-                title: "Re-analysis complete",
-                description: `Done in ${elapsedSec}s. Refreshing view with new insights…`,
-                variant: "success",
-            })
-
-            // Refresh the parent's ad list so the new analysis shows on screen.
-            // Fallback to a full reload if no callback was passed.
-            if (onReanalyzed) {
-                onReanalyzed()
-            } else {
-                setTimeout(() => window.location.reload(), 600)
-            }
-        } catch (err: any) {
-            console.error("[MetaAdDetailView] Re-analysis failed:", err)
-            toast({
-                title: "Re-analysis failed",
-                description: err?.message || "Check the server logs.",
-                variant: "destructive",
-            })
-        } finally {
-            if (reanalyzeTimerRef.current) {
-                clearInterval(reanalyzeTimerRef.current)
-                reanalyzeTimerRef.current = null
-            }
-            setIsReanalyzing(false)
-            setReanalyzeElapsed(0)
-        }
-    }
-
-    // Auto-analyze on open — when a selected ad hasn't been analyzed yet, kick
-    // off the analyzer automatically so clicking any ad gives a live, real-time
-    // result without a manual "Re-analyze". Already-analyzed ads show instantly
-    // (the button still forces a fresh run). Guarded by adId so it fires once
-    // per ad and never loops after the result lands.
-    const autoAnalyzedRef = useRef<string | null>(null)
-    useEffect(() => {
-        if (!ad?.adId) return
-        const hasAnalysis = !!(ad.scoreOverall || ad.compositeRating || ad.analysisDate)
-        if (hasAnalysis) { autoAnalyzedRef.current = ad.adId; return }
-        if (autoAnalyzedRef.current === ad.adId || isReanalyzing) return
-        autoAnalyzedRef.current = ad.adId
-        handleReanalyze()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ad?.adId, ad?.scoreOverall, ad?.compositeRating, ad?.analysisDate])
-
-    const reanalyzeStep = isReanalyzing ? reanalyzeStepFor(reanalyzeElapsed) : null
-
-    // Pull fresh Phase-2 metrics from Meta Insights API (outbound_clicks,
-    // purchases, retention, rankings, etc.) and persist onto creative_data.
-    // After this lands, the next Re-analyze has way more to diagnose against.
-    const handleEnrichMetrics = async () => {
-        if (isEnriching || isReanalyzing || !ad.adId) return
-        setIsEnriching(true)
-        try {
-            toast({
-                title: "Pulling fresh Meta metrics",
-                description: "Calling Meta Insights API for outbound_clicks, purchases, ROAS rankings, retention. ~5-10 seconds.",
-                duration: 4000,
-            })
-            const res = await fetch(`/api/realtime/ads/${ad.adId}/enrich`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({}),
-            })
-            const payload = await res.json()
-            if (!res.ok || !payload.success) {
-                throw new Error(payload.error || `HTTP ${res.status}`)
-            }
-            const e = payload.data?.enriched || {}
-            // Build a short summary of what came back so the user sees concrete value
-            const bits: string[] = []
-            if (e.purchase_count != null) bits.push(`${e.purchase_count} purchases`)
-            if (e.cost_per_purchase != null) bits.push(`$${Number(e.cost_per_purchase).toFixed(2)} CPA`)
-            if (e.outbound_clicks_ctr != null) bits.push(`${Number(e.outbound_clicks_ctr).toFixed(2)}% outbound CTR`)
-            if (e.quality_ranking) bits.push(`Q:${e.quality_ranking}`)
-            toast({
-                title: "Metrics enriched",
-                description: bits.length ? bits.join(" · ") : "New metrics saved.",
-                variant: "success",
-            })
-            if (onReanalyzed) onReanalyzed()
-        } catch (err: any) {
-            console.error("[MetaAdDetailView] Enrich failed:", err)
-            toast({
-                title: "Enrichment failed",
-                description: err?.message || "Check the server logs.",
-                variant: "destructive",
-            })
-        } finally {
-            setIsEnriching(false)
-        }
     }
 
     return (

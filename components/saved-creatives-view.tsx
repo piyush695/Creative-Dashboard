@@ -188,7 +188,7 @@ export default function SavedCreativesView() {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Saved</h1>
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Saved Creatives</h1>
           <p className="text-sm text-muted-foreground">
             Your bookmarked creatives. {totalItems > 0 && <span className="text-foreground">{totalItems} total</span>}
           </p>
@@ -241,9 +241,7 @@ export default function SavedCreativesView() {
                 <tr>
                   <Th className="w-24">Preview</Th>
                   <Th>Creative</Th>
-                  <Th className="hidden lg:table-cell">Prompt</Th>
-                  <Th className="w-20 text-center">Score</Th>
-                  <Th className="w-36">Saved</Th>
+                  <Th className="w-44">Saved</Th>
                 </tr>
               </thead>
               <tbody>
@@ -281,16 +279,6 @@ export default function SavedCreativesView() {
                           </span>
                         </div>
                       </div>
-                    </td>
-                    <td className="hidden max-w-[420px] px-4 py-3 lg:table-cell">
-                      <p className="line-clamp-2 text-xs text-muted-foreground">
-                        {entry.prompt || <span className="italic opacity-60">No prompt</span>}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex h-7 min-w-[40px] items-center justify-center rounded-md border border-primary/30 bg-primary/10 px-2 text-xs font-semibold tabular-nums text-primary">
-                        {entry.score || entry.result?.targetScore || "—"}
-                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5 text-xs text-foreground">
@@ -332,25 +320,22 @@ export default function SavedCreativesView() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h4 className="line-clamp-1 text-sm font-medium">{entry.headline || "Untitled"}</h4>
-                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                    {entry.prompt || "No prompt"}
-                  </p>
-                  {getEntryDate(entry) && (
-                    <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <Calendar className="h-3 w-3 text-sky-500" />
-                      <span>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+                      {entry.tab || "Studio"}
+                    </span>
+                    {getEntryDate(entry) && (
+                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Calendar className="h-3 w-3 text-sky-500" />
                         {new Date(getEntryDate(entry)!).toLocaleDateString([], {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
                         })}
                       </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-                <span className="inline-flex h-7 shrink-0 items-center justify-center rounded-md border border-primary/30 bg-primary/10 px-2 text-xs font-semibold tabular-nums text-primary">
-                  {entry.score || entry.result?.targetScore || "—"}
-                </span>
               </button>
             ))}
           </div>

@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Creative Studio — Attachments (Redesign)</title>
+<meta name="description" content="Simplified single-screen Creative Studio with a ChatGPT-style attachment modal and multi-select generation types." />
+
+<!--
+  ============================================================================
+  CREATIVE STUDIO — SIMPLIFIED + ATTACHMENT MODAL  (standalone, no build step)
+  ============================================================================
+  WHAT CHANGED IN THIS PASS
+    REMOVED (clutter):
+      • top-center nav (Create/Library/Insights/Assets)
+      • theme toggle + hamburger (top-right)
+      • right-side "Assets" tab
+      • aspect-ratio dropdown in the composer
+      • standalone "Reference" button  → merged into the new "+" (both upload)
+    ADDED:
+      • floating "+" button in the composer  ┐ both open the SAME
+      • "Add" button in the top bar          ┘ ChatGPT-style upload modal
+      • multi-select "Generation Type" dropdown
+      • upload modal: file-type quick-add, drag & drop, multi-select,
+        live previews, per-file removal — all before submitting
+
+  LAYOUT: one full-screen column (no page scroll):
+      topbar → tabs → stage (hero) → composer
+  ============================================================================
+-->
+
+<style>
+  /* ========================================================================
+     1. DESIGN TOKENS  (HolaPrime palette, light theme only — toggle removed)
+     ===================================================================== */
+  :root {
+    --bg:           #f7f8fa;
+    --surface:      #ffffff;
+    --surface-2:    #f1f3f7;
+    --fg:           #1a1d29;
+    --fg-muted:     #6b7280;
+    --fg-subtle:    #9aa1ad;
+    --border:       #e6e8ee;
+    --border-strong:#d3d7e0;
+    --primary:      #007aff;
+    --primary-fg:   #ffffff;
+    --primary-soft: #e8f1ff;
+    --accent:       #ff5a3c;
+    --accent-fg:    #ffffff;
+    --ring:         #007aff66;
+    --grad: linear-gradient(135deg,#0a4a8a 0%,#1184d6 52%,#0dd6ec 100%);
+    --shadow-sm: 0 1px 2px rgba(20,24,40,.06), 0 2px 8px rgba(20,24,40,.05);
+    --shadow-md: 0 4px 12px rgba(20,24,40,.08), 0 12px 28px rgba(20,24,40,.10);
+    --shadow-lg: 0 18px 48px rgba(20,24,40,.22);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  /* ========================================================================
+     2. RESET & BASE
+     ===================================================================== */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px; line-height: 1.5;
+    color: var(--fg); background: var(--bg);
+    -webkit-font-smoothing: antialiased; overflow: hidden;   /* single-screen */
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
+  ::placeholder { color: var(--fg-subtle); }
+  .icon { width: 20px; height: 20px; flex: none; stroke-width: 1.8; }
+  .icon-sm { width: 16px; height: 16px; stroke-width: 1.9; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  /* ========================================================================
+     3. APP GRID — one full-screen column
+     ===================================================================== */
+  .app { height: 100dvh; display: grid; grid-template-rows: auto auto 1fr auto; }
+
+  /* ---- 3a. TOP BAR (simplified) ---------------------------------------- */
+  .topbar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 22px; background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand__mark {
+    width: 34px; height: 34px; flex: none; display: grid; place-items: center;
+    border-radius: 10px; background: var(--grad); color: #fff; box-shadow: var(--shadow-sm);
+  }
+  .brand__meta { min-width: 0; }
+  .brand__meta h1 {
+    margin: 0; font-size: 14.5px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .brand__meta p { margin: 0; font-size: 12px; color: var(--fg-muted); }
+  .topbar__spacer { flex: 1; }
+  .topbar__actions { display: flex; align-items: center; gap: 8px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 14px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border); background: var(--surface); color: var(--fg);
+    transition: background .15s, border-color .15s, filter .15s;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn--primary { background: var(--primary); color: var(--primary-fg); border-color: transparent; }
+  .btn--primary:hover { filter: brightness(1.06); background: var(--primary); }
+  /* Soft-primary: themed but lighter than the solid CTA — used for History */
+  .btn--soft { background: var(--primary-soft); color: var(--primary); border-color: transparent; }
+  .btn--soft:hover { background: #d7e8ff; }
+
+  /* ---- 3b. TABS (Assets tab removed) ----------------------------------- */
+  .tabs {
+    display: flex; align-items: center; gap: 4px;
+    padding: 0 22px; background: var(--surface); border-bottom: 1px solid var(--border);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    position: relative; padding: 11px 13px; border: none; background: none;
+    font-size: 13px; font-weight: 500; color: var(--fg-muted); white-space: nowrap;
+  }
+  .tab:hover { color: var(--fg); }
+  .tab[aria-selected="true"] { color: var(--primary); }
+  .tab[aria-selected="true"]::after {
+    content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px;
+    height: 2px; border-radius: 2px; background: var(--primary);
+  }
+
+  /* ---- 3c. STAGE (hero) ------------------------------------------------- */
+  .stage {
+    overflow-y: auto; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 24px;
+  }
+  .stage__mark {
+    width: 56px; height: 56px; display: grid; place-items: center;
+    border-radius: 16px; background: var(--grad); color: #fff;
+    box-shadow: var(--shadow-md); margin-bottom: 16px;
+  }
+  .stage h2 { margin: 0 0 6px; font-size: clamp(18px, 2.2vw, 22px); font-weight: 650; }
+  .stage p { margin: 0 0 22px; max-width: 440px; color: var(--fg-muted); font-size: 14px; }
+  .starters {
+    display: grid; gap: 10px; width: 100%; max-width: 640px;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .starter {
+    text-align: left; padding: 13px 14px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface);
+    transition: border-color .15s, box-shadow .15s, transform .12s;
+  }
+  .starter:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+  .starter strong { display: block; font-size: 13px; font-weight: 600; }
+  .starter span { font-size: 12px; color: var(--fg-muted); }
+
+  /* ========================================================================
+     3d. COMPOSER
+     ===================================================================== */
+  .composer-wrap { padding: 14px 22px 18px; background: var(--surface); border-top: 1px solid var(--border); }
+  .composer {
+    max-width: 920px; margin: 0 auto;
+    border: 1px solid var(--border); border-radius: 16px;
+    background: var(--surface-2); box-shadow: var(--shadow-sm);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .composer:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+
+  /* Attachment chip tray (shown above the prompt when files exist) */
+  .tray { display: none; flex-wrap: wrap; gap: 8px; padding: 12px 12px 0; }
+  .tray.has-items { display: flex; }
+  .tray-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 6px 6px 8px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--border); max-width: 220px;
+  }
+  .tray-chip img, .tray-chip .ficon {
+    width: 28px; height: 28px; border-radius: 6px; object-fit: cover; flex: none;
+    display: grid; place-items: center; background: var(--surface-2); color: var(--fg-muted);
+  }
+  .tray-chip .name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tray-chip .x { border: none; background: none; color: var(--fg-subtle); padding: 4px; border-radius: 6px; flex: none; }
+  .tray-chip .x:hover { background: var(--surface-2); color: var(--fg); }
+
+  .composer__prompt {
+    display: block; width: 100%; border: none; background: none; resize: none;
+    padding: 14px 16px 6px; min-height: 52px; max-height: 132px; color: var(--fg); line-height: 1.55;
+  }
+  .composer__prompt:focus { outline: none; }
+  .composer__bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 10px 10px; }
+  .composer__bar .spacer { flex: 1; min-width: 8px; }
+
+  /* Floating "+" — circular attach trigger (ChatGPT-style) */
+  .plus {
+    width: 38px; height: 38px; flex: none; display: grid; place-items: center;
+    border-radius: 50%; border: 1px solid var(--border); background: var(--surface);
+    color: var(--fg-muted); position: relative;
+    transition: background .15s, color .15s, border-color .15s, transform .12s;
+  }
+  .plus:hover { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); }
+  .plus:active { transform: scale(.94); }
+  .plus__badge {
+    position: absolute; top: -4px; right: -4px; min-width: 17px; height: 17px; padding: 0 4px;
+    border-radius: 9px; background: var(--primary); color: #fff; font-size: 10.5px; font-weight: 700;
+    display: none; align-items: center; justify-content: center; line-height: 1;
+  }
+  .plus__badge.show { display: flex; }
+
+  .ctrl-wrap { position: relative; display: inline-flex; }
+  .ctrl {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 11px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface);
+    font-size: 12.5px; font-weight: 500; color: var(--fg-muted);
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .ctrl:hover { border-color: var(--border-strong); color: var(--fg); }
+  .ctrl[aria-pressed="true"], .ctrl[aria-expanded="true"] { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+  .ctrl__badge { font-size: 10.5px; font-weight: 700; color: var(--primary); background: var(--primary-soft); padding: 2px 6px; border-radius: 5px; }
+  .ctrl__count { font-weight: 700; color: var(--primary); background: var(--primary-soft); border-radius: 999px; padding: 1px 7px; font-size: 11px; }
+
+  /* Primary CTA — matches the dashboard theme (HolaPrime blue) and the New chat button */
+  .btn-generate {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 9px 18px; border: none; border-radius: 10px;
+    background: var(--primary); color: var(--primary-fg);
+    font-size: 13.5px; font-weight: 600; box-shadow: var(--shadow-sm);
+    transition: filter .15s, transform .12s;
+  }
+  .btn-generate:hover { filter: brightness(1.06); }
+  .btn-generate:active { transform: translateY(1px); }
+
+  /* ---- Popover menus (engine single-select, generation multi-select) --- */
+  .menu {
+    position: absolute; bottom: calc(100% + 8px); left: 0;
+    min-width: 230px; padding: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow-lg);
+    opacity: 0; transform: translateY(6px) scale(.98); transform-origin: bottom left;
+    pointer-events: none; transition: opacity .14s, transform .14s; z-index: 60;
+  }
+  .menu.open { opacity: 1; transform: none; pointer-events: auto; }
+  .menu__head { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--fg-muted); padding: 6px 8px 4px; }
+  .menu__item {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 9px 10px; border: none; background: none; border-radius: 8px;
+    font-size: 13px; color: var(--fg); text-align: left;
+  }
+  .menu__item:hover { background: var(--surface-2); }
+  .menu__item small { display: block; color: var(--fg-muted); font-weight: 400; font-size: 11.5px; }
+  .menu__check { margin-left: auto; opacity: 0; color: var(--primary); }
+  .menu__item[aria-checked="true"] { color: var(--primary); font-weight: 600; }
+  .menu__item[aria-checked="true"] .menu__check { opacity: 1; }
+  /* Multi-select checkbox affordance */
+  .menu__box {
+    width: 18px; height: 18px; flex: none; border-radius: 5px;
+    border: 1.5px solid var(--border-strong); display: grid; place-items: center; color: #fff;
+  }
+  .menu__item[aria-checked="true"] .menu__box { background: var(--primary); border-color: var(--primary); }
+  .menu__item[aria-checked="true"] .menu__box svg { opacity: 1; }
+  .menu__box svg { opacity: 0; }
+
+  /* Consolidated Generation dropdown: wider, with sections */
+  .menu--wide { min-width: 270px; }
+  .menu__sep { height: 1px; background: var(--border); margin: 6px 6px; }
+
+  /* Style — single-select pills */
+  .style-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 8px 6px; }
+  .style-pill {
+    padding: 6px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 500;
+    border: 1px solid var(--border); background: var(--surface); color: var(--fg-muted);
+    transition: all .14s;
+  }
+  .style-pill:hover { border-color: var(--border-strong); color: var(--fg); }
+  .style-pill[aria-pressed="true"] { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+
+  /* Direct — toggle switch row */
+  .switch-row { justify-content: space-between; }
+  .switch {
+    width: 38px; height: 22px; flex: none; border-radius: 999px;
+    background: var(--border-strong); position: relative; transition: background .15s;
+  }
+  .switch::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+    border-radius: 50%; background: #fff; box-shadow: var(--shadow-sm); transition: left .15s;
+  }
+  .switch-row[aria-checked="true"] { color: var(--fg); }
+  .switch-row[aria-checked="true"] .switch { background: var(--primary); }
+  .switch-row[aria-checked="true"] .switch::after { left: 18px; }
+
+  /* ========================================================================
+     4. ATTACHMENT MODAL  (ChatGPT attachment-library inspired)
+     ===================================================================== */
+  .overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(15,19,32,.46); backdrop-filter: blur(2px);
+    display: grid; place-items: center; padding: 20px;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .modal {
+    width: 100%; max-width: 540px; max-height: 86dvh; overflow: hidden;
+    background: var(--surface); border-radius: 20px; box-shadow: var(--shadow-lg);
+    display: flex; flex-direction: column;
+    transform: translateY(14px) scale(.97); opacity: 0;
+    transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .22s;
+  }
+  .overlay.open .modal { transform: none; opacity: 1; }
+  .modal__head { display: flex; align-items: flex-start; gap: 12px; padding: 18px 20px 8px; }
+  .modal__head h3 { margin: 0; font-size: 16px; font-weight: 650; }
+  .modal__head p { margin: 2px 0 0; font-size: 12.5px; color: var(--fg-muted); }
+  .modal__close {
+    margin-left: auto; width: 34px; height: 34px; flex: none; display: grid; place-items: center;
+    border: none; background: var(--surface-2); border-radius: 9px; color: var(--fg-muted);
+    transition: background .15s, color .15s;
+  }
+  .modal__close:hover { background: var(--border); color: var(--fg); }
+  .modal__body { padding: 8px 20px 4px; overflow-y: auto; }
+  .modal__label { font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--fg-muted); margin: 14px 0 8px; }
+
+  /* Generation type — multi-select chips inside the modal */
+  .gen-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .gen-chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 12px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--fg-muted);
+    font-size: 13px; font-weight: 500; transition: all .14s;
+  }
+  .gen-chip:hover { border-color: var(--border-strong); color: var(--fg); }
+  .gen-chip[aria-pressed="true"] { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+
+  /* File-type quick-add buttons */
+  .ftypes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .ftype {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 12px 6px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface); color: var(--fg-muted);
+    font-size: 11.5px; font-weight: 500; transition: all .14s;
+  }
+  .ftype:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); transform: translateY(-1px); }
+  .ftype .icon { color: inherit; }
+
+  /* Drag & drop zone */
+  .dropzone {
+    margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 26px; border-radius: var(--radius);
+    border: 1.5px dashed var(--border-strong); background: var(--surface-2); color: var(--fg-muted);
+    text-align: center; transition: border-color .15s, background .15s, color .15s;
+  }
+  .dropzone.drag { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+  .dropzone strong { color: var(--fg); font-size: 13.5px; }
+  .dropzone.drag strong { color: var(--primary); }
+  .dropzone small { font-size: 11.5px; }
+  .dropzone u { cursor: pointer; }
+
+  /* Pending file list (previews + removal) */
+  .files { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .file {
+    display: flex; align-items: center; gap: 11px;
+    padding: 8px 10px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface);
+    animation: pop .18s ease;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .file__thumb {
+    width: 40px; height: 40px; flex: none; border-radius: 8px; object-fit: cover;
+    display: grid; place-items: center; background: var(--surface-2); color: var(--fg-muted);
+  }
+  .file__meta { min-width: 0; flex: 1; }
+  .file__name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file__sub { font-size: 11.5px; color: var(--fg-muted); }
+  .file__x {
+    flex: none; width: 32px; height: 32px; display: grid; place-items: center;
+    border: none; background: none; color: var(--fg-subtle); border-radius: 8px;
+    transition: background .15s, color .15s;
+  }
+  .file__x:hover { background: var(--surface-2); color: var(--accent); }
+  .empty-note { font-size: 12.5px; color: var(--fg-subtle); text-align: center; padding: 8px 0 2px; }
+
+  .modal__foot {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 20px 18px; border-top: 1px solid var(--border); margin-top: 12px;
+  }
+  .modal__foot .count { font-size: 12.5px; color: var(--fg-muted); margin-right: auto; }
+  .link-btn { border: none; background: none; color: var(--fg-muted); font-size: 12.5px; padding: 6px 8px; border-radius: 7px; }
+  .link-btn:hover { color: var(--accent); background: var(--surface-2); }
+
+  /* Toast */
+  .toast {
+    position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%) translateY(12px);
+    background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px;
+    font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg);
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 120;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ========================================================================
+     5. RESPONSIVE
+     ===================================================================== */
+  @media (max-width: 600px) {
+    .topbar { padding: 10px 14px; gap: 10px; }
+    .tabs { padding: 0 14px; }
+    .composer-wrap { padding: 10px 12px 14px; }
+    .btn__text { display: none; }
+    .btn { padding: 9px 11px; }
+    .brand__meta p { display: none; }
+    .stage { padding: 18px 14px; }
+    .starters { grid-template-columns: 1fr; gap: 8px; }
+    .starter:nth-child(n+3) { display: none; }     /* protect no-scroll */
+    .composer__bar .label-text { display: none; }   /* controls shrink to icon+badge */
+
+    /* Modal becomes a bottom sheet */
+    .overlay { padding: 0; align-items: flex-end; }
+    .modal { max-width: 100%; max-height: 92dvh; border-radius: 20px 20px 0 0; transform: translateY(100%); }
+    .ftypes { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <!-- ========================= TOP BAR ========================= -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand__mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>
+      </div>
+      <div class="brand__meta">
+        <h1>Summer sale — bold promo set</h1>
+        <p>Custom · chat conversation</p>
+      </div>
+    </div>
+
+    <div class="topbar__spacer"></div>
+
+    <div class="topbar__actions">
+      <!-- New chat: start a fresh creative conversation. -->
+      <button class="btn btn--primary" id="newChatBtn">
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span class="btn__text">New chat</span>
+      </button>
+      <!-- History: open prior conversations. Themed (soft-primary) for a consistent dashboard look. -->
+      <button class="btn btn--soft">
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.7 3M3 4v4h4"/><path d="M12 8v4l3 2"/></svg>
+        <span class="btn__text">History</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================= TABS (Assets tab removed) ========================= -->
+  <nav class="tabs" role="tablist" aria-label="Creative sources">
+    <button class="tab" role="tab" aria-selected="true">Custom</button>
+    <button class="tab" role="tab" aria-selected="false">Top ads</button>
+    <button class="tab" role="tab" aria-selected="false">Ad library</button>
+  </nav>
+
+  <!-- ========================= STAGE ========================= -->
+  <section class="stage">
+    <div class="stage__mark" aria-hidden="true">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>
+    </div>
+    <h2>Start a new creative</h2>
+    <p>Describe the ad you want, add a reference, or pick a starting point below. Variations appear right here in the conversation.</p>
+    <div class="starters">
+      <button class="starter" data-prompt="Mid-season sale promo — bold, neon, 4:5"><strong>Mid-season sale promo</strong><span>Bold, neon, 4:5</span></button>
+      <button class="starter" data-prompt="UGC testimonial — authentic, story 9:16"><strong>UGC testimonial</strong><span>Authentic, story 9:16</span></button>
+      <button class="starter" data-prompt="Forex challenge hook — high-contrast A/B"><strong>Forex challenge hook</strong><span>High-contrast A/B</span></button>
+      <button class="starter" data-prompt="Carousel — bestsellers, clean product grid"><strong>Carousel — bestsellers</strong><span>Clean product grid</span></button>
+    </div>
+  </section>
+
+  <!-- ========================= COMPOSER ========================= -->
+  <div class="composer-wrap">
+    <div class="composer">
+      <!-- Attachment tray: previews of committed files, removable -->
+      <div class="tray" id="tray" aria-label="Attached files"></div>
+
+      <!-- PROMPT -->
+      <textarea class="composer__prompt" id="prompt" rows="1"
+        placeholder="Describe the ad creative — offer, tone, colors… or pick a starter above"></textarea>
+
+      <!-- CONTROL BAR -->
+      <div class="composer__bar">
+        <!-- FLOATING "+" : opens the attachment modal -->
+        <button class="plus" id="plusBtn" aria-label="Add attachments">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span class="plus__badge" id="plusBadge">0</span>
+        </button>
+
+        <!-- GENERATION: one dropdown holding generation type (multi), style, and direct -->
+        <div class="ctrl-wrap">
+          <button class="ctrl" id="genBtn" aria-haspopup="menu" aria-expanded="false">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>
+            <span class="label-text">Generation</span>
+            <span class="ctrl__count" id="genCount">1</span>
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="menu menu--wide" id="genMenu" role="menu" aria-multiselectable="true">
+            <!-- Generation type — multi-select -->
+            <div class="menu__head">Generation type · pick one or more</div>
+            <button class="menu__item gen-opt" role="menuitemcheckbox" aria-checked="true"  data-val="Image"><span class="menu__box"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span> Image</button>
+            <button class="menu__item gen-opt" role="menuitemcheckbox" aria-checked="false" data-val="Video"><span class="menu__box"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span> Video</button>
+            <button class="menu__item gen-opt" role="menuitemcheckbox" aria-checked="false" data-val="Carousel"><span class="menu__box"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span> Carousel</button>
+            <button class="menu__item gen-opt" role="menuitemcheckbox" aria-checked="false" data-val="Story"><span class="menu__box"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span> Story</button>
+            <button class="menu__item gen-opt" role="menuitemcheckbox" aria-checked="false" data-val="UGC"><span class="menu__box"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span> UGC</button>
+
+            <div class="menu__sep"></div>
+
+            <!-- Style — single-select (moved out of the bar) -->
+            <div class="menu__head">Style</div>
+            <div class="style-row" id="styleRow" role="group" aria-label="Style">
+              <button class="style-pill" data-style="" aria-pressed="true">None</button>
+              <button class="style-pill" data-style="Neon" aria-pressed="false">Neon</button>
+              <button class="style-pill" data-style="Minimal" aria-pressed="false">Minimal</button>
+              <button class="style-pill" data-style="Retro" aria-pressed="false">Retro</button>
+              <button class="style-pill" data-style="Luxe" aria-pressed="false">Luxe</button>
+            </div>
+
+            <div class="menu__sep"></div>
+
+            <!-- Direct — toggle (moved out of the bar) -->
+            <button class="menu__item switch-row" id="directRow" role="menuitemcheckbox" aria-checked="false">
+              <span>Direct mode<small>Bypass pipeline — send prompt verbatim</small></span>
+              <span class="switch" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+        <span class="spacer"></span>
+
+        <!-- GENERATE -->
+        <button class="btn-generate" id="generateBtn">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          Generate
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================= ATTACHMENT MODAL ========================= -->
+<div class="overlay" id="overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal__head">
+      <div>
+        <h3 id="modalTitle">Add to creative</h3>
+        <p>Upload references and drop files to guide your generation.</p>
+      </div>
+      <button class="modal__close" id="modalClose" aria-label="Close">
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="modal__body">
+      <!-- File-type quick add: each sets the accept filter and opens the picker -->
+      <div class="modal__label">Quick add</div>
+      <div class="ftypes">
+        <button class="ftype" data-accept="image/*">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          Images
+        </button>
+        <button class="ftype" data-accept="video/*">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="14" height="14" rx="2"/><path d="M16 9l6-3v12l-6-3"/></svg>
+          Videos
+        </button>
+        <button class="ftype" data-accept=".pdf,.doc,.docx">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg>
+          Documents
+        </button>
+        <button class="ftype" data-accept=".html,.htm">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9l-3 3 3 3"/><path d="M16 9l3 3-3 3"/><path d="M13 6l-2 12"/></svg>
+          HTML
+        </button>
+        <button class="ftype" data-accept=".txt,text/plain">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 12h8M8 16h8M8 8h2"/></svg>
+          Text
+        </button>
+      </div>
+
+      <!-- Drag & drop zone -->
+      <div class="dropzone" id="dropzone">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        <strong>Drag &amp; drop files here</strong>
+        <small>or <u id="browseLink">browse</u> · Images, Video, PDF, DOC, DOCX, HTML, TXT</small>
+      </div>
+      <input type="file" id="fileInput" multiple hidden />
+
+      <!-- Pending files with previews + per-file removal -->
+      <div class="modal__label" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>Files <span id="fileCount" style="color:var(--fg-subtle)">(0)</span></span>
+      </div>
+      <div class="files" id="fileList"></div>
+      <div class="empty-note" id="emptyNote">No files yet — drop or browse to add.</div>
+    </div>
+
+    <div class="modal__foot">
+      <span class="count" id="footCount">0 files attached</span>
+      <button class="link-btn" id="clearAll">Clear all</button>
+      <button class="btn-generate" id="doneBtn" style="padding:9px 20px;">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!--
+  ==========================================================================
+  JAVASCRIPT — all interactions wired:
+  engine (single) + generation (multi) popovers, attachment modal (open from
+  "+" and "Add"), file-type quick-add, drag & drop, previews, per-file removal,
+  composer tray sync, styles cycle, direct toggle, prompt autogrow, generate.
+  ==========================================================================
+-->
+<script>
+(function () {
+  var $  = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---- Toast ---------------------------------------------------------- */
+  var toast = $('#toast'), toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg; toast.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2000);
+  }
+
+  /* ---- Tabs ----------------------------------------------------------- */
+  var tabs = $$('.tab');
+  tabs.forEach(function (t) { t.addEventListener('click', function () {
+    tabs.forEach(function (x) { x.setAttribute('aria-selected', 'false'); });
+    t.setAttribute('aria-selected', 'true');
+  }); });
+
+  /* ---- Popovers (engine, generation) ---------------------------------- */
+  function closeAllMenus() {
+    $$('.menu.open').forEach(function (m) { m.classList.remove('open'); });
+    $$('[aria-haspopup="menu"][aria-expanded="true"]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
+  }
+  function wirePopover(btn, menu, keepOpen) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var willOpen = !menu.classList.contains('open');
+      closeAllMenus();
+      if (willOpen) { menu.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); }
+    });
+    menu.addEventListener('click', function (e) { e.stopPropagation(); if (!keepOpen) closeAllMenus(); });
+  }
+  document.addEventListener('click', closeAllMenus);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeAllMenus(); closeModal(); } });
+
+  wirePopover($('#genBtn'), $('#genMenu'), true);   // consolidated panel — stays open while adjusting
+
+  /* ---- Generation dropdown: type (multi) + style (single) + direct ---- */
+  // Generation type — multi-select
+  function genSelected() { return $$('#genMenu .gen-opt[aria-checked="true"]').map(function (x) { return x.getAttribute('data-val'); }); }
+  function refreshGenCount() {
+    var n = genSelected().length;
+    $('#genCount').textContent = String(n);
+    $('#genBtn').setAttribute('aria-pressed', n > 0 ? 'true' : 'false');
+  }
+  $$('#genMenu .gen-opt').forEach(function (opt) {
+    opt.addEventListener('click', function () {
+      opt.setAttribute('aria-checked', opt.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+      refreshGenCount();
+    });
+  });
+  refreshGenCount();
+
+  // Style — single-select pills
+  function selectedStyle() {
+    var p = $('#styleRow .style-pill[aria-pressed="true"]');
+    return p ? p.getAttribute('data-style') : '';
+  }
+  $$('#styleRow .style-pill').forEach(function (pill) {
+    pill.addEventListener('click', function () {
+      $$('#styleRow .style-pill').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      pill.setAttribute('aria-pressed', 'true');
+    });
+  });
+
+  // Direct — toggle row
+  var directRow = $('#directRow');
+  directRow.addEventListener('click', function () {
+    directRow.setAttribute('aria-checked', directRow.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+  });
+  function isDirect() { return directRow.getAttribute('aria-checked') === 'true'; }
+
+  /* ---- Prompt: autogrow + Enter-to-generate --------------------------- */
+  var prompt = $('#prompt');
+  function autogrow() { prompt.style.height = 'auto'; prompt.style.height = Math.min(132, prompt.scrollHeight) + 'px'; }
+  prompt.addEventListener('input', autogrow);
+  prompt.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generate(); } });
+  $$('.starter').forEach(function (card) {
+    card.addEventListener('click', function () { prompt.value = card.getAttribute('data-prompt'); autogrow(); prompt.focus(); });
+  });
+
+  /* ====================================================================
+     ATTACHMENT MODAL + FILE MANAGEMENT
+     ==================================================================== */
+  var overlay = $('#overlay'), fileInput = $('#fileInput'), dropzone = $('#dropzone');
+  var fileList = $('#fileList'), tray = $('#tray');
+  var attachments = [];   // { id, file, name, size, kind, url }
+
+  // Map a File to a coarse kind for icon/preview selection
+  function kindOf(file) {
+    var t = file.type, n = file.name.toLowerCase();
+    if (t.indexOf('image/') === 0) return 'image';
+    if (t.indexOf('video/') === 0) return 'video';
+    if (/\.(html?|htm)$/.test(n) || t === 'text/html') return 'html';
+    if (/\.(pdf|docx?|)$/.test(n) && /\.(pdf|docx?)$/.test(n)) return 'doc';
+    if (/\.txt$/.test(n) || t === 'text/plain') return 'text';
+    return 'file';
+  }
+  function fmtSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(0) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+  var ICONS = {
+    image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+    video: '<rect x="2" y="5" width="14" height="14" rx="2"/><path d="M16 9l6-3v12l-6-3"/>',
+    doc:   '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/>',
+    html:  '<path d="M8 9l-3 3 3 3"/><path d="M16 9l3 3-3 3"/><path d="M13 6l-2 12"/>',
+    text:  '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/>',
+    file:  '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/>'
+  };
+  function svgIcon(kind, cls) {
+    return '<svg class="' + (cls || 'icon-sm') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' + (ICONS[kind] || ICONS.file) + '</svg>';
+  }
+
+  var uid = 0;
+  function addFiles(list) {
+    Array.prototype.forEach.call(list, function (file) {
+      // de-dupe by name + size
+      if (attachments.some(function (a) { return a.name === file.name && a.size === file.size; })) return;
+      var kind = kindOf(file);
+      attachments.push({
+        id: ++uid, file: file, name: file.name, size: file.size, kind: kind,
+        url: kind === 'image' ? URL.createObjectURL(file) : null
+      });
+    });
+    render();
+  }
+  function removeFile(id) {
+    var i = attachments.findIndex(function (a) { return a.id === id; });
+    if (i > -1) { if (attachments[i].url) URL.revokeObjectURL(attachments[i].url); attachments.splice(i, 1); render(); }
+  }
+
+  function render() {
+    // Modal list
+    fileList.innerHTML = '';
+    attachments.forEach(function (a) {
+      var row = document.createElement('div');
+      row.className = 'file';
+      var thumb = a.url
+        ? '<img class="file__thumb" src="' + a.url + '" alt="">'
+        : '<span class="file__thumb">' + svgIcon(a.kind, 'icon') + '</span>';
+      row.innerHTML = thumb +
+        '<div class="file__meta"><div class="file__name">' + esc(a.name) + '</div>' +
+        '<div class="file__sub">' + a.kind.toUpperCase() + ' · ' + fmtSize(a.size) + '</div></div>' +
+        '<button class="file__x" aria-label="Remove ' + esc(a.name) + '"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+      row.querySelector('.file__x').addEventListener('click', function () { removeFile(a.id); });
+      fileList.appendChild(row);
+    });
+
+    var n = attachments.length;
+    $('#fileCount').textContent = '(' + n + ')';
+    $('#footCount').textContent = n + (n === 1 ? ' file attached' : ' files attached');
+    $('#emptyNote').style.display = n ? 'none' : 'block';
+
+    // "+" badge
+    var badge = $('#plusBadge');
+    badge.textContent = String(n);
+    badge.classList.toggle('show', n > 0);
+
+    // Composer tray
+    tray.innerHTML = '';
+    tray.classList.toggle('has-items', n > 0);
+    attachments.forEach(function (a) {
+      var chip = document.createElement('div');
+      chip.className = 'tray-chip';
+      var thumb = a.url ? '<img src="' + a.url + '" alt="">' : '<span class="ficon">' + svgIcon(a.kind) + '</span>';
+      chip.innerHTML = thumb + '<span class="name">' + esc(a.name) + '</span>' +
+        '<button class="x" aria-label="Remove ' + esc(a.name) + '"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+      chip.querySelector('.x').addEventListener('click', function () { removeFile(a.id); });
+      tray.appendChild(chip);
+    });
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+
+  /* ---- Modal open/close ----------------------------------------------- */
+  function openModal() { overlay.classList.add('open'); overlay.setAttribute('aria-hidden', 'false'); }
+  function closeModal() { overlay.classList.remove('open'); overlay.setAttribute('aria-hidden', 'true'); }
+  $('#plusBtn').addEventListener('click', openModal);
+  $('#modalClose').addEventListener('click', closeModal);
+  $('#doneBtn').addEventListener('click', closeModal);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+  $('#clearAll').addEventListener('click', function () {
+    attachments.forEach(function (a) { if (a.url) URL.revokeObjectURL(a.url); });
+    attachments = []; render();
+  });
+
+  /* ---- File input + quick-add type buttons ---------------------------- */
+  $('#browseLink').addEventListener('click', function () { fileInput.removeAttribute('accept'); fileInput.click(); });
+  dropzone.addEventListener('click', function (e) { if (e.target.id !== 'browseLink') { fileInput.removeAttribute('accept'); fileInput.click(); } });
+  $$('.ftype').forEach(function (b) {
+    b.addEventListener('click', function () { fileInput.setAttribute('accept', b.getAttribute('data-accept')); fileInput.click(); });
+  });
+  fileInput.addEventListener('change', function () { if (fileInput.files.length) addFiles(fileInput.files); fileInput.value = ''; });
+
+  /* ---- Drag & drop ---------------------------------------------------- */
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    dropzone.addEventListener(ev, function (e) { e.preventDefault(); dropzone.classList.add('drag'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    dropzone.addEventListener(ev, function (e) { e.preventDefault(); if (ev === 'dragleave' && dropzone.contains(e.relatedTarget)) return; dropzone.classList.remove('drag'); });
+  });
+  dropzone.addEventListener('drop', function (e) { if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+
+  /* ---- Generate / New chat -------------------------------------------- */
+  function generate() {
+    var text = prompt.value.trim();
+    var gens = genSelected();
+    if (!text && attachments.length === 0) { prompt.focus(); showToast('Add a prompt, a file, or pick a starter first'); return; }
+    if (gens.length === 0) { showToast('Pick at least one generation type'); return; }
+    var style = selectedStyle();
+    showToast((isDirect() ? 'Direct · ' : '') + 'Generating ' + gens.join(' + ') +
+      (style ? ' · ' + style : '') +
+      (attachments.length ? ' · ' + attachments.length + ' file(s)' : '') + '…');
+  }
+  $('#generateBtn').addEventListener('click', generate);
+  $('#newChatBtn').addEventListener('click', function () {
+    prompt.value = ''; autogrow();
+    attachments.forEach(function (a) { if (a.url) URL.revokeObjectURL(a.url); });
+    attachments = []; render(); prompt.focus(); showToast('New chat started');
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

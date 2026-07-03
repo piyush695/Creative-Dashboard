@@ -188,32 +188,34 @@ export async function applyLogoOverlay(
     const width = metadata.width || 1080;
     const height = metadata.height || 1920;
 
-    // Logo sizing: ~17% of image width (smaller for better integration)
-    const logoTargetWidth = Math.round(width * 0.17);
-    // Position: slightly higher (top padding smaller than left padding)
-    const paddingLeft = Math.round(width * 0.03);
-    const paddingTop = Math.round(height * 0.015);
+    // ── Compact top-left brand placement, aligned on the SAME horizontal line as
+    //    the "#WeAreTraders" tagline (which the image model renders top-right inside
+    //    the reserved top brand strip). The stacked wordmark is band-constrained so
+    //    it never bleeds into the headline. ──
+    const brandLineCenterY = Math.round(height * 0.06); // strip center ≈ 6% from top
+    const logoMaxH = Math.round(height * 0.085);        // stacked 2-line wordmark
+    const logoMaxW = Math.round(width * 0.30);
+    const paddingLeft = Math.round(width * 0.055);
 
     // ── Load logo: prefer PNG file, fall back to SVG render ──
     let logoBuffer: Buffer;
     const logoPath = getLogoPath();
 
     if (fs.existsSync(logoPath)) {
-      // Load and process the logo PNG:
-      // 1. Resize to target width
-      // 2. Remove black background by making near-black pixels transparent
+      // Process the logo PNG:
+      // 1. Make the solid black background transparent (near-black → alpha 0)
+      // 2. TRIM the now-transparent padding so the wordmark hugs the corner
+      // 3. Resize INTO the brand band (height-constrained, width-capped)
       const rawLogo = await sharp(logoPath)
-        .resize({ width: logoTargetWidth, withoutEnlargement: true })
         .ensureAlpha()  // Ensure RGBA channels exist
         .raw()
         .toBuffer({ resolveWithObject: true });
 
       const { data, info } = rawLogo;
-      const { width: lw, height: lh, channels } = info;
+      const { channels } = info;
 
-      // Make near-black pixels transparent (threshold: RGB all < 30)
-      // This removes the solid black background from the AI-generated logo
-      const BLACK_THRESHOLD = 30;
+      // Make near-black pixels transparent (threshold: RGB all < 40)
+      const BLACK_THRESHOLD = 40;
       for (let i = 0; i < data.length; i += channels) {
         const r = data[i], g = data[i + 1], b = data[i + 2];
         if (r < BLACK_THRESHOLD && g < BLACK_THRESHOLD && b < BLACK_THRESHOLD) {
@@ -221,13 +223,15 @@ export async function applyLogoOverlay(
         }
       }
 
-      logoBuffer = await sharp(data, { raw: { width: lw, height: lh, channels } })
+      logoBuffer = await sharp(data, { raw: { width: info.width, height: info.height, channels } })
+        .trim()  // strip the transparent padding so the logo sits flush in the corner
+        .resize({ width: logoMaxW, height: logoMaxH, fit: 'inside', withoutEnlargement: true })
         .png()
         .toBuffer();
-      console.log(`[LogoOverlay] Loaded PNG logo → resized to ${logoTargetWidth}px (black bg removed)`);
+      console.log(`[LogoOverlay] Loaded PNG logo → black removed, trimmed, fit into ${logoMaxW}x${logoMaxH} band`);
     } else {
-      logoBuffer = await renderLogoFromSvg(logoTargetWidth);
-      console.log(`[LogoOverlay] Rendered SVG logo → ${logoTargetWidth}px`);
+      logoBuffer = await renderLogoFromSvg(Math.min(logoMaxW, Math.round(logoMaxH * 1.8)));
+      console.log(`[LogoOverlay] Rendered SVG logo → band ${logoMaxH}px tall`);
     }
 
     // ── FORCED OVERLAY ──
@@ -242,8 +246,11 @@ export async function applyLogoOverlay(
     // Instead of a solid black rectangle, we use a soft radial gradient shadow.
     // This allows the logo to pop while blending naturally with the background.
     const logoMeta = await sharp(logoBuffer).metadata();
-    const bgW = (logoMeta.width || logoTargetWidth) + 80;
-    const bgH = (logoMeta.height || Math.round(logoTargetWidth * 0.55)) + 80;
+    const logoH = logoMeta.height || logoMaxH;
+    // Vertically center the logo on the brand line so it aligns with #WeAreTraders.
+    const paddingTop = Math.max(0, brandLineCenterY - Math.round(logoH / 2));
+    const bgW = (logoMeta.width || logoMaxW) + 80;
+    const bgH = logoH + 80;
 
     const shadowSvg = `<svg width="${bgW}" height="${bgH}" xmlns="http://www.w3.org/2000/svg">
       <defs>

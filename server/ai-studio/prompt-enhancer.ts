@@ -44,7 +44,7 @@ Brand: Hola Prime — a premium prop trading firm. Tagline "#WeAreTraders".
 CTA (FIXED — never substitute): "Buy Challenge" (English) / "Compra el Challenge" (Spanish). NEVER "Start Now", "Get Started", "Learn More".
 Palette: deep near-black background (#000–#0A0A0F); white text; ONE accent — neon green or cyan for the hero number; blue pill CTA button.
 Tiers: funded challenges from $2K to $100K. USPs: 1-step process, 5% profit target, no time limits, fast withdrawals, no activation fees, high profit splits.
-Branding: logo top-left, "#WeAreTraders" pill top-right.
+Branding layout: the real logo is composited in the top-left corner in post-processing — leave that corner clear and do NOT draw it. "#WeAreTraders" pill sits top-right on the same line.
 Legal disclaimer (use verbatim, tiny, bottom — NEVER replace with "Terms apply"): "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON THEIR PERFORMANCE THROUGH SUCH DEMO HOLA PRIME ACCOUNTS."
 === END BRAND ===
 `;
@@ -74,6 +74,11 @@ const CREATIVE_DIRECTIONS: Array<{ format: string; accent: string; vibe: string 
   { format: 'a grey statutory broker risk-warning banner in its own legalese typeface, one line struck through in red ink and corrected so the math flips in the trader\'s favour', accent: 'red on grey', vibe: 'regulatory in-joke, insider wink' },
   { format: 'a month-view trading P&L calendar heatmap of red / green / grey day tiles, mostly green, one day hand-circled "evaluation passed"', accent: 'green', vibe: 'consistency over luck, the grind' },
   { format: 'a single minted challenge coin standing on its edge in a vast black void, a hard rim-light eclipse halo, the embossed crest in shadow', accent: 'bronze/gold', vibe: 'earned rite of passage, collectible status' },
+  // ── FTMO-tier archetypes (top prop-firm craft — funded-trader, proof at scale, testimonial) ──
+  { format: "a real funded trader's authentic celebration moment — modest desk, laptop showing a green payout confirmation, genuine relief and joy, documentary-style lighting (absolutely NOT cheesy stock)", accent: 'warm gold', vibe: 'human, believable win, aspirational' },
+  { format: "a funded trader's calm aspirational lifestyle — living the outcome (working from anywhere, quiet confidence, freedom), cinematic depth of field, premium and real", accent: 'cyan', vibe: 'this could be you, status earned' },
+  { format: 'a bold payout-milestone announcement — one giant cumulative figure (total paid to funded traders) as the hero, premium editorial typography on deep black, tiny supporting proof line', accent: 'neon green', vibe: 'social proof at scale, credibility' },
+  { format: "an authentic funded-trader testimonial quote card — a short real-sounding quote, small avatar, first name + a verified tick, clean premium dark layout", accent: 'white', vibe: 'peer proof, trust, de-risks the click' },
 ];
 
 // Creative ANGLES for the best-of-N panel — the lens each candidate commits to.
@@ -93,11 +98,42 @@ function shuffle<T>(arr: T[]): T[] {
   }
   return a;
 }
-function pickDirection() {
-  return CREATIVE_DIRECTIONS[Math.floor(Math.random() * CREATIVE_DIRECTIONS.length)];
+// ── Anti-repetition by DESIGN FAMILY ──────────────────────────────────────────
+// The 22 directions cluster into a few families (proof · human · status · bold ·
+// data). The judge tends to favour the "proof/receipt" family for proof-y prompts,
+// so excluding the exact format isn't enough — consecutive runs still all look like
+// receipts/screenshots. So we rotate at the FAMILY level: each run draws its
+// candidates from DISTINCT families, excluding the last couple of WINNING families,
+// so a bare prompt comes back as a visibly different design language every run.
+const RECENT_CAP = 2;
+const _recentFamilies: string[] = [];
+function familyOf(format: string): string {
+  const f = (format || '').toLowerCase();
+  if (/face|hands|trader'?s|holding a phone|silhouette|human/.test(f)) return 'human';
+  if (/vault|metal|membership|credit card|coin|cash|banknote|boarding pass|ticket/.test(f)) return 'status';
+  if (/brutalist|billboard|times.?square|poster|risk.?warning|helvetica/.test(f)) return 'bold';
+  if (/chart|candlestick|curve|heatmap|x-?ray|sparkline|terminal|ticker|calendar/.test(f)) return 'data';
+  return 'proof'; // receipt, invoice, leaked chat, notification, ATM screen, X post…
 }
-function pickDirectionsDistinct(n: number) {
-  return shuffle(CREATIVE_DIRECTIONS).slice(0, n);
+function recordFamily(format?: string) {
+  if (!format) return;
+  _recentFamilies.push(familyOf(format));
+  while (_recentFamilies.length > RECENT_CAP) _recentFamilies.shift();
+}
+// Pick n directions from n DISTINCT families, avoiding the recently-won families.
+function pickFromFamilies(n: number, exclude: string[]): { format: string; accent: string; vibe: string }[] {
+  const allFamilies = [...new Set(CREATIVE_DIRECTIONS.map((d) => familyOf(d.format)))];
+  let fams = allFamilies.filter((fam) => !exclude.includes(fam));
+  if (fams.length < Math.min(n, allFamilies.length)) fams = allFamilies; // not enough fresh ones
+  const chosen = shuffle(fams).slice(0, n);
+  while (chosen.length < n) chosen.push(allFamilies[Math.floor(Math.random() * allFamilies.length)]);
+  return chosen.map((fam) => {
+    const pool = CREATIVE_DIRECTIONS.filter((d) => familyOf(d.format) === fam);
+    return pool[Math.floor(Math.random() * pool.length)] || CREATIVE_DIRECTIONS[0];
+  });
+}
+function pickDirection(exclude: string[] = []) {
+  return pickFromFamilies(1, exclude)[0];
 }
 function pickAngles(n: number) {
   return shuffle(BRILLIANT_ANGLES).slice(0, n);
@@ -111,6 +147,10 @@ export interface EnhanceOptions {
   logoPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   /** How many candidate concepts to generate + judge. Default from STUDIO_BEST_OF (3). */
   bestOf?: number;
+  /** When the prompt is a photographic SCENE (a person doing something), lock the
+   *  literal subject + action: the brief may art-direct it but never replace it
+   *  with an object/receipt/screen concept. Pass the user's scene description. */
+  subjectLock?: string;
 }
 
 export interface OverlayText {
@@ -147,6 +187,26 @@ THE BRILLIANT BAR — push past "good/competent" to scroll-stopping (this is the
 - HUMANS ALLOWED: authentic human faces, reactions, hands, and UGC-style people ARE permitted and encouraged when the angle calls for it — this OVERRIDES any "graphic only / no faces" brand note. Keep them premium and real, never cheesy stock.
 - If an ASSIGNED ANGLE is given in the user message, commit to it 100% — that is your creative lens for this concept.
 
+TOP-PROP-FIRM CRAFT BAR (benchmark = the best FTMO / FundedNext / prop-firm ads — match their CONVERSION craft, applied to THIS brand; never copy their brand):
+- ONE dominant message per ad. Pick a single value prop or proof point and let it OWN the frame — never cram multiple offers (that reads cheap). Supporting details stay small and secondary.
+- PROOF IS SPECIFIC + CREDIBLE: real figures, exact payout amounts, timeframes ("paid in 7 minutes"), approval/denial rates. "We pay fast" is weak; "$8,400 withdrawn · 0 denials" is strong. Never fabricate — use the brand's real facts or clearly representative framing.
+- SOCIAL PROOF AT SCALE when it fits: cumulative payouts, number of funded traders, verified testimonials — the "everyone's getting paid" signal that de-risks the click.
+- ASPIRATIONAL BUT BELIEVABLE: real funded-trader moments + lifestyle (relief, freedom, vindication) beat generic luxury. A person must feel real, never cheesy stock.
+- PREMIUM RESTRAINT: confident and uncluttered, generous negative space, ONE hero focal point, a crisp accent. It looks expensive because it's disciplined, not busy.
+- ONE unmistakable CTA, and a hook that lands the emotion in the first 0.5 seconds.
+
+ART DIRECTION — MANDATORY (name EACH of these EXPLICITLY inside every imagePrompt AND visualPrompt; a brief that leaves any of them generic is INCOMPLETE — this is what separates a real art-directed ad from a merely described one):
+- FOCAL POINT + HIERARCHY: state the ONE hero the eye must hit first, and rank everything else as explicitly SUBORDINATE (secondary, tertiary). One hero only — never two elements competing for attention.
+- LIGHTING SETUP: name a real setup + direction — e.g. "low-key single rim light from back-left", "soft key with gentle fill", "hard chiaroscuro spotlight", "high-key editorial", "moody practical screen-glow". Never just "good"/"dramatic" lighting.
+- LENS / FRAMING / DEPTH OF FIELD: name a focal length + framing + DOF, and say what is sharp vs. what melts to bokeh — e.g. "85mm portrait, shallow f/1.8, tight crop", "35mm environmental wide, deep focus", "100mm macro on the receipt".
+- COLOUR GRADE + PALETTE: name a cohesive grade tied to the emotional beat and the brand's near-black base — e.g. "cool cyan monochrome on black", "teal-and-orange filmic grade", "warm amber low-key", "bleach-bypass steel". Restrained 3-4 colours, ONE hero accent — never rainbow.
+- NEGATIVE SPACE (anti-clutter): demand deliberate empty space and say it in words — "remove elements until the composition would break; if a thing does not earn its place, delete it." Cap at ~5-6 elements with real breathing room on all sides.
+- COMPOSITION RULE + THUMBNAIL (SQUINT) TEST: commit to ONE rule — "rule of thirds", "centered symmetry", or "intentional off-balance asymmetry" — and guarantee the hero + headline READ AT THUMBNAIL SIZE: if it turns to mush shrunk into a phone feed, it has failed.
+- MATERIAL / TEXTURE / MOOD: where relevant, specify tangible surface + finish (brushed metal, thermal-receipt paper grain, glossy black acrylic reflection, real skin pores + stubble, fine film grain) and the single-word mood.
+- PROOF IS NEVER CLUTTER: for a prop firm, CREDIBILITY CONVERTS — so restraint removes DECORATION (stray glows, particles, extra props, background noise), NEVER evidence. Payout / withdrawal screens, receipts, approval ticks, real figures, the offer/price, funded-account proof are CONVERSION elements — keep them visible, legible and prominent. When trimming, cut a decorative flourish, never a proof point. "Minimal" means fewer decorations, not less proof.
+
+BANNED FILLER — never write these hollow phrases; each one is a craft decision you failed to make. Replace every one with a concrete lighting / lens / grade / composition choice: "professional ad", "eye-catching", "modern design", "sleek and modern", "visually appealing", "high quality", "stunning", "clean and professional", "dynamic composition". If one slips in, delete it and specify the actual craft instead.
+
 HARD RULES:
 1. PRESERVE USER INTENT EXACTLY. Every number, price, %, promo code, date and proper noun appears UNCHANGED. Never invent offers; never drop given ones. Interpret ambiguity by COMMITTING to the strongest reading.
 2. BRAND IS GROUND TRUTH. Pull brand name, voice, palette, CTA wording, disclaimer, tiers and proof from the brand block. NEVER a generic CTA ("Start Now", "Get Started", "Learn More") when the brand specifies one. NEVER "Terms apply." when a real disclaimer exists — use the exact one. (The HUMANS-ALLOWED note above intentionally overrides any "no faces" brand line.)
@@ -154,10 +214,10 @@ HARD RULES:
 4. BANNED DEFAULTS / VARIETY: do NOT default to (a) a big chrome headline centred on plain black, or (b) a black price tag / hang tag / centred card — overused; everything starts looking identical. COMMIT to the ASSIGNED CREATIVE DIRECTION (format + accent) and ANGLE in the user message. Vary the accent as assigned (green, cyan, amber, violet, red, gold, white) — not always neon green.
 5. NO CLICHÉS: "AI-powered", "Revolutionary", "Next-gen", "Unlock your potential", "Algorithm", generic glow-on-black, cheesy stock-photo collages.
 6. SPELL EVERY WORD CORRECTLY, and render EACH on-image text string EXACTLY ONCE — the headline, each bullet, the price, the CTA and the disclaimer each appear in ONE location only. NEVER duplicate a block of copy (especially the feature/benefit list) across two zones of the image. List the exact on-image text strings. The brand hashtag must be spelled EXACTLY as given.
-7. WRITE FOR AN IMAGE MODEL: concrete and visual, 350–700 words — layout, exact on-image text, typography, colours BY NAME (no hex), lighting, materials, mood, where the hero/CTA/disclaimer sit. No markdown headers.
+7. WRITE FOR AN IMAGE MODEL: concrete and visual, 400–750 words — layout, exact on-image text, typography, colours BY NAME (no hex), and EVERY art-direction spec above stated explicitly (focal point + hierarchy, named lighting setup, lens/framing/DOF, colour grade, deliberate negative space with the "remove until it breaks" test, composition rule + thumbnail-readability, material/texture/mood), plus where the hero/CTA/disclaimer sit. RESERVE the top ~10-12% as a clean brand strip: keep the top-left corner clear (the real logo is composited there in post — do NOT draw it), put the "#WeAreTraders" pill top-right on that same line, and START THE HEADLINE BELOW the strip so nothing overlaps the logo corner. No markdown headers.
 
 ALSO return a "visualPrompt" and an "overlay" object for a zero-typo mode where text is drawn in code:
-- "visualPrompt": a TEXT-FREE plate — atmosphere/lighting/colour/abstract or human hero only, NO readable text, numbers, words or logo; reserve empty space top ~12% and bottom ~35%. Deep premium background.
+- "visualPrompt": a TEXT-FREE plate, FULL-BLEED and edge-to-edge — the hero subject or scene FILLS THE ENTIRE FRAME (a face/figure is large and dominant; an object/scene extends to all four edges). NO readable text, numbers, words or logo. Name the LENS/focal length, LIGHTING setup and COLOUR GRADE here too — same art-direction bar as the imagePrompt. KEEP proof DEVICES visible (a payout/withdrawal screen, a receipt, an approval tick, a funded-account dashboard) — but with ZERO letterforms or digits visible: heavily out-of-focus, angled away, or abstracted to glow and shape (an out-of-focus glowing screen, never fake numbers — placeholder/"illegible" filler ALWAYS renders as garbled junk and is FORBIDDEN); never delete the proof object itself. Do NOT leave blank or empty areas — instead make the TOP ~12% and BOTTOM ~38% naturally DARKER (cinematic shadow, gradient, vignette or depth-of-field falloff) so overlaid text stays legible WITHOUT any dead space. Deep, premium, cinematic — frame-filling, never a small element floating on an empty background.
 - "overlay": the EXACT text strings — headline short (<=6 words); 3–5 short USP bullets; price = ONE short hero token only (e.g. "$39", "40% OFF", or "$100K") — NEVER a phrase or two numbers (put phrases in headline/subheadline); cta = the brand's fixed CTA; disclaimer = the brand's exact disclaimer. Do NOT repeat the same offer across headline, subheadline, price and urgencyText — each field says something different.
 
 OUTPUT: raw JSON only, no fences, no preamble:
@@ -167,7 +227,7 @@ OUTPUT: raw JSON only, no fences, no preamble:
   "headline": "the primary on-image headline text (a HOOK, verbatim as it renders)",
   "cta": "the brand's fixed CTA",
   "imagePrompt": "the full literal 350-700 word image prompt, committed to ONE concept (text integrated)",
-  "visualPrompt": "a 120-250 word TEXT-FREE plate prompt — no words/numbers/logo, space reserved top & bottom",
+  "visualPrompt": "a 120-250 word TEXT-FREE plate prompt — FULL-BLEED frame-filling hero, no words/numbers/logo, ZERO letterforms even on screens/receipts (out-of-focus/abstracted), top & bottom naturally DARKENED (not empty) for text legibility",
   "overlay": { "headline": "", "subheadline": "", "price": "", "bullets": [], "cta": "", "urgencyText": "", "promoCode": "", "disclaimer": "" }
 }`;
 
@@ -182,9 +242,8 @@ function buildUserMessage(
   angle: string | null,
 ): string {
   const toneLine = opts.tone ? `\nTONE / STYLE OVERRIDE: ${opts.tone}` : '';
-  const logoLine = opts.logoWillBeComposited
-    ? `\nLOGO HANDLING: The real brand logo will be composited onto the ${opts.logoPosition || 'top-left'} corner AFTER generation. Keep that corner clear/empty (dark, no text, no drawn logo). Do NOT draw any brand wordmark/logo.`
-    : `\nLOGO HANDLING: No logo will be composited. Don't draw a brand logo/wordmark unless the user asked — keep brand corners clean.`;
+  const logoCorner = opts.logoPosition || 'top-left';
+  const logoLine = `\nBRAND STRIP (STRICT TOP-OF-CANVAS LAYOUT): Reserve the TOP ~10-12% of the canvas as a clean, uncluttered horizontal brand strip. The real brand logo is composited onto the ${logoCorner} corner of this strip AFTER generation — keep that corner COMPLETELY clear/empty (dark, no text, do NOT draw any logo or wordmark, do NOT write "Hola" or "Prime" anywhere). Place the "#WeAreTraders" pill in the TOP-RIGHT of the SAME strip, vertically centered on the same horizontal line as the (empty) logo corner. NOTHING else may enter this top strip — the headline and ALL other text/content MUST start BELOW it, never overlapping the corner.`;
 
   const angleBlock = angle
     ? `\nASSIGNED ANGLE (your creative lens for THIS concept — commit 100%):\n${angle}\n`
@@ -195,12 +254,21 @@ ASSIGNED CREATIVE DIRECTION (commit to THIS unless the user's request clearly na
 - Format / concept: ${direction.format}
 - Accent colour: ${direction.accent} (hero accent on the brand's deep near-black base)
 - Vibe: ${direction.vibe}
-Build the whole creative around this so it looks DIFFERENT from a generic dark price tag/card. Use the assigned accent, not green-by-default.`;
+Build the whole creative around this so it looks DIFFERENT from a generic dark price tag/card. Use the assigned accent, not green-by-default.
+Creative seed (for fresh variation in composition, props and wording — do NOT render this number anywhere): ${Math.floor(Math.random() * 1_000_000)}`;
+
+  const subjectLockBlock = opts.subjectLock
+    ? `
+SUBJECT LOCK — OVERRIDES THE ASSIGNED DIRECTION'S FORMAT:
+The user asked for a photographic SCENE: "${opts.subjectLock}".
+The image MUST literally depict this human subject and action as the frame-filling hero. You may art-direct it (lighting, lens, grade, mood, environment) but you may NOT substitute the subject with an object, receipt, screen, notification or any other stand-in concept. A person ${/celebrat/i.test(opts.subjectLock) ? 'celebrating' : 'doing the described action'} must be visible and dominant in BOTH imagePrompt and visualPrompt. If the assigned creative direction conflicts with this, keep its lighting/accent/vibe and DROP its format.
+`
+    : '';
 
   return `USER REQUEST (expand into a full BRILLIANT ad brief — preserve every number and word):
 """
 ${userPrompt}
-"""${toneLine}${logoLine}
+"""${toneLine}${logoLine}${subjectLockBlock}
 ${angleBlock}${directionBlock}
 ${effectiveBrand(opts)}
 
@@ -459,31 +527,37 @@ export async function enhanceImagePrompt(
   if (bestOf <= 1 || opts.directionHint) {
     const direction = opts.directionHint
       ? { format: opts.directionHint, accent: 'on-brand accent', vibe: '' }
-      : pickDirection();
+      : pickDirection(_recentFamilies);
     console.log(`[PromptEnhancer] Single brief | direction: ${direction.format}`);
     const brief = await generateBrief(buildUserMessage(trimmed, opts, direction, null), attempts, rules, trimmed);
+    if (brief && !opts.directionHint) recordFamily(direction.format);
     return brief || fallback;
   }
 
-  // ── BEST-OF-N: diverse angles × directions, generated in parallel, then judged ──
+  // ── BEST-OF-N: diverse angles × directions, generated in parallel, then judged.
+  //    Directions EXCLUDE the recent winners so the design language rotates each run. ──
   const angles = pickAngles(bestOf);
-  const dirs = pickDirectionsDistinct(bestOf);
-  console.log(`[PromptEnhancer] Brilliant mode: best-of-${bestOf} | angles: ${angles.map((a) => a.split(' —')[0]).join(', ')}`);
+  const dirs = pickFromFamilies(bestOf, _recentFamilies);
+  console.log(`[PromptEnhancer] Brilliant mode: best-of-${bestOf} | families: ${dirs.map((d) => familyOf(d.format)).join(', ')} | avoiding [${_recentFamilies.join(', ')}]`);
 
   const results = await Promise.all(
     angles.map((angle, i) =>
-      generateBrief(buildUserMessage(trimmed, opts, dirs[i], angle), attempts, rules, trimmed).catch(() => null),
+      generateBrief(buildUserMessage(trimmed, opts, dirs[i], angle), attempts, rules, trimmed)
+        .then((b) => (b ? { brief: b, dir: dirs[i] } : null))
+        .catch(() => null),
     ),
   );
-  const candidates = results.filter((b): b is EnhancedPrompt => !!b);
+  const candidates = results.filter(Boolean) as { brief: EnhancedPrompt; dir: { format: string; accent: string; vibe: string } }[];
 
   if (candidates.length === 0) {
     console.warn('[PromptEnhancer] All candidates failed — using original prompt.');
     return fallback;
   }
-  if (candidates.length === 1) return candidates[0];
+  if (candidates.length === 1) { recordFamily(candidates[0].dir.format); return candidates[0].brief; }
 
-  const winner = await judgeBriefs(trimmed, candidates, haveOpenAI, haveAnthropic);
-  console.log(`[PromptEnhancer] ✓ Best-of-${candidates.length} winner: "${candidates[winner].concept}"`);
-  return candidates[winner];
+  const winner = await judgeBriefs(trimmed, candidates.map((c) => c.brief), haveOpenAI, haveAnthropic);
+  const win = candidates[winner] || candidates[0];
+  recordFamily(win.dir.format);
+  console.log(`[PromptEnhancer] ✓ Best-of-${candidates.length} winner: "${win.brief.concept}" (${win.dir.format.slice(0, 28)})`);
+  return win.brief;
 }

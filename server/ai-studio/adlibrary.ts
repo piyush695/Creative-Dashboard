@@ -388,10 +388,10 @@ export async function fetchAdLibrary(
           // Special handling for permission errors — very common
           if (metaError.code === 10 || metaError.error_subcode === 2332002) {
             throw new Error(
-              `Ad Library API access not enabled. To fix:\n` +
-              `1. Go to facebook.com/ads/library/api\n` +
-              `2. Accept the Terms of Service\n` +
-              `3. Your existing META_ACCESS_TOKEN should then work.\n` +
+              `Ad Library API access not enabled for this app (code 10 / subcode 2332002). One-time fix:\n` +
+              `1. Complete Meta IDENTITY + LOCATION verification at facebook.com/id .\n` +
+              `2. developers.facebook.com → your app → add the "Ad Library API" use case and accept its Terms.\n` +
+              `3. IMPORTANT: only EU-reach countries return commercial (non-political) ads, so competitor brands like FTMO must be queried with EU ad_reached_countries (handled by fetchCompetitorAds).\n` +
               `(Original error: ${metaError.message})`
             );
           }
@@ -472,20 +472,36 @@ export async function fetchOwnAds(
 /**
  * Fetch competitor prop firm ads from the Ad Library.
  */
+// Commercial (non-political) ads are returned by the Ad Library API ONLY for EU
+// reach countries (DSA transparency) — a US query returns nothing for a brand like
+// FTMO. So competitor sweeps run across several EU markets and merge (dedup by id).
+const EU_DSA_COUNTRIES = ['DE', 'FR', 'ES', 'IT', 'NL', 'PL', 'IE', 'SE'];
+
 export async function fetchCompetitorAds(
   competitorName: string,
-  options: { activeOnly?: boolean; limit?: number; pageId?: string } = {}
+  options: { activeOnly?: boolean; limit?: number; pageId?: string; countries?: string[] } = {}
 ): Promise<AdLibraryResult> {
-  const { activeOnly = true, limit = 15, pageId } = options;
+  const { activeOnly = true, limit = 15, pageId, countries = EU_DSA_COUNTRIES } = options;
 
-  const result = await fetchAdLibrary(competitorName, {
-    adActiveStatus: activeOnly ? 'ACTIVE' : 'ALL',
-    limit,
-    pageId,
-  });
+  const seen = new Set<string>();
+  const merged: AdLibraryAd[] = [];
+  let base: AdLibraryResult | null = null;
+  let firstError: any = null;
+  for (const country of countries) {
+    try {
+      const r = await fetchAdLibrary(competitorName, { adActiveStatus: activeOnly ? 'ACTIVE' : 'ALL', limit, pageId, country });
+      if (!base) base = r;
+      for (const ad of r.ads || []) if (ad.id && !seen.has(ad.id)) { seen.add(ad.id); merged.push(ad); }
+    } catch (e) { if (!firstError) firstError = e; }
+  }
+  if (!base) throw firstError || new Error('Ad Library returned no results');
 
-  result.source = 'competitor';
-  return result;
+  merged.sort((a, b) => (a.isActive === b.isActive ? (b.daysRunning || 0) - (a.daysRunning || 0) : a.isActive ? -1 : 1));
+  base.ads = merged.slice(0, limit);
+  base.totalCount = base.ads.length;
+  base.source = 'competitor';
+  base.searchTerm = competitorName;
+  return base;
 }
 
 // ─── Brand DNA Extraction ───

@@ -21,10 +21,12 @@ export async function GET(req: Request) {
     // CRITICAL: imageUrl may be a multi-MB base64 string. We use aggregation
     // to only include short URL strings (< 500 chars = real URLs) and skip
     // massive base64 blobs so the response is instant.
+    // Project FIRST to drop the multi-MB base64 blobs, THEN sort — otherwise the
+    // createdAt sort runs on the full documents and exceeds MongoDB's 32MB
+    // in-memory sort limit. allowDiskUse is a further safety net.
     const history = await historyCollection
       .aggregate([
         { $match: query },
-        { $sort: { createdAt: -1 as const } },
         { $project: {
             creativeId: 1, tab: 1, prompt: 1,
             createdAt: 1, headline: 1, score: 1, parentId: 1, childId: 1,
@@ -43,8 +45,9 @@ export async function GET(req: Request) {
               }
             }
           }
-        }
-      ])
+        },
+        { $sort: { createdAt: -1 as const } }
+      ], { allowDiskUse: true })
       .toArray();
     
     return NextResponse.json({ historyLength: history.length, history: history || [] });

@@ -19,7 +19,8 @@ import { runCreativeDirector } from '@/server/ai-studio/director';
 // in code with real fonts. Eliminates Gemini/OpenAI text rendering errors entirely.
 import { applyTextOverlay, extractOverlayConfig } from '@/server/ai-studio/text-overlay';
 import { generateCrossPlatform, getAvailablePlatforms } from '@/server/ai-studio/crossplatform';
-import { generateImageOpenAI, editImageOpenAI } from '@/server/ai-studio/imagegen-openai';
+import { generateImageOpenAI, editImageOpenAI, getLastOpenAIError } from '@/server/ai-studio/imagegen-openai';
+import { buildDocContext } from '@/server/ai-studio/doc-extract';
 import { generateForAllPersonas, getAvailablePersonas } from '@/server/ai-studio/personas';
 // Cache module available but not used in main generation flows (generation must always be fresh)
 // import { getCached, setCache } from '@/server/ai-studio/cache';
@@ -28,7 +29,11 @@ import { getFullBrandContext } from '@/server/ai-studio/adlibrary';
 import { getStoredAdContext } from '@/server/ai-studio/ad-library-db';
 import { enhanceImagePrompt } from '@/server/ai-studio/prompt-enhancer';
 import { buildBrandKnowledgeContext, getBrandLogo } from '@/server/ai-studio/brand-knowledge';
-import { applyBrandLogoOverlay } from '@/server/ai-studio/logo-overlay';
+import { applyBrandLogoOverlay, applyLogoOverlay } from '@/server/ai-studio/logo-overlay';
+import { classifyPromptEngine } from '@/server/ai-studio/engine-router';
+import { generateTemplateVariations } from '@/server/ai-studio/template-pipeline';
+import { gateOverlayCopy, gateBriefCopy, gateImagePrompt, formatViolations, FIXED_DISCLAIMER } from '@/server/ai-studio/claim-gate';
+import { requireSession } from '@/server/api-auth';
 
 // ─── Text fidelity helpers — used to combat Gemini text-rendering errors ───
 // Gemini's image model frequently introduces character doubling ("sstep"),
@@ -76,7 +81,7 @@ const TEXT_OVERLAY_ENABLED = process.env.TEXT_OVERLAY !== 'off';
 // Directive replaces the text manifest when overlay mode is on. Tells the image
 // model emphatically to leave room for text we'll composite later — no actual
 // text rendering in the image itself.
-const VISUAL_ONLY_DIRECTIVE = `\n=== VISUAL-ONLY MODE ===\nThis image will have ALL TEXT composited on top in post-processing using real fonts. Your job is to generate the VISUAL BASE only.\n\nABSOLUTE RULES:\n1. DO NOT RENDER ANY READABLE TEXT in the image. No headlines, no prices, no body copy, no CTA buttons with text, no #WeAreTraders, no disclaimer.\n2. Generate the visual atmosphere: lighting, materials, mood, hero objects (phones, terminals, receipts, charts, abstract shapes, etc.), background gradients, particle effects.\n3. LEAVE NEGATIVE SPACE for text to be added later. Specifically:\n   - Top 10% of canvas: clear (logo + tagline will be composited here)\n   - Middle ~45-65% of canvas: hero visual area — this is where your image content lives\n   - Bottom 30%: clear (headline, body, CTA, disclaimer composited here)\n4. If the brief calls for a specific format (phone notification, receipt photograph, terminal screen), render the OBJECT itself but with placeholder/illegible text inside it — we'll overlay readable text later if needed.\n5. If your concept inherently has text (like a "receipt aesthetic"), use blurred / illegible / placeholder Lorem-ipsum style filler inside the object. Do NOT try to render the actual offer text — it WILL be garbled and we WILL overlay correct text later.\n\nThink of this as generating a "magazine ad background plate" — the visual, lit, beautiful base. Text comes in post.\n=== END VISUAL-ONLY MODE ===\n\n`;
+const VISUAL_ONLY_DIRECTIVE = `\n=== VISUAL-ONLY MODE ===\nThis image will have ALL TEXT composited on top in post-processing using real fonts. Your job is to generate the VISUAL BASE only.\n\nABSOLUTE RULES:\n1. DO NOT RENDER ANY READABLE TEXT in the image. No headlines, no prices, no body copy, no CTA buttons with text, no #WeAreTraders, no disclaimer.\n2. Generate the visual atmosphere: lighting, materials, mood, hero objects (phones, terminals, receipts, charts, abstract shapes, etc.), background gradients, particle effects.\n3. LEAVE NEGATIVE SPACE for text to be added later. Specifically:\n   - Top 10% of canvas: clear (logo + tagline will be composited here)\n   - Middle ~45-65% of canvas: hero visual area — this is where your image content lives\n   - Bottom 30%: clear (headline, body, CTA, disclaimer composited here)\n4. If the concept involves a text-bearing object (phone notification, receipt, terminal screen, document), render it with ZERO letterforms visible — heavily out of focus, extreme angle, motion blur, or abstracted to pure light and shape. NO fake numbers, NO placeholder text, NO "lorem ipsum", NO blurred-but-recognizable words: filler text ALWAYS renders as garbled junk in the final ad and is FORBIDDEN. A glowing out-of-focus screen says "payout" better than fake digits.\n5. When in doubt, replace any text surface with abstract glow, bokeh, or clean geometry.\n\nThink of this as generating a "magazine ad background plate" — the visual, lit, beautiful base. Text comes in post.\n=== END VISUAL-ONLY MODE ===\n\n`;
 
 
 // Lazy singleton — ensures env vars are loaded before SDK reads them
@@ -360,6 +365,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ recent: recent || [] });
     }
 
+    // ── STUDIO INPUT DATA: reference image(s) attached in a conversation ──
+    // (mate's chat UI) Returns the most recent turn's reference images so the
+    // composer can restore the uploaded reference when a chat is reopened.
+    if (action === 'input-data') {
+      const conversationId = searchParams.get('conversationId');
+      if (!conversationId) return NextResponse.json({ error: 'conversationId required' }, { status: 400 });
+      const inputCollection = db.collection('studio_input_data');
+      const rows = await inputCollection
+        .find({ conversationId })
+        .sort({ createdAt: -1 })
+        .project({ _id: 0, creativeId: 1, prompt: 1, referenceImages: 1, createdAt: 1 })
+        .toArray();
+      const latestWithRefs = rows.find(
+        (r: any) => Array.isArray(r.referenceImages) && r.referenceImages.length > 0
+      );
+      return NextResponse.json({ referenceImages: latestWithRefs?.referenceImages || [], rows });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (err: any) {
     console.error('Studio API GET Error:', err);
@@ -368,6 +391,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Mutating + credit-burning endpoint — verified session required (middleware
+  // only checks cookie presence; this verifies it).
+  const unauth = await requireSession();
+  if (unauth) return unauth;
   let body: any = null;
   try {
     body = await request.json();
@@ -537,6 +564,16 @@ export async function POST(request: Request) {
         throw new Error(`Failed to parse AI response. Raw output: ${aiText.substring(0, 150)}...`);
       }
 
+      // ── COMPLIANCE GATE (pre-prompt): clean the brief's copywriting BEFORE it
+      //    feeds the text manifest / image prompt / overlay / UI copy — so
+      //    integrated mode can never hand the image model an unsourced claim to
+      //    bake into pixels. ──
+      {
+        const g = gateBriefCopy(brief, userPrompt || '');
+        brief = g.brief;
+        if (g.violations.length) console.warn(`[ClaimGate] pattern-based brief: stripped — ${formatViolations(g.violations)}`);
+      }
+
       // --- Pass source creative thumbnails as reference for visual-grounded generation ---
       // Combine user-selected source creative thumbnails with the top stored
       // ads from the synced Meta Ad Library. The image generator uses these
@@ -686,7 +723,8 @@ ABSOLUTE RULES:
       // ── 3-VARIANT GENERATION — CONCEPT DIVERSITY (not just color variations) ──
       // Each variant uses a FUNDAMENTALLY DIFFERENT visual paradigm.
       // They share the same text content but look NOTHING alike.
-      const pickedParadigms = pickDiverseParadigms(3);
+      const variations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || 3));
+      const pickedParadigms = pickDiverseParadigms(variations);
       console.log(`[Studio] Picked paradigms: ${pickedParadigms.map(p => p.name).join(', ')}`);
 
       const variantConfigs = pickedParadigms.map((paradigm: ConceptParadigm) => ({
@@ -823,13 +861,21 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             // When text-overlay mode is on, we ask the image model for VISUAL ONLY.
             // The text manifest + per-string fidelity block become irrelevant — text is
             // composited in code with real fonts after generation.
-            const variantPrompt = TEXT_OVERLAY_ENABLED
+            let variantPrompt = TEXT_OVERLAY_ENABLED
               ? (useDirectorPrompt
                   ? brandVisualDirective + VISUAL_ONLY_DIRECTIVE + userRequirementsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
                   : brandVisualDirective + VISUAL_ONLY_DIRECTIVE + userRequirementsBlock + variant.promptPrefix + basePrompt + PREMIUM_CRAFT_DIRECTIVE)
               : (useDirectorPrompt
                   ? brandVisualDirective + textManifest + patternTextFidelity + userRequirementsBlock + conceptPrompt + PREMIUM_CRAFT_DIRECTIVE
                   : brandVisualDirective + textManifest + patternTextFidelity + userRequirementsBlock + variant.promptPrefix + basePrompt + PREMIUM_CRAFT_DIRECTIVE);
+            // Integrated mode: text gets BAKED into pixels — the whole prompt goes
+            // through the claim gate so the model never sees an unsourced claim.
+            if (!TEXT_OVERLAY_ENABLED) {
+              const gp = gateImagePrompt(variantPrompt, userPrompt || '');
+              variantPrompt = gp.text;
+              if (gp.violations.length) console.warn(`[ClaimGate] pattern baked-text prompt ("${variant.id}"): ${formatViolations(gp.violations)}`);
+              console.warn('[Studio] ⚠ Integrated mode: baked text cannot be verified post-render. Claim gate applied pre-prompt.');
+            }
             // Premium quality image prompt with anti-cheap-design guardrails
             const premiumNegativePrompt = [
               baseNegative,
@@ -862,7 +908,13 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             // ── TEXT OVERLAY: composite all text with real fonts (eliminates typos) ──
             if (TEXT_OVERLAY_ENABLED && finalImageUrl) {
               try {
-                const overlayConfig = extractOverlayConfig(brief, variant.id);
+                // COMPLIANCE GATE: brief copy derives from the stored-ads DB — those
+                // figures are HISTORICAL, not approved. A price that ran in June is
+                // not a claim we may make today. Gate against the user's prompt +
+                // evergreen facts + the active-offers config, same as every lane.
+                const { overlay: overlayConfig, violations: ovV } = gateOverlayCopy(
+                  extractOverlayConfig(brief, variant.id), userPrompt || '');
+                if (ovV.length) console.warn(`[ClaimGate] pattern-based lane (variant "${variant.id}"): stripped — ${formatViolations(ovV)}`);
                 finalImageUrl = await applyTextOverlay(finalImageUrl, overlayConfig);
                 console.log(`[Studio] ✓ Variant "${variant.id}" — text overlay applied (zero-typo composition)`);
               } catch (overlayErr: any) {
@@ -970,12 +1022,111 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
           ...brief,
           imageUrl: primaryVariant?.imageUrl || null,
           variants: scoredVariants,
-          sourceAdIds: adIds
+          sourceAdIds: adIds,
+          bakedTextWarning: !TEXT_OVERLAY_ENABLED || undefined,
         }
       });
     }
 
     if (type === 'custom' || type === 'image' || type === 'video') {
+      // ── DOCUMENT CONTEXT (mate's chat UI): extract text from attached
+      //    PDFs/DOCX/TXT/HTML and fold it into the prompt — image models can't
+      //    read documents, this is what makes an attached brief "understood". ──
+      let docContext = '';
+      if (Array.isArray(body.docFiles) && body.docFiles.length > 0) {
+        try {
+          docContext = await buildDocContext(body.docFiles);
+          if (docContext) console.log(`[Studio] Extracted text from ${body.docFiles.length} attached document(s) (${docContext.length} chars of context)`);
+        } catch (e: any) {
+          console.warn('[Studio] Document extraction failed (non-blocking):', e?.message);
+        }
+      }
+
+      // ── REFERENCE IMAGES (mate's chat UI sends `references[]`; the older UI a
+      //    single `reference`) — normalized here, used by the AI lane below. ──
+      const refImagesIn: string[] = Array.isArray(body.references)
+        ? body.references.filter((r: any) => typeof r === 'string' && r)
+        : (typeof body.reference === 'string' && body.reference ? [body.reference] : []);
+
+      // ── AUTO-ROUTER: Design Engine (procedural, zero-typo) vs AI Image ──
+      // A deterministic classifier (server/ai-studio/engine-router) picks the lane.
+      //   body.engine: 'auto' (default) | 'template' | 'ai'  — the last two are the
+      //   UI's one-click manual override. A reference image always forces the AI lane
+      //   (image-to-image). The decision + reason ride back on the response so the UI
+      //   can show the chosen-engine chip, the ⚠ low-confidence flag, and the override.
+      const engineParam: 'auto' | 'template' | 'ai' =
+        body.engine === 'template' || body.engine === 'ai' ? body.engine : 'auto';
+      const routeRefImage = refImagesIn.some((r) => r.startsWith('data:image')) || refImagesIn.some((r) => /^https?:\/\//.test(r));
+      const routeDecision = classifyPromptEngine(userPrompt || '', engineParam === 'auto' ? undefined : engineParam);
+      const routingPublic = {
+        engine: routeRefImage ? 'ai' : routeDecision.engine,
+        archetypeHint: routeDecision.archetypeHint,
+        confidence: routeRefImage ? 0.95 : routeDecision.confidence,
+        ambiguous: routeRefImage ? false : routeDecision.ambiguous,
+        reason: routeRefImage
+          ? 'A reference image is attached → AI Image (image-to-image).'
+          : routeDecision.reason,
+        overridable: !routeRefImage,
+        forced: engineParam !== 'auto',
+      };
+
+      // ── DESIGN ENGINE LANE ── procedural render (template-pipeline). Falls through
+      //    to the AI path below if it produces nothing / errors (graceful degradation).
+      if (type === 'custom' && !routeRefImage && routingPublic.engine === 'template') {
+        const rawTplPrompt = (userPrompt || '').trim();
+        if (!rawTplPrompt) {
+          return NextResponse.json({ error: 'Please enter a prompt to generate from.' }, { status: 400 });
+        }
+        const tplVariations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || 1));
+        try {
+          const { variants: tplVariants } = await generateTemplateVariations(rawTplPrompt, tplVariations);
+          if (tplVariants.length) {
+            for (const v of tplVariants) {
+              try {
+                const up = await uploadToCloudinary(v.imageUrl, { folder: 'creative-studio/template', publicId: `tpl-${Date.now()}-${v.id}` });
+                if (up?.url) v.imageUrl = up.url;
+              } catch { /* keep data URI */ }
+            }
+            const primaryT = tplVariants[0];
+            console.log(`[Studio] ✓ Design Engine — ${tplVariants.length} variation(s); archetypes: ${tplVariants.map((v) => v.archetype).join(', ')}`);
+            return NextResponse.json({
+              creative: {
+                creativeId: `tpl-${Date.now()}`,
+                creativeConcept: {
+                  title: primaryT.objective || 'Design-engine creative',
+                  rationale: primaryT.rationale || 'Rendered on the on-brand design engine — procedural layout, real fonts, zero typos.',
+                },
+                copywriting: { headline: { primary: rawTplPrompt.slice(0, 80) }, cta: { primary: 'Buy Challenge' } },
+                variants: tplVariants.map((v) => ({
+                  id: v.id,
+                  label: v.label,
+                  description: `${v.archetype} · ${v.accent} · ${v.background}`,
+                  paradigm: v.archetype,
+                  archetype: v.archetype,
+                  accent: v.accent,
+                  imageUrl: v.imageUrl,
+                  score: { overall: 9.0, content: 9, design: 9, color: 9, impact: 9 },
+                  // Claims the compliance gate stripped (transparency; empty = fully sourced)
+                  gated: v.gated,
+                })),
+                imageUrl: primaryT.imageUrl,
+                provider: 'template-engine',
+                model: 'hola-design-engine',
+                directMode: true,
+                engine: 'template',
+                routing: routingPublic,
+                variations: tplVariants.length,
+              },
+              saved: false,
+            });
+          }
+          console.warn('[Studio] Design Engine produced no variants — falling back to AI image path.');
+        } catch (tplErr: any) {
+          console.error('[Studio] Design Engine failed, falling back to AI image path:', tplErr?.message);
+        }
+        // fall through to the AI path below on empty/error
+      }
+
       // ── ENHANCED FAST MODE (Custom tab default) ──
       // The user's prompt — however short — is ALWAYS auto-expanded into a full,
       // brand-aware, agency-grade image brief (lib/ai-studio/prompt-enhancer.ts)
@@ -987,12 +1138,20 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
       // Force this fast path (never the slow full pipeline) when an IMAGE
       // reference is attached, so reference edits always get the clean result —
       // even if the user left Fast mode off.
-      const hasImageRef = typeof body.reference === 'string' && body.reference.startsWith('data:image');
+      const hasImageRef = refImagesIn.length > 0;
       if (type === 'custom' && (body.directMode === true || hasImageRef)) {
-        const rawPrompt = (userPrompt || '').trim();
-        if (!rawPrompt) {
-          return NextResponse.json({ error: 'Please enter a prompt to generate from.' }, { status: 400 });
+        let rawPrompt = (userPrompt || '').trim();
+        // Attachment-only turns are valid (mate's chat UX): the image/document IS
+        // the instruction — use a sensible default brief.
+        if (!rawPrompt && !hasImageRef && !docContext) {
+          return NextResponse.json({ error: 'Please enter a prompt, or attach an image or document.' }, { status: 400 });
         }
+        if (!rawPrompt) {
+          rawPrompt = 'Create a polished, high-end advertising creative based on the attached context. Agency-grade composition, lighting and typography.';
+        }
+        // Fold extracted document text in so an attached brief actually drives
+        // the creative (goes through the enhancer + claim gate like all copy).
+        if (docContext) rawPrompt = rawPrompt + docContext;
         if (!process.env.OPENAI_API_KEY) {
           return NextResponse.json(
             { error: 'Image generation requires OPENAI_API_KEY in .env. Add the key and restart the dev server.' },
@@ -1001,11 +1160,13 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
         }
 
         // ── Clean-text mode: render a VISUAL-ONLY plate, then composite perfect,
-        //    real-font text in code (zero image-model typos). Toggle: body.cleanText
-        //    (UI checkbox); default can be forced on via STUDIO_CLEAN_TEXT_DEFAULT=on.
+        //    real-font text in code (zero image-model typos: no "FICTITIS"/"S MULATED").
+        //    DEFAULT = ON (clean-text) for the default path. Integrated mode stays
+        //    available explicitly via body.cleanText=false (UI checkbox) or the
+        //    STUDIO_CLEAN_TEXT_DEFAULT=off env override.
         const cleanText = body.cleanText !== undefined
           ? body.cleanText === true
-          : process.env.STUDIO_CLEAN_TEXT_DEFAULT === 'on';
+          : process.env.STUDIO_CLEAN_TEXT_DEFAULT !== 'off';
 
         // ── Brand logo. Used when "Add brand logo" is on (concept mode), AND
         //    always in clean-text mode so the clean ad still carries the real logo. ──
@@ -1026,49 +1187,63 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
           console.warn('[Studio] Brand knowledge fetch failed (non-blocking):', e.message);
         }
 
-        // ── ALWAYS ENHANCE: short prompt → full brand-aware image brief ──
-        const enhanced = await enhanceImagePrompt(rawPrompt, {
-          brandContext: brandKbContext,
-          tone: body.tone,
-          logoWillBeComposited,
-          logoPosition,
-          directionHint: body.directionHint, // optional: force a specific creative direction (QA/testing)
-        });
-        console.log(
-          `[Studio] Always-enhance: "${rawPrompt.slice(0, 60)}" → ${enhanced.imagePrompt.length} chars ` +
-          `(concept: "${enhanced.concept || '—'}", logo: ${logoWillBeComposited ? logoPosition : 'off'})`,
-        );
+        // If the user attached IMAGE reference(s), transform them (image-to-image)
+        // so the result is grounded in their image(s) while keeping the brilliant brief.
+        const refImage = hasImageRef ? refImagesIn[0] : null; // primary ref (logo/overlay decisions)
 
-        // If the user attached an IMAGE reference, transform it (image-to-image)
-        // so the result is grounded in their image while keeping the brilliant
-        // brief, clean auto-contrast logo and no double-text. Video refs can't be
-        // edited by the image model, so they're ignored (text-to-image instead).
-        const refImage = (typeof body.reference === 'string' && body.reference.startsWith('data:image'))
-          ? body.reference
-          : null;
+        // ── Number of creative variations to produce. User-selectable, but HARD-CAPPED
+        //    at 4 — a user can never request (or receive) more than 4 at a time.
+        //    The chat UI doesn't send `variations` — default to 3 there (its
+        //    pick-your-favorite UX); callers that send an explicit count keep it. ──
+        const variations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || (body.variations === undefined ? 3 : 1)));
 
         try {
+          const variants: any[] = [];
+          for (let vi = 0; vi < variations; vi++) {
+          // ── ALWAYS ENHANCE — called PER variation so the enhancer's family rotation
+          //    yields a DISTINCT concept for each of the (up to 4) variations. ──
+          const enhanced = await enhanceImagePrompt(rawPrompt, {
+            brandContext: brandKbContext,
+            tone: body.tone,
+            logoWillBeComposited,
+            logoPosition,
+            directionHint: body.directionHint,
+            // The router classified this as a photographic SCENE → lock the literal
+            // subject + action so the enhancer can't swap the person for a
+            // receipt/screen concept (live failure: "First Payout Invoice").
+            subjectLock: (!refImage && routingPublic.engine === 'ai' && routingPublic.archetypeHint === 'photographic')
+              ? rawPrompt
+              : undefined,
+          });
+          console.log(`[Studio] Variation ${vi + 1}/${variations}: concept "${enhanced.concept || '—'}"`);
           let directResult: any = null;
 
           if (refImage) {
             // Use a CONCISE transform instruction (not the full from-scratch
             // concept) so the model refreshes the reference cleanly instead of
             // cramming a whole new ad on top (which causes overlapping/duplicate text).
-            const editPrompt = [
+            let editPrompt = [
               `Transform this advertisement into a new version. NEW MESSAGE: ${rawPrompt}.`,
               enhanced.headline ? `Headline reads: "${enhanced.headline}".` : '',
               `Keep the reference image's overall composition, lighting and premium dark style; refresh the text to match the new message.`,
               `The CTA button must read "${enhanced.cta || 'Buy Challenge'}". Keep "#WeAreTraders" top-right and a tiny legal disclaimer at the very bottom. Leave the top-left corner clear with NO logo.`,
               `CRITICAL: render every piece of text exactly ONCE — crisp, clean and readable. NO duplicated words, NO overlapping or stacked text, NO garbled letters.`,
             ].filter(Boolean).join(' ');
-            console.log(`[Studio] Reference image attached → gpt-image-1 image-to-image (edit prompt ${editPrompt.length} chars)`);
+            // Reference edits BAKE text into pixels — gate the prompt pre-model.
+            {
+              const gp = gateImagePrompt(editPrompt, rawPrompt);
+              editPrompt = gp.text;
+              if (gp.violations.length) console.warn(`[ClaimGate] reference-edit prompt: ${formatViolations(gp.violations)}`);
+              console.warn('[Studio] ⚠ Reference edit: baked text cannot be verified post-render. Claim gate applied pre-prompt.');
+            }
+            console.log(`[Studio] ${refImagesIn.length} reference image(s) attached → gpt-image-1 image-to-image (edit prompt ${editPrompt.length} chars)`);
             directResult = await editImageOpenAI({
               prompt: editPrompt,
-              imageDataUri: refImage,
+              references: refImagesIn, // multi-reference (mate's chat UI) — all refs ground the edit
               size: '1024x1536',
               quality: 'high',
             });
-            if (!directResult) console.warn('[Studio] Edit returned nothing — falling back to text-to-image');
+            if (!directResult) console.warn('[Studio] Edit returned nothing — falling back to text-to-image:', getLastOpenAIError() || '');
           }
 
           if (!directResult) {
@@ -1076,11 +1251,19 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             // doesn't collide); concept mode uses the full concept prompt. Force a
             // dark plate so the white composited text always has contrast.
             const DARK_PLATE = 'The background MUST be a deep, near-black premium dark scene (almost pure black, #000000–#0A0A0F, with only subtle dark gradients or faint neon glow). NEVER light, white, pale, grey, or pastel. ';
-            const genPrompt = (!refImage && cleanText)
+            let genPrompt = (!refImage && cleanText)
               ? DARK_PLATE + VISUAL_ONLY_DIRECTIVE + (enhanced.visualPrompt && enhanced.visualPrompt.length > 40
                   ? enhanced.visualPrompt
                   : enhanced.imagePrompt)
               : enhanced.imagePrompt;
+            // Integrated mode (cleanText off): the concept prompt's text gets BAKED
+            // into pixels — gate the prose so the model never sees an unsourced claim.
+            if (!cleanText) {
+              const gp = gateImagePrompt(genPrompt, rawPrompt);
+              genPrompt = gp.text;
+              if (gp.violations.length) console.warn(`[ClaimGate] integrated-mode prompt: ${formatViolations(gp.violations)}`);
+              console.warn('[Studio] ⚠ Integrated mode: baked text cannot be verified post-render. Claim gate applied pre-prompt.');
+            }
             directResult = await generateImageOpenAI({
               prompt: genPrompt,
               size: '1024x1536',  // portrait, closest to 9:16
@@ -1090,10 +1273,8 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
           }
 
           if (!directResult?.dataUri) {
-            return NextResponse.json(
-              { error: 'gpt-image-1 returned no result. Check OPENAI_API_KEY + billing at platform.openai.com.' },
-              { status: 500 },
-            );
+            console.warn(`[Studio] Variation ${vi + 1} produced no image — skipping.`);
+            continue;
           }
 
           let finalImageUrl = directResult.dataUri;
@@ -1101,17 +1282,44 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
           if (!refImage && cleanText) {
             // ── Zero-typo path: composite perfect, real-font text in code ──
             try {
-              const ov = enhanced.overlay || {};
+              // ── COMPLIANCE GATE: strip any figure/%/price/timeframe/guarantee the
+              //    enhancer invented (not sourced from the user's prompt or the approved
+              //    brand facts) BEFORE it is burned into the creative. Same hard line as
+              //    the Design Engine lane — see claim-gate.ts. ──
+              const rawOv = enhanced.overlay || {};
+              const { overlay: ov, violations: ovViolations } = gateOverlayCopy(
+                {
+                  headline: rawOv.headline || enhanced.headline || '',
+                  subheadline: rawOv.subheadline || '',
+                  price: rawOv.price || '',
+                  bullets: Array.isArray(rawOv.bullets) ? rawOv.bullets : [],
+                  cta: rawOv.cta || enhanced.cta || 'Buy Challenge',
+                  urgencyText: rawOv.urgencyText || '',
+                  promoCode: rawOv.promoCode || '',
+                },
+                rawPrompt,
+              );
+              if (ovViolations.length) {
+                console.warn(`[ClaimGate] AI-lane overlay: stripped unsourced claims — ${formatViolations(ovViolations)}`);
+              }
+              // NEVER ship a heroless creative: if the gate (or the enhancer)
+              // left no headline, fall back to claim-free copy — promote the
+              // subheadline, else use the user's own words (always gate-safe).
+              if (!ov.headline) {
+                if (ov.subheadline) { ov.headline = ov.subheadline; ov.subheadline = ''; }
+                else ov.headline = rawPrompt.length > 64 ? rawPrompt.slice(0, 61).trimEnd() + '…' : rawPrompt;
+                console.warn('[Studio] Headline was empty after gating — promoted claim-free fallback so the creative keeps a hero element.');
+              }
               finalImageUrl = await applyTextOverlay(finalImageUrl, {
-                headline: ov.headline || enhanced.headline || '',
-                subheadline: ov.subheadline || '',
-                price: ov.price || '',
-                bullets: Array.isArray(ov.bullets) ? ov.bullets : [],
-                cta: ov.cta || enhanced.cta || 'Buy Challenge',
-                urgencyText: ov.urgencyText || '',
-                promoCode: ov.promoCode || '',
-                disclaimer: ov.disclaimer
-                  || 'HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULATED TRADING PURPOSES ONLY. CLIENTS MAY EARN MONETARY REWARDS BASED ON THEIR PERFORMANCE THROUGH SUCH DEMO HOLA PRIME ACCOUNTS.',
+                headline: ov.headline,
+                subheadline: ov.subheadline,
+                price: ov.price,
+                bullets: ov.bullets,
+                cta: ov.cta,
+                urgencyText: ov.urgencyText,
+                promoCode: ov.promoCode,
+                // Disclaimer is the FIXED approved legal text — never model-written.
+                disclaimer: FIXED_DISCLAIMER,
                 layout: 'standard',
                 darkBackground: true,
                 tagline: '#WeAreTraders',
@@ -1135,57 +1343,82 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             } catch (logoErr: any) {
               console.warn('[Studio] Brand logo overlay failed (non-blocking):', logoErr.message);
             }
+          } else {
+            // ── Integrated concept mode (no uploaded Brand-Kit logo): composite the
+            //    authentic Hola Prime PNG so every creative carries a crisp, correctly
+            //    spelled logo, cleanly aligned in the reserved top brand strip (the
+            //    model is instructed to leave the top-left corner clear). This stops
+            //    the image model from drawing its own typo-prone wordmark over the
+            //    headline — the exact bug that caused logo/headline overlap. ──
+            try {
+              finalImageUrl = await applyLogoOverlay(finalImageUrl);
+            } catch (logoErr: any) {
+              console.warn('[Studio] Authentic logo overlay failed (non-blocking):', logoErr.message);
+            }
           }
 
-          // ── Store a short Cloudinary URL instead of a ~2MB base64 data URI, so
-          //    history/saves stay tiny and never fill the database. Falls back to
-          //    the data URI if Cloudinary isn't configured or the upload fails. ──
+          // ── Store a short Cloudinary URL instead of a ~2MB base64 data URI. ──
           try {
             const uploaded = await uploadToCloudinary(finalImageUrl, {
               folder: 'creative-studio/fast',
-              publicId: `gen-${Date.now()}`,
+              publicId: `gen-${Date.now()}-${vi}`,
             });
-            if (uploaded?.url) {
-              finalImageUrl = uploaded.url;
-              console.log('[Studio] ✓ Uploaded to Cloudinary (storing URL, not base64)');
-            }
+            if (uploaded?.url) finalImageUrl = uploaded.url;
           } catch (upErr: any) {
             console.warn('[Studio] Cloudinary upload failed (keeping data URI):', upErr.message);
           }
 
+          variants.push({
+            id: `enhanced-${vi + 1}`,
+            label: enhanced.concept || `Variation ${vi + 1}`,
+            description: 'Prompt auto-enhanced → gpt-image-1' + (logoWillBeComposited ? ' + brand logo' : ''),
+            paradigm: 'Enhanced',
+            imageUrl: finalImageUrl,
+            score: { overall: 9.0, content: 9, design: 9, color: 9, impact: 9 }, // placeholder — unscored
+            enhancedPrompt: enhanced.imagePrompt,
+            _headline: enhanced.headline, _cta: enhanced.cta, _concept: enhanced.concept, _model: directResult.model,
+          });
+          } // ── end per-variation loop ──
+
+          if (!variants.length) {
+            return NextResponse.json(
+              // Surface the ACTUAL OpenAI failure (billing, auth, content policy…)
+              { error: getLastOpenAIError() || 'gpt-image-1 returned no result. Check OPENAI_API_KEY + billing at platform.openai.com.' },
+              { status: 500 },
+            );
+          }
+
+          const primary: any = variants[0];
           const directCreativeId = `gen-${Date.now()}`;
           const responsePayload = {
             creative: {
               creativeId: directCreativeId,
               creativeConcept: {
-                title: enhanced.concept || 'Enhanced generation',
+                title: primary._concept || 'Enhanced generation',
                 rationale: 'Your prompt was auto-expanded into a full brand-aware brief, then rendered by gpt-image-1.',
               },
               copywriting: {
-                headline: { primary: enhanced.headline || rawPrompt.slice(0, 80) },
-                cta: { primary: enhanced.cta || 'Buy Challenge' },
+                headline: { primary: primary._headline || rawPrompt.slice(0, 80) },
+                cta: { primary: primary._cta || 'Buy Challenge' },
               },
-              enhancedPrompt: enhanced.imagePrompt,
-              variants: [
-                {
-                  id: 'enhanced',
-                  label: enhanced.concept || 'Enhanced',
-                  description: 'Prompt auto-enhanced → gpt-image-1' + (logoWillBeComposited ? ' + brand logo' : ''),
-                  paradigm: 'Enhanced',
-                  imageUrl: finalImageUrl,
-                  score: { overall: 9.0, content: 9, design: 9, color: 9, impact: 9 }, // placeholder — unscored
-                },
-              ],
-              imageUrl: finalImageUrl,
+              enhancedPrompt: primary.enhancedPrompt,
+              variants: variants.map(({ _headline, _cta, _concept, _model, ...v }: any) => v),
+              imageUrl: primary.imageUrl,
               provider: 'openai',
-              model: directResult.model,
+              model: primary._model,
               directMode: true,
               logoApplied: logoWillBeComposited,
+              engine: 'ai',
+              routing: routingPublic,
+              // Baked text (reference edit / integrated mode) can't be verified
+              // post-render — the claim gate ran pre-prompt instead.
+              bakedTextWarning: (refImage !== null || !cleanText) || undefined,
+              variations: variants.length,
             },
             saved: false,
           };
 
-          console.log(`[Studio] ✓ Enhanced generation complete — gpt-image-1 (${directResult.size}, ${directResult.quality})`);
+          console.log(`[Studio] ✓ Enhanced generation complete — ${variants.length} variation(s).`);
           return NextResponse.json(responsePayload);
         } catch (err: any) {
           console.error('[Studio] Enhanced generation failed:', err.message);
@@ -1207,7 +1440,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
         }
       }
 
-      const generationPrompt = type === 'custom' ? userPrompt : `Instructions: ${userPrompt}. Reference analysis applied.`;
+      const generationPrompt = (type === 'custom' ? (userPrompt || '') : `Instructions: ${userPrompt}. Reference analysis applied.`) + docContext;
 
       // ── BRAND DNA: Only inject full brand DNA if user explicitly requests it ──
       const customUserText = (userPrompt || '').toLowerCase();
@@ -1427,15 +1660,33 @@ ${customBrandContext}${customStoredAdContext}${customBrandKb}${noBrandDNARule}
         throw new Error(`Failed to generate creative brief. Raw output: ${aiText.substring(0, 150)}...`);
       }
 
+      // ── COMPLIANCE GATE (pre-prompt): clean the brief's copywriting BEFORE it
+      //    feeds the text manifest / image prompt / overlay / UI copy. ──
+      {
+        const g = gateBriefCopy(brief, userPrompt || '');
+        brief = g.brief;
+        if (g.violations.length) console.warn(`[ClaimGate] custom brief: stripped — ${formatViolations(g.violations)}`);
+      }
+
       let baseImagePrompt = brief?.imageGenerationPrompt?.detailed
         || (typeof brief?.imageGenerationPrompt === 'string' ? brief.imageGenerationPrompt : null)
         || userPrompt
         || 'Professional prop trading advertisement creative for Hola Prime';
 
+      // Integrated mode (env TEXT_OVERLAY=off): text gets BAKED into pixels — gate
+      // the prose image prompt too, so unsourced claims never reach the model.
+      if (!TEXT_OVERLAY_ENABLED) {
+        const gp = gateImagePrompt(baseImagePrompt, userPrompt || '');
+        baseImagePrompt = gp.text;
+        if (gp.violations.length) console.warn(`[ClaimGate] custom baked-text prompt: ${formatViolations(gp.violations)}`);
+        console.warn('[Studio] ⚠ Integrated mode: text is baked by the image model and CANNOT be verified post-render. Claim gate applied pre-prompt.');
+      }
+
       const baseNeg = brief?.imageGenerationPrompt?.negative || 'typos, misspellings, blurry, low quality, generic stock photos, white background, overlapping text, cramped layout, cluttered elements';
 
       // ── 3-VARIANT GENERATION for custom path — CONCEPT DIVERSITY ──
-      const customParadigms = pickDiverseParadigms(3);
+      const variations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || 3));
+      const customParadigms = pickDiverseParadigms(variations);
       console.log(`[Studio] Custom paradigms: ${customParadigms.map((p: ConceptParadigm) => p.name).join(', ')}`);
 
       const customVariants = customParadigms.map((paradigm: ConceptParadigm) => ({
@@ -1521,7 +1772,7 @@ DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULAT
       try {
         console.log('[Studio] Running Creative Director for custom concept-diverse prompts...');
         // CRITICAL: Ensure user instructions ARE passed to the Director
-        const customDirectorResult = await runCreativeDirector(brief, customParadigms, customBrandPrefix, userPrompt, body.tone);
+        const customDirectorResult = await runCreativeDirector(brief, customParadigms, customBrandPrefix, userPrompt, body.tone, TEXT_OVERLAY_ENABLED && body.cleanText === true);
         if (customDirectorResult && customDirectorResult.concepts && customDirectorResult.concepts.length >= 3) {
           customDirectorConcepts = customDirectorResult.concepts;
           console.log(`[Studio] ✓ Custom Director produced ${customDirectorConcepts.length} concepts (${customDirectorConcepts.map((c: any) => c.paradigm).join(', ')})`);
@@ -1558,7 +1809,11 @@ DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULAT
             // ── TEXT OVERLAY: composite all text with real fonts (eliminates typos) ──
             if (TEXT_OVERLAY_ENABLED && finalImageUrl) {
               try {
-                const overlayConfig = extractOverlayConfig(brief, variant.id);
+                // COMPLIANCE GATE: same hard line as every other lane — DB-sourced
+                // figures are historical, not approved claims.
+                const { overlay: overlayConfig, violations: ovV } = gateOverlayCopy(
+                  extractOverlayConfig(brief, variant.id), userPrompt || '');
+                if (ovV.length) console.warn(`[ClaimGate] custom lane (variant "${variant.id}"): stripped — ${formatViolations(ovV)}`);
                 finalImageUrl = await applyTextOverlay(finalImageUrl, overlayConfig);
                 console.log(`[Studio] ✓ Custom variant "${variant.id}" — text overlay applied (zero-typo composition)`);
               } catch (overlayErr: any) {
@@ -1646,6 +1901,9 @@ DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULAT
           ...brief,
           imageUrl: primaryVariant?.imageUrl || reference || null,
           variants: scoredVariants,
+          engine: 'ai',
+          routing: routingPublic,
+          bakedTextWarning: !TEXT_OVERLAY_ENABLED || undefined,
         }
       });
     }
@@ -1810,7 +2068,7 @@ DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULAT
 
     // ── SAVE TO HISTORY — Store creative in reddit_data.history ──
     if (type === 'save-history') {
-      const { creativeId, parentId, childId, tab, prompt: historyPrompt, generationOptions: histOpts, result: histResult, imageUrl: histImageUrl, previousInputs } = body;
+      const { creativeId, conversationId, parentId, childId, tab, prompt: historyPrompt, generationOptions: histOpts, result: histResult, imageUrl: histImageUrl, previousInputs, referenceImages: histRefs } = body;
       if (!creativeId) {
         return NextResponse.json({ error: 'creativeId is required' }, { status: 400 });
       }
@@ -1822,8 +2080,32 @@ DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULAT
       const headline = histResult?.copywriting?.headline?.primary || histResult?.creativeConcept?.title || '';
       const score = histResult?.creativeConcept?.targetScore || histResult?.targetScore || null;
 
+      // ── REFERENCE IMAGES (mate's chat UI): persist uploads so they stay attached
+      //    after a History reopen. Base64 → Cloudinary short URL; URLs kept as-is. ──
+      let referenceImageUrls: string[] = [];
+      if (Array.isArray(histRefs) && histRefs.length > 0) {
+        referenceImageUrls = (
+          await Promise.all(
+            histRefs.slice(0, 6).map(async (ref: string, i: number) => {
+              if (typeof ref !== 'string' || !ref) return null;
+              if (!ref.startsWith('data:')) return ref; // already a short URL
+              try {
+                const up = await uploadToCloudinary(ref, {
+                  folder: 'creative-studio/references',
+                  publicId: `${creativeId}-ref-${i}`,
+                  tags: ['reference', 'hola-prime'],
+                });
+                return up?.url || null;
+              } catch { return null; }
+            }),
+          )
+        ).filter((u): u is string => !!u);
+      }
+
       await historyCollection.insertOne({
         creativeId,
+        // Groups all creatives from one chat session into a single History entry.
+        conversationId: conversationId || creativeId,
         parentId: parentId || null,
         childId: childId || null,
         tab: tab || 'custom',
@@ -1831,11 +2113,28 @@ DISCLAIMER: "HOLA PRIME PROVIDES DEMO ACCOUNTS WITH FICTITIOUS FUNDS FOR SIMULAT
         generationOptions: histOpts || {},
         result: histResult || {},
         imageUrl: histImageUrl || null,
+        referenceImages: referenceImageUrls,
         headline,
         score,
         previousInputs: previousInputs || [],
         createdAt: new Date(),
       });
+
+      // ── STUDIO INPUT DATA (mate's chat UI): persist the turn's INPUT (prompt +
+      //    reference URLs) so it restores into the composer on conversation reopen. ──
+      try {
+        const inputCollection = db.collection('studio_input_data');
+        await inputCollection.insertOne({
+          conversationId: conversationId || creativeId,
+          creativeId,
+          tab: tab || 'custom',
+          prompt: historyPrompt || '',
+          referenceImages: referenceImageUrls,
+          createdAt: new Date(),
+        });
+      } catch (e: any) {
+        console.warn('[Studio] studio_input_data write failed (non-blocking):', e?.message);
+      }
 
       // If this is a regeneration (has parentId), update parent's childId
       if (parentId) {

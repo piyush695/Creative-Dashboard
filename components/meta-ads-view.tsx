@@ -7,11 +7,11 @@
  */
 
 import { AdData } from "@/lib/types"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Users, Facebook } from "lucide-react"
+import MetaAudiencesView from "./meta-audiences-view"
 import PlatformView, { compact, type PlatformKpis, type PlatformMetric } from "./platform-view"
 import { type AccountStat } from "@/components/account-switcher"
+import { fetchMetaOverview, fetchMetaAdsPage, fetchMetaLatestDate } from "@/server/actions/ads"
 
 interface MetaAdsViewProps {
     metaAds: AdData[]
@@ -73,26 +73,16 @@ export default function MetaAdsView({
             onEnlargeImage={onEnlargeImage}
             onRefresh={onRefresh}
             isSyncing={isSyncing}
+            fetchOverview={fetchMetaOverview}
+            fetchAdsPage={fetchMetaAdsPage}
+            fetchLatestDate={fetchMetaLatestDate}
             buildMetrics={buildMetrics}
             fourthTab={{
                 id: "audiences",
                 label: "Audiences",
                 icon: Users,
-                render: () => (
-                    <Card className="border border-border bg-card shadow-sm rounded-xl p-10 md:p-16">
-                        <div className="flex flex-col items-center justify-center text-center gap-4 max-w-md mx-auto">
-                            <div className="h-16 w-16 rounded-2xl flex items-center justify-center border" style={{ backgroundColor: `${ACCENT}12`, borderColor: `${ACCENT}33` }}>
-                                <Users className="h-7 w-7" style={{ color: ACCENT }} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <h3 className="text-lg font-semibold tracking-tight text-foreground">Audience insights</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    Audience-level breakdowns for Meta will appear here once audience data is connected. The layout matches the other platforms so it slots in without any change to your workflow.
-                                </p>
-                            </div>
-                            <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-border">Coming soon</Badge>
-                        </div>
-                    </Card>
+                render: (ctx) => (
+                    <MetaAudiencesView accountId={ctx.accountId} dateRange={ctx.dateRange} accent={ACCENT} />
                 ),
             }}
         />

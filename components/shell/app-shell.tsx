@@ -22,6 +22,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { contentZoom } = useUiSettings();
   // Footer appears on the Main Dashboard overview only — hidden on inner pages.
   const pathname = usePathname();
+  // Studio and Saved have their own page headers, so the global top bar is
+  // redundant there. We hide it on desktop (lg+, where the sidebar is docked)
+  // but keep it on smaller screens, since it carries the hamburger that opens
+  // the mobile nav drawer.
+  const hideTopbarDesktop =
+    (pathname?.startsWith("/studio") || pathname?.startsWith("/saved")) ?? false;
 
   // Opening the platform picker must close the mobile drawer first — otherwise
   // the dialog would stack on top of the off-canvas Sheet and get clipped.
@@ -85,11 +91,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <AddPlatformDialog open={addPlatformOpen} onOpenChange={setAddPlatformOpen} />
 
       <div suppressHydrationWarning className="relative z-10 flex min-w-0 flex-1 flex-col">
-        <Topbar onMenuClick={() => setMobileOpen(true)} />
+        <Topbar onMenuClick={() => setMobileOpen(true)} className={hideTopbarDesktop ? "lg:hidden" : undefined} />
         <main className="flex flex-1 flex-col overflow-auto">
           {/* Content zoom scales ONLY this inner content (CSS `zoom` reflows
               within the fixed main container); the shell/topbar are unaffected. */}
-          <div suppressHydrationWarning className="flex-1" style={{ zoom: contentZoom } as CSSProperties}>{children}</div>
+          <div suppressHydrationWarning className="flex-1 min-h-0" style={{ zoom: contentZoom } as CSSProperties}>{children}</div>
           {pathname === "/" && <Footer />}
         </main>
       </div>

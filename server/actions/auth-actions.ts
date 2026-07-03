@@ -7,7 +7,10 @@ import { signIn } from "@/server/auth"
 import { sendVerificationEmail, sendResetPasswordEmail } from "@/server/mail"
 import jwt from "jsonwebtoken"
 
-const JWT_SECRET = process.env.AUTH_SECRET || "default_secret_for_dev_only"
+// HARD-FAIL if AUTH_SECRET is missing — a silent hardcoded fallback would sign
+// production JWTs with a publicly known secret (session forgery).
+const JWT_SECRET = process.env.AUTH_SECRET as string
+if (!JWT_SECRET) throw new Error("AUTH_SECRET is not set — refusing to sign auth tokens without a real secret.")
 
 export async function sendVerificationCode(formData: FormData) {
     const email = (formData.get("email") as string)?.trim().toLowerCase()

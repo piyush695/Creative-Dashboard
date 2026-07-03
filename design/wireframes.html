@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HolaPrime Studio — Responsive Wireframes & Clickable Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" rel="stylesheet" />
+<style>
+:root{
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
+  --r:8px; --r-lg:12px; --r-xl:16px; --r-pill:999px;
+  --bg:#FFFFFF; --sidebar:#F7F7F4; --surface:#FFFFFF; --surface-2:#F3F3EF;
+  --border:#ECECE6; --border-2:#DFDFD8;
+  --text:#1A1A18; --text-2:#6B6B65; --text-3:#9C9C94;
+  --accent:#C9603A; --accent-hover:#B5512F; --accent-weak:#F8EDE7; --accent-text:#8A3E22;
+  --danger:#C0341B; --danger-weak:#FBEDE9;
+  --shadow-sm:0 1px 2px rgba(20,20,18,.04);
+  --shadow-pop:0 10px 30px rgba(20,20,18,.14);
+  --font:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--font);background:#E7E7E2;color:var(--text);-webkit-font-smoothing:antialiased;line-height:1.5;}
+
+/* ============ PREVIEWER CHROME ============ */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:var(--s4);
+  padding:var(--s3) var(--s5);background:#1A1A18;color:#fff;flex-wrap:wrap;}
+.topbar .brand{display:flex;align-items:center;gap:var(--s2);font-weight:600;font-size:14px;}
+.topbar .brand i{color:#E2906F;font-size:18px;}
+.topbar .sub{font-size:11px;color:#9C9C94;font-weight:400;border-left:1px solid #38382f;padding-left:var(--s3);}
+.seg{display:flex;background:#2a2a25;border-radius:var(--r-pill);padding:3px;gap:2px;}
+.seg button{all:unset;cursor:pointer;font-size:12px;font-weight:500;color:#bdbdb4;padding:6px 14px;border-radius:var(--r-pill);display:flex;align-items:center;gap:6px;}
+.seg button.on{background:#fff;color:#1A1A18;}
+.topbar .spacer{flex:1}
+.tb-btn{all:unset;cursor:pointer;font-size:12px;font-weight:500;color:#dcdcd4;padding:7px 12px;border-radius:var(--r);display:flex;align-items:center;gap:6px;border:1px solid #38382f;}
+.tb-btn.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+select.jump{all:unset;cursor:pointer;font-size:12px;color:#dcdcd4;background:#2a2a25;border:1px solid #38382f;border-radius:var(--r);padding:7px 10px;}
+select.jump option{color:#000;}
+
+/* ============ STAGE ============ */
+.stage{display:flex;justify-content:center;padding:var(--s7) var(--s5);min-height:70vh;}
+.device{position:relative;background:var(--bg);border-radius:16px;box-shadow:var(--shadow-pop);overflow:hidden;
+  border:1px solid var(--border-2);transition:width .25s ease,height .25s ease;}
+.device.desktop{width:1180px;height:760px;}
+.device.tablet{width:820px;height:1040px;border-radius:24px;border:10px solid #1A1A18;}
+.device.mobile{width:384px;height:812px;border-radius:34px;border:11px solid #1A1A18;}
+.device.tablet::after,.device.mobile::after{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:42%;max-width:140px;height:5px;border-radius:5px;background:#37372f;z-index:60;}
+.device.tablet .app,.device.mobile .app{padding-top:22px;}
+
+.caption{max-width:1180px;margin:0 auto var(--s5);padding:0 var(--s5);color:#55554f;font-size:13px;}
+.caption b{color:#1A1A18;font-weight:600;}
+
+/* ============ APP SHELL ============ */
+.app{height:100%;width:100%;background:var(--bg);position:relative;display:grid;overflow:hidden;font-size:14px;}
+.app.dev-desktop{grid-template-columns:264px 1fr;}
+.app.dev-desktop.collapsed{grid-template-columns:72px 1fr;}
+.app.dev-tablet{grid-template-columns:72px 1fr;}
+.app.dev-mobile{grid-template-columns:1fr;}
+
+/* ---- sidebar ---- */
+.sidebar{position:relative;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;min-width:0;z-index:20;}
+.app.dev-mobile .sidebar{display:none;}
+.sb-full{display:flex;flex-direction:column;height:100%;min-width:0;}
+.sb-rail{display:none;flex-direction:column;align-items:center;height:100%;padding:14px 0;gap:var(--s2);}
+.app.dev-desktop.collapsed .sb-full,.app.dev-tablet .sb-full{display:none;}
+.app.dev-desktop.collapsed .sb-rail,.app.dev-tablet .sb-rail{display:flex;}
+
+/* drawer overlay (tablet & mobile) */
+.app.drawer-open .scrim{display:block;}
+.app.dev-tablet.drawer-open .sidebar,.app.dev-mobile.drawer-open .sidebar{position:absolute;top:0;bottom:0;left:0;width:284px;box-shadow:var(--shadow-pop);display:flex;}
+.app.dev-mobile.drawer-open .sidebar{width:84%;max-width:320px;}
+.app.dev-tablet.drawer-open .sb-full,.app.dev-mobile.drawer-open .sb-full{display:flex;}
+.app.dev-tablet.drawer-open .sb-rail{display:none;}
+
+.sb-head{display:flex;align-items:center;gap:10px;padding:var(--s4) var(--s4) var(--s2);}
+.sb-logo{width:30px;height:30px;border-radius:9px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.sb-brand{flex:1;min-width:0;}
+.sb-brand .b1{font-size:14px;font-weight:600;line-height:1.2;}
+.sb-brand .b2{font-size:11px;color:var(--text-3);}
+.sb-collapse{all:unset;cursor:pointer;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--text-3);}
+.sb-collapse:hover{background:var(--surface-2);color:var(--text-2);}
+
+.btn{all:unset;cursor:pointer;font-size:13px;font-weight:600;border-radius:var(--r);padding:10px 14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent-hover);}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border-2);}
+.btn-block{display:flex;width:auto;}
+.sb-new{margin:var(--s2) var(--s3) var(--s2);}
+
+.sb-search{margin:var(--s1) var(--s3) var(--s2);display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border-2);border-radius:var(--r);padding:8px 10px;color:var(--text-3);font-size:13px;}
+.app.is-search .sb-search{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak);color:var(--text-2);}
+.sb-list{flex:1;overflow:auto;padding:var(--s2) var(--s2) var(--s3);}
+.sb-group{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;padding:var(--s3) var(--s2) var(--s1);}
+.sb-item{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-2);padding:8px 10px;border-radius:var(--r);cursor:pointer;white-space:nowrap;overflow:hidden;}
+.sb-item i{font-size:15px;color:var(--text-3);flex-shrink:0;}
+.sb-item span{overflow:hidden;text-overflow:ellipsis;}
+.sb-item:hover{background:var(--surface-2);}
+.sb-item.on{background:var(--accent-weak);color:var(--accent-text);font-weight:500;}
+.sb-item.on i{color:var(--accent);}
+.search-count{display:none;font-size:11px;color:var(--text-3);padding:var(--s1) var(--s3) var(--s2);}
+.app.is-search .search-count{display:block;}
+.app.is-search .sb-group,.app.is-search .sb-item:not(.match){display:none;}
+
+.sb-foot{border-top:1px solid var(--border);padding:10px var(--s3);display:flex;align-items:center;gap:10px;}
+.sb-foot .av{width:30px;height:30px;border-radius:50%;background:var(--accent-weak);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+.sb-foot .who{flex:1;min-width:0;}
+.sb-foot .who .n1{font-size:13px;font-weight:500;line-height:1.2;}
+.sb-foot .who .n2{font-size:11px;color:var(--text-3);}
+.sb-foot .set{color:var(--text-3);font-size:18px;cursor:pointer;}
+
+/* rail */
+.rail-i{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text-2);cursor:pointer;}
+.rail-i.brand{background:var(--accent);color:#fff;}
+.rail-i.on{background:var(--accent-weak);color:var(--accent);}
+.rail-i:hover:not(.brand):not(.on){background:var(--surface-2);}
+.sb-rail .sp{flex:1}
+.rail-av{width:30px;height:30px;border-radius:50%;background:var(--accent-weak);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+
+/* ---- main ---- */
+.main{display:flex;flex-direction:column;min-width:0;background:var(--surface);position:relative;}
+.appbar{display:flex;align-items:center;gap:var(--s3);height:56px;padding:0 var(--s4);border-bottom:1px solid var(--border);flex-shrink:0;}
+.hamburger{display:none;all:unset;cursor:pointer;width:36px;height:36px;border-radius:9px;align-items:center;justify-content:center;font-size:20px;color:var(--text);}
+.hamburger:hover{background:var(--surface-2);}
+.app.dev-tablet .hamburger,.app.dev-mobile .hamburger{display:inline-flex;}
+.ab-title{flex:1;min-width:0;}
+.ab-title .t1{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ab-title .t2{font-size:11px;color:var(--text-3);}
+.source-sel{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-2);border:1px solid var(--border-2);border-radius:var(--r);padding:7px 11px;cursor:pointer;background:var(--surface);}
+.source-sel i:last-child{font-size:13px;color:var(--text-3);}
+.ab-ic{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text-2);cursor:pointer;}
+.ab-ic:hover{background:var(--surface-2);}
+.app.dev-mobile .source-sel .lbl{display:none;}
+.app.dev-mobile .ab-share{display:none;}
+
+.thread{flex:1;overflow:auto;}
+.col{max-width:720px;margin:0 auto;width:100%;padding:var(--s6) var(--s5);}
+.app.dev-mobile .col{padding:var(--s5) var(--s4);}
+
+/* home / empty */
+.home-state{display:none;flex-direction:column;align-items:center;text-align:center;gap:var(--s5);padding-top:9%;}
+.app.view-home .home-state{display:flex;}
+.home-state .greet-ic{width:56px;height:56px;border-radius:16px;background:var(--accent-weak);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:27px;}
+.home-state h2{margin:0;font-size:24px;font-weight:600;letter-spacing:-.01em;}
+.home-state p{margin:0;color:var(--text-2);font-size:14px;max-width:380px;}
+.suggestions{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3);max-width:560px;width:100%;margin-top:var(--s1);}
+.app.dev-mobile .suggestions{grid-template-columns:1fr;}
+.sug{border:1px solid var(--border);background:var(--surface);border-radius:var(--r-lg);padding:14px var(--s4);text-align:left;cursor:pointer;display:flex;gap:11px;align-items:flex-start;}
+.sug:hover{border-color:var(--border-2);background:var(--surface-2);}
+.sug i{font-size:18px;color:var(--accent);margin-top:1px;}
+.sug .st{font-size:13px;font-weight:600;}
+.sug .sd{font-size:12px;color:var(--text-3);}
+
+/* conversation */
+.thread-conv{display:none;flex-direction:column;gap:var(--s6);}
+.app.view-conversation .thread-conv{display:flex;}
+.msg-user{align-self:flex-end;max-width:80%;background:var(--surface-2);color:var(--text);font-size:14px;line-height:1.55;padding:11px 15px;border-radius:16px 16px 4px 16px;}
+.msg-ai{display:flex;gap:var(--s3);}
+.ai-av{width:30px;height:30px;border-radius:9px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.ai-body{flex:1;min-width:0;}
+.ai-name{font-size:13px;font-weight:600;margin-bottom:2px;}
+.ai-meta{font-size:12px;color:var(--text-3);margin-bottom:12px;}
+.var-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3);}
+.app.dev-mobile .var-grid{grid-template-columns:1fr 1fr;}
+.var{aspect-ratio:4/5;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:18px;}
+.actions{display:flex;gap:var(--s2);margin-top:var(--s3);flex-wrap:wrap;}
+.act{font-size:12px;color:var(--text-2);border:1px solid var(--border-2);border-radius:var(--r);padding:6px 11px;cursor:pointer;background:var(--surface);display:flex;align-items:center;gap:5px;}
+.act:hover{background:var(--surface-2);}
+.act i{font-size:14px;}
+
+/* loading */
+.gen-loading{display:none;}
+.app.is-loading .gen-loading{display:block;}
+.app.is-loading .var-done,.app.is-loading .actions{display:none;}
+.sk-meta{font-size:12px;color:var(--text-2);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.spinner{width:14px;height:14px;border:2px solid var(--border-2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sk{aspect-ratio:4/5;border-radius:var(--r-lg);background:linear-gradient(100deg,var(--surface-2) 30%,#ececE6 50%,var(--surface-2) 70%);background-size:200% 100%;animation:sh 1.3s infinite;}
+@keyframes sh{to{background-position:-200% 0}}
+
+/* error */
+.error-card{display:none;flex-direction:column;align-items:flex-start;gap:var(--s3);background:var(--danger-weak);border:1px solid #EFC9BF;border-radius:var(--r-lg);padding:var(--s4);}
+.app.is-error .error-card{display:flex;}
+.app.is-error .var-done,.app.is-error .actions,.app.is-error .gen-loading{display:none;}
+.error-card .et{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--danger);}
+.error-card p{margin:0;font-size:13px;color:#8a3322;}
+
+/* composer */
+.composer{border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.composer .col{padding:var(--s3) var(--s5) var(--s4);}
+.app.dev-mobile .composer .col{padding:var(--s2) var(--s4) var(--s3);}
+.composer-box{border:1px solid var(--border-2);border-radius:var(--r-xl);background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow-sm);}
+.cb-input{font-size:14px;color:var(--text-3);min-height:22px;}
+.cb-tools{display:flex;align-items:center;gap:var(--s2);}
+.tool{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);border:1px solid var(--border-2);border-radius:var(--r-pill);padding:6px 11px;cursor:pointer;background:var(--surface);}
+.tool:hover{background:var(--surface-2);}
+.tool i{font-size:15px;}
+.tool.icon-only{padding:6px;width:30px;justify-content:center;}
+.cb-send{margin-left:auto;width:34px;height:34px;border-radius:10px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;flex-shrink:0;}
+.cb-send:hover{background:var(--accent-hover);}
+.app.dev-mobile .tool .lbl{display:none;}
+.app.dev-mobile .tool{padding:6px;width:30px;justify-content:center;}
+
+/* scrim */
+.scrim{display:none;position:absolute;inset:0;background:rgba(20,20,18,.35);z-index:15;}
+
+/* annotations */
+.annot-legend{display:none;max-width:1180px;margin:0 auto var(--s6);padding:var(--s4) var(--s5);background:var(--accent-weak);border:1px solid #EAD3C7;border-radius:var(--r-lg);}
+body.show-annot .annot-legend{display:block;}
+.annot-legend h4{margin:0 0 var(--s2);font-size:13px;color:var(--accent-text);}
+.annot-legend ul{margin:0;padding-left:var(--s5);color:#7c4a35;font-size:13px;line-height:1.7;}
+
+/* gallery / print */
+.gallery{display:none;padding:var(--s6) var(--s5) var(--s8);}
+body.mode-gallery .stage{display:none;}
+body.mode-gallery .gallery{display:block;}
+.gal-group{max-width:1240px;margin:0 auto var(--s8);}
+.gal-group>h2{font-size:18px;font-weight:600;margin:0 0 var(--s2);display:flex;align-items:center;gap:10px;}
+.gal-group>h2 .pill{font-size:11px;font-weight:500;color:var(--text-2);background:#fff;border:1px solid var(--border-2);border-radius:var(--r-pill);padding:3px 10px;}
+.gal-grid{display:flex;flex-wrap:wrap;gap:var(--s6) var(--s5);}
+.gal-card{background:#fff;border:1px solid var(--border-2);border-radius:var(--r-lg);padding:var(--s4);box-shadow:var(--shadow-sm);}
+.gal-card h3{margin:0 0 2px;font-size:14px;font-weight:600;}
+.gal-card .gc-note{font-size:12px;color:var(--text-2);margin:0 0 var(--s3);line-height:1.5;}
+.frame-wrap{overflow:hidden;border-radius:12px;border:1px solid var(--border);background:var(--bg);}
+.frame-scale{transform-origin:top left;}
+
+@media print{
+  @page{size:A4 landscape;margin:12mm;}
+  body{background:#fff;}
+  .topbar,.caption,.stage,.annot-legend{display:none !important;}
+  .gallery{display:block !important;}
+  .gal-group{break-inside:avoid;page-break-inside:avoid;margin-bottom:22px;}
+  .gal-card{break-inside:avoid;page-break-inside:avoid;box-shadow:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><i class="ti ti-sparkles"></i> HolaPrime Studio <span class="sub">Responsive wireframe · v2 · clickable prototype</span></div>
+  <div class="spacer"></div>
+  <div class="seg" id="deviceSeg">
+    <button data-dev="desktop" class="on"><i class="ti ti-device-desktop"></i> Desktop</button>
+    <button data-dev="tablet"><i class="ti ti-device-ipad"></i> Tablet</button>
+    <button data-dev="mobile"><i class="ti ti-device-mobile"></i> Mobile</button>
+  </div>
+  <select class="jump" id="jump" title="Jump to a state">
+    <optgroup label="Jump to state">
+      <option value="home">Home / Empty</option>
+      <option value="newchat">New chat</option>
+      <option value="conversation" selected>Conversation</option>
+      <option value="loading">Loading</option>
+      <option value="error">Error</option>
+      <option value="history">History / search</option>
+      <option value="drawer">Nav drawer</option>
+      <option value="collapsed">Sidebar collapsed</option>
+    </optgroup>
+  </select>
+  <button class="tb-btn" id="annotBtn"><i class="ti ti-bulb"></i> Annotations</button>
+  <button class="tb-btn" id="galleryBtn"><i class="ti ti-layout-board"></i> All frames / Print</button>
+</div>
+
+<div class="caption" id="caption"></div>
+
+<div class="stage">
+  <div class="device desktop" id="device"></div>
+</div>
+
+<div class="annot-legend" id="legend"></div>
+<div class="gallery" id="gallery"></div>
+
+<script>
+function shell(){return `
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- full -->
+    <div class="sb-full">
+      <div class="sb-head">
+        <div class="sb-logo"><i class="ti ti-sparkles"></i></div>
+        <div class="sb-brand"><div class="b1">hola prime</div><div class="b2">Creative Studio</div></div>
+        <button class="sb-collapse" data-act="collapse" title="Collapse"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+      </div>
+      <button class="btn btn-primary btn-block sb-new" data-act="newchat"><i class="ti ti-plus"></i> New chat</button>
+      <div class="sb-search" data-act="search"><i class="ti ti-search"></i> Search chats…</div>
+      <div class="search-count">3 results for “sale”</div>
+      <div class="sb-list">
+        <div class="sb-group">Today</div>
+        <div class="sb-item on match"><i class="ti ti-message"></i><span>Summer sale — bold promo</span></div>
+        <div class="sb-item match"><i class="ti ti-message"></i><span>Mid-season sale teaser</span></div>
+        <div class="sb-item"><i class="ti ti-message"></i><span>UGC testimonial concepts</span></div>
+        <div class="sb-group">Yesterday</div>
+        <div class="sb-item"><i class="ti ti-message"></i><span>Forex challenge — hook A/B</span></div>
+        <div class="sb-item"><i class="ti ti-message"></i><span>Carousel — bestsellers</span></div>
+        <div class="sb-group">Previous 7 days</div>
+        <div class="sb-item match"><i class="ti ti-message"></i><span>Black-week sale teaser</span></div>
+        <div class="sb-item"><i class="ti ti-message"></i><span>Instagram story — 45% off</span></div>
+        <div class="sb-item"><i class="ti ti-message"></i><span>Retargeting — cart reminder</span></div>
+      </div>
+      <div class="sb-foot">
+        <div class="av">GS</div>
+        <div class="who"><div class="n1">Pankaj Sharma</div><div class="n2">HolaPrime · Pro</div></div>
+        <i class="ti ti-settings set"></i>
+      </div>
+    </div>
+    <!-- rail -->
+    <div class="sb-rail">
+      <div class="rail-i brand"><i class="ti ti-sparkles"></i></div>
+      <div class="rail-i" data-act="newchat" title="New chat"><i class="ti ti-plus"></i></div>
+      <div class="rail-i on" data-act="expand" title="Search / history"><i class="ti ti-search"></i></div>
+      <div class="rail-i" data-act="expand" title="History"><i class="ti ti-history"></i></div>
+      <div class="rail-i" title="Saved"><i class="ti ti-bookmark"></i></div>
+      <div class="sp"></div>
+      <div class="rail-i" title="Settings"><i class="ti ti-settings"></i></div>
+      <div class="rail-av">GS</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <header class="appbar">
+      <button class="hamburger" data-act="drawer"><i class="ti ti-menu-2"></i></button>
+      <div class="ab-title"><div class="t1">Summer sale — bold promo</div><div class="t2">Updated just now</div></div>
+      <div class="source-sel"><i class="ti ti-adjustments-horizontal"></i> <span class="lbl">Custom</span> <i class="ti ti-chevron-down"></i></div>
+      <div class="ab-ic ab-share" title="Share"><i class="ti ti-share-2"></i></div>
+      <div class="ab-ic" title="More"><i class="ti ti-dots"></i></div>
+    </header>
+
+    <div class="thread">
+      <div class="col">
+        <!-- HOME / EMPTY / NEW CHAT -->
+        <div class="home-state">
+          <div class="greet-ic"><i class="ti ti-sparkles"></i></div>
+          <div>
+            <h2>What should we create today?</h2>
+            <p>Describe an ad, attach a reference, or start from one of these.</p>
+          </div>
+          <div class="suggestions">
+            <div class="sug" data-act="send"><i class="ti ti-discount"></i><div><div class="st">Mid-season sale promo</div><div class="sd">Bold · neon · 4:5</div></div></div>
+            <div class="sug" data-act="send"><i class="ti ti-user-heart"></i><div><div class="st">UGC testimonial</div><div class="sd">Authentic · 9:16</div></div></div>
+            <div class="sug" data-act="send"><i class="ti ti-chart-line"></i><div><div class="st">Forex challenge hook</div><div class="sd">High-contrast A/B</div></div></div>
+            <div class="sug" data-act="send"><i class="ti ti-layout-grid"></i><div><div class="st">Bestseller carousel</div><div class="sd">Clean product grid</div></div></div>
+          </div>
+        </div>
+
+        <!-- CONVERSATION -->
+        <div class="thread-conv">
+          <div class="msg-user">A bold “Mid-season sale — up to 45% off” promo for our forex challenge. Dark, energetic, neon accents. 4:5.</div>
+          <div class="msg-ai">
+            <div class="ai-av"><i class="ti ti-sparkles"></i></div>
+            <div class="ai-body">
+              <div class="ai-name">Studio</div>
+              <div class="ai-meta">4 variations · Custom · 4:5</div>
+              <div class="var-grid var-done">
+                <div class="var"><i class="ti ti-photo"></i></div><div class="var"><i class="ti ti-photo"></i></div>
+                <div class="var"><i class="ti ti-photo"></i></div><div class="var"><i class="ti ti-photo"></i></div>
+              </div>
+              <div class="gen-loading">
+                <div class="sk-meta"><span class="spinner"></span> Generating 4 variations…</div>
+                <div class="var-grid"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+              </div>
+              <div class="error-card">
+                <div class="et"><i class="ti ti-alert-triangle"></i> Generation failed</div>
+                <p>The model didn’t return images — this can happen under heavy load. Your prompt is saved.</p>
+                <button class="btn btn-primary" data-act="retry"><i class="ti ti-refresh"></i> Retry</button>
+              </div>
+              <div class="actions">
+                <span class="act"><i class="ti ti-bookmark"></i> Save</span>
+                <span class="act"><i class="ti ti-download"></i> Download</span>
+                <span class="act"><i class="ti ti-copy"></i> Variations</span>
+                <span class="act"><i class="ti ti-photo-up"></i> Use as source</span>
+              </div>
+            </div>
+          </div>
+          <div class="msg-user">Love #2. Two more like it, headline “Last 12 hours”.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPOSER (holds all generation controls) -->
+    <div class="composer">
+      <div class="col">
+        <div class="composer-box">
+          <div class="cb-input">Describe the ad you want to create…</div>
+          <div class="cb-tools">
+            <span class="tool" title="Add reference"><i class="ti ti-photo-plus"></i> <span class="lbl">Reference</span></span>
+            <span class="tool"><i class="ti ti-aspect-ratio"></i> <span class="lbl">4:5</span></span>
+            <span class="tool"><i class="ti ti-palette"></i> <span class="lbl">Styles</span></span>
+            <span class="tool"><i class="ti ti-wand"></i> <span class="lbl">Direct</span></span>
+            <div class="cb-send" data-act="send"><i class="ti ti-arrow-up"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scrim" data-act="close"></div>
+  </main>
+</div>`;}
+
+/* ---------------- state ---------------- */
+const S={device:'desktop',view:'conversation',collapsed:false,loading:false,error:false,search:false,drawer:false};
+function classFor(s){
+  return 'app dev-'+s.device
+    +(s.collapsed?' collapsed':'')
+    +(s.loading?' is-loading':'')
+    +(s.error?' is-error':'')
+    +(s.search?' is-search':'')
+    +(s.drawer?' drawer-open':'')
+    +' view-'+s.view;
+}
+const captions={
+  home:'<b>Home / Empty / New chat.</b> Centered greeting, starter cards, and the composer. New chat and History live in the persistent left sidebar — part of the interface, never floating.',
+  conversation:'<b>Conversation.</b> One 720px reading column: user messages right, AI results as labelled blocks with a 4-up grid and a tidy action row.',
+  loading:'<b>Loading.</b> Skeleton tiles + spinner replace the result while generating. The composer stays available.',
+  error:'<b>Error.</b> Inline error block stating the cause with a single Retry action. The prompt is preserved.',
+  history:'<b>History / search.</b> Search field focuses, list filters to matches with a result count — all inside the sidebar.',
+  drawer:'<b>Navigation drawer.</b> On tablet & mobile the sidebar (New chat + search + history) slides in over a scrim from the hamburger.',
+  collapsed:'<b>Sidebar collapsed.</b> Sidebar reduces to a 72px icon rail; one click on search / history expands it again.'
+};
+const legends={
+  desktop:'Two zones: a 264px sidebar (nav · New chat · searchable history) and a fluid canvas. Thread and composer share one centered 720px column for a single alignment axis.',
+  tablet:'Sidebar persists as a 72px icon rail; the hamburger expands it to a 284px drawer. Canvas is full-width; composer stays centered.',
+  mobile:'Sidebar becomes a full drawer behind the hamburger. App bar = menu · title · source. Composer pins to the bottom with an icon-only tool row.'
+};
+
+const dev=document.getElementById('device');
+const captionEl=document.getElementById('caption');
+function render(){
+  dev.className='device '+S.device;
+  if(!dev.firstElementChild) dev.innerHTML=shell();
+  dev.firstElementChild.className=classFor(S);
+  let key=S.drawer?'drawer':(S.search?'history':(S.loading?'loading':(S.error?'error':(S.collapsed?'collapsed':S.view))));
+  captionEl.innerHTML=(captions[key]||captions[S.view])+'  <span style="color:var(--text-3)">— '+S.device+'</span>';
+  document.getElementById('legend').innerHTML='<h4>Responsive behavior — '+S.device+'</h4><ul><li>'+legends[S.device]
+    +'</li><li>8px spacing grid · type 11/12/13/14/24 · radii 8 / 12 / 16 · one accent (clay) for generative actions and active state.</li>'
+    +'<li>Tap targets ≥36px · hairline 1px borders · a single overlay elevation for the drawer.</li></ul>';
+}
+
+dev.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t)return;
+  const a=t.dataset.act;
+  if(a==='send'){S.view='conversation';S.error=false;S.search=false;S.drawer=false;S.loading=true;render();
+    clearTimeout(window._t);window._t=setTimeout(()=>{S.loading=false;render();},1500);}
+  else if(a==='newchat'){S.view='home';S.loading=false;S.error=false;S.search=false;S.drawer=false;render();}
+  else if(a==='collapse'){S.collapsed=true;render();}
+  else if(a==='expand'){S.collapsed=false;render();}
+  else if(a==='search'){S.search=!S.search;render();}
+  else if(a==='drawer'){S.drawer=!S.drawer;render();}
+  else if(a==='close'){S.drawer=false;render();}
+  else if(a==='retry'){S.error=false;S.loading=true;render();clearTimeout(window._t);window._t=setTimeout(()=>{S.loading=false;render();},1500);}
+});
+
+document.getElementById('deviceSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-dev]'); if(!b)return;
+  [...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));
+  S.device=b.dataset.dev; if(S.device!=='desktop')S.collapsed=false; if(S.device==='desktop')S.drawer=false;
+  render();
+});
+
+document.getElementById('jump').addEventListener('change',e=>{
+  const v=e.target.value; S.loading=false;S.error=false;S.search=false;S.collapsed=false;S.drawer=false;
+  const setDev=d=>{S.device=d;document.querySelectorAll('#deviceSeg button').forEach(x=>x.classList.toggle('on',x.dataset.dev===d));};
+  if(v==='home'||v==='newchat'){S.view='home';}
+  else if(v==='conversation'){S.view='conversation';}
+  else if(v==='loading'){S.view='conversation';S.loading=true;}
+  else if(v==='error'){S.view='conversation';S.error=true;}
+  else if(v==='history'){if(S.device==='mobile'){S.drawer=true;}else{S.search=true;}S.view='conversation';}
+  else if(v==='drawer'){if(S.device==='desktop')setDev('mobile');S.view='conversation';S.drawer=true;}
+  else if(v==='collapsed'){setDev('desktop');S.view='conversation';S.collapsed=true;}
+  render();
+});
+
+document.getElementById('annotBtn').addEventListener('click',e=>{document.body.classList.toggle('show-annot');e.currentTarget.classList.toggle('on');});
+
+/* ---------------- gallery / print ---------------- */
+const FRAMES=[
+  {dev:'desktop',title:'Home / Empty · New chat',note:'Centered greeting + starter cards. Sidebar holds New chat and history.',s:{view:'home'}},
+  {dev:'desktop',title:'Conversation',note:'Single 720px reading column; labelled AI result blocks with action row.',s:{view:'conversation'}},
+  {dev:'desktop',title:'Loading',note:'Skeleton grid + spinner while generating.',s:{view:'conversation',loading:true}},
+  {dev:'desktop',title:'Error',note:'Inline error block with a single Retry action.',s:{view:'conversation',error:true}},
+  {dev:'desktop',title:'History / search',note:'Search focuses, list filters to matches with a count.',s:{view:'conversation',search:true}},
+  {dev:'desktop',title:'Sidebar collapsed',note:'Sidebar reduces to a 72px icon rail.',s:{view:'conversation',collapsed:true}},
+  {dev:'tablet',title:'Conversation (rail)',note:'Sidebar persists as an icon rail; full-width canvas.',s:{view:'conversation'}},
+  {dev:'tablet',title:'Home',note:'Greeting + cards adapt to the wider single column.',s:{view:'home'}},
+  {dev:'tablet',title:'Navigation drawer',note:'Hamburger expands the rail to a 284px drawer.',s:{view:'conversation',drawer:true}},
+  {dev:'mobile',title:'Home / Empty',note:'Single column, stacked starter cards, pinned composer.',s:{view:'home'}},
+  {dev:'mobile',title:'Conversation',note:'2-up variation grid; icon-only composer tools.',s:{view:'conversation'}},
+  {dev:'mobile',title:'Loading',note:'Skeleton grid, composer stays put.',s:{view:'conversation',loading:true}},
+  {dev:'mobile',title:'Error',note:'Inline error block + Retry.',s:{view:'conversation',error:true}},
+  {dev:'mobile',title:'Navigation drawer',note:'Full sidebar (New chat + history) over a scrim.',s:{view:'conversation',drawer:true}},
+];
+const DIMS={desktop:[1180,760],tablet:[800,1040],mobile:[384,812]};
+const SCALE={desktop:.5,tablet:.42,mobile:.62};
+const GROUPS={desktop:['ti-device-desktop','Desktop — 1280px+','12-col grid'],tablet:['ti-device-ipad','Tablet — 768–1024px','8-col grid'],mobile:['ti-device-mobile','Mobile — 360–430px','4-col grid']};
+function buildGallery(){
+  const g=document.getElementById('gallery');let html='';
+  ['desktop','tablet','mobile'].forEach(d=>{
+    const G=GROUPS[d];
+    html+='<div class="gal-group"><h2><i class="ti '+G[0]+'"></i> '+G[1]+'<span class="pill">'+G[2]+'</span></h2><div class="gal-grid">';
+    FRAMES.filter(f=>f.dev===d).forEach(f=>{
+      const[w,h]=DIMS[d],sc=SCALE[d];
+      const st=Object.assign({device:d,view:'conversation',collapsed:false,loading:false,error:false,search:false,drawer:false},f.s,{device:d});
+      html+='<div class="gal-card" style="width:'+(w*sc+34)+'px">'
+        +'<h3>'+f.title+'</h3><p class="gc-note">'+f.note+'</p>'
+        +'<div class="frame-wrap" style="width:'+(w*sc)+'px;height:'+(h*sc)+'px">'
+        +'<div class="frame-scale" style="width:'+w+'px;height:'+h+'px;transform:scale('+sc+')">'
+        +'<div class="device '+d+'" style="width:'+w+'px;height:'+h+'px;box-shadow:none;border-radius:0;border:none">'
+        +shell().replace('class="app"','class="'+classFor(st)+'"')
+        +'</div></div></div></div>';
+    });
+    html+='</div></div>';
+  });
+  g.innerHTML=html;
+}
+document.getElementById('galleryBtn').addEventListener('click',e=>{
+  const on=document.body.classList.toggle('mode-gallery');
+  e.currentTarget.classList.toggle('on',on);
+  window.scrollTo(0,0);
+});
+
+render();
+buildGallery();
+if(location.search.indexOf('gallery')>-1){document.body.classList.add('mode-gallery');document.getElementById('galleryBtn').classList.add('on');}
+</script>
+</body>
+</html>

@@ -19,8 +19,9 @@ import {
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { useUiSettings } from "@/components/providers/ui-settings-provider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
-export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
+export function Topbar({ onMenuClick, className }: { onMenuClick?: () => void; className?: string }) {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
   const { notificationIconEnabled } = useUiSettings();
@@ -31,6 +32,12 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  // The global "Search ads by name or ID" box drives the legacy ads grid. It's
+  // hidden where it doesn't apply or would duplicate a page-local search:
+  //  • Studio — no ad grid
+  //  • Saved  — has its own "Search saved creatives…" field
+  const hideSearch =
+    (pathname?.startsWith("/studio") || pathname?.startsWith("/saved")) ?? false;
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchValue, setSearchValue] = useState(searchParams?.get("q") || "");
 
@@ -76,7 +83,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
     .toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-background/70 px-3 backdrop-blur-xl backdrop-saturate-150 sm:gap-3 sm:px-4">
+    <header className={cn("sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-background/70 px-3 backdrop-blur-xl backdrop-saturate-150 sm:gap-3 sm:px-4", className)}>
       {/* Mobile menu toggle — opens the off-canvas sidebar drawer below lg */}
       <Button
         variant="ghost"
@@ -88,9 +95,11 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         <Menu className="h-5 w-5" />
       </Button>
 
-      {/* Global search input — debounced via Enter / blur. Filters the ads grid by name or ID. */}
+      {/* Global search input — debounced via Enter / blur. Filters the ads grid by
+          name or ID. Hidden on the Studio page (no ad grid to filter). */}
       {/* suppressHydrationWarning: security extensions (e.g. Bitdefender) inject a
           `bis_skin_checked` attribute onto this div before React hydrates. */}
+      {!hideSearch && (
       <div suppressHydrationWarning className="group relative flex h-9 w-full min-w-0 max-w-[420px] items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 text-sm transition-all duration-200 focus-within:bg-background focus-within:border-primary/50 focus-within:shadow-[0_0_0_3px_oklch(0.58_0.21_264_/_0.12)]">
         <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0 transition-colors group-focus-within:text-primary" />
         <input
@@ -137,6 +146,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           <span className="text-xs">⌘</span>K
         </kbd>
       </div>
+      )}
 
       <div suppressHydrationWarning className="ml-auto flex items-center gap-1.5">
         {notificationIconEnabled && (

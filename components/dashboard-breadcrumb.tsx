@@ -113,9 +113,8 @@ export function DashboardBreadcrumb(props: DashboardBreadcrumbProps) {
       <BreadcrumbList className="flex-nowrap gap-1 text-xs sm:gap-1.5">
         {segments.map((seg, i) => {
           const isLast = i === last;
-          // Platform crumb shows the selected platform's icon next to its name.
-          const PlatformIcon =
-            seg.kind === "platform" ? props.platformMeta[props.selectedPlatform]?.icon : undefined;
+          // Breadcrumb crumbs are text-only — the platform mark is no longer shown
+          // here (it lives on the ad cards as the official platform logo).
           return (
             <React.Fragment key={`${seg.kind}-${i}`}>
               {i > 0 && <BreadcrumbSeparator />}
@@ -129,13 +128,11 @@ export function DashboardBreadcrumb(props: DashboardBreadcrumbProps) {
                       className="flex items-center gap-1.5 font-medium text-muted-foreground transition-colors hover:text-foreground"
                       title={`Go to ${seg.label} home`}
                     >
-                      {PlatformIcon && <PlatformIcon className="h-3.5 w-3.5 shrink-0" />}
                       {seg.label}
                     </button>
                   </BreadcrumbLink>
                 ) : (
                   <BreadcrumbPage className="flex items-center gap-1.5 max-w-[140px] truncate font-medium text-foreground sm:max-w-[220px] lg:max-w-none">
-                    {PlatformIcon && <PlatformIcon className="h-3.5 w-3.5 shrink-0" />}
                     {seg.label}
                   </BreadcrumbPage>
                 )}

@@ -32,3 +32,13 @@ next-env.d.ts
 /public/ad-library-uploads/*/*.jpeg
 /public/ad-library-uploads/*/*.webp
 /public/ad-library-uploads/*/*.gif
+# keep the documented template (only real .env files are secret)
+!.env.example
+
+# runtime debug logs
+api_debug.log
+auth-error.log
+/logs
+
+# throwaway local probes
+/_hd_bulk.mjs

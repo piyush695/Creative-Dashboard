@@ -10,7 +10,6 @@
 
 import { useState } from "react"
 import { AdData } from "@/lib/types"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Search, Database, Wifi, ChevronDown, Play } from "lucide-react"
@@ -18,6 +17,8 @@ import { cn } from "@/lib/utils"
 import PlatformView, { compact, type PlatformKpis, type PlatformMetric } from "./platform-view"
 import { RealtimeNativeView } from "./realtime-native-view"
 import { type AccountStat } from "@/components/account-switcher"
+import { fetchGoogleOverview, fetchGoogleAdsPage } from "@/server/actions/google-live"
+import GoogleKeywordsView from "./google-keywords-view"
 
 interface GoogleAdsViewProps {
     googleAds: AdData[]
@@ -50,52 +51,6 @@ const buildMetrics = (k: PlatformKpis): PlatformMetric[] => [
     { label: "Conv. value", value: `$${compact(k.convValue)}` },
     { label: "Account ROAS", value: `${k.roas.toFixed(2)}x` },
 ]
-
-function KeywordsTab({ ads, accent }: { ads: AdData[]; accent: string }) {
-    const map = new Map<string, { word: string; spend: number; impr: number; clicks: number }>()
-    ads.forEach((ad: any) => {
-        const kws: string[] = ad.keywords || ad.searchTerms || []
-        kws.forEach((kw) => {
-            const e = map.get(kw) || { word: kw, spend: 0, impr: 0, clicks: 0 }
-            e.spend += Number(ad.spend || 0); e.impr += Number(ad.impressions || 0); e.clicks += Number(ad.clicks || 0)
-            map.set(kw, e)
-        })
-    })
-    const keywords = Array.from(map.values()).map(k => ({ ...k, ctr: k.impr > 0 ? (k.clicks / k.impr) * 100 : 0 })).sort((a, b) => b.spend - a.spend).slice(0, 50)
-
-    return (
-        <Card className="border border-border bg-card shadow-sm rounded-xl overflow-hidden">
-            <div className="p-5 border-b border-border">
-                <h3 className="text-sm font-semibold tracking-tight text-foreground">Search keywords</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">{keywords.length} terms · ranked by cost</p>
-            </div>
-            {keywords.length > 0 ? (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[440px]">
-                        <thead>
-                            <tr className="border-b border-border">
-                                <th className="py-3 px-5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Term</th>
-                                <th className="py-3 px-5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Cost</th>
-                                <th className="py-3 px-5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">CTR</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {keywords.map((kw, i) => (
-                                <tr key={`${kw.word}-${i}`} className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors">
-                                    <td className="py-3.5 px-5 max-w-[320px]"><span className="text-[13px] text-foreground break-words">{kw.word}</span></td>
-                                    <td className="py-3.5 px-5 text-right text-[13px] font-semibold text-foreground whitespace-nowrap">${kw.spend.toLocaleString()}</td>
-                                    <td className="py-3.5 px-5 text-right text-[13px] font-semibold whitespace-nowrap" style={{ color: accent }}>{kw.ctr.toFixed(2)}%</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                <div className="py-16 text-center text-muted-foreground text-sm">No keyword data available for the current selection.</div>
-            )}
-        </Card>
-    )
-}
 
 export default function GoogleAdsView({
     googleAds,
@@ -177,6 +132,8 @@ export default function GoogleAdsView({
             onRefresh={onRefresh}
             isSyncing={isSyncing}
             buildMetrics={buildMetrics}
+            fetchOverview={fetchGoogleOverview}
+            fetchAdsPage={fetchGoogleAdsPage}
             defaultTab={defaultTab}
             headerControls={dataSourceToggle}
             bodyOverride={realtimeBody}
@@ -184,7 +141,7 @@ export default function GoogleAdsView({
                 id: "keywords",
                 label: "Keywords",
                 icon: Search,
-                render: ({ ads, accent }) => <KeywordsTab ads={ads} accent={accent} />,
+                render: ({ accent, dateRange }) => <GoogleKeywordsView dateRange={dateRange} accent={accent} />,
             }}
         />
     )

@@ -17,6 +17,7 @@ import {
   getAdLibraryStats,
 } from "@/server/ai-studio/ad-library-db";
 import { syncAdLibrary } from "@/server/ai-studio/ad-library-sync";
+import { requireSession } from "@/server/api-auth";
 import { syncLocalAdLibrary } from "@/server/ai-studio/ad-library-local-sync";
 import { summarizePatterns, buildPatternContext } from "@/server/ai-studio/ad-pattern-extractor";
 
@@ -145,7 +146,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ summary, context, sourceAdCount: top.length });
     }
 
-    // ─── Sync ────────────────────────────────────────────────────────────
+    // ─── Sync (mutating-by-GET: writes to Mongo) — verified session required ──
+    if (action === "sync-all" || action === "sync-local") {
+      const unauth = await requireSession();
+      if (unauth) return unauth;
+    }
     if (action === "sync-all") {
       const skipPatterns = searchParams.get("skipPatterns") === "true";
       const countriesParam = searchParams.get("countries");

@@ -5,6 +5,7 @@ import { connectDB, saveAnalysis } from "@/server/realtime-services/mongoService
 import { saveMetaAnalysis } from "@/server/realtime-services/saveMetaAnalysis";
 import { enrichAndSaveForAd } from "@/server/realtime-services/metaInsightsEnrich";
 import clientPromise from "@/server/mongodb-client";
+import { requireSession } from "@/server/api-auth";
 import fs from "fs";
 
 const jsonResponse = (data: any, status = 200) => NextResponse.json(data, { status });
@@ -253,6 +254,9 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
 
 // ─── POST Handler ───────────────────────────────────────────────────────────── 
 export async function POST(req: NextRequest, { params }: { params: any }) {
+    // Mutating (runs analyses / writes to Mongo) — verified session required.
+    const unauth = await requireSession();
+    if (unauth) return unauth;
     let path = "unknown";
     try {
         const p = await params;

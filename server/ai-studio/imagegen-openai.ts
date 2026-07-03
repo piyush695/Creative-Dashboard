@@ -31,6 +31,34 @@ function getClient(): OpenAI {
   return _client;
 }
 
+// Last human-readable failure reason from generateImageOpenAI(). The function
+// returns null on failure (so provider-fallback callers keep working), so this
+// lets the direct-mode path surface WHY it failed instead of a generic message.
+let _lastError: string | null = null;
+export function getLastOpenAIError(): string | null {
+  return _lastError;
+}
+
+// Map an OpenAI SDK error to a short, actionable message for the end user.
+function friendlyOpenAIError(err: any): string {
+  const status = err?.status;
+  const code = err?.code || err?.error?.code || "";
+  const message = err?.message || String(err);
+  if (code === "billing_hard_limit_reached" || /billing|quota|insufficient/i.test(message) || status === 402) {
+    return "OpenAI billing limit reached. Add credits or raise your usage limit at platform.openai.com → Settings → Billing, then try again.";
+  }
+  if (status === 401 || status === 403) {
+    return "OpenAI rejected the API key (auth failed). Check OPENAI_API_KEY in .env.";
+  }
+  if (status === 429) {
+    return "OpenAI rate limit hit. Wait a moment and try again.";
+  }
+  if (status === 400 && /content_policy|moderation|safety/i.test(message)) {
+    return "OpenAI rejected the prompt (content policy). Try rephrasing the request.";
+  }
+  return `OpenAI image generation failed: ${message.substring(0, 200)}`;
+}
+
 // gpt-image-1 supports these sizes only (per OpenAI docs)
 export type OpenAIImageSize = "1024x1024" | "1024x1536" | "1536x1024" | "auto";
 
@@ -118,38 +146,19 @@ export async function generateImageOpenAI(
     `[OpenAI] Generating image (model: gpt-image-1, size: ${requestBody.size}, quality: ${requestBody.quality}, prompt: ${params.prompt.length} chars)`,
   );
 
+  _lastError = null;
   let response: any;
   try {
     response = await getClient().images.generate(requestBody as any);
   } catch (err: any) {
-    // Friendly error messages for common failure modes
-    const status = err?.status;
-    const message = err?.message || String(err);
-
-    if (status === 401 || status === 403) {
-      console.error(
-        `[OpenAI] Auth failed (${status}). Check OPENAI_API_KEY in .env. Message: ${message.substring(0, 300)}`,
-      );
-    } else if (status === 402 || /billing|quota|insufficient/i.test(message)) {
-      console.error(
-        "[OpenAI] Billing / quota issue. Top up at https://platform.openai.com/settings/organization/billing/overview",
-      );
-    } else if (status === 429) {
-      console.warn("[OpenAI] Rate limited. Backing off.");
-    } else if (status === 400 || /content_policy|moderation/i.test(message)) {
-      console.error(
-        `[OpenAI] Prompt rejected (likely content policy): ${message.substring(0, 400)}`,
-      );
-    } else if (status >= 500) {
-      console.warn(`[OpenAI] Server error (${status}). Will fall back.`);
-    } else {
-      console.error(`[OpenAI] Generation failed: ${message.substring(0, 400)}`);
-    }
+    _lastError = friendlyOpenAIError(err);
+    console.error(`[OpenAI] ${_lastError} (status: ${err?.status}, code: ${err?.code || err?.error?.code || "?"})`);
     return null;
   }
 
   const image = response?.data?.[0];
   if (!image?.b64_json) {
+    _lastError = "OpenAI returned an empty response (no image data).";
     console.error(
       "[OpenAI] Response had no b64_json. Full response:",
       JSON.stringify(response).substring(0, 500),
@@ -182,54 +191,110 @@ export async function generateImageOpenAI(
 }
 
 /**
- * Image-to-image: transform a REFERENCE image with a text prompt via
- * gpt-image-1's edits endpoint. Used when the user attaches a reference in the
- * Studio so the output is visually grounded in their image. Returns null on
- * failure so the caller can fall back to text-to-image.
+ * Convert a reference image (data URI or remote URL) into an OpenAI-uploadable
+ * File. Returns null if the source can't be read (bad URL, fetch failure) so the
+ * caller can skip it instead of aborting the whole edit.
  */
-export async function editImageOpenAI(params: {
-  prompt: string;
-  imageDataUri: string;
-  size?: OpenAIImageSize;
-  quality?: OpenAIImageQuality;
-}): Promise<OpenAIResult | null> {
-  if (!OPENAI_API_KEY) return null;
-  if (!params.imageDataUri || !params.imageDataUri.startsWith("data:image")) {
-    console.log("[OpenAI] editImage: reference is not an image data URI — skipping edit");
+async function referenceToFile(ref: string, idx: number): Promise<any | null> {
+  try {
+    if (ref.startsWith("data:")) {
+      const [meta, data] = ref.split(",");
+      const mimeType = meta.split(":")[1]?.split(";")[0] || "image/png";
+      const ext = mimeType.split("/")[1] || "png";
+      const buffer = Buffer.from(data, "base64");
+      return await toFile(buffer, `reference-${idx}.${ext}`, { type: mimeType });
+    }
+    // Remote URL — download then wrap.
+    const resp = await fetch(ref);
+    if (!resp.ok) throw new Error(`fetch ${resp.status}`);
+    const mimeType = resp.headers.get("content-type") || "image/png";
+    const ext = mimeType.split("/")[1] || "png";
+    const buffer = Buffer.from(await resp.arrayBuffer());
+    return await toFile(buffer, `reference-${idx}.${ext}`, { type: mimeType });
+  } catch (err: any) {
+    console.warn(`[OpenAI] Reference image ${idx} could not be loaded (skipping):`, err?.message);
     return null;
   }
+}
+
+export interface OpenAIEditParams extends OpenAIGenerateParams {
+  /** One or more reference images (data URIs or remote URLs) to edit/remix. */
+  references: string[];
+}
+
+/**
+ * Edit / remix using OpenAI gpt-image-1's images.edit endpoint. Unlike
+ * images.generate (text-only), this takes the user's attached image(s) as the
+ * visual base so the output is grounded in what they uploaded. Used by the
+ * Studio's Direct mode whenever the user attaches a reference image.
+ *
+ * gpt-image-1 accepts multiple input images — we pass all of them so the model
+ * can compose/blend the references. Returns null on failure so callers can fall
+ * back to text-only generation.
+ */
+export async function editImageOpenAI(
+  params: OpenAIEditParams,
+): Promise<OpenAIResult | null> {
+  if (!OPENAI_API_KEY) {
+    console.log("[OpenAI] OPENAI_API_KEY not set — skipping OpenAI edit path");
+    return null;
+  }
+
+  _lastError = null;
+
+  const files = (
+    await Promise.all(params.references.map((ref, i) => referenceToFile(ref, i)))
+  ).filter(Boolean);
+
+  if (files.length === 0) {
+    _lastError = "None of the attached reference images could be loaded for editing.";
+    console.error(`[OpenAI] ${_lastError}`);
+    return null;
+  }
+
+  const size = params.size ?? ("1024x1536" as const);
+  const quality = params.quality ?? ("high" as const);
+
+  console.log(
+    `[OpenAI] Editing image (model: gpt-image-1, ${files.length} reference image(s), size: ${size}, quality: ${quality}, prompt: ${params.prompt.length} chars)`,
+  );
+
+  let response: any;
   try {
-    const comma = params.imageDataUri.indexOf(",");
-    const semi = params.imageDataUri.indexOf(";");
-    const mime = params.imageDataUri.substring(5, semi > 5 ? semi : params.imageDataUri.indexOf(",")) || "image/png";
-    const buf = Buffer.from(params.imageDataUri.substring(comma + 1), "base64");
-    const ext = mime.includes("png") ? "png" : mime.includes("webp") ? "webp" : (mime.includes("jpeg") || mime.includes("jpg")) ? "jpg" : "png";
-    const file = await toFile(buf, `reference.${ext}`, { type: mime });
-
-    const size = params.size ?? ("1024x1536" as const);
-    const quality = params.quality ?? ("high" as const);
-    console.log(`[OpenAI] images.edit (gpt-image-1, ${size}, ${quality}, ref ${Math.round(buf.length / 1024)}KB, prompt ${params.prompt.length} chars)`);
-
-    const resp: any = await getClient().images.edit({
+    response = await getClient().images.edit({
       model: "gpt-image-1",
-      image: file as any,
+      image: files.length === 1 ? files[0] : (files as any),
       prompt: params.prompt,
       size,
       quality,
+      n: 1,
     } as any);
-
-    const b64 = resp?.data?.[0]?.b64_json;
-    if (!b64) {
-      console.error("[OpenAI] images.edit returned no b64_json");
-      return null;
-    }
-    const dataUri = `data:image/png;base64,${b64}`;
-    console.log("[OpenAI] ✓ images.edit complete (reference-grounded)");
-    return { dataUri, url: dataUri, provider: "openai", model: "gpt-image-1", size: String(size), quality: String(quality) };
   } catch (err: any) {
-    console.warn("[OpenAI] images.edit failed:", err?.status, (err?.message || String(err)).substring(0, 240));
+    _lastError = friendlyOpenAIError(err);
+    console.error(`[OpenAI] ${_lastError} (status: ${err?.status}, code: ${err?.code || err?.error?.code || "?"})`);
     return null;
   }
+
+  const image = response?.data?.[0];
+  if (!image?.b64_json) {
+    _lastError = "OpenAI returned an empty response (no image data) for the edit request.";
+    console.error("[OpenAI] Edit response had no b64_json. Full response:", JSON.stringify(response).substring(0, 500));
+    return null;
+  }
+
+  // gpt-image-1 edit always returns PNG base64
+  const dataUri = `data:image/png;base64,${image.b64_json}`;
+  const approxKB = Math.round((image.b64_json.length * 3) / 4 / 1024);
+  console.log(`[OpenAI] ✓ Edited image (size: ${size}, quality: ${quality}, ~${approxKB}KB)`);
+
+  return {
+    dataUri,
+    url: dataUri,
+    provider: "openai",
+    model: "gpt-image-1",
+    size,
+    quality,
+  };
 }
 
 /**

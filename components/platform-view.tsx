@@ -72,7 +72,7 @@ export interface FourthTab {
     id: string
     label: string
     icon: any
-    render: (ctx: { ads: AdData[]; accent: string; kpis: PlatformKpis }) => ReactNode
+    render: (ctx: { ads: AdData[]; accent: string; kpis: PlatformKpis; accountId: string; dateRange?: { from?: string; to?: string } }) => ReactNode
 }
 
 export interface PlatformViewProps {
@@ -109,6 +109,13 @@ export interface PlatformViewProps {
     bodyOverride?: ReactNode
     /** Initial active tab id. */
     defaultTab?: string
+    /** Server-side Overview roll-up (KPIs + chart + campaigns + formats). When set, the Overview doesn't read the `ads` prop. */
+    fetchOverview?: (opts: { accountId: string; search: string; dateRange?: { from?: string; to?: string } }) => Promise<{ kpis: PlatformKpis; series: { label: string; revenue: number; spend: number }[]; topCampaigns: any[]; formats: { name: string; value: number }[] }>
+    /** Server-side Ads pagination. When set, the Ads grid pages from the server instead of slicing `ads`. */
+    fetchAdsPage?: (opts: { accountId: string; search: string; page: number; perPage: number; dateRange?: { from?: string; to?: string } }) => Promise<{ ads: AdData[]; total: number }>
+    /** Returns the latest date (YYYY-MM-DD) that actually has data. When set, the
+     *  default window auto-anchors to it so the first view is never empty. */
+    fetchLatestDate?: (opts: { accountId: string }) => Promise<string | null>
 }
 
 const ADS_PER_PAGE = 10
@@ -116,7 +123,6 @@ const ADS_PER_PAGE = 10
 export default function PlatformView({
     accent,
     title,
-    icon: Icon,
     persistKey,
     ads,
     selectedAccountId,
@@ -131,6 +137,9 @@ export default function PlatformView({
     headerControls,
     bodyOverride,
     defaultTab = "overview",
+    fetchOverview,
+    fetchAdsPage,
+    fetchLatestDate,
 }: PlatformViewProps) {
     const [activeTab, setActiveTab] = useState(defaultTab)
     // Root element ref — used to find the scrollable ancestor so we can restore
@@ -139,12 +148,30 @@ export default function PlatformView({
     // Session key for persisting tab / page / scroll across the unmount that
     // happens when an ad detail view replaces this list and is then closed.
     const storeKey = `pv:${persistKey || title}`
-    // Date-range calendar dropdown — defaults to the last 7 days. An empty range
-    // ({}) means "All time" (no date filtering).
+    // Date-range calendar dropdown. Defaults to the last 90 days (bounded recent
+    // window — fast, not all-time). Empty range ({}) = "All time".
     const [dateRange, setDateRange] = useState<DateRange | undefined>(() => ({
-        from: startOfDay(subDays(new Date(), 6)),
+        from: startOfDay(subDays(new Date(), 89)),
         to: endOfDay(new Date()),
     }))
+    // Auto-anchor: if the platform reports the latest date that actually has data
+    // (e.g. a static snapshot that ends weeks ago), shift the default 90-day window
+    // to END at that date so the first view is never empty regardless of the
+    // calendar. Runs once on mount; a manual date pick afterwards takes over.
+    const anchoredRef = useRef(false)
+    useEffect(() => {
+        if (!fetchLatestDate || anchoredRef.current) return
+        anchoredRef.current = true
+        fetchLatestDate({ accountId: selectedAccountId })
+            .then((d) => {
+                if (!d) return
+                const dt = new Date(`${d}T00:00:00`)
+                if (isNaN(dt.getTime()) || dt.getTime() >= startOfDay(new Date()).getTime()) return
+                setDateRange({ from: startOfDay(subDays(dt, 89)), to: endOfDay(dt) })
+            })
+            .catch(() => { })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     // Only apply the recency window when the data actually carries dates, so a
     // dataset without analysisDate never renders empty.
@@ -251,11 +278,60 @@ export default function PlatformView({
     // Reset to the first page whenever the catalog changes (account/search) or
     // the current page falls out of range.
     useEffect(() => { setAdsPage(1) }, [selectedAccountId, searchQuery])
-    useEffect(() => { if (adsPage > totalAdPages) setAdsPage(1) }, [adsPage, totalAdPages])
+    // CLIENT-MODE ONLY: clamp to the in-memory page count. In server mode the
+    // catalog isn't in the browser (so totalAdPages collapses to 1) — running
+    // this there snaps every page click back to 1. The server clamp below
+    // (guarded by serverGrid) handles out-of-range pages for server mode.
+    useEffect(() => { if (!fetchAdsPage && adsPage > totalAdPages) setAdsPage(1) }, [adsPage, totalAdPages, fetchAdsPage])
     const pagedAds = useMemo(
         () => catalogAds.slice((adsPage - 1) * ADS_PER_PAGE, adsPage * ADS_PER_PAGE),
         [catalogAds, adsPage],
     )
+
+    // ── Optional server data source ───────────────────────────────────────────
+    // When the platform passes fetchOverview / fetchAdsPage, the heavy roll-up +
+    // paging happen in MongoDB and the browser holds only the current page + a
+    // small summary (the `ads` prop can be empty). Platforms that don't pass them
+    // keep the client-side path above, unchanged.
+    const serverOv = !!fetchOverview
+    const serverGrid = !!fetchAdsPage
+    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery)
+    useEffect(() => { const t = setTimeout(() => setDebouncedSearch(searchQuery), 300); return () => clearTimeout(t) }, [searchQuery])
+
+    // Date window → YYYY-MM-DD strings for the server (filters by ad createdTime).
+    // Use LOCAL date parts (not toISOString) so the picked day isn't TZ-shifted.
+    const ymdLocal = (d?: Date) => d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : undefined
+    const srvFrom = dateRange?.from ? ymdLocal(dateRange.from) : undefined
+    const srvTo = dateRange?.to ? ymdLocal(dateRange.to) : undefined
+    const srvDateRange = (srvFrom || srvTo) ? { from: srvFrom, to: srvTo } : undefined
+    // Reset to the first page whenever the date window changes.
+    useEffect(() => { setAdsPage(1) }, [srvFrom, srvTo])
+
+    const [srvOverview, setSrvOverview] = useState<{ kpis: PlatformKpis; series: { label: string; revenue: number; spend: number }[]; topCampaigns: any[]; formats: { name: string; value: number }[] } | null>(null)
+    useEffect(() => {
+        if (!fetchOverview) return
+        let cancelled = false
+        fetchOverview({ accountId: selectedAccountId, search: debouncedSearch, dateRange: srvDateRange }).then(r => { if (!cancelled) setSrvOverview(r) }).catch(() => { })
+        return () => { cancelled = true }
+    }, [fetchOverview, selectedAccountId, debouncedSearch, srvFrom, srvTo])
+
+    const [srvAds, setSrvAds] = useState<{ ads: AdData[]; total: number }>({ ads: [], total: 0 })
+    // Only fetch the ads grid when the Ads tab is actually open — this keeps the
+    // initial Overview landing fast (one fewer live query, which matters for the
+    // slower Google API path).
+    useEffect(() => {
+        if (!fetchAdsPage || activeTab !== "ads") return
+        let cancelled = false
+        fetchAdsPage({ accountId: selectedAccountId, search: debouncedSearch, page: adsPage, perPage: ADS_PER_PAGE, dateRange: srvDateRange }).then(r => { if (!cancelled) setSrvAds(r) }).catch(() => { })
+        return () => { cancelled = true }
+    }, [fetchAdsPage, selectedAccountId, debouncedSearch, adsPage, srvFrom, srvTo, activeTab])
+
+    const effKpis = serverOv ? (srvOverview?.kpis ?? kpis) : kpis
+    const effAnalytics = serverOv ? (srvOverview ?? { series: [], topCampaigns: [], formats: [] }) : analytics
+    const effPagedAds = serverGrid ? srvAds.ads : pagedAds
+    const effTotalAds = serverGrid ? srvAds.total : catalogAds.length
+    const effTotalAdPages = serverGrid ? Math.max(1, Math.ceil(srvAds.total / ADS_PER_PAGE)) : totalAdPages
+    useEffect(() => { if (serverGrid && adsPage > effTotalAdPages) setAdsPage(1) }, [serverGrid, adsPage, effTotalAdPages])
 
     // ── Tab / page / scroll persistence ───────────────────────────────────────
     // Selecting an ad swaps this whole list out for the analysis view; closing it
@@ -326,7 +402,7 @@ export default function PlatformView({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [storeKey])
 
-    const metrics = buildMetrics(kpis)
+    const metrics = buildMetrics(effKpis)
     const tabs = [
         { id: "overview", label: "Overview", icon: Layout },
         { id: "campaigns", label: "Campaigns", icon: TrendingUp },
@@ -334,11 +410,11 @@ export default function PlatformView({
         { id: fourthTab.id, label: fourthTab.label, icon: fourthTab.icon },
     ]
 
-    const card = "rounded-xl border border-border bg-card"
+    const card = "rounded-xl border border-border bg-card shadow-sm"
 
     const renderTab = () => {
         if (activeTab === "overview") {
-            const { series, topCampaigns, formats } = analytics
+            const { series, topCampaigns, formats } = effAnalytics
             const maxFmt = Math.max(1, ...formats.map(f => f.value))
             return (
                 <div className="space-y-4 animate-in fade-in duration-300 pb-20">
@@ -419,7 +495,9 @@ export default function PlatformView({
         }
 
         if (activeTab === "campaigns") {
-            const { topCampaigns } = analytics
+            // Use effAnalytics (server roll-up in server-mode; client analytics otherwise).
+            // Reading `analytics` directly was empty for Meta, whose `ads` prop is [].
+            const { topCampaigns } = effAnalytics
             return (
                 <div className="animate-in fade-in duration-300 pb-20">
                     <div className={cn(card, "overflow-hidden")}>
@@ -455,20 +533,20 @@ export default function PlatformView({
             return (
                 <div className="animate-in fade-in duration-300 pb-20 space-y-5">
                     <SampleAds
-                        ads={pagedAds}
-                        hasAdsInAccount={catalogAds.length > 0}
+                        ads={effPagedAds}
+                        hasAdsInAccount={effTotalAds > 0}
                         searchQuery={searchQuery}
                         selectedAdId={null}
-                        onSelect={(id) => { const ad = catalogAds.find(a => a.id === id); if (ad) onSelectAd(ad) }}
+                        onSelect={(id) => { const ad = effPagedAds.find(a => a.id === id); if (ad) onSelectAd(ad) }}
                         onEnlargeImage={onEnlargeImage}
                         hideToolbar
                     />
-                    {totalAdPages > 1 && (
+                    {effTotalAdPages > 1 && (
                         <AdsPagination
                             page={adsPage}
-                            totalPages={totalAdPages}
+                            totalPages={effTotalAdPages}
                             onChange={setAdsPage}
-                            totalAds={catalogAds.length}
+                            totalAds={effTotalAds}
                             accent={accent}
                         />
                     )}
@@ -478,23 +556,17 @@ export default function PlatformView({
 
         return (
             <div className="animate-in fade-in duration-300 pb-20">
-                {fourthTab.render({ ads: filteredAds, accent, kpis })}
+                {fourthTab.render({ ads: filteredAds, accent, kpis: effKpis, accountId: selectedAccountId, dateRange: srvDateRange })}
             </div>
         )
     }
 
     return (
         <div ref={rootRef} className="w-full">
-            {/* Header — platform icon + {Platform} overview · account · date range */}
+            {/* Header — {Platform} overview · account · date range. The leading
+                platform icon was removed per design; the platform mark now lives
+                on each ad card as its official logo. */}
             <div className="flex items-center gap-2.5 flex-wrap pt-1 pb-5">
-                {Icon && (
-                    <span
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border"
-                        style={{ backgroundColor: `${accent}14`, borderColor: `${accent}33` }}
-                    >
-                        <Icon className="h-4 w-4" style={{ color: accent }} />
-                    </span>
-                )}
                 <h1 className="text-lg md:text-xl font-bold tracking-tight text-foreground">{title}</h1>
                 {/* Ad-account switcher — relocated here from the breadcrumb. */}
                 {onSelectAccount && accountStats && (
@@ -520,10 +592,10 @@ export default function PlatformView({
                     {/* Metric cards */}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
                         {metrics.map((m) => (
-                            <div key={m.label} className="rounded-xl border border-border bg-muted/40 p-4">
+                            <div key={m.label} className="card-premium hover-lift p-4">
                                 <div className="text-[12px] text-muted-foreground">{m.label}</div>
-                                <div className="text-2xl font-bold tracking-tight text-foreground mt-1">{m.value}</div>
-                                <div className="mt-3 h-1.5 rounded-full bg-muted" />
+                                <div className="text-2xl font-bold tracking-tight text-foreground mt-1 nums">{m.value}</div>
+                                <div className="mt-3 h-1.5 rounded-full bg-gradient-primary opacity-70" />
                             </div>
                         ))}
                     </div>

@@ -18,6 +18,7 @@ import { Users, Database, Wifi, ChevronDown, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
 import PlatformView, { compact, type PlatformKpis, type PlatformMetric } from "./platform-view"
 import { RealtimeNativeView } from "./realtime-native-view"
+import { fetchAdrollOverview, fetchAdrollAdsPage } from "@/server/actions/adroll-live"
 
 interface AdrollViewProps {
     adrollAds: AdData[]
@@ -43,7 +44,12 @@ const buildMetrics = (k: PlatformKpis): PlatformMetric[] => [
 ]
 
 function AudiencesTab({ ads, accent }: { ads: AdData[]; accent: string }) {
-    const audiences = Array.from(new Set(ads.flatMap((ad: any) => ad.tags || [])))
+    const [campaignId, setCampaignId] = useState("")
+    // Distinct campaigns from the ads for the selector.
+    const campaigns = Array.from(new Set((ads as any[]).map((ad) => ad.campaignName || ad.campaignId).filter(Boolean).map(String))).sort()
+    // Scope the audience derivation to the selected campaign.
+    const scoped = campaignId ? (ads as any[]).filter((ad) => String(ad.campaignName || ad.campaignId) === campaignId) : ads
+    const audiences = Array.from(new Set(scoped.flatMap((ad: any) => ad.tags || [])))
         .filter((tag: any) => typeof tag === "string" && tag.length > 5 && !tag.includes(" "))
         .slice(0, 12)
         .map((tag: any) => {
@@ -51,24 +57,39 @@ function AudiencesTab({ ads, accent }: { ads: AdData[]; accent: string }) {
             return { name: tag, reach: (seed * 123) % 40000 + 10000, score: (seed * 7) % 20 + 80 }
         })
 
+    const selector = campaigns.length > 0 ? (
+        <div className="flex items-center justify-end gap-2">
+            <span className="text-[11px] text-muted-foreground">Campaign</span>
+            <select value={campaignId} onChange={(e) => setCampaignId(e.target.value)} className="max-w-[300px] truncate rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary/30">
+                <option value="">All campaigns</option>
+                {campaigns.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+        </div>
+    ) : null
+
     if (audiences.length === 0) {
         return (
-            <Card className="border border-border bg-card shadow-sm rounded-xl p-10 md:p-16">
-                <div className="flex flex-col items-center justify-center text-center gap-4 max-w-md mx-auto">
-                    <div className="h-16 w-16 rounded-2xl flex items-center justify-center border" style={{ backgroundColor: `${accent}12`, borderColor: `${accent}33` }}>
-                        <Users className="h-7 w-7" style={{ color: accent }} />
+            <div className="space-y-4">
+                {selector}
+                <Card className="border border-border bg-card shadow-sm rounded-xl p-10 md:p-16">
+                    <div className="flex flex-col items-center justify-center text-center gap-4 max-w-md mx-auto">
+                        <div className="h-16 w-16 rounded-2xl flex items-center justify-center border" style={{ backgroundColor: `${accent}12`, borderColor: `${accent}33` }}>
+                            <Users className="h-7 w-7" style={{ color: accent }} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <h3 className="text-lg font-semibold tracking-tight text-foreground">Audience insights</h3>
+                            <p className="text-sm text-muted-foreground leading-relaxed">No audience segments detected{campaignId ? " for this campaign" : ""} yet. They appear here once tag data is available for the current selection.</p>
+                        </div>
                     </div>
-                    <div className="space-y-1.5">
-                        <h3 className="text-lg font-semibold tracking-tight text-foreground">Audience insights</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">No audience segments detected yet. They appear here once tag data is available for the current selection.</p>
-                    </div>
-                </div>
-            </Card>
+                </Card>
+            </div>
         )
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-4">
+            {selector}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {audiences.map((aud) => (
                 <Card key={aud.name} className="p-6 border border-border bg-card rounded-xl shadow-sm">
                     <div className="flex items-center justify-between mb-6">
@@ -88,6 +109,7 @@ function AudiencesTab({ ads, accent }: { ads: AdData[]; accent: string }) {
                     </div>
                 </Card>
             ))}
+            </div>
         </div>
     )
 }
@@ -159,6 +181,8 @@ export default function AdrollView({
             onSelectAd={onSelectAd}
             onEnlargeImage={onEnlargeImage}
             buildMetrics={buildMetrics}
+            fetchOverview={fetchAdrollOverview}
+            fetchAdsPage={fetchAdrollAdsPage}
             headerControls={dataSourceToggle}
             bodyOverride={realtimeBody}
             fourthTab={{

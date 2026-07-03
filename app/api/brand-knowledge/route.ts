@@ -17,6 +17,7 @@ import {
   type BrandLogo,
 } from '@/server/ai-studio/brand-knowledge';
 import { parseDocumentToText } from '@/server/ai-studio/doc-parser';
+import { requireSession } from '@/server/api-auth';
 
 const MAX_LOGO_BYTES = 3 * 1024 * 1024;   // 3 MB
 const MAX_DOC_BYTES = 25 * 1024 * 1024;   // 25 MB
@@ -68,6 +69,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  // Writes the brand knowledge base that feeds every generation — verified session required.
+  const unauth = await requireSession();
+  if (unauth) return unauth;
   let body: any;
   try {
     body = await request.json();

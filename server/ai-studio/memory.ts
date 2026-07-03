@@ -8,7 +8,7 @@
 
 import clientPromise from '@/server/mongodb-client';
 
-const DB_NAME = process.env.MONGODB_DB_NAME || 'reddit_data';
+const DB_NAME = process.env.MONGODB_DB || 'reddit_data';
 const COLLECTION = 'creative_generations';
 
 export interface CreativeMemoryEntry {

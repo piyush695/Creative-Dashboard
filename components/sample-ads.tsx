@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AdData } from "@/lib/types"
-import { Maximize2, ChevronDown, ChevronUp, LayoutGrid, List, Table as TableIcon, Grid2X2, Facebook, Play, Linkedin, Twitter, Smartphone, Disc as Pinterest, Globe, ShoppingBag, Copy, Check, MoreHorizontal, Target, Search, Newspaper } from "lucide-react"
+import { Maximize2, LayoutGrid, List, Table as TableIcon, Copy, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Select,
@@ -33,23 +33,6 @@ interface SampleAdsProps {
    *  Used by the Meta section, which always renders the grid + its own pager. */
   hideToolbar?: boolean
 }
-
-const PlatformIcon = ({ platform, className }: { platform?: AdData['platform'], className?: string }) => {
-  switch (platform) {
-    case 'meta': return <Facebook className={cn("text-[#1877F2]", className)} />;
-    case 'tiktok': return <Smartphone className={cn("text-foreground dark:text-white", className)} />;
-    case 'google': return <Play className={cn("text-[#EA4335]", className)} />;
-    case 'youtube': return <Play className={cn("text-[#FF0000]", className)} />;
-    case 'linkedin': return <Linkedin className={cn("text-[#0A66C2]", className)} />;
-    case 'x': return <Twitter className={cn("text-foreground dark:text-white", className)} />;
-    case 'pinterest': return <Pinterest className={cn("text-[#BD081C]", className)} />;
-    case 'shopify': return <ShoppingBag className={cn("text-[#95BF47]", className)} />;
-    case 'taboola': return <Newspaper className={cn("text-[#285d9a]", className)} />;
-    case 'bing': return <Search className={cn("text-[#00A4EF]", className)} />;
-    case 'adroll': return <Target className={cn("text-[#E0267D]", className)} />;
-    default: return <Globe className={cn("text-muted-foreground", className)} />;
-  }
-};
 
 const AdGridCard = ({
   ad,
@@ -110,14 +93,9 @@ const AdGridCard = ({
         hasHighlight && "ring-2 ring-primary ring-offset-2 ring-offset-background border-transparent"
       )}
     >
-      {/* Framed Image Section */}
-      <div
-        className="aspect-[1.91/1] w-full relative overflow-hidden rounded-xl bg-gradient-subtle shadow-inner cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation()
-          if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName)
-        }}
-      >
+      {/* Framed Image Section — clicking the image opens the ad details page
+          (handled by the card's onClick); the popup is reserved for "View more". */}
+      <div className="aspect-[1.91/1] w-full relative overflow-hidden rounded-xl bg-gradient-subtle shadow-inner cursor-pointer">
         <img
           src={ad.thumbnailUrl || "/placeholder.svg"}
           alt={ad.adName}
@@ -126,11 +104,7 @@ const AdGridCard = ({
         />
 
         {/* Floating Badges */}
-        <div className="absolute top-3 left-3 right-3 flex items-start justify-between z-10">
-          <div className="w-8 h-8 rounded-full glass flex items-center justify-center shadow-md">
-            <PlatformIcon platform={ad.platform} className="w-4 h-4" />
-          </div>
-
+        <div className="absolute top-3 left-3 right-3 flex items-start justify-end z-10">
           <span
             className={cn(
               "text-[10px] px-2.5 py-1 rounded-full font-medium shadow-md backdrop-blur-md border border-white/20",
@@ -149,7 +123,7 @@ const AdGridCard = ({
       {/* Content Body */}
       <div className="pt-4 px-1 pb-1 flex flex-col gap-4 flex-1">
 
-        {/* Title & Read More - Single Line */}
+        {/* Title & View More - Single Line */}
         <div className="flex items-center gap-1.5 w-full">
           <h3
             className="font-medium text-[15px] leading-snug text-foreground hover:text-primary transition-colors truncate cursor-text"
@@ -166,7 +140,7 @@ const AdGridCard = ({
               if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName)
             }}
           >
-            ... Read more
+            ... View more
           </button>
         </div>
 
@@ -282,25 +256,16 @@ const AdListCard = ({
         hasHighlight && "ring-2 ring-primary ring-offset-2 ring-offset-background border-transparent shadow-lg"
       )}
     >
-      {/* Image Section - Stacked on Mobile, Left on Desktop */}
-      <div
-        className="w-full sm:w-48 aspect-[1.91/1] sm:aspect-auto relative overflow-hidden bg-gradient-subtle shrink-0 sm:m-3 rounded-t-xl sm:rounded-xl cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation()
-          if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName)
-        }}
-      >
+      {/* Image Section - Stacked on Mobile, Left on Desktop. Clicking the image
+          opens the ad details page (bubbles to the card's onClick); the popup is
+          reserved for the "View more" action. */}
+      <div className="w-full sm:w-48 aspect-[1.91/1] sm:aspect-auto relative overflow-hidden bg-gradient-subtle shrink-0 sm:m-3 rounded-t-xl sm:rounded-xl cursor-pointer">
         <img
           src={ad.thumbnailUrl || "/placeholder.svg"}
           alt={ad.adName}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }}
         />
-
-        {/* Hover Action Overlay */}
-        <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center z-10">
-          <Maximize2 className="w-6 h-6 text-foreground drop-shadow-md" />
-        </div>
       </div>
 
       {/* Content Section - Bottom on Mobile, Right on Desktop */}
@@ -337,8 +302,6 @@ const AdListCard = ({
                 </div>
               </div>
             </div>
-
-            <PlatformIcon platform={ad.platform} className="w-4 h-4 opacity-50 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all" />
           </div>
 
           <div className="flex items-center gap-1.5 w-full mt-1">
@@ -352,7 +315,7 @@ const AdListCard = ({
                 if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName)
               }}
             >
-              ... Read more
+              ... View more
             </button>
           </div>
         </div>
@@ -418,11 +381,7 @@ const AdTableRow = ({
     >
       <TableCell>
         <div
-          className="w-12 h-12 rounded-lg bg-gradient-subtle overflow-hidden cursor-zoom-in border border-border"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (onEnlargeImage) onEnlargeImage(ad.thumbnailUrl, ad.adName);
-          }}
+          className="w-12 h-12 rounded-lg bg-gradient-subtle overflow-hidden cursor-pointer border border-border"
         >
           <img src={ad.thumbnailUrl || "/placeholder.svg"} className="w-full h-full object-cover" onError={(e) => {
             (e.target as HTMLImageElement).src = "/placeholder.svg"

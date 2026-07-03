@@ -46,6 +46,7 @@ export async function runCreativeDirector(
   brandDirective: string,
   userPrompt?: string,
   userTone?: string,
+  visualOnly: boolean = false,
 ): Promise<DirectorResult | null> {
   try {
     // Extract text content from the brief
@@ -88,6 +89,27 @@ ${p.imageDirective}
 ANTI-PATTERNS (things that would RUIN this concept):
 ${p.antiPatterns}
 `).join('\n---\n');
+
+    // When the caller composites text in code (clean-text / overlay mode), the
+    // director must write TEXT-FREE plate prompts — otherwise the model also draws
+    // text that collides with the composited overlay (doubled CTAs, garbled disclaimers).
+    const textHandling = visualOnly
+      ? `TEXT IN THE IMAGE — CRITICAL (TEXT-FREE PLATE):
+This is a VISUAL-ONLY background plate. ALL text (headline, price, CTA, disclaimer, #WeAreTraders) is composited in code AFTERWARD with real fonts. In EVERY imagePrompt:
+- Render ABSOLUTELY NO readable text: no words, numbers, prices, letters, CTA buttons-with-text, badges, or disclaimers.
+- Describe ONLY the composition, hero subject, lighting, materials, colour and mood.
+- Deliberately RESERVE calm negative space for text: keep the TOP ~12% and the BOTTOM ~35% visually quiet and darker; never put busy focal detail where text will land.
+- If a paradigm implies an object that normally carries text (receipt, terminal, ticket, card), render it with BLANK or softly-blurred illegible surfaces — NO real words.
+- Leave the TOP-LEFT corner clear for the logo PNG; draw no logo.`
+      : `TEXT IN THE IMAGE:
+The imagePrompt must include ALL text from the text manifest. Describe:
+- TOP-LEFT corner left COMPLETELY CLEAR — no logo text (the real logo PNG is composited in post-processing)
+- "#WeAreTraders" in white text inside a thin oval/pill border at top-right
+- Headline rendered large and bold
+- Price rendered oversized with visual treatment (glow, 3D, chrome)
+- CTA as a blue pill-shaped button with white text
+- Small disclaimer text at the very bottom
+- Spell every word correctly: "Withdrawals" "Challenge" "Limits" "Performance" "Fictitious" "Simulated"`;
 
     const response = await getClient().messages.create({
       model: DIRECTOR_MODEL,
@@ -138,15 +160,7 @@ The visual should feel like a premium prop trading firm ad. Suitable visual subj
 - Reflective surfaces, glass, chrome, brushed metal textures
 DO NOT use: smiley faces, emojis, cartoon characters, food items, random unrelated objects, abstract blobs, nature scenes, animals. Keep it FINTECH.
 
-TEXT IN THE IMAGE:
-The imagePrompt must include ALL text from the text manifest. Describe:
-- TOP-LEFT corner left COMPLETELY CLEAR — no logo text (the real logo PNG is composited in post-processing)
-- "#WeAreTraders" in white text inside a thin oval/pill border at top-right
-- Headline rendered large and bold
-- Price rendered oversized with visual treatment (glow, 3D, chrome)
-- CTA as a blue pill-shaped button with white text
-- Small disclaimer text at the very bottom
-- Spell every word correctly: "Withdrawals" "Challenge" "Limits" "Performance" "Fictitious" "Simulated"
+${textHandling}
 
 Respond with ONLY valid JSON — no markdown, no preamble, no explanation.`,
       messages: [{
@@ -198,7 +212,7 @@ Return this exact JSON structure:
       "imagePrompt": "600+ word prompt. IMPORTANT: Do NOT draw any HolaPrime logo or brand text — leave top-left corner CLEAR (dark bg only). TOP-RIGHT '#WeAreTraders' oval pill. Then describe the ${paradigms[2]?.name || 'third'} paradigm — completely different visual from concepts 1 and 2."
     }
   ]
-}`
+}${visualOnly ? '\n\n*** VISUAL-ONLY OVERRIDE — HIGHEST PRIORITY ***\nThis run composites all text in code afterward. Ignore EVERY earlier instruction to include, render, or describe text. Each "imagePrompt" MUST be a TEXT-FREE plate: NO words, numbers, letters, prices, CTA-buttons-with-text, badges, or disclaimers anywhere in the image. Reserve quiet, darker negative space (top ~12% and bottom ~35%) for text composited later. Keep the top-left corner clear for the logo PNG.' : ''}`
       }]
     });
 

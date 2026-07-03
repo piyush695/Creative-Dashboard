@@ -10,11 +10,15 @@
  * - innovativeness measures VISUAL DISTINCTIVENESS within the prop firm ad genre, not Cannes Lions originality.
  * - whitespaceUsage: dark negative space IS the brand's intentional aesthetic. Generous dark space = high score.
  *
- * Scoring Dimensions:
- * CONTENT (21%):  textAccuracy (13%), messageClarity (8%)
- * DESIGN (35%):   layoutQuality (9%), gridAlignment (8%), typographyPairing (8%), visualBalance (5%), whitespaceUsage (5%)
- * COLOR (16%):    colorHarmony (8%), brandCompliance (8%)
- * IMPACT (28%):   psychologyScore (8%), creativityScore (10%), innovativeness (10%)
+ * Scoring Dimensions (weights sum to 1.0):
+ * CONTENT (18%):  textAccuracy (11%), messageClarity (7%)
+ * DESIGN (44%):   layoutQuality (8%), gridAlignment (5%), typographyPairing (6%), visualBalance (5%), whitespaceUsage (4%), textPlacement (8%), clutter (8%)
+ * COLOR (14%):    colorHarmony (7%), brandCompliance (7%)
+ * IMPACT (24%):   psychologyScore (6%), creativityScore (9%), innovativeness (9%)
+ *
+ * HONEST SCORING: overall = the TRUE weighted average of the reported dimensions.
+ * No score floors and no benefit-of-the-doubt inflation — a weak creative can (and
+ * must) return a low/failing score so selection + self-correction actually work.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -29,12 +33,14 @@ export interface CreativeScore {
   // Content (21%)
   textAccuracy: number;         // 1-10: spelling, no duplicates, correct content
   messageClarity: number;       // 1-10: single message discipline, direct communication
-  // Design (35%)
+  // Design (44%)
   layoutQuality: number;        // 1-10: spacing, alignment, hierarchy
   gridAlignment: number;        // 1-10: elements align to invisible grid, consistent spacing
   typographyPairing: number;    // 1-10: font hierarchy, weight contrast, readability
   visualBalance: number;        // 1-10: weight distribution, symmetry/asymmetry intent
   whitespaceUsage: number;      // 1-10: breathing room, margins, no overcrowding
+  textPlacement: number;        // 1-10: text sits in deliberate negative space, respects margins, relates to composition, never covers the focal subject
+  clutter: number;              // 1-10: restraint / anti-clutter — 10 = clean, few intentional elements; 1 = busy, overcrowded, competing elements
   // Color (16%)
   colorHarmony: number;         // 1-10: complementary/analogous/triadic adherence
   brandCompliance: number;      // 1-10: Hola Prime brand consistency + logo presence
@@ -126,7 +132,7 @@ Brief context:
 
 EVALUATE EACH DIMENSION — use the Grade Scale from your system prompt:
 
-CONTENT (21% total weight):
+CONTENT (18% total weight):
 textAccuracy [13%]: All text legible? Correct spelling? No duplicates? No garbling?
   → 9-10: All text clean, correct, readable | 7-8: One minor error | 5-6: Multiple errors | Below 5: Severely garbled
 
@@ -146,17 +152,23 @@ typographyPairing [8%]: Is there a clear size hierarchy (hero >> body)? Is it re
 visualBalance [5%]: Is visual weight distributed intentionally? Is there one dominant focal point?
   → 8-10: Strong focal point, intentional balance | 7: Generally balanced | Below 6: Chaotic or random
 
-whitespaceUsage [5%]: For a dark fintech ad, dark empty space IS intentional design. Score generous dark space as premium.
+whitespaceUsage [4%]: For a dark fintech ad, dark empty space IS intentional design. Score generous dark space as premium.
   → 8-10: Generous breathing room, premium spacing, nothing cramped | 7: Adequate spacing | Below 6: Elements cramped, touching edges
 
-COLOR (16% total weight):
+textPlacement [8%]: Is every text block placed with INTENT — in deliberate negative space, aligned to the composition, inside safe margins, and NEVER covering the focal subject (face/hero/price)?
+  → 8-10: Text sits in calm negative space, reinforces the focal point, clean safe margins | 7: Mostly intentional, minor crowding | 5-6: Some text fights the subject or hugs the edges | Below 5: Text placed arbitrarily, overlaps the focal subject, or breaks the frame margins
+
+clutter [8%]: RESTRAINT score (HIGH = clean, LOW = busy). Count the competing elements. Does ONE focal point dominate, or do many elements fight for attention?
+  → 8-10: Disciplined, few intentional elements, one clear dominant focal point ("less is more") | 7: Slightly busy but controlled | 5-6: Noticeably cluttered, several competing elements | Below 5: Chaotic, overcrowded, no breathing room, no clear hierarchy
+
+COLOR (14% total weight):
 colorHarmony [8%]: Does the color palette feel cohesive and intentional? Dark bg + white text + neon accent = good for this brand.
   → 8-10: Cohesive, harmonious, intentional palette | 7: Generally consistent | Below 6: Jarring or clashing
 
 brandCompliance [8%]: Apply the logo check from your system prompt instructions.
   → Start at 8 if both logo elements correct, adjust based on overall brand alignment
 
-IMPACT (28% total weight):
+IMPACT (24% total weight):
 psychologyScore [8%]: Does this creative trigger desire, aspiration, or urgency? Would a trader feel excited by this?
   → 8-10: Strong emotional pull, aspirational | 7: Moderate emotional impact | Below 6: Flat, no emotional resonance
 
@@ -178,6 +190,8 @@ Return ONLY this JSON (no other text):
   "typographyPairing": <1-10>,
   "visualBalance": <1-10>,
   "whitespaceUsage": <1-10>,
+  "textPlacement": <1-10>,
+  "clutter": <1-10>,
   "colorHarmony": <1-10>,
   "brandCompliance": <1-10>,
   "psychologyScore": <1-10>,
@@ -203,45 +217,31 @@ Return ONLY this JSON (no other text):
 
     const parsed = JSON.parse(cleaned);
 
-    // Sanity check: recompute overall score ourselves to catch any scorer drift
-    // (Claude sometimes declares an "overall" that doesn't match the weighted math)
+    // HONEST WEIGHTED AVERAGE from the reported dimensions (weights sum to 1.0).
+    // Missing/invalid dimensions count as 0 so a malformed or evasive response
+    // cannot accidentally score high.
+    const d = (x: any) => (typeof x === 'number' && isFinite(x) ? x : 0);
     const computed =
-      (parsed.textAccuracy    * 0.13) +
-      (parsed.messageClarity  * 0.08) +
-      (parsed.layoutQuality   * 0.09) +
-      (parsed.gridAlignment   * 0.08) +
-      (parsed.typographyPairing * 0.08) +
-      (parsed.visualBalance   * 0.05) +
-      (parsed.whitespaceUsage * 0.05) +
-      (parsed.colorHarmony    * 0.08) +
-      (parsed.brandCompliance * 0.08) +
-      (parsed.psychologyScore * 0.08) +
-      (parsed.creativityScore * 0.10) +
-      (parsed.innovativeness  * 0.10);
+      (d(parsed.textAccuracy)      * 0.11) +
+      (d(parsed.messageClarity)    * 0.07) +
+      (d(parsed.layoutQuality)     * 0.08) +
+      (d(parsed.gridAlignment)     * 0.05) +
+      (d(parsed.typographyPairing) * 0.06) +
+      (d(parsed.visualBalance)     * 0.05) +
+      (d(parsed.whitespaceUsage)   * 0.04) +
+      (d(parsed.textPlacement)     * 0.08) +
+      (d(parsed.clutter)           * 0.08) +
+      (d(parsed.colorHarmony)      * 0.07) +
+      (d(parsed.brandCompliance)   * 0.07) +
+      (d(parsed.psychologyScore)   * 0.06) +
+      (d(parsed.creativityScore)   * 0.09) +
+      (d(parsed.innovativeness)    * 0.09);
 
-    // Use the higher of Claude's declared overall vs the computed value (benefit of the doubt)
-    let finalOverall = Math.max(parsed.overall, Math.round(computed * 10) / 10);
-    
-    // ENFORCED MINIMUM LIMIT: The system design strictly requires all generated creatives
-    // to have an overall score of at least 8.0. If the AI scorer returns below 8.0, 
-    // bump it to a minimum of 8.0.
-    finalOverall = Math.max(finalOverall, 8.0);
-    
-    // Smooth out individual metrics so the math looks realistic in the UI
-    const metrics = [
-      'textAccuracy', 'messageClarity', 'layoutQuality', 'gridAlignment', 
-      'typographyPairing', 'visualBalance', 'whitespaceUsage', 'colorHarmony', 
-      'brandCompliance', 'psychologyScore', 'creativityScore', 'innovativeness'
-    ];
-    for (const metric of metrics) {
-      if (typeof parsed[metric] === 'number') {
-        parsed[metric] = Math.max(parsed[metric], 7.5);
-      }
-    }
+    // HONEST SCORING: overall IS the weighted average. No score floor, no
+    // benefit-of-the-doubt inflation — a weak creative must be able to fail.
+    parsed.overall = Math.round(computed * 10) / 10;
 
-    parsed.overall = finalOverall;
-
-    console.log(`[Scorer] Variant "${variantId}": ${parsed.overall}/10 (computed: ${computed.toFixed(1)}) — ${parsed.verdict}`);
+    console.log(`[Scorer] Variant "${variantId}": ${parsed.overall}/10 — ${parsed.verdict}`);
     return parsed as CreativeScore;
 
   } catch (err: any) {

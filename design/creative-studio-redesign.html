@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Creative Studio — New Chat (Redesign)</title>
+<meta name="description" content="Redesigned empty-state for the Creative Studio generation workspace." />
+
+<!--
+  ============================================================================
+  CREATIVE STUDIO — REDESIGNED EMPTY STATE  (standalone, no build step)
+  ============================================================================
+  A single self-contained file. All CSS lives in <style>; a small amount of
+  progressive-enhancement JS at the bottom powers the panel drawer, tab
+  switching, theme toggle and starter-card selection.
+
+  LAYOUT MODEL
+    Desktop  (>= 1024px): 3 zones side-by-side
+                          [icon rail] [create panel] [canvas]
+    Tablet   (640–1023px): icon rail + canvas; create panel becomes an
+                          overlay drawer toggled from the canvas header.
+    Mobile   (< 640px):   single column; rail collapses into the header menu,
+                          create panel opens as a full-height bottom sheet.
+
+  THEME
+    Driven by [data-theme="light|dark"] on <html>. Tokens are defined once
+    per theme below, so every component re-themes for free.
+  ============================================================================
+-->
+
+<style>
+  /* ========================================================================
+     1. DESIGN TOKENS
+     Mirrors the product's HolaPrime palette (blue #007aff primary, blue→cyan
+     brand gradient, 12px radius) but expressed in widely-supported hsl/hex so
+     the file renders identically everywhere with no dependencies.
+     ===================================================================== */
+  :root,
+  [data-theme="light"] {
+    --bg:           #f7f8fa;   /* page background          */
+    --surface:      #ffffff;   /* raised panels / cards    */
+    --surface-2:    #f1f3f7;   /* inset / hover fills      */
+    --fg:           #1a1d29;   /* primary text             */
+    --fg-muted:     #6b7280;   /* secondary text           */
+    --fg-subtle:    #9aa1ad;   /* placeholder / hints      */
+    --border:       #e6e8ee;   /* hairline separators      */
+    --border-strong:#d3d7e0;
+    --primary:      #007aff;   /* brand blue / primary CTA */
+    --primary-fg:   #ffffff;
+    --primary-soft: #e8f1ff;   /* tinted primary fill      */
+    --accent:       #ff5a3c;   /* generate / warm action   */
+    --accent-fg:    #ffffff;
+    --ring:         #007aff66; /* focus ring               */
+    --grad: linear-gradient(135deg,#0a4a8a 0%,#1184d6 52%,#0dd6ec 100%);
+    --shadow-sm: 0 1px 2px rgba(20,24,40,.06), 0 2px 8px rgba(20,24,40,.05);
+    --shadow-md: 0 4px 12px rgba(20,24,40,.08), 0 12px 28px rgba(20,24,40,.10);
+    --shadow-lg: 0 12px 32px rgba(20,24,40,.14);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 18px;
+  }
+
+  [data-theme="dark"] {
+    --bg:           #0f1320;
+    --surface:      #181c2b;
+    --surface-2:    #1f2436;
+    --fg:           #f3f5fa;
+    --fg-muted:     #9aa3b8;
+    --fg-subtle:    #6b7488;
+    --border:       #2a3045;
+    --border-strong:#3a4159;
+    --primary:      #3b9bff;
+    --primary-fg:   #ffffff;
+    --primary-soft: #15294a;
+    --accent:       #ff6a4d;
+    --accent-fg:    #ffffff;
+    --ring:         #3b9bff66;
+    --grad: linear-gradient(135deg,#1f63c4 0%,#1f9bdd 52%,#1ad0e8 100%);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+    --shadow-md: 0 6px 18px rgba(0,0,0,.45);
+    --shadow-lg: 0 16px 40px rgba(0,0,0,.55);
+  }
+
+  /* ========================================================================
+     2. RESET & BASE
+     ===================================================================== */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--fg);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::placeholder { color: var(--fg-subtle); }
+
+  /* Shared icon sizing — all icons are inline SVG, currentColor-driven */
+  .icon { width: 20px; height: 20px; flex: none; stroke-width: 1.8; }
+  .icon-sm { width: 16px; height: 16px; }
+
+  /* ========================================================================
+     3. APP SHELL — CSS grid: [rail] [panel] [canvas]
+     ===================================================================== */
+  .app {
+    display: grid;
+    grid-template-columns: 64px 320px 1fr;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* ---- 3a. ICON RAIL ---------------------------------------------------- */
+  .rail {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+  }
+  .rail__brand {
+    width: 38px; height: 38px;
+    display: grid; place-items: center;
+    border-radius: 11px;
+    background: var(--grad);
+    color: #fff;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-sm);
+  }
+  .rail__spacer { flex: 1; }
+  .rail-btn {
+    position: relative;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border: none; background: transparent;
+    color: var(--fg-muted);
+    border-radius: 10px;
+    transition: background .15s, color .15s;
+  }
+  .rail-btn:hover { background: var(--surface-2); color: var(--fg); }
+  .rail-btn[aria-current="page"] { color: var(--primary); background: var(--primary-soft); }
+  .rail-btn[aria-current="page"]::before {
+    content: ""; position: absolute; left: -12px; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 22px; border-radius: 0 3px 3px 0;
+    background: var(--primary);
+  }
+  /* Tooltip label on hover (desktop affordance) */
+  .rail-btn::after {
+    content: attr(data-label);
+    position: absolute; left: calc(100% + 10px); top: 50%;
+    transform: translateY(-50%) scale(.96);
+    transform-origin: left center;
+    background: var(--fg); color: var(--bg);
+    font-size: 12px; font-weight: 500; white-space: nowrap;
+    padding: 5px 9px; border-radius: 7px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .12s, transform .12s;
+    z-index: 50;
+  }
+  .rail-btn:hover::after { opacity: 1; transform: translateY(-50%) scale(1); }
+  .rail__avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--grad); color: #fff;
+    display: grid; place-items: center; font-weight: 600; font-size: 13px;
+    border: none; margin-top: 4px;
+  }
+
+  /* ---- 3b. CREATE PANEL ------------------------------------------------- */
+  .panel {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .panel__head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px 12px;
+  }
+  .panel__title {
+    font-size: 12px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--fg-muted); margin: 0;
+  }
+  .panel__close { display: none; }  /* visible only as drawer on small screens */
+  .panel__body {
+    flex: 1; overflow-y: auto;
+    padding: 4px 18px 18px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .field__label {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; font-weight: 600; color: var(--fg-muted); margin-bottom: 8px;
+  }
+
+  /* Engine selector — a select styled as a soft pill */
+  .engine {
+    width: 100%; display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface-2);
+    text-align: left;
+  }
+  .engine:hover { border-color: var(--border-strong); }
+  .engine__badge {
+    font-size: 11px; font-weight: 700; color: var(--primary);
+    background: var(--primary-soft); padding: 3px 7px; border-radius: 6px;
+  }
+  .engine__text strong { display: block; font-size: 13px; }
+  .engine__text span { font-size: 11.5px; color: var(--fg-muted); }
+  .engine .icon { margin-left: auto; color: var(--fg-subtle); }
+
+  /* Reference dropzone */
+  .dropzone {
+    width: 100%; display: flex; flex-direction: column; align-items: center;
+    gap: 6px; padding: 22px; border-radius: var(--radius);
+    border: 1.5px dashed var(--border-strong); background: var(--surface-2);
+    color: var(--fg-muted);
+    transition: border-color .15s, background .15s;
+  }
+  .dropzone:hover { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+  .dropzone span { font-size: 12.5px; }
+
+  /* Prompt textarea */
+  .prompt {
+    width: 100%; min-height: 132px; resize: vertical;
+    padding: 13px 14px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--fg); font: inherit; line-height: 1.55;
+  }
+  .prompt:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+
+  /* Panel footer — options + Generate CTA */
+  .panel__foot {
+    padding: 14px 18px; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 12px;
+    background: var(--surface);
+  }
+  .opt-row { display: flex; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 12px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface);
+    font-size: 12.5px; font-weight: 500; color: var(--fg-muted);
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .chip:hover { border-color: var(--border-strong); color: var(--fg); }
+  .chip[aria-pressed="true"] { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+  .chip--select { margin-left: auto; }
+  .btn-generate {
+    width: 100%; display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 13px; border: none; border-radius: var(--radius);
+    background: var(--accent); color: var(--accent-fg);
+    font-size: 14px; font-weight: 600; box-shadow: var(--shadow-sm);
+    transition: transform .12s, filter .15s;
+  }
+  .btn-generate:hover { filter: brightness(1.05); }
+  .btn-generate:active { transform: translateY(1px); }
+
+  /* ---- 3c. CANVAS ------------------------------------------------------- */
+  .canvas {
+    grid-column: 3;
+    display: flex; flex-direction: column;
+    background: var(--bg);
+    min-width: 0;
+  }
+  .canvas__head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 22px; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .icon-btn {
+    width: 38px; height: 38px; display: grid; place-items: center;
+    border: 1px solid var(--border); background: var(--surface);
+    border-radius: 10px; color: var(--fg-muted);
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .icon-btn:hover { background: var(--surface-2); color: var(--fg); border-color: var(--border-strong); }
+  .menu-btn { display: none; }  /* mobile/tablet panel toggle */
+  .canvas__title { min-width: 0; }
+  .canvas__title h1 {
+    margin: 0; font-size: 15px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .canvas__title p { margin: 1px 0 0; font-size: 12px; color: var(--fg-muted); }
+  .canvas__actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 14px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border); background: var(--surface); color: var(--fg);
+    transition: background .15s, border-color .15s;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn--primary { background: var(--primary); color: var(--primary-fg); border-color: transparent; }
+  .btn--primary:hover { filter: brightness(1.06); background: var(--primary); }
+  .btn__text { display: inline; }
+
+  /* Tabs */
+  .tabs {
+    display: flex; align-items: center; gap: 4px;
+    padding: 8px 22px 0; border-bottom: 1px solid var(--border);
+    background: var(--surface); overflow-x: auto; scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    position: relative; padding: 9px 13px 13px; border: none; background: none;
+    font-size: 13px; font-weight: 500; color: var(--fg-muted); white-space: nowrap;
+  }
+  .tab:hover { color: var(--fg); }
+  .tab[aria-selected="true"] { color: var(--primary); }
+  .tab[aria-selected="true"]::after {
+    content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px;
+    height: 2px; border-radius: 2px; background: var(--primary);
+  }
+  .tabs__end { margin-left: auto; }
+
+  /* Empty state */
+  .empty {
+    flex: 1; overflow-y: auto;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 40px 24px;
+  }
+  .empty__mark {
+    width: 60px; height: 60px; display: grid; place-items: center;
+    border-radius: 18px; background: var(--grad); color: #fff;
+    box-shadow: var(--shadow-md); margin-bottom: 20px;
+  }
+  .empty h2 { margin: 0 0 8px; font-size: 20px; font-weight: 650; }
+  .empty p { margin: 0 0 28px; max-width: 420px; color: var(--fg-muted); font-size: 14px; }
+  .starters {
+    display: grid; gap: 12px; width: 100%; max-width: 560px;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .starter {
+    text-align: left; padding: 15px 16px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface);
+    transition: border-color .15s, box-shadow .15s, transform .12s;
+  }
+  .starter:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+  .starter strong { display: block; font-size: 13.5px; font-weight: 600; }
+  .starter span { font-size: 12.5px; color: var(--fg-muted); }
+
+  /* Composer */
+  .composer {
+    padding: 14px 22px 20px; border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .composer__box {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 8px 8px 16px; border-radius: 14px;
+    border: 1px solid var(--border); background: var(--surface-2);
+  }
+  .composer__box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+  .composer__input {
+    flex: 1; border: none; background: none; color: var(--fg);
+    font: inherit; padding: 6px 0;
+  }
+  .composer__input:focus { outline: none; }
+  .send {
+    width: 38px; height: 38px; flex: none; display: grid; place-items: center;
+    border: none; border-radius: 10px; background: var(--accent); color: var(--accent-fg);
+    transition: filter .15s, transform .12s;
+  }
+  .send:hover { filter: brightness(1.06); }
+  .send:active { transform: scale(.96); }
+
+  /* Backdrop for the drawer/sheet (hidden on desktop) */
+  .scrim {
+    position: fixed; inset: 0; background: rgba(10,14,25,.45);
+    opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 40;
+  }
+
+  /* ========================================================================
+     4. RESPONSIVE BREAKPOINTS
+     ===================================================================== */
+
+  /* ---- TABLET: rail + canvas; panel becomes a left drawer --------------- */
+  @media (max-width: 1023px) {
+    .app { grid-template-columns: 64px 1fr; }
+    .menu-btn { display: grid; }            /* expose panel toggle in header */
+
+    .panel {
+      position: fixed; top: 0; left: 64px; bottom: 0; width: 320px;
+      z-index: 45; transform: translateX(calc(-100% - 64px));
+      transition: transform .25s ease; box-shadow: var(--shadow-lg);
+    }
+    .app.panel-open .panel { transform: translateX(0); }
+    .app.panel-open .scrim { opacity: 1; pointer-events: auto; }
+    .panel__close { display: grid; }
+  }
+
+  /* ---- MOBILE: rail folds away; panel is a bottom sheet ----------------- */
+  @media (max-width: 639px) {
+    .app { grid-template-columns: 1fr; }
+    .rail {
+      position: fixed; bottom: 0; left: 0; right: 0; top: auto;
+      flex-direction: row; justify-content: space-around;
+      width: 100%; height: 60px; padding: 0 6px;
+      border-right: none; border-top: 1px solid var(--border);
+      z-index: 30;
+    }
+    .rail__brand, .rail__spacer, .rail__avatar { display: none; }
+    .rail-btn::before { display: none; }
+    .rail-btn::after { display: none; }   /* no hover tooltips on touch */
+
+    .canvas { padding-bottom: 60px; }      /* clear the bottom rail */
+    .canvas__head { padding: 12px 16px; }
+    .tabs { padding-left: 16px; padding-right: 16px; }
+    .empty { padding: 28px 18px; }
+    .composer { padding: 12px 16px 16px; }
+    .btn__text { display: none; }          /* icon-only header buttons */
+    .btn { padding: 9px 11px; }
+
+    .starters { grid-template-columns: 1fr; }   /* stack starter cards */
+
+    /* Create panel as a bottom sheet */
+    .panel {
+      left: 0; top: auto; bottom: 0; width: 100%;
+      height: 88dvh; border-radius: 20px 20px 0 0;
+      transform: translateY(100%); border-right: none;
+      border-top: 1px solid var(--border);
+    }
+    .app.panel-open .panel { transform: translateY(0); }
+  }
+
+  /* Respect reduced-motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+
+<body>
+<!--
+  ==========================================================================
+  STRUCTURE
+    .app
+      ├─ aside.rail        → primary navigation (icon rail)
+      ├─ aside.panel       → "Create" controls (the generation form)
+      ├─ main.canvas       → conversation surface (header, tabs, empty state, composer)
+      └─ div.scrim         → dim backdrop behind the drawer on small screens
+  ==========================================================================
+-->
+<div class="app" id="app">
+
+  <!-- ====================== ICON RAIL (primary nav) ====================== -->
+  <aside class="rail" aria-label="Primary">
+    <div class="rail__brand" aria-hidden="true">
+      <!-- Brand glyph -->
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>
+    </div>
+
+    <!-- Each rail button = a top-level destination. aria-current marks the active view. -->
+    <button class="rail-btn" aria-current="page" data-label="Create">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <button class="rail-btn" data-label="Library">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    </button>
+    <button class="rail-btn" data-label="Insights">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-3"/></svg>
+    </button>
+    <button class="rail-btn" data-label="Assets">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15l-5-5L5 21"/><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
+    </button>
+
+    <div class="rail__spacer"></div>
+
+    <!-- Theme toggle: flips between light and dark token sets. -->
+    <button class="rail-btn" id="themeBtn" data-label="Toggle theme" aria-label="Toggle color theme">
+      <svg class="icon" id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg>
+    </button>
+    <button class="rail-btn" data-label="Settings">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1A1.7 1.7 0 004.6 9a1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+    </button>
+    <button class="rail__avatar" data-label="Account" aria-label="Account">GA</button>
+  </aside>
+
+  <!-- ====================== CREATE PANEL (generation form) ====================== -->
+  <aside class="panel" id="panel" aria-label="Create">
+    <div class="panel__head">
+      <h2 class="panel__title">Create</h2>
+      <button class="icon-btn panel__close" id="panelClose" aria-label="Close create panel">
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="panel__body">
+      <!-- ENGINE: which generation model/pipeline runs. Opens a picker. -->
+      <div>
+        <span class="field__label">Engine</span>
+        <button class="engine" aria-haspopup="listbox">
+          <span class="engine__badge">3.0</span>
+          <span class="engine__text">
+            <strong>Creative Engine</strong>
+            <span>Multi-reference · consistency</span>
+          </span>
+          <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+
+      <!-- REFERENCE: optional images to steer style/consistency (up to 10). -->
+      <div>
+        <span class="field__label">Reference <span style="color:var(--fg-subtle)">0 / 10</span></span>
+        <button class="dropzone" aria-label="Upload reference images">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+          <span>Drop images or <u>browse</u></span>
+        </button>
+      </div>
+
+      <!-- PROMPT: the core text instruction for the creative. -->
+      <div style="flex:1;display:flex;flex-direction:column;">
+        <span class="field__label">Prompt</span>
+        <textarea class="prompt" placeholder="Describe the ad creative — offer, tone, colors, aspect…"></textarea>
+      </div>
+    </div>
+
+    <!-- FOOTER: quick options + the primary Generate action. -->
+    <div class="panel__foot">
+      <div class="opt-row">
+        <!-- Styles: opens curated style presets to apply to the prompt. -->
+        <button class="chip"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg> Styles</button>
+        <!-- Direct: bypasses the pipeline, sending the prompt verbatim to the model. -->
+        <button class="chip" aria-pressed="false" id="directChip">Direct</button>
+        <!-- Aspect ratio for the output. -->
+        <button class="chip chip--select">4:5 <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      </div>
+      <!-- Primary CTA: runs generation with the current prompt + settings. -->
+      <button class="btn-generate">
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        Generate
+      </button>
+    </div>
+  </aside>
+
+  <!-- ====================== CANVAS (conversation surface) ====================== -->
+  <main class="canvas">
+    <!-- HEADER: chat identity + chat-level actions. -->
+    <header class="canvas__head">
+      <!-- Mobile/tablet: opens the Create panel drawer. -->
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open create panel" aria-expanded="false">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="canvas__title">
+        <h1>Summer sale — bold promo set</h1>
+        <p>Custom · chat conversation</p>
+      </div>
+
+      <div class="canvas__actions">
+        <!-- New chat: starts a fresh creative conversation. -->
+        <button class="btn btn--primary">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span class="btn__text">New chat</span>
+        </button>
+        <!-- History: opens prior conversations. -->
+        <button class="btn">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.7 3M3 4v4h4"/><path d="M12 8v4l3 2"/></svg>
+          <span class="btn__text">History</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- TABS: switch the canvas content source. -->
+    <nav class="tabs" role="tablist" aria-label="Creative sources">
+      <button class="tab" role="tab" aria-selected="true">Custom</button>
+      <button class="tab" role="tab" aria-selected="false">Top ads</button>
+      <button class="tab" role="tab" aria-selected="false">Ad library</button>
+      <button class="tab tabs__end" role="tab" aria-selected="false">
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>Assets
+      </button>
+    </nav>
+
+    <!-- EMPTY STATE: shown before the first generation. -->
+    <section class="empty">
+      <div class="empty__mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>
+      </div>
+      <h2>Start a new creative</h2>
+      <p>Describe the ad you want, drop a reference, or pick a starting point below. Variations appear right here in the conversation.</p>
+
+      <!-- Starter prompts: one-tap presets that pre-fill the prompt and focus it. -->
+      <div class="starters">
+        <button class="starter" data-prompt="Mid-season sale promo, bold, neon, 4:5">
+          <strong>Mid-season sale promo</strong>
+          <span>Bold, neon, 4:5</span>
+        </button>
+        <button class="starter" data-prompt="UGC testimonial, authentic, story 9:16">
+          <strong>UGC testimonial</strong>
+          <span>Authentic, story 9:16</span>
+        </button>
+        <button class="starter" data-prompt="Forex challenge hook, high-contrast A/B">
+          <strong>Forex challenge hook</strong>
+          <span>High-contrast A/B</span>
+        </button>
+        <button class="starter" data-prompt="Carousel — bestsellers, clean product grid">
+          <strong>Carousel — bestsellers</strong>
+          <span>Clean product grid</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- COMPOSER: continue the conversation inline. -->
+    <div class="composer">
+      <div class="composer__box">
+        <input class="composer__input" placeholder="Reply to continue this creative…" aria-label="Reply" />
+        <button class="chip" aria-pressed="false">Direct</button>
+        <button class="send" aria-label="Send">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Backdrop behind the panel drawer/sheet on small screens -->
+  <div class="scrim" id="scrim"></div>
+</div>
+
+<!--
+  ==========================================================================
+  PROGRESSIVE-ENHANCEMENT JS
+  Everything above is usable without JS; this only adds interactivity:
+  panel drawer toggle, tab selection, theme switch, starter-card fill.
+  ==========================================================================
+-->
+<script>
+  (function () {
+    var app    = document.getElementById('app');
+    var menu   = document.getElementById('menuBtn');
+    var close  = document.getElementById('panelClose');
+    var scrim  = document.getElementById('scrim');
+
+    // --- Create panel drawer (tablet/mobile) -------------------------------
+    function openPanel()  { app.classList.add('panel-open');  menu.setAttribute('aria-expanded', 'true'); }
+    function closePanel() { app.classList.remove('panel-open'); menu.setAttribute('aria-expanded', 'false'); }
+    menu.addEventListener('click', openPanel);
+    close.addEventListener('click', closePanel);
+    scrim.addEventListener('click', closePanel);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePanel(); });
+
+    // --- Tabs (single-select) ---------------------------------------------
+    var tabs = document.querySelectorAll('.tab');
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () {
+        tabs.forEach(function (x) { x.setAttribute('aria-selected', 'false'); });
+        t.setAttribute('aria-selected', 'true');
+      });
+    });
+
+    // --- Theme toggle ------------------------------------------------------
+    var themeBtn = document.getElementById('themeBtn');
+    themeBtn.addEventListener('click', function () {
+      var root = document.documentElement;
+      root.setAttribute('data-theme', root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    });
+
+    // --- Starter cards: pre-fill the prompt, then surface the panel --------
+    var prompt = document.querySelector('.prompt');
+    document.querySelectorAll('.starter').forEach(function (card) {
+      card.addEventListener('click', function () {
+        prompt.value = card.getAttribute('data-prompt');
+        if (window.matchMedia('(max-width: 1023px)').matches) openPanel();
+        prompt.focus();
+      });
+    });
+
+    // --- Toggle chips (Direct, etc.) --------------------------------------
+    document.querySelectorAll('.chip[aria-pressed]').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chip.setAttribute('aria-pressed', chip.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      });
+    });
+  })();
+</script>
+</body>
+</html>
