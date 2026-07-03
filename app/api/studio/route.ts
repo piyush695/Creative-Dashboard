@@ -1283,6 +1283,10 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
           }
 
           let finalImageUrl = directResult.dataUri;
+          // The GATED overlay copy actually composited — the verifier's
+          // expectations MUST come from this, not the raw enhancer output
+          // (live bug: verifier expected strings the gate had stripped).
+          let compositedCopy: any = null;
 
           if (!refImage && cleanText) {
             // ── Zero-typo path: composite perfect, real-font text in code ──
@@ -1315,6 +1319,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                 else ov.headline = rawPrompt.length > 64 ? rawPrompt.slice(0, 61).trimEnd() + '…' : rawPrompt;
                 console.warn('[Studio] Headline was empty after gating — promoted claim-free fallback so the creative keeps a hero element.');
               }
+              compositedCopy = ov;
               finalImageUrl = await applyTextOverlay(finalImageUrl, {
                 headline: ov.headline,
                 subheadline: ov.subheadline,
@@ -1370,15 +1375,17 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
           let verification: any = null;
           if (!refImage && cleanText && verifierEnabled()) {
             try {
-              const ovr = enhanced.overlay || {};
+              // Expectations come from the GATED copy that was actually composited
+              // ('#WeAreTraders' is the only fixed text the overlay always draws).
+              const ovr = compositedCopy || {};
               verification = await verifyCreative(finalImageUrl, {
                 userPrompt: rawPrompt,
                 expectedSubject: routingPublic.archetypeHint === 'photographic' ? rawPrompt : undefined,
                 expectedTexts: [
-                  ovr.headline || enhanced.headline, ovr.subheadline, ovr.price,
+                  ovr.headline, ovr.subheadline, ovr.price,
                   ...(Array.isArray(ovr.bullets) ? ovr.bullets : []),
-                  ovr.cta || enhanced.cta, ovr.promoCode, ovr.urgencyText,
-                  '#WeAreTraders', 'Trustpilot', 'hola prime',
+                  ovr.cta, ovr.promoCode, ovr.urgencyText,
+                  '#WeAreTraders',
                 ].filter((s): s is string => !!s),
                 allowedFigures: [
                   ...extractClaimTokens(rawPrompt),
