@@ -44,11 +44,17 @@ function archetypePool(base: Archetype): Archetype[] {
   }
 }
 
+// Cross-REQUEST rotation offset. Without it, every 1-variation request (the
+// chat UI's default) started the rotation at the same point → LIVE MONOTONY BUG
+// 2026-07-03: every chat generation came out cyan-on-black giant-number.
+let _requestSeq = 0;
+
 export async function generateTemplateVariations(
   prompt: string,
   count = 1,
 ): Promise<{ variants: TemplateVariant[]; base: DirectorResult }> {
   const n = Math.max(1, Math.min(4, Math.round(count) || 1));
+  const seq = _requestSeq++;
   const base = await directCreative(prompt);
   let baseArch: Archetype = base.decision.archetype;
   if (baseArch === 'photographic') baseArch = 'giant-number'; // the template lane never renders photo
@@ -56,14 +62,22 @@ export async function generateTemplateVariations(
 
   const variants: TemplateVariant[] = [];
   for (let i = 0; i < n; i++) {
-    const accent = ACCENT_ROTATION[i % ACCENT_ROTATION.length];
-    const bg = (i === 0 ? 'black' : BG_ROTATION[i % BG_ROTATION.length]) as NonNullable<CreativeSpec['background']>;
+    const rot = (i + seq) % ACCENT_ROTATION.length;
+    // Variation 1 keeps the DIRECTOR's per-situation palette (green social-proof,
+    // purple trust, red urgency…) — overriding it was the monotony bug. Later
+    // variations rotate for in-request distinctness, offset per request.
+    const accent = i === 0
+      ? (base.spec.accent || ACCENT_ROTATION[rot])
+      : ACCENT_ROTATION[rot];
+    const bg = (i === 0
+      ? ((base.spec.background && base.spec.background !== 'photo') ? base.spec.background : 'black')
+      : BG_ROTATION[rot]) as NonNullable<CreativeSpec['background']>;
     const archetype = i === 0 ? baseArch : pool[i % pool.length];
 
     let r: DirectorResult = base;
     if (i > 0) {
       const directive =
-        `\n\nTREATMENT ${i + 1} of ${n}: Render this as the "${archetype}" archetype on a "${bg}" background with the "${accent}" accent. ${ANGLES[i % ANGLES.length]} ` +
+        `\n\nTREATMENT ${i + 1} of ${n}: Render this as the "${archetype}" archetype on a "${bg}" background with the "${accent}" accent. ${ANGLES[(i + seq) % ANGLES.length]} ` +
         `Make it visually DISTINCT from the other treatments — a different layout and focal point, NOT a recolor. ` +
         `Preserve every number, %, price and promo code from the brief VERBATIM. Do not invent payout amounts or fake named people.`;
       try { r = await directCreative(prompt + directive); } catch { r = base; }
