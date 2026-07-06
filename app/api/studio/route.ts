@@ -1049,6 +1049,19 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
         ? body.references.filter((r: any) => typeof r === 'string' && r)
         : (typeof body.reference === 'string' && body.reference ? [body.reference] : []);
 
+      // ── BRIEF DIRECTIVES the marketer states in text (META ADS workflow):
+      //    "Deliver 2 variants" and named brand accents were being ignored. ──
+      const promptVariantCount = (() => {
+        const m = (userPrompt || '').match(/(\d)\s*(?:variants?|variations?)\b/i);
+        const n = m ? parseInt(m[1], 10) : 0;
+        return n >= 1 && n <= 4 ? n : 0;
+      })();
+      const requestedAccent = (() => {
+        if (!/accent|brand colou?rs?/i.test(userPrompt || '')) return undefined;
+        const m = (userPrompt || '').match(/\b(gold|amber|orange|teal|white|cyan|green|purple|red|blue|magenta)\b/i);
+        return m ? m[1].toLowerCase() : undefined;
+      })();
+
       // ── AUTO-ROUTER: Design Engine (procedural, zero-typo) vs AI Image ──
       // A deterministic classifier (server/ai-studio/engine-router) picks the lane.
       //   body.engine: 'auto' (default) | 'template' | 'ai'  — the last two are the
@@ -1078,9 +1091,12 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
         if (!rawTplPrompt) {
           return NextResponse.json({ error: 'Please enter a prompt to generate from.' }, { status: 400 });
         }
-        const tplVariations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || 1));
+        // Default 3 (same as the AI lane) — the 1-variation default was why offer
+        // briefs kept returning a single same-family creative. A count stated in
+        // the brief ("Deliver 2 variants") wins over the default.
+        const tplVariations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || promptVariantCount || 3));
         try {
-          const { variants: tplVariants } = await generateTemplateVariations(rawTplPrompt, tplVariations);
+          const { variants: tplVariants } = await generateTemplateVariations(rawTplPrompt, tplVariations, { forcedAccent: requestedAccent });
           if (tplVariants.length) {
             for (const v of tplVariants) {
               try {
@@ -1202,8 +1218,9 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
         // ── Number of creative variations to produce. User-selectable, but HARD-CAPPED
         //    at 4 — a user can never request (or receive) more than 4 at a time.
         //    The chat UI doesn't send `variations` — default to 3 there (its
-        //    pick-your-favorite UX); callers that send an explicit count keep it. ──
-        const variations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || (body.variations === undefined ? 3 : 1)));
+        //    pick-your-favorite UX); a count stated in the brief text wins;
+        //    callers that send an explicit count keep it. ──
+        const variations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || promptVariantCount || 3));
 
         try {
           const variants: any[] = [];

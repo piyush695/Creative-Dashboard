@@ -15,7 +15,15 @@ import { FONT } from './font-setup';
 export const CANVAS = { W: 1080, H: 1080 };
 
 // Palette: black base, white type, ONE accent per creative (varies by campaign).
+// NOTE: keep in sync with the director's accent enum (template-director.ts) —
+// a name missing here silently falls back to cyan (live bug: "gold accent"
+// briefs rendered cyan).
 export const ACCENTS: Record<string, string> = {
+  gold: '#E8B84B',
+  amber: '#E8B84B',
+  orange: '#F97316',
+  teal: '#14B8A6',
+  white: '#F4F6F8',
   cyan: '#29B6E8',
   green: '#00E676',
   purple: '#7B4DFF',
