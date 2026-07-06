@@ -20,7 +20,7 @@ import { playbookContext, SITUATIONS } from './brand-playbook';
 import type { CreativeSpec, Archetype } from './template-studio';
 
 let _client: Anthropic | null = null;
-function client(): Anthropic { if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); return _client; }
+function client(): Anthropic { if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 90_000, maxRetries: 1 }); return _client; }
 
 const MODEL = process.env.STUDIO_DIRECTOR_MODEL || 'claude-sonnet-4-6';
 

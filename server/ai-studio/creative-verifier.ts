@@ -24,7 +24,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { extractAndRepairJson } from './parser';
 
 let _client: Anthropic | null = null;
-function client(): Anthropic { if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); return _client; }
+function client(): Anthropic { if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 90_000, maxRetries: 1 }); return _client; }
 
 const MODEL = process.env.STUDIO_VERIFIER_MODEL || 'claude-sonnet-4-6';
 

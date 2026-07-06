@@ -1204,6 +1204,13 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
           // single retry, and which variations already used their retry.
           const qaNotes: Record<number, string> = {};
           const qaRetried = new Set<number>();
+          // TIME BUDGET — Cloud Run cuts the request at its timeout; better to
+          // ship a good-but-unverified creative than die at the gateway (live
+          // failure: request pinned past the limit → plain-text 504 to the UI).
+          const laneStart = Date.now();
+          const elapsedS = () => (Date.now() - laneStart) / 1000;
+          const QA_RETRY_BUDGET_S = 240;  // no QA retries after this
+          const QA_SKIP_BUDGET_S = 430;   // no QA at all after this
           for (let vi = 0; vi < variations; vi++) {
           // ── ALWAYS ENHANCE — called PER variation so the enhancer's family rotation
           //    yields a DISTINCT concept for each of the (up to 4) variations. ──
@@ -1373,7 +1380,9 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
           //    mode already carry bakedTextWarning, and the Design Engine lane is
           //    deterministic + structurally gated. One retry with QA feedback. ──
           let verification: any = null;
-          if (!refImage && cleanText && verifierEnabled()) {
+          if (elapsedS() > QA_SKIP_BUDGET_S) {
+            console.warn(`[Verifier] skipped — time budget exhausted (${Math.round(elapsedS())}s elapsed); shipping unverified rather than hitting the gateway timeout.`);
+          } else if (!refImage && cleanText && verifierEnabled()) {
             try {
               // Expectations come from the GATED copy that was actually composited
               // ('#WeAreTraders' is the only fixed text the overlay always draws).
@@ -1393,7 +1402,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                   ...activeOfferTexts(),
                 ],
               });
-              if (!verification.pass && !qaRetried.has(vi)) {
+              if (!verification.pass && !qaRetried.has(vi) && elapsedS() < QA_RETRY_BUDGET_S) {
                 qaRetried.add(vi);
                 qaNotes[vi] = `\n\nQA FEEDBACK — the previous attempt FAILED verification, fix these: ${verification.issues.join('; ')}. ${verification.retryHint || ''}`;
                 console.warn(`[Verifier] Variation ${vi + 1} FAILED QA (${verification.issues.join(' | ')}) — retrying once.`);

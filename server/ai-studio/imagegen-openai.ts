@@ -26,7 +26,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 let _client: OpenAI | null = null;
 function getClient(): OpenAI {
   if (!_client) {
-    _client = new OpenAI({ apiKey: OPENAI_API_KEY });
+    _client = new OpenAI({ apiKey: OPENAI_API_KEY, timeout: 180_000, maxRetries: 1 });
   }
   return _client;
 }
