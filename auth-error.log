@@ -382,3 +382,6 @@ AccessDenied: AccessDenied. Read more at https://errors.authjs.dev#accessdenied
     at async Server.requestListener (C:\Users\PC\Downloads\Creative_Merged\node_modules\next\dist\server\lib\start-server.js:226:13)
 
 ---
+[2026-07-06T12:28:33.745Z] WARN
+"debug-enabled"
+---

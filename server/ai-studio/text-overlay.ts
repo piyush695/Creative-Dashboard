@@ -461,6 +461,19 @@ const RENDERERS: Record<LayoutArchetype, (c: Ctx) => string[]> = {
   'minimal-corner': archMinimalCorner,
 };
 
+// The brand frame (WE ARE TRADERS pill, Trustpilot badge, Deloitte mark) is
+// composited by THIS module — so those marks must never ALSO appear in the
+// model's body copy (live dup on 1:1: "Independently Reviewed By Deloitte"
+// rendered as a bullet AND the bottom-right frame mark). Strip them from all
+// SECONDARY copy (never the headline/price/CTA). A field/bullet that is
+// essentially just a frame mark is dropped whole.
+const FRAME_MARK_RE = /(independently\s+)?reviewed\s+by\s+deloitte\.?|rated\s+[0-9.]+\s+(?:stars?\s+)?on\s+trustpilot|trustpilot(?:\s+[0-9.]+)?(?:\s+stars?)?|#?\s*we\s*are\s*traders|\bdeloitte\b/gi;
+function stripFrameMarks(s?: string): string {
+  if (!s) return '';
+  const out = s.replace(FRAME_MARK_RE, '').replace(/\s{2,}/g, ' ').replace(/^[\s·•,.·–—-]+|[\s·•,.–—-]+$/g, '').trim();
+  return out;
+}
+
 // ─── Main export ───
 
 export async function applyTextOverlay(imageDataUri: string, config: TextOverlayConfig): Promise<string> {
@@ -472,6 +485,19 @@ export async function applyTextOverlay(imageDataUri: string, config: TextOverlay
     const metadata = await sharp(imageBuffer).metadata();
     const width = metadata.width || 1024;
     const height = metadata.height || 1536;
+
+    // Strip brand-frame marks from secondary copy so they never duplicate the
+    // composited frame (done BEFORE the never-heroless promotion so a frame-mark
+    // bullet can't get promoted to the headline).
+    if (config.brandFrame) {
+      config = {
+        ...config,
+        attentionGrabber: stripFrameMarks(config.attentionGrabber) || undefined,
+        subheadline: stripFrameMarks(config.subheadline) || undefined,
+        urgencyText: stripFrameMarks(config.urgencyText) || undefined,
+        bullets: (config.bullets || []).map(stripFrameMarks).filter((b) => b.length >= 4),
+      };
+    }
 
     // NEVER-HEROLESS GUARD: a creative must always carry a dominant text element
     // (the claim gate may have dropped the headline). Promote the best remaining
@@ -551,34 +577,52 @@ export async function applyTextOverlay(imageDataUri: string, config: TextOverlay
       );
     }
 
-    // 4a) Trust frame: Trustpilot badge bottom-left + Deloitte mark bottom-right
-    // (brand-frame spec — code-rendered so the marks are exact, never gibberish).
-    if (config.brandFrame) {
-      const bSize = Math.round(height * 0.0145);
-      const rowBase = height - Math.round(height * 0.052);
-      svgParts.push(linearScrim('trust', 0, 1, 0, 0, [[0, 0.8], [100, 0]]));
-      svgParts.push(`<rect x="0" y="${rowBase - Math.round(bSize * 2.6)}" width="${width}" height="${height - rowBase + Math.round(bSize * 2.6)}" fill="url(#trust)"/>`);
-      const sb = Math.round(bSize * 1.7);
-      const sy = rowBase - sb + Math.round(bSize * 0.3);
-      const tpX = pad + sb + Math.round(bSize * 0.7);
-      const tpSize = Math.round(bSize * 1.15);
-      svgParts.push(
-        `<rect x="${pad}" y="${sy}" width="${sb}" height="${sb}" rx="3" fill="#00B67A"/>`,
-        `<path transform="translate(${pad + sb * 0.12}, ${sy + sb * 0.14}) scale(${(sb * 0.76) / 20})" d="M10 0l2.9 6.2 6.8.6-5.1 4.5 1.5 6.7-6.1-3.5-6.1 3.5 1.5-6.7L.3 6.8l6.8-.6z" fill="#FFFFFF"/>`,
-        txt(tpX, rowBase, 'Trustpilot', tpSize, { weight: '700', anchor: 'start', stroke: false, fill: '#FFFFFF' }),
-        txt(tpX + Math.round(10 * tpSize * CHARW) + Math.round(bSize * 0.6), rowBase, '4.6', tpSize, { weight: '600', anchor: 'start', stroke: false, fill: '#B9C0CC' }),
-      );
-      svgParts.push(txt(width - pad, rowBase, 'Independently Reviewed By Deloitte.', Math.round(bSize * 1.05), { weight: '600', anchor: 'end', stroke: false, fill: '#E8ECF2', opacity: 0.9 }));
-    }
+    // 4) BOTTOM TRUST STACK — the legal disclaimer is pinned to the very bottom,
+    //    and the Trustpilot + Deloitte trust row is stacked directly ABOVE it
+    //    with a clear gap. (They shared one band and collided into garbled
+    //    overlap on 1:1 — live QA catch.) ONE shared scrim behind the whole
+    //    stack so both read cleanly on any aspect ratio.
+    {
+      const hasDisc = !!config.disclaimer;
+      const discLines = hasDisc
+        ? wrapText(config.disclaimer!.toUpperCase(), Math.floor((width - pad * 2) / (disclaimerSize * 0.52))).slice(0, 4)
+        : [];
+      const discStep = Math.round(disclaimerSize * 1.3);
+      const discBottom = height - Math.round(pad * 0.5);                // last line baseline
+      const discTopBaseline = discBottom - (discLines.length - 1) * discStep;
+      const discTopEdge = discTopBaseline - disclaimerSize;            // top pixel of disclaimer
 
-    // 4b) Disclaimer — always pinned to the very bottom, over a thin bottom scrim.
-    if (config.disclaimer) {
-      const maxDiscChars = Math.floor((width - pad * 2) / (disclaimerSize * 0.52));
-      const discLines = wrapText(config.disclaimer.toUpperCase(), maxDiscChars).slice(0, 4);
-      svgParts.push(linearScrim('disc', 0, 1, 0, 0, [[0, 0.75], [100, 0]]));
-      svgParts.push(`<rect x="0" y="${height - Math.round(height * 0.1)}" width="${width}" height="${Math.round(height * 0.1)}" fill="url(#disc)"/>`);
-      let discY = height - Math.round(pad * 0.5) - Math.round((discLines.length - 1) * disclaimerSize * 1.3);
-      for (const line of discLines) { svgParts.push(txt(cx, discY, line, disclaimerSize, { weight: '300', fill: '#9AA1AC', stroke: false })); discY += Math.round(disclaimerSize * 1.3); }
+      // Trust row baseline sits a gap ABOVE the disclaimer's top edge.
+      const bSize = Math.round(height * 0.0145);
+      const tpSize = Math.round(bSize * 1.15);
+      const sb = Math.round(bSize * 1.7);
+      const trustBaseline = (hasDisc ? discTopEdge : discBottom) - Math.round(height * 0.022);
+      const trustSy = trustBaseline - sb + Math.round(bSize * 0.3);
+
+      // 1) Single shared scrim behind the whole bottom stack.
+      const scrimTop = config.brandFrame ? trustSy - Math.round(height * 0.025) : discTopEdge - Math.round(height * 0.02);
+      if (hasDisc || config.brandFrame) {
+        svgParts.push(linearScrim('botstack', 0, 1, 0, 0, [[0, 0.85], [100, 0]]));
+        svgParts.push(`<rect x="0" y="${scrimTop}" width="${width}" height="${height - scrimTop}" fill="url(#botstack)"/>`);
+      }
+
+      // 2) Trustpilot badge (left) + Deloitte mark (right), above the disclaimer.
+      if (config.brandFrame) {
+        const tpX = pad + sb + Math.round(bSize * 0.7);
+        svgParts.push(
+          `<rect x="${pad}" y="${trustSy}" width="${sb}" height="${sb}" rx="3" fill="#00B67A"/>`,
+          `<path transform="translate(${pad + sb * 0.12}, ${trustSy + sb * 0.14}) scale(${(sb * 0.76) / 20})" d="M10 0l2.9 6.2 6.8.6-5.1 4.5 1.5 6.7-6.1-3.5-6.1 3.5 1.5-6.7L.3 6.8l6.8-.6z" fill="#FFFFFF"/>`,
+          txt(tpX, trustBaseline, 'Trustpilot', tpSize, { weight: '700', anchor: 'start', stroke: false, fill: '#FFFFFF' }),
+          txt(tpX + Math.round(10 * tpSize * CHARW) + Math.round(bSize * 0.6), trustBaseline, '4.6', tpSize, { weight: '600', anchor: 'start', stroke: false, fill: '#B9C0CC' }),
+          txt(width - pad, trustBaseline, 'Independently Reviewed By Deloitte.', Math.round(bSize * 1.05), { weight: '600', anchor: 'end', stroke: false, fill: '#E8ECF2', opacity: 0.9 }),
+        );
+      }
+
+      // 3) Disclaimer at the very bottom.
+      if (hasDisc) {
+        let discY = discTopBaseline;
+        for (const line of discLines) { svgParts.push(txt(cx, discY, line, disclaimerSize, { weight: '300', fill: '#9AA1AC', stroke: false })); discY += discStep; }
+      }
     }
 
     const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">\n${svgParts.join('\n')}\n</svg>`;
