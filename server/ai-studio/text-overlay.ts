@@ -264,12 +264,15 @@ function ctaPill(ctx: Ctx, x: number, y: number, anchor: 'start' | 'middle' | 'e
   // element kit requires it when the brief provides one (live QA catch).
   if (cfg.urgencyText) {
     const uSize = Math.round(size * 0.72);
-    // Never enter the disclaimer band at the very bottom (live collision:
-    // "New users only" overlapped the legal line) — skip if no room.
+    const ux = anchor === 'start' ? left : anchor === 'end' ? left + w : left + w / 2;
+    const uAnchor = anchor === 'middle' ? 'middle' : anchor === 'end' ? 'end' : 'start';
+    // Never enter the disclaimer band (live collision: "New users only" sat on
+    // the legal line). No room below → render ABOVE the CTA block instead.
     if (belowY + uSize * 1.6 < ctx.H * 0.93) {
-      const ux = anchor === 'start' ? left : anchor === 'end' ? left + w : left + w / 2;
-      const uAnchor = anchor === 'middle' ? 'middle' : anchor === 'end' ? 'end' : 'start';
       parts.push(txt(ux, belowY + uSize, cfg.urgencyText, uSize, { weight: '600', anchor: uAnchor, fill: '#E8ECF2', opacity: 0.9 }));
+    } else {
+      const aboveY = y - Math.round(uSize * 1.1) - (cfg.wasPrice ? Math.round(size * 1.9) : 0);
+      parts.push(txt(ux, aboveY, cfg.urgencyText, uSize, { weight: '600', anchor: uAnchor, fill: '#E8ECF2', opacity: 0.9 }));
     }
   }
   return parts;

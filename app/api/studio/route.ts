@@ -1362,6 +1362,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                 headline: ov.headline,
                 subheadline: ov.subheadline,
                 price: ov.price,
+                wasPrice: ov.wasPrice, // struck-through anchor price (deterministic from brief)
                 bullets: ov.bullets,
                 cta: ov.cta,
                 urgencyText: ov.urgencyText,
