@@ -74,6 +74,17 @@ const CREATIVE_DIRECTIONS: Array<{ format: string; accent: string; vibe: string 
   { format: 'a grey statutory broker risk-warning banner in its own legalese typeface, one line struck through in red ink and corrected so the math flips in the trader\'s favour', accent: 'red on grey', vibe: 'regulatory in-joke, insider wink' },
   { format: 'a month-view trading P&L calendar heatmap of red / green / grey day tiles, mostly green, one day hand-circled "evaluation passed"', accent: 'green', vibe: 'consistency over luck, the grind' },
   { format: 'a single minted challenge coin standing on its edge in a vast black void, a hard rim-light eclipse halo, the embossed crest in shadow', accent: 'bronze/gold', vibe: 'earned rite of passage, collectible status' },
+  // ── TREND SNAPSHOT 2026-07 (web-researched; refresh periodically) — UGC-native
+  //    dominates Meta in 2026: phone-shot look, works muted, credibility over
+  //    discount codes, answer the category objection ("will I actually get paid?") ──
+  { format: 'a UGC-style selfie frame — a real trader talking to their phone camera mid-sentence, imperfect framing, natural light, caption-style headline like a paused Reel', accent: 'white', vibe: 'native UGC, filmed-not-designed, works muted' },
+  { format: 'a POV caption card over a candid phone-shot scene: "POV: your withdrawal actually arrives" energy — big native-app caption typography on a real moment', accent: 'white', vibe: 'meme-adjacent, thumb-native' },
+  { format: 'an iPhone Notes-app confession screenshot — short, honest, personal note about the trading journey, timestamps visible, zero ad polish', accent: 'white', vibe: 'raw honesty, anti-ad' },
+  { format: 'a WhatsApp/Telegram chat thread where a payout notification lands mid-conversation — reactions, emojis blurred, authentic chat UI', accent: 'green', vibe: 'social proof in the wild' },
+  { format: 'a split-screen THEM vs US comparison — left: waiting weeks for a payout (grey, dim); right: paid fast (bright, alive) — same trader, two timelines', accent: 'green', vibe: 'the objection, answered visually' },
+  { format: 'an over-the-shoulder candid of a trader checking their phone at a kitchen table at 6am, coffee steam, documentary grain — the quiet routine of someone who made it work', accent: 'warm gold', vibe: 'day-in-the-life, believable' },
+  { format: 'a screen-recorded dashboard moment with a finger tapping WITHDRAW — UI slightly out of focus, human touch visible, feels captured not staged', accent: 'cyan', vibe: 'proof you can almost touch' },
+  { format: 'a street-interview freeze-frame with a caption bar — mid-laugh reaction shot the moment someone hears the payout speed', accent: 'white', vibe: 'reaction content, native to Reels' },
   // ── FTMO-tier archetypes (top prop-firm craft — funded-trader, proof at scale, testimonial) ──
   { format: "a real funded trader's authentic celebration moment — modest desk, laptop showing a green payout confirmation, genuine relief and joy, documentary-style lighting (absolutely NOT cheesy stock)", accent: 'warm gold', vibe: 'human, believable win, aspirational' },
   { format: "a funded trader's calm aspirational lifestyle — living the outcome (working from anywhere, quiet confidence, freedom), cinematic depth of field, premium and real", accent: 'cyan', vibe: 'this could be you, status earned' },

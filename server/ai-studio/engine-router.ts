@@ -132,38 +132,34 @@ export function classifyPromptEngine(promptRaw: string, override?: Engine): Rout
   let reason: string;
   const collision = strongType && hasExplicitPhoto;
 
-  if (collision) {
-    // Both lanes fire strongly. Tie-break to the on-brand, zero-typo Design Engine.
+  // ── GEN-AI-FIRST (user directive 2026-07-03): every brief gets a FRESH
+  //    AI-generated concept/layout by default — "use gen AI fully, invent
+  //    placement every generation". The fixed-layout Design Engine runs ONLY
+  //    when the user explicitly asks for structured/exact placement (or forces
+  //    it via the override chip). Compliance is unchanged either way: the claim
+  //    gate + real-font overlay + verifier run on the AI lane too. ──
+  const wantsTemplate = /\b(design engine|template|exact placement|locked layout|fixed layout|strict layout|bau style|brand layout)\b/i.test(prompt);
+
+  if (wantsTemplate) {
     engine = 'template';
-    reason = `Ambiguous — explicit photo cue (${sigList(signals, 'photo')}) but also a strong text anchor (${sigList(signals, 'type')}). Tie-broken to Design Engine; switch to AI Image for a literal photo.`;
-  } else if (strongType) {
-    engine = 'template';
-    reason = `Strong text anchor (${sigList(signals, 'type')})${photoScore ? `; scene words (${sigList(signals, 'photo')}) treated as decoration` : ''} → Design Engine.`;
-  } else if (photoScore > 0) {
-    // A scene with no strong text anchor is a photographic brief — even without an
-    // explicit "photo/cinematic" cue. A lone weak text word does not beat it.
-    engine = 'ai';
-    reason = `Photographic/scene brief (${sigList(signals, 'photo')})${typeScore ? `; weak text signal (${sigList(signals, 'type')}) is secondary` : ''} → AI Image.`;
-  } else if (typeScore > 0) {
-    engine = 'template';
-    reason = `Light text signal (${sigList(signals, 'type')}), no scene → Design Engine.`;
+    reason = `You asked for structured placement (${prompt.match(/\b(design engine|template|exact placement|locked layout|fixed layout|strict layout|bau style|brand layout)\b/i)?.[0]}) → Design Engine (locked brand layouts).`;
   } else {
-    engine = 'template';
-    reason = `No scene or strong signal → default Design Engine (on-brand). Switch to AI Image for a photo/scene.`;
+    engine = 'ai';
+    reason = strongType
+      ? `Gen-AI-first: fresh AI concept + layout (offer copy composited in real fonts, claim-gated). Say "use the design engine" or use the override for locked brand layouts.`
+      : photoScore > 0
+        ? `Photographic/scene brief (${sigList(signals, 'photo')}) → AI Image.`
+        : `Gen-AI-first default: fresh concept + layout every generation.`;
   }
 
   const archetypeHint: ArchetypeHint = engine === 'ai' ? 'photographic' : pickArchetype(signals, benefitCount);
 
-  // Confidence: separation of the two lanes, damped when evidence is thin/collides.
+  // Confidence under gen-AI-first: explicit template request = certain; the AI
+  // default is high (it's a policy, not a guess) but soft enough to surface the
+  // override chip when the brief is empty of signals.
   const winner = Math.max(typeScore, photoScore);
-  let confidence: number;
-  if (collision) confidence = 0.5;
-  else if (winner === 0) confidence = 0.35;
-  else {
-    const sep = Math.abs(typeScore - photoScore) / (typeScore + photoScore);
-    confidence = 0.55 + 0.4 * sep;
-    if (winner <= 2) confidence = Math.min(confidence, 0.6); // thin evidence → soft
-  }
+  void collision; void strongType; // retained signals still power archetypeHint + reasons
+  let confidence: number = wantsTemplate ? 0.95 : winner > 0 ? 0.85 : 0.7;
   confidence = round2(confidence);
 
   // Low-confidence-always-flags: a close call is surfaced regardless of the winner.
