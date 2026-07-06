@@ -41,6 +41,8 @@ export interface RouteSignal {
 
 export interface RouteDecision {
   engine: Engine;
+  /** True when the brief describes a photographic SCENE (person/place/moment) — gates subject-lock + subject verification. */
+  scene: boolean;
   archetypeHint: ArchetypeHint;
   typeScore: number;
   photoScore: number;
@@ -118,7 +120,7 @@ export function classifyPromptEngine(promptRaw: string, override?: Engine): Rout
   // Manual override from the UI always wins.
   if (override) {
     return {
-      engine: override, archetypeHint: override === 'ai' ? 'photographic' : pickArchetype(signals, benefitCount),
+      engine: override, scene: photoScore > 0, archetypeHint: override === 'ai' ? 'photographic' : pickArchetype(signals, benefitCount),
       typeScore, photoScore, confidence: 1, ambiguous: false, signals,
       reason: `Forced to ${override === 'ai' ? 'AI Image' : 'Design Engine'} by you (manual override).`,
     };
@@ -168,7 +170,7 @@ export function classifyPromptEngine(promptRaw: string, override?: Engine): Rout
     reason += ` (Low-confidence call — flip the engine in one click if this is wrong.)`;
   }
 
-  return { engine, archetypeHint, typeScore, photoScore, confidence, ambiguous, signals, reason };
+  return { engine, scene: photoScore > 0, archetypeHint, typeScore, photoScore, confidence, ambiguous, signals, reason };
 }
 
 function sigList(signals: RouteSignal[], side: 'type' | 'photo'): string {

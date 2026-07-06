@@ -173,7 +173,7 @@ THE TEAM'S CREATIVE APPROACH (this is the methodology — follow it, in order, f
    - reward — "I can access a bigger account for less."
    The hook must work as a STANDALONE SENTENCE (e.g. "Unlock a $100K Challenge for less than the price of a weekend trade setup"). If it doesn't stop a thumb alone, rewrite it before designing.
 
-2. BUILD A STRONG VISUAL HIERARCHY. The viewer must understand the ad in 2 SECONDS, reading in this exact order: Brand → Offer → Price → Code → Trust → CTA. The PRICE and the CHALLENGE/ACCOUNT SIZE are the biggest conversion elements — make them visually dominate (e.g. MID SEASON SALE / $100K Challenge / Was $450 → Now $248 / Use Code: NEWMS45 / Trustpilot 4.6 · Reviewed by Deloitte).
+2. BUILD A STRONG VISUAL HIERARCHY. The viewer must understand the ad in 2 SECONDS, reading in this exact order: Brand → Offer → Price → Code → Trust → CTA. The PRICE and the CHALLENGE/ACCOUNT SIZE are the biggest conversion elements — make them visually dominate (e.g. MID SEASON SALE / $100K Challenge / Was $450 → Now $248 / Use Code: NEWMS45 / Trustpilot 4.6 · Reviewed by Deloitte). HARD RULE: if the brief names a challenge/account size ($100K, $200K…), it MUST appear on-image — put it in the overlay "headline" (e.g. "$100K Challenge") so the viewer knows exactly WHAT they are buying, with the price as the separate hero token.
 
 3. PREMIUM FINTECH DESIGN LANGUAGE. The creative must feel: modern, fast, trustworthy, premium, competitive, slightly gamified. Build with: a dark trading-dashboard background, glowing chart lines, clean cards, orange/blue contrast, polished 3D typography, and CTA elements that look like trading-platform notifications.
 

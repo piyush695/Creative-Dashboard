@@ -1075,6 +1075,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
       const routeDecision = classifyPromptEngine(userPrompt || '', engineParam === 'auto' ? undefined : engineParam);
       const routingPublic = {
         engine: routeRefImage ? 'ai' : routeDecision.engine,
+        scene: routeRefImage ? false : routeDecision.scene,
         archetypeHint: routeDecision.archetypeHint,
         confidence: routeRefImage ? 0.95 : routeDecision.confidence,
         ambiguous: routeRefImage ? false : routeDecision.ambiguous,
@@ -1246,7 +1247,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             // The router classified this as a photographic SCENE → lock the literal
             // subject + action so the enhancer can't swap the person for a
             // receipt/screen concept (live failure: "First Payout Invoice").
-            subjectLock: (!refImage && routingPublic.engine === 'ai' && routingPublic.archetypeHint === 'photographic')
+            subjectLock: (!refImage && routingPublic.engine === 'ai' && routingPublic.scene)
               ? rawPrompt
               : undefined,
           });
@@ -1415,7 +1416,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
               const ovr = compositedCopy || {};
               verification = await verifyCreative(finalImageUrl, {
                 userPrompt: rawPrompt,
-                expectedSubject: routingPublic.archetypeHint === 'photographic' ? rawPrompt : undefined,
+                expectedSubject: routingPublic.scene ? rawPrompt : undefined, // only when the brief actually describes a scene (offer briefs need no human)
                 // Only strings the archetypes GUARANTEE rendering (headline, price,
                 // CTA, promo chip, tagline) — subheadline/bullets/urgency are
                 // legitimately skipped by some layouts and were causing false fails.

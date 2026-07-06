@@ -225,7 +225,10 @@ function ctaPill(ctx: Ctx, x: number, y: number, anchor: 'start' | 'middle' | 'e
   // outlined chip sits directly under the CTA in every archetype.
   if (cfg.promoCode) {
     const cSize = Math.round(size * 0.82);
-    const label = `Code: ${cfg.promoCode}`;
+    // The enhancer sometimes emits "USE CODE: X" as the code value — strip any
+    // such prefix so the chip never reads "Code: USE CODE: X" (live defect).
+    const codeClean = cfg.promoCode.replace(/^\s*(?:use\s+code|code)\s*[:\s]\s*/i, '').trim() || cfg.promoCode.trim();
+    const label = `Code: ${codeClean}`;
     const cw = Math.round(label.length * cSize * 0.6 + cSize * 1.6);
     const ch = Math.round(cSize * 2);
     let cLeft = anchor === 'start' ? left : anchor === 'end' ? left + w - cw : Math.round(left + w / 2 - cw / 2);
