@@ -1329,6 +1329,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
               const rawOv = enhanced.overlay || {};
               const { overlay: ov, violations: ovViolations } = gateOverlayCopy(
                 {
+                  attentionGrabber: rawOv.attentionGrabber || '', // micro-hook (gated like all copy)
                   headline: rawOv.headline || enhanced.headline || '',
                   subheadline: rawOv.subheadline || '',
                   price: rawOv.price || '',
@@ -1368,6 +1369,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
               if (ctaM) ov.cta = ctaM[1].trim();
               compositedCopy = ov;
               finalImageUrl = await applyTextOverlay(finalImageUrl, {
+                attentionGrabber: ov.attentionGrabber, // 3-7 word micro-hook eyebrow
                 headline: ov.headline,
                 subheadline: ov.subheadline,
                 price: ov.price,
@@ -1383,7 +1385,8 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                 disclaimer: FIXED_DISCLAIMER,
                 layout: 'standard',
                 darkBackground: true,
-                tagline: '#WeAreTraders',
+                tagline: '#WeAreTraders', // renders as the "WE ARE TRADERS" pill badge
+                brandFrame: true, // Trustpilot bottom-left + Deloitte bottom-right (team methodology)
                 // If we have the uploaded logo, suppress the compositor's bundled
                 // logo and composite the real (transparent) one below instead.
                 drawLogo: !hasBrandLogo,
@@ -1443,7 +1446,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                   // not the raw "Use Code: X" phrase (was a false legibility fail).
                   ovr.promoCode ? `Code: ${String(ovr.promoCode).replace(/^\s*(?:use\s+code|code)\s*[:\s]\s*/i, '').trim()}` : undefined,
                   ovr.urgencyText,
-                  '#WeAreTraders',
+                  'WE ARE TRADERS', // the top-right pill badge (brand frame)
                 ].filter((s): s is string => !!s),
                 allowedFigures: [
                   ...extractClaimTokens(rawPrompt),

@@ -43,6 +43,9 @@ export interface TextOverlayConfig {
   drawLogo?: boolean;
   /** Brief-named brand accent (hex) — colours the hero price, CTA pill and promo chip. */
   accentColor?: string;
+  /** Render the fixed brand trust frame: Trustpilot badge bottom-left +
+   *  "Independently Reviewed By Deloitte." bottom-right (team methodology). */
+  brandFrame?: boolean;
 }
 
 // ─── Helpers ───
@@ -270,8 +273,9 @@ function ctaPill(ctx: Ctx, x: number, y: number, anchor: 'start' | 'middle' | 'e
     const ux = anchor === 'start' ? left : anchor === 'end' ? left + w : left + w / 2;
     const uAnchor = anchor === 'middle' ? 'middle' : anchor === 'end' ? 'end' : 'start';
     // Never enter the disclaimer band (live collision: "New users only" sat on
-    // the legal line). No room below → render ABOVE the CTA block instead.
-    if (belowY + uSize * 1.6 < ctx.H * 0.93) {
+    // the legal line) — nor the trust-badge row when the brand frame is on.
+    // No room below → render ABOVE the CTA block instead.
+    if (belowY + uSize * 1.6 < ctx.H * (ctx.cfg.brandFrame ? 0.9 : 0.93)) {
       parts.push(txt(ux, belowY + uSize, cfg.urgencyText, uSize, { weight: '600', anchor: uAnchor, fill: '#E8ECF2', opacity: 0.9 }));
     } else {
       const aboveY = y - Math.round(uSize * 1.1) - (cfg.wasPrice ? Math.round(size * 1.9) : 0);
@@ -294,18 +298,32 @@ function archLeftColumn(ctx: Ctx): string[] {
   parts.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="url(#lc)"/>`);
 
   const hl = fitText((cfg.headline || '').toUpperCase(), colW, Math.round(S.headline * 1.25));
-  const bl = bulletsOf(cfg, 4);
-  // measure block height
-  let bh = hl.lines.length * Math.round(hl.size * 1.15) + Math.round(S.sub * 1.6);
-  if (cfg.price) bh += Math.round(S.price * 1.5);
-  bh += bl.length * Math.round(S.bullet * 1.6) + Math.round(S.cta * 3);
-  let y = Math.max(Math.round(H * 0.2), Math.round(H * 0.52 - bh / 2));
+  const sub = cfg.subheadline && cfg.subheadline.length < 90 ? fitText(cfg.subheadline, colW, S.sub, 0.75) : null;
+  let bl = bulletsOf(cfg, 4);
+  // ACCURATE block measure — the old one skipped the eyebrow + wrapped
+  // subheadline lines, so a full stack overflowed into the trust badges
+  // (local QA catch). Includes the CTA pill + code chip + urgency below.
+  const eyebrowH = cfg.attentionGrabber ? Math.round(S.sub * 1.1 + hl.size * 0.78) : 0;
+  const belowStack = Math.round(S.cta * 2.4) + (cfg.promoCode ? Math.round(S.cta * 2.7) : 0) + (cfg.urgencyText ? Math.round(S.cta * 1.7) : 0);
+  const measure = (k: number) =>
+    eyebrowH + hl.lines.length * Math.round(hl.size * 1.15)
+    + Math.round(S.sub * 0.6) + (sub ? sub.lines.length * Math.round(sub.size * 1.4) + Math.round(S.sub * 0.3) : 0)
+    + (cfg.price ? Math.round(S.price * 1.45) : 0)
+    + k * Math.round(S.bullet * 1.6)
+    + Math.round(S.cta * 0.6) + belowStack;
+  // Shed bullets until the whole stack fits above the trust/disclaimer band.
+  const limit = Math.round(H * (cfg.brandFrame ? 0.875 : 0.92));
+  let top = Math.max(Math.round(H * 0.17), Math.round(H * 0.52 - measure(bl.length) / 2));
+  while (bl.length && top + measure(bl.length) > limit) {
+    bl = bl.slice(0, -1);
+    top = Math.max(Math.round(H * 0.17), Math.round(H * 0.52 - measure(bl.length) / 2));
+  }
+  let y = top;
 
+  if (cfg.attentionGrabber) { parts.push(txt(x, y, cfg.attentionGrabber.toUpperCase(), Math.round(S.sub * 1.05), { weight: '700', anchor, fill: cfg.accentColor || '#8FD8FF', spacing: 2 })); y += eyebrowH; }
   for (const ln of hl.lines) { parts.push(txt(x, y, ln, hl.size, { weight: '900', anchor, spacing: 1 })); y += Math.round(hl.size * 1.15); }
   y += Math.round(S.sub * 0.6);
-  if (cfg.subheadline && cfg.subheadline.length < 90) {
-    // fit like the headline — a raw single line clipped at the column edge (live QA catch ×2)
-    const sub = fitText(cfg.subheadline, colW, S.sub, 0.75);
+  if (sub) {
     for (const ln of sub.lines) { parts.push(txt(x, y, ln, sub.size, { weight: '500', fill: '#D6DAE2', anchor })); y += Math.round(sub.size * 1.4); }
     y += Math.round(S.sub * 0.3);
   }
@@ -328,6 +346,8 @@ function archDominantNumber(ctx: Ctx): string[] {
   if (cfg.headline) {
     const hl = fitText(cfg.headline.toUpperCase(), W - pad * 2, Math.round(S.headline * 0.9));
     let hy = numY - Math.round(H * 0.14) - (hl.lines.length - 1) * Math.round(hl.size * 1.1);
+    // Micro-hook eyebrow above the headline (methodology hierarchy).
+    if (cfg.attentionGrabber) { parts.push(txt(cx, hy - Math.round(hl.size * 1.1), cfg.attentionGrabber.toUpperCase(), Math.round(S.sub * 1.05), { weight: '700', fill: cfg.accentColor || '#8FD8FF', spacing: 2 })); }
     for (const ln of hl.lines) { parts.push(txt(cx, hy, ln, hl.size, { weight: '800', spacing: 1 })); hy += Math.round(hl.size * 1.1); }
   }
   if (hero) {
@@ -358,6 +378,9 @@ function archTopEditorial(ctx: Ctx): string[] {
 
   const hl = fitText((cfg.headline || '').toUpperCase(), W - pad * 2, Math.round(S.headline * 1.35));
   let y = Math.round(H * 0.135);
+  // Micro-hook eyebrow gets its OWN slot above the headline (was overlapping —
+  // local QA catch).
+  if (cfg.attentionGrabber) { parts.push(txt(pad, y, cfg.attentionGrabber.toUpperCase(), Math.round(S.sub * 1.05), { weight: '700', anchor: 'start', fill: cfg.accentColor || '#8FD8FF', spacing: 2 })); y += Math.round(S.sub * 1.1 + hl.size * 0.78); }
   for (const ln of hl.lines) { parts.push(txt(pad, y, ln, hl.size, { weight: '900', anchor: 'start', spacing: 1 })); y += Math.round(hl.size * 1.14); }
   if (cfg.subheadline && cfg.subheadline.length < 90) {
     // fit to the canvas — a raw single line clipped at the right edge (live QA catch ×2)
@@ -512,14 +535,43 @@ export async function applyTextOverlay(imageDataUri: string, config: TextOverlay
       svgParts.push(`<g transform="translate(${pad}, ${brandTop}) scale(${scale})"><g font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="44" fill="${fg}" letter-spacing="-2">${!isBrightLogoArea ? `<g fill="rgba(0,0,0,0.5)"><text x="2" y="34">h</text><text x="68" y="34">la</text><text x="2" y="72">prime</text></g>` : ''}<text x="0" y="32">h</text><circle cx="45" cy="18" r="15" fill="#00d4ff"/><text x="66" y="32">la</text><text x="0" y="70">prime</text></g></g>`);
     }
 
-    // 3) Tagline top-right (on top of any scrim).
+    // 3) "WE ARE TRADERS" badge top-right — premium rounded pill, thin light
+    // outline, glass fill (brand-frame spec). "#WeAreTraders" auto-converts.
     const tagline = config.tagline !== undefined ? config.tagline : '#WeAreTraders';
     if (tagline) {
-      const tagSize = Math.round(height * 0.02);
-      svgParts.push(txt(width - pad, brandCenterY + Math.round(tagSize * 0.36), tagline, tagSize, { weight: '400', anchor: 'end' }));
+      const label = tagline.replace(/^#/, '').replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
+      const tagSize = Math.round(height * 0.0155);
+      const tw = Math.round(label.length * tagSize * CHARW + tagSize * 2.8);
+      const th = Math.round(tagSize * 2.2);
+      const tx = width - pad - tw;
+      const ty = brandCenterY - Math.round(th / 2);
+      svgParts.push(
+        `<rect x="${tx}" y="${ty}" width="${tw}" height="${th}" rx="${th / 2}" fill="rgba(12,14,22,0.45)" stroke="rgba(255,255,255,0.55)" stroke-width="1.5"/>`,
+        txt(tx + tw / 2, ty + th / 2 + Math.round(tagSize * 0.35), label, tagSize, { weight: '600', stroke: false, fill: '#F2F5F9', spacing: 1 }),
+      );
     }
 
-    // 4) Disclaimer — always pinned to the very bottom, over a thin bottom scrim.
+    // 4a) Trust frame: Trustpilot badge bottom-left + Deloitte mark bottom-right
+    // (brand-frame spec — code-rendered so the marks are exact, never gibberish).
+    if (config.brandFrame) {
+      const bSize = Math.round(height * 0.0145);
+      const rowBase = height - Math.round(height * 0.052);
+      svgParts.push(linearScrim('trust', 0, 1, 0, 0, [[0, 0.8], [100, 0]]));
+      svgParts.push(`<rect x="0" y="${rowBase - Math.round(bSize * 2.6)}" width="${width}" height="${height - rowBase + Math.round(bSize * 2.6)}" fill="url(#trust)"/>`);
+      const sb = Math.round(bSize * 1.7);
+      const sy = rowBase - sb + Math.round(bSize * 0.3);
+      const tpX = pad + sb + Math.round(bSize * 0.7);
+      const tpSize = Math.round(bSize * 1.15);
+      svgParts.push(
+        `<rect x="${pad}" y="${sy}" width="${sb}" height="${sb}" rx="3" fill="#00B67A"/>`,
+        `<path transform="translate(${pad + sb * 0.12}, ${sy + sb * 0.14}) scale(${(sb * 0.76) / 20})" d="M10 0l2.9 6.2 6.8.6-5.1 4.5 1.5 6.7-6.1-3.5-6.1 3.5 1.5-6.7L.3 6.8l6.8-.6z" fill="#FFFFFF"/>`,
+        txt(tpX, rowBase, 'Trustpilot', tpSize, { weight: '700', anchor: 'start', stroke: false, fill: '#FFFFFF' }),
+        txt(tpX + Math.round(10 * tpSize * CHARW) + Math.round(bSize * 0.6), rowBase, '4.6', tpSize, { weight: '600', anchor: 'start', stroke: false, fill: '#B9C0CC' }),
+      );
+      svgParts.push(txt(width - pad, rowBase, 'Independently Reviewed By Deloitte.', Math.round(bSize * 1.05), { weight: '600', anchor: 'end', stroke: false, fill: '#E8ECF2', opacity: 0.9 }));
+    }
+
+    // 4b) Disclaimer — always pinned to the very bottom, over a thin bottom scrim.
     if (config.disclaimer) {
       const maxDiscChars = Math.floor((width - pad * 2) / (disclaimerSize * 0.52));
       const discLines = wrapText(config.disclaimer.toUpperCase(), maxDiscChars).slice(0, 4);
