@@ -75,7 +75,7 @@ export async function verifyCreative(imageDataUri: string, exp: VerifyExpectatio
     `2. BAKED TEXT: does the IMAGE ITSELF (backgrounds, screens, receipts, documents, signs) contain legible or semi-legible text/digits that is NOT one of the approved copy strings below? Garbled pseudo-text counts as a FAILURE. (bakedTextOk = true only if the scene is clean)`,
     `3. LEGIBILITY: are the approved copy strings readable — not clipped at the canvas edge, not overlapping each other or the subject's face — and would the headline still read at a 200px-wide thumbnail? (legibilityOk)`,
     `4. FIGURES: is every number/%/price visible on the creative present in the ALLOWED FIGURES list? (figuresOk)`,
-    `5. HEADLINE DOMINANCE: is the hook headline the visually LARGEST/most dominant text element, with everything else clearly subordinate? (headlineDominant)`,
+    `5. HEADLINE DOMINANCE: is ONE element clearly the visual hero — either the hook headline OR a hero price/number (price-led hierarchy is VALID for offer creatives)? Fail only if no single element dominates or two elements compete equally. (headlineDominant)`,
     `6. ONE IDEA, ONE CTA: does the creative land exactly ONE message with exactly ONE call-to-action — no competing offers/messages? (oneIdeaOneCta)`,
     `7. ADVISORY (report in issues but do not fail): could a viewer state the offer/message within 2 seconds? does it pass as native feed content rather than a cheap banner? does text cover more than ~30% of the image?`,
   ].join('\n');

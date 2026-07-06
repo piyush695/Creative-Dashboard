@@ -38,6 +38,8 @@ export interface TextOverlayConfig {
   tagline?: string;
   /** When false, the compositor draws NO logo (caller composites its own). Default true. */
   drawLogo?: boolean;
+  /** Brief-named brand accent (hex) — colours the hero price, CTA pill and promo chip. */
+  accentColor?: string;
 }
 
 // ─── Helpers ───
@@ -195,18 +197,46 @@ function bulletsOf(cfg: TextOverlayConfig, max: number): string[] {
   return (Array.isArray(cfg.bullets) ? cfg.bullets : []).slice(0, max).map((b) => b.replace(/^[•\-]\s*/, '').trim()).filter(Boolean);
 }
 
+/** Perceived-lightness check so accent pills keep readable label text. */
+function isLightHexColor(hex: string): boolean {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const n = parseInt(full, 16);
+  return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 150;
+}
+
 function ctaPill(ctx: Ctx, x: number, y: number, anchor: 'start' | 'middle' | 'end', size: number): string[] {
   const { cfg, txt } = ctx;
   if (!cfg.cta) return [];
+  // Brief-named brand accent (e.g. "gold") drives the CTA pill; default stays blue.
+  const pillFill = cfg.accentColor || '#2563EB';
+  const labelFill = isLightHexColor(pillFill) ? '#0b1220' : '#FFFFFF';
   const h = Math.round(size * 2.4);
   const w = Math.min(Math.round(ctx.W * 0.62), Math.round(cfg.cta.length * size * 0.62 + 70));
   // Clamp so the pill never runs off either edge.
   let left = anchor === 'start' ? x : anchor === 'end' ? Math.round(x - w) : Math.round(x - w / 2);
   left = Math.max(ctx.pad, Math.min(left, ctx.W - ctx.pad - w));
-  return [
-    `<rect x="${left}" y="${y}" width="${w}" height="${h}" rx="${h / 2}" fill="#2563EB"/>`,
-    txt(left + w / 2, y + h / 2 + size * 0.35, cfg.cta, size, { weight: '700', stroke: false }),
+  const parts = [
+    `<rect x="${left}" y="${y}" width="${w}" height="${h}" rx="${h / 2}" fill="${pillFill}"/>`,
+    txt(left + w / 2, y + h / 2 + size * 0.35, cfg.cta, size, { weight: '700', stroke: false, fill: labelFill }),
   ];
+  // GUARANTEED PROMO CODE: an offer creative must always show its code (live
+  // QA failure: PRIME25 was parsed but no archetype rendered it). A compact
+  // outlined chip sits directly under the CTA in every archetype.
+  if (cfg.promoCode) {
+    const cSize = Math.round(size * 0.82);
+    const label = `Code: ${cfg.promoCode}`;
+    const cw = Math.round(label.length * cSize * 0.6 + cSize * 1.6);
+    const ch = Math.round(cSize * 2);
+    let cLeft = anchor === 'start' ? left : anchor === 'end' ? left + w - cw : Math.round(left + w / 2 - cw / 2);
+    cLeft = Math.max(ctx.pad, Math.min(cLeft, ctx.W - ctx.pad - cw));
+    const cy = y + h + Math.round(ch * 0.35);
+    parts.push(
+      `<rect x="${cLeft}" y="${cy}" width="${cw}" height="${ch}" rx="${ch / 2}" fill="rgba(10,10,18,0.55)" stroke="${cfg.accentColor || '#FFFFFF'}" stroke-width="1.5"/>`,
+      txt(cLeft + cw / 2, cy + ch / 2 + cSize * 0.35, label, cSize, { weight: '700', stroke: false, fill: cfg.accentColor || '#FFFFFF' }),
+    );
+  }
+  return parts;
 }
 
 // A) Bold left (or right) column — text stacked in the calmer vertical half.
@@ -232,7 +262,7 @@ function archLeftColumn(ctx: Ctx): string[] {
   for (const ln of hl.lines) { parts.push(txt(x, y, ln, hl.size, { weight: '900', anchor, spacing: 1 })); y += Math.round(hl.size * 1.15); }
   y += Math.round(S.sub * 0.6);
   if (cfg.subheadline && cfg.subheadline.length < 90) { parts.push(txt(x, y, cfg.subheadline, S.sub, { weight: '500', fill: '#D6DAE2', anchor })); y += Math.round(S.sub * 1.7); }
-  if (cfg.price) { y += Math.round(S.price * 0.75); parts.push(txt(x, y, cfg.price, S.price, { weight: '900', anchor, fill: '#FFFFFF' })); y += Math.round(S.price * 0.7); }
+  if (cfg.price) { y += Math.round(S.price * 0.75); parts.push(txt(x, y, cfg.price, S.price, { weight: '900', anchor, fill: cfg.accentColor || '#FFFFFF' })); y += Math.round(S.price * 0.7); }
   for (const b of bl) { parts.push(txt(x, y, `•  ${b}`, S.bullet, { weight: '400', fill: '#E0E4EA', anchor })); y += Math.round(S.bullet * 1.6); }
   y += Math.round(S.cta * 0.6);
   parts.push(...ctaPill(ctx, x, y, 'start', S.cta));
@@ -286,7 +316,7 @@ function archTopEditorial(ctx: Ctx): string[] {
 
   // base: price left, CTA right (or stacked)
   let by = Math.round(H * 0.78);
-  if (cfg.price) { parts.push(txt(pad, by, cfg.price, S.price, { weight: '900', anchor: 'start' })); }
+  if (cfg.price) { parts.push(txt(pad, by, cfg.price, S.price, { weight: '900', anchor: 'start', fill: cfg.accentColor || '#FFFFFF' })); }
   const bl = bulletsOf(cfg, 3);
   if (bl.length) { let yy = by + Math.round(S.price * 0.4); for (const b of bl) { yy += Math.round(S.bullet * 1.5); parts.push(txt(pad, yy, `•  ${b}`, S.bullet, { weight: '400', fill: '#E0E4EA', anchor: 'start' })); } }
   parts.push(...ctaPill(ctx, W - pad, by - Math.round(S.cta * 1.4), 'end', S.cta));
@@ -310,7 +340,7 @@ function archSideRail(ctx: Ctx): string[] {
   let bh = hl.lines.length * Math.round(hl.size * 1.15) + (cfg.price ? Math.round(S.price * 1.4) : 0) + bl.length * Math.round(S.bullet * 1.6) + Math.round(S.cta * 3);
   let y = Math.max(Math.round(H * 0.16), Math.round(H * 0.5 - bh / 2));
   for (const ln of hl.lines) { parts.push(txt(innerX, y, ln, hl.size, { weight: '900', anchor: 'start' })); y += Math.round(hl.size * 1.15); }
-  if (cfg.price) { y += Math.round(S.price * 0.7); parts.push(txt(innerX, y, cfg.price, S.price, { weight: '900', anchor: 'start' })); y += Math.round(S.price * 0.7); }
+  if (cfg.price) { y += Math.round(S.price * 0.7); parts.push(txt(innerX, y, cfg.price, S.price, { weight: '900', anchor: 'start', fill: cfg.accentColor || '#FFFFFF' })); y += Math.round(S.price * 0.7); }
   for (const b of bl) { parts.push(txt(innerX, y, `•  ${b}`, S.bullet, { weight: '400', fill: '#E0E4EA', anchor: 'start' })); y += Math.round(S.bullet * 1.6); }
   y += Math.round(S.cta * 0.7);
   parts.push(...ctaPill(ctx, innerX, y, 'start', Math.round(S.cta * 0.95)));

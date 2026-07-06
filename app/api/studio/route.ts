@@ -34,6 +34,7 @@ import { classifyPromptEngine } from '@/server/ai-studio/engine-router';
 import { generateTemplateVariations } from '@/server/ai-studio/template-pipeline';
 import { gateOverlayCopy, gateBriefCopy, gateImagePrompt, formatViolations, FIXED_DISCLAIMER, extractClaimTokens, APPROVED_BRAND_FACTS, activeOfferTexts } from '@/server/ai-studio/claim-gate';
 import { verifyCreative, verifierEnabled } from '@/server/ai-studio/creative-verifier';
+import { ACCENTS } from '@/server/ai-studio/brand-system';
 import { requireSession } from '@/server/api-auth';
 
 // ─── Text fidelity helpers — used to combat Gemini text-rendering errors ───
@@ -1357,6 +1358,9 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                 cta: ov.cta,
                 urgencyText: ov.urgencyText,
                 promoCode: ov.promoCode,
+                // Brief-named brand accent ("gold accent") — live QA fail: the AI
+                // lane previously had no accent support at all.
+                accentColor: requestedAccent ? ACCENTS[requestedAccent] : undefined,
                 // Disclaimer is the FIXED approved legal text — never model-written.
                 disclaimer: FIXED_DISCLAIMER,
                 layout: 'standard',
@@ -1412,10 +1416,11 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
               verification = await verifyCreative(finalImageUrl, {
                 userPrompt: rawPrompt,
                 expectedSubject: routingPublic.archetypeHint === 'photographic' ? rawPrompt : undefined,
+                // Only strings the archetypes GUARANTEE rendering (headline, price,
+                // CTA, promo chip, tagline) — subheadline/bullets/urgency are
+                // legitimately skipped by some layouts and were causing false fails.
                 expectedTexts: [
-                  ovr.headline, ovr.subheadline, ovr.price,
-                  ...(Array.isArray(ovr.bullets) ? ovr.bullets : []),
-                  ovr.cta, ovr.promoCode, ovr.urgencyText,
+                  ovr.headline, ovr.price, ovr.cta, ovr.promoCode,
                   '#WeAreTraders',
                 ].filter((s): s is string => !!s),
                 allowedFigures: [
