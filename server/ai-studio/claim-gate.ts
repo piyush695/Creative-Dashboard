@@ -117,6 +117,15 @@ const CLAIM_PATTERNS: RegExp[] = [
   /\b(?:best|fastest|biggest|largest|highest|cheapest|most\s+trusted|world'?s\s+(?:best|leading)|leading)\b/gi, // superlatives
   /\b(?:guaranteed?|risk[- ]free|no[- ]risk|assured)\b/gi,                     // guarantees
   /\b(?:instant(?:ly)?|same[- ]day|24\/7)\b/gi,                                // speed guarantees
+  // LIVE LEAK 2026-07-06 (run 5): "1-Step Process · Zero Payout Denial" passed —
+  // digit-hyphen compounds and spelled-out numbers weren't claim-shaped. A step
+  // count is a product figure; "Zero …" is quantified absence and must match the
+  // approved fact's EXACT wording ("Zero Payout Denials", plural).
+  /\b\d+\s?-?\s?(?:steps?|phases?|stages?|tiers?)\b/gi,                        // step counts: 1-Step, 2 phase
+  /\b(?:one|two|three|four|five|six|seven|eight|nine|ten)[\s-](?:min(?:ute)?s?|hours?|days?|weeks?|months?|steps?|phases?)\b/gi, // spelled timeframes/steps: one hour, two-step
+  // Noun list is deliberately claim-nouns only — "zero letterforms" in art
+  // direction prose must NOT be stripped from image prompts.
+  /\bzero\s+(?:payout\s*denials?|denials?|fees?|commissions?|hidden\s+fees?|costs?|charges?|spreads?|slippage|delays?|risk)\b/gi, // quantified absence: zero fees
 ];
 
 /** Normalize for comparison: lowercase; strip everything except a-z 0-9 $ % + . */

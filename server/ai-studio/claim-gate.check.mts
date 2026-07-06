@@ -210,5 +210,26 @@ console.log('\n[11] LIVE BREACH 2026-07-02 — ratios + banned phrasing ("90/10 
   check('overlay bullets: breach pill dropped, approved kept', JSON.stringify(overlay.bullets) === JSON.stringify(['Zero Payout Denials']));
 }
 
+console.log('\n[12] LIVE LEAK 2026-07-06 — step counts + spelled numbers ("1-Step Process · Zero Payout Denial"):');
+{
+  const MS = 'Mid season sale. $100K Challenge, was $450 now $248, code NEWMS45. New users only.';
+  check('the exact leaked subheadline is now caught',
+    findViolations('1-Step Process · No Time Limits · Zero Payout Denial', MS).length >= 2);
+  check('step count "1-Step" caught', findViolations('1-Step Process', MS).length >= 1);
+  check('"2 phase evaluation" caught', findViolations('2 phase evaluation', TP).length >= 1);
+  check('spelled "two-step challenge" caught', findViolations('two-step challenge', TP).length >= 1);
+  check('spelled "one hour payouts" caught (not the approved wording)', findViolations('one hour payouts', TP).length >= 1);
+  check('singular "Zero Payout Denial" caught (approved fact is plural)', findViolations('Zero Payout Denial', TP).length >= 1);
+  check('invented "zero fees" caught', findViolations('zero fees on all accounts', TP).length >= 1);
+  check('EXACT "Zero Payout Denials" still passes', findViolations('Zero Payout Denials', TP).length === 0);
+  check('98.35% fact verbatim (contains "one hour") still passes',
+    findViolations('98.35% of withdrawals processed within one hour', TP).length === 0);
+  check('user-typed "1-step" survives from brief', findViolations('1-Step Challenge', 'promote our 1-step challenge').length === 0);
+  const { text } = gateImagePrompt('dark trading scene, ZERO letterforms or digits visible anywhere', TP);
+  check('"zero letterforms" art direction NOT stripped from image prompts', /ZERO letterforms/i.test(text));
+  const { overlay } = gateOverlayCopy({ subheadline: '1-Step Process · No Time Limits · Zero Payout Denial' } as any, MS);
+  check('overlay: the leaked subheadline field dropped whole', overlay.subheadline === '');
+}
+
 console.log(`\nRESULT: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
