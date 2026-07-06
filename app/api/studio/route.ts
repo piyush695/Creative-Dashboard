@@ -1351,6 +1351,12 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                 else ov.headline = rawPrompt.length > 64 ? rawPrompt.slice(0, 61).trimEnd() + '…' : rawPrompt;
                 console.warn('[Studio] Headline was empty after gating — promoted claim-free fallback so the creative keeps a hero element.');
               }
+              // DETERMINISTIC was-price: don't rely on the model populating the
+              // field — if the brief says "was $450", extract it in code.
+              if (!ov.wasPrice) {
+                const wasM = rawPrompt.match(/\bwas\s*(\$\s?[\d,]+(?:\.\d+)?\s?[kKmM]?)\b/i);
+                if (wasM) ov.wasPrice = wasM[1].replace(/\s/g, '');
+              }
               compositedCopy = ov;
               finalImageUrl = await applyTextOverlay(finalImageUrl, {
                 headline: ov.headline,
@@ -1422,7 +1428,11 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                 // CTA, promo chip, tagline) — subheadline/bullets/urgency are
                 // legitimately skipped by some layouts and were causing false fails.
                 expectedTexts: [
-                  ovr.headline, ovr.price, ovr.wasPrice, ovr.cta, ovr.promoCode, ovr.urgencyText,
+                  ovr.headline, ovr.price, ovr.wasPrice, ovr.cta,
+                  // The chip renders the CLEANED code ("Code: X") — expect that,
+                  // not the raw "Use Code: X" phrase (was a false legibility fail).
+                  ovr.promoCode ? `Code: ${String(ovr.promoCode).replace(/^\s*(?:use\s+code|code)\s*[:\s]\s*/i, '').trim()}` : undefined,
+                  ovr.urgencyText,
                   '#WeAreTraders',
                 ].filter((s): s is string => !!s),
                 allowedFigures: [
