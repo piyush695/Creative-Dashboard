@@ -1091,10 +1091,9 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
         if (!rawTplPrompt) {
           return NextResponse.json({ error: 'Please enter a prompt to generate from.' }, { status: 400 });
         }
-        // Default 3 (same as the AI lane) — the 1-variation default was why offer
-        // briefs kept returning a single same-family creative. A count stated in
-        // the brief ("Deliver 2 variants") wins over the default.
-        const tplVariations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || promptVariantCount || 3));
+        // USER RULE: variants are PROMPT-DRIVEN — one creative per generation
+        // unless the brief asks ("Deliver 3 variants") or the UI sends a count.
+        const tplVariations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || promptVariantCount || 1));
         try {
           const { variants: tplVariants } = await generateTemplateVariations(rawTplPrompt, tplVariations, { forcedAccent: requestedAccent });
           if (tplVariants.length) {
@@ -1217,10 +1216,9 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
 
         // ── Number of creative variations to produce. User-selectable, but HARD-CAPPED
         //    at 4 — a user can never request (or receive) more than 4 at a time.
-        //    The chat UI doesn't send `variations` — default to 3 there (its
-        //    pick-your-favorite UX); a count stated in the brief text wins;
-        //    callers that send an explicit count keep it. ──
-        const variations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || promptVariantCount || 3));
+        //    USER RULE: variants are PROMPT-DRIVEN — one creative per generation
+        //    unless the brief asks ("Deliver 3 variants") or the UI sends a count. ──
+        const variations = Math.max(1, Math.min(4, Math.round(Number(body.variations)) || promptVariantCount || 1));
 
         try {
           const variants: any[] = [];
