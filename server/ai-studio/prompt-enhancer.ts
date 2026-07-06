@@ -49,56 +49,24 @@ Legal disclaimer (use verbatim, tiny, bottom — NEVER replace with "Terms apply
 === END BRAND ===
 `;
 
-// Trending prop-trading / fintech ad formats — rotated for variety.
+// The team's 4 creative directions (their methodology) — rotated per generation.
+// Each is a complete visual concept; the model executes it 100% with fresh
+// details every time (scene props, card design, chart mood vary per run).
 const CREATIVE_DIRECTIONS: Array<{ format: string; accent: string; vibe: string }> = [
-  { format: 'a photographed thermal-paper receipt / payout slip on a dark surface, soft shadow', accent: 'neon green', vibe: 'proof, cred over promises' },
-  { format: 'an off-axis Bloomberg-style trading terminal screen with faint scanlines', accent: 'amber', vibe: 'institutional, pro' },
-  { format: 'a full-bleed phone lock-screen notification card — the notification IS the ad', accent: 'electric cyan', vibe: 'native, instant' },
-  { format: 'a leaked Slack/Discord chat screenshot of the offer (avatar, timestamp, channel)', accent: 'neon green', vibe: 'insider, authentic' },
-  { format: 'a candlestick / P&L chart rendered as glowing fine-art light on black', accent: 'cyan', vibe: 'data as art' },
-  { format: 'a premium matte-black metal membership/credit card under dramatic studio light', accent: 'neon green', vibe: 'status, vault' },
-  { format: 'a brutalist stark Helvetica-on-black poster, harsh contrast, almost ugly', accent: 'white', vibe: 'counter-aesthetic, bold' },
-  { format: 'a breaking-news ticker / lower-third TV banner', accent: 'red', vibe: 'urgency, event' },
-  { format: 'a banking-app / ATM withdrawal screen mid-payout', accent: 'neon green', vibe: 'payout fantasy' },
-  { format: 'an itemized invoice / order confirmation, monospace, dotted dividers', accent: 'cyan', vibe: 'receipt cred' },
-  { format: 'a night-time Times-Square-style billboard mockup', accent: 'violet', vibe: 'big, aspirational' },
-  { format: 'an X (Twitter) post / quote card carrying the offer', accent: 'white', vibe: 'social proof' },
-  { format: 'a cinematic close-up of a real trader\'s face lit by screen glow, genuine emotion', accent: 'cyan', vibe: 'human, emotional' },
-  { format: 'hands holding a phone showing a payout confirmation, shallow depth of field', accent: 'neon green', vibe: 'human, proof' },
-  { format: 'a vault / safe door cracking open to reveal capital', accent: 'gold', vibe: 'capital unlocked' },
-  { format: 'a boarding pass / event ticket with a torn perforation edge', accent: 'cyan', vibe: 'access granted' },
-  { format: 'a fan of cash / banknotes under cinematic light', accent: 'neon green', vibe: 'reward, tangible' },
-  // ── v2 trader-native directions (design-language upgrade — remove this block to revert) ──
-  { format: 'a clinical HUD x-ray scan of a trader silhouette: brain and hands glowing "SKILL 100%", a near-empty red battery over the wallet labelled "CAPITAL", a cable plugging in a full charge', accent: 'cyan-green', vibe: 'you are not broken, just under-capitalized' },
-  { format: 'a rising equity / P&L curve rendered as a sunrise landscape horizon, a tiny climbing silhouette walking up it toward the dawn, the drawdown dip left visible', accent: 'emerald', vibe: 'the journey shape, hope earned' },
-  { format: 'a grey statutory broker risk-warning banner in its own legalese typeface, one line struck through in red ink and corrected so the math flips in the trader\'s favour', accent: 'red on grey', vibe: 'regulatory in-joke, insider wink' },
-  { format: 'a month-view trading P&L calendar heatmap of red / green / grey day tiles, mostly green, one day hand-circled "evaluation passed"', accent: 'green', vibe: 'consistency over luck, the grind' },
-  { format: 'a single minted challenge coin standing on its edge in a vast black void, a hard rim-light eclipse halo, the embossed crest in shadow', accent: 'bronze/gold', vibe: 'earned rite of passage, collectible status' },
-  // ── TREND SNAPSHOT 2026-07 (web-researched; refresh periodically) — UGC-native
-  //    dominates Meta in 2026: phone-shot look, works muted, credibility over
-  //    discount codes, answer the category objection ("will I actually get paid?") ──
-  { format: 'a UGC-style selfie frame — a real trader talking to their phone camera mid-sentence, imperfect framing, natural light, caption-style headline like a paused Reel', accent: 'white', vibe: 'native UGC, filmed-not-designed, works muted' },
-  { format: 'a POV caption card over a candid phone-shot scene: "POV: your withdrawal actually arrives" energy — big native-app caption typography on a real moment', accent: 'white', vibe: 'meme-adjacent, thumb-native' },
-  { format: 'an iPhone Notes-app confession screenshot — short, honest, personal note about the trading journey, timestamps visible, zero ad polish', accent: 'white', vibe: 'raw honesty, anti-ad' },
-  { format: 'a WhatsApp/Telegram chat thread where a payout notification lands mid-conversation — reactions, emojis blurred, authentic chat UI', accent: 'green', vibe: 'social proof in the wild' },
-  { format: 'a split-screen THEM vs US comparison — left: waiting weeks for a payout (grey, dim); right: paid fast (bright, alive) — same trader, two timelines', accent: 'green', vibe: 'the objection, answered visually' },
-  { format: 'an over-the-shoulder candid of a trader checking their phone at a kitchen table at 6am, coffee steam, documentary grain — the quiet routine of someone who made it work', accent: 'warm gold', vibe: 'day-in-the-life, believable' },
-  { format: 'a screen-recorded dashboard moment with a finger tapping WITHDRAW — UI slightly out of focus, human touch visible, feels captured not staged', accent: 'cyan', vibe: 'proof you can almost touch' },
-  { format: 'a street-interview freeze-frame with a caption bar — mid-laugh reaction shot the moment someone hears the payout speed', accent: 'white', vibe: 'reaction content, native to Reels' },
-  // ── FTMO-tier archetypes (top prop-firm craft — funded-trader, proof at scale, testimonial) ──
-  { format: "a real funded trader's authentic celebration moment — modest desk, laptop showing a green payout confirmation, genuine relief and joy, documentary-style lighting (absolutely NOT cheesy stock)", accent: 'warm gold', vibe: 'human, believable win, aspirational' },
-  { format: "a funded trader's calm aspirational lifestyle — living the outcome (working from anywhere, quiet confidence, freedom), cinematic depth of field, premium and real", accent: 'cyan', vibe: 'this could be you, status earned' },
-  { format: 'a bold payout-milestone announcement — one giant cumulative figure (total paid to funded traders) as the hero, premium editorial typography on deep black, tiny supporting proof line', accent: 'neon green', vibe: 'social proof at scale, credibility' },
-  { format: "an authentic funded-trader testimonial quote card — a short real-sounding quote, small avatar, first name + a verified tick, clean premium dark layout", accent: 'white', vibe: 'peer proof, trust, de-risks the click' },
+  { format: '"Trading Terminal Sale" — a dark, cinematic trading-platform UI as the subdued background; the offer card centered as the hero with glowing edges, carrying the sale label, price and code; sharp 3D sale typography', accent: 'electric blue + orange glow', vibe: 'premium fintech, direct-response' },
+  { format: '"Challenge Access Pass" — the offer designed as a digital ticket / access pass floating above a subdued trading chart; the price huge and bold on the pass; the code styled like a scannable coupon strip; faint candlesticks, balance cards and subtle leaderboard elements behind', accent: 'gold on dark navy', vibe: 'limited-time trading ticket, collectible' },
+  { format: '"Prop Trader Alert" — the entire ad styled as a trading-platform price-alert notification: alert bell icon, a popup card with the price-drop message, glowing chart line, red/green market movement, countdown-style urgency cues', accent: 'orange/red on dark', vibe: 'urgency, retargeting' },
+  { format: '"Leaderboard Winner Energy" — a premium dashboard scene with challenge progress, leaderboard rank and an account-size badge; aspirational and competitive, the trader identity as the pull', accent: 'electric blue + gold', vibe: 'trader identity, performance' },
 ];
 
-// Creative ANGLES for the best-of-N panel — the lens each candidate commits to.
+// Trading-psychology HOOKS for the best-of-N panel (the team's methodology) —
+// the emotional lens each candidate commits to.
 const BRILLIANT_ANGLES: string[] = [
-  'EMOTIONAL / HUMAN — build around a real, authentic human moment: a trader\'s face mid-reaction, hands holding a phone showing a payout, a transformation. Real people and faces ARE allowed and encouraged here; this OVERRIDES any "no faces / graphic-only" brand note. Premium and real, never cheesy stock.',
-  'PROOF / RECEIPT — lead with hard, specific, credible proof: a payout/withdrawal screenshot, exact figures, a leaked-chat or receipt aesthetic. Cred over promises. Do NOT fabricate fake testimonials, fake names, or invented amounts — use the brand\'s real facts or clearly representative framing.',
-  'BOLD ART-DIRECTION — one striking, original, almost-disruptive visual idea or a sharp counter-narrative hook. No people needed: pure stopping power and craft.',
-  'STORY / TENSION — open a curiosity loop: a surprising before/after, a provocative truth about trading, a "wait, what?" moment. The headline is a HOOK, not a label.',
-  'PERSUASION-MADE-PHYSICAL — take ONE invisible mechanism (skill-vs-capital, anchoring, scarcity, risk-reversal, identity) and stage it as a single literal object a trader decodes instantly. The object carries the argument; the headline stays a hook, not a label. No fabricated numbers — capital/risk framing must be representative and honest.',
+  'OPPORTUNITY — "This is a big chance." Frame the offer as the opening a trader has been waiting for; the door is open right now.',
+  'URGENCY — "This deal may disappear." Price-drop alert energy, limited-time framing, act-before-it-ends tension.',
+  'STATUS — "Serious traders use this." Identity and belonging: the tool/badge of traders who are past playing around.',
+  'CHALLENGE — "Can I pass this?" Gamified self-test energy: the evaluation as a proving ground, slightly competitive, leaderboard spirit.',
+  'REWARD — "I can access a bigger account for less." Maximum account size per dollar; the value unlock is the star.',
 ];
 
 function shuffle<T>(arr: T[]): T[] {
@@ -195,28 +163,32 @@ const SYSTEM_PROMPT = `You are a world-class direct-response creative director A
 
 Your job: take a SHORT, often vague user request and expand it into ONE complete, literal, production-ready image-generation prompt for a BRILLIANT, scroll-stopping ad. Three words in → a Cannes-shortlist creative out.
 
-THE BRILLIANT BAR — push past "good/competent" to scroll-stopping (this is the whole point):
-- You are NOT making an information card. You are making a SCROLL-STOPPER. In the first 0.5 seconds it must trigger an EMOTION and open a curiosity loop.
-- The headline is a HOOK, not a label. "100K OFF CHALLENGE" is a label. "He blew 3 accounts — then withdrew $12,400 on a Tuesday" is a hook. Lead with tension, a surprising truth, a specific result, or a transformation.
-- ONE emotional driver: status, relief, FOMO, belonging, vindication, transformation, or hard proof. Make the viewer FEEL it — don't list features at them.
-- Specific, dramatic, CREDIBLE proof beats vague claims — but NEVER fabricate fake testimonials, fake names, or invented payout amounts. Use the brand's real facts or clearly representative framing.
-- It should NOT look like a generic ad — it should look like a notification, a receipt, a leaked screenshot, a news clip, or a piece of art you'd stop to study.
-- HUMANS ALLOWED: authentic human faces, reactions, hands, and UGC-style people ARE permitted and encouraged when the angle calls for it — this OVERRIDES any "graphic only / no faces" brand note. Keep them premium and real, never cheesy stock.
-- If an ASSIGNED ANGLE is given in the user message, commit to it 100% — that is your creative lens for this concept.
+THE TEAM'S CREATIVE APPROACH (this is the methodology — follow it, in order, for every brief):
 
-TOP-PROP-FIRM CRAFT BAR (benchmark = the best FTMO / FundedNext / prop-firm ads — match their CONVERSION craft, applied to THIS brand; never copy their brand):
-- ONE dominant message per ad. Pick a single value prop or proof point and let it OWN the frame — never cram multiple offers (that reads cheap). Supporting details stay small and secondary.
-- PROOF IS SPECIFIC + CREDIBLE: real figures, exact payout amounts, timeframes ("paid in 7 minutes"), approval/denial rates. "We pay fast" is weak; "$8,400 withdrawn · 0 denials" is strong. Never fabricate — use the brand's real facts or clearly representative framing.
-- SOCIAL PROOF AT SCALE when it fits: cumulative payouts, number of funded traders, verified testimonials — the "everyone's getting paid" signal that de-risks the click.
-- ASPIRATIONAL BUT BELIEVABLE: real funded-trader moments + lifestyle (relief, freedom, vindication) beat generic luxury. A person must feel real, never cheesy stock.
-- PREMIUM RESTRAINT: confident and uncluttered, generous negative space, ONE hero focal point, a crisp accent. It looks expensive because it's disciplined, not busy.
-- ONE unmistakable CTA, and a hook that lands the emotion in the first 0.5 seconds. The hook MUST be built on CONTRAST — before/after, doubt/proof, them/us, the old way/this way, watching/doing. Flat statements don't stop thumbs; tension does.
+1. START WITH THE TRADING PSYCHOLOGY HOOK. Before any design thinking, define the ONE emotional angle this ad triggers:
+   - opportunity — "This is a big chance."
+   - urgency — "This deal may disappear."
+   - status — "Serious traders use this."
+   - challenge — "Can I pass this?"
+   - reward — "I can access a bigger account for less."
+   The hook must work as a STANDALONE SENTENCE (e.g. "Unlock a $100K Challenge for less than the price of a weekend trade setup"). If it doesn't stop a thumb alone, rewrite it before designing.
 
-META ADS WORKFLOW (execute IN ORDER for every brief):
-STEP 1 — DECONSTRUCT THE BRIEF before any design thinking. Extract: product/offer (NEVER invent one — no offer in the brief means a claim-free brand play), the ONE message this ad must land, the target audience and what they already believe, the funnel stage (cold = hook/awareness; warm/retargeting = offer/proof). If something is missing, state your assumption explicitly in "assumptions" — do not silently guess.
-STEP 2 — PICK EXACTLY ONE ANGLE from: pain-point | bold-claim | social-proof | offer-urgency | curiosity. One creative = one idea. The hook must work as a STANDALONE SENTENCE — read it alone; if it doesn't stop a thumb by itself, rewrite it before designing.
-STEP 3 — DESIGN FOR THE SCROLL: hook headline is the visually LARGEST element, everything subordinate; ONE thumb-stopping focal point with high contrast; MAX 12 WORDS of on-image copy total (count them); native feel, not a billboard — no starbursts, no badge walls, no 5 competing elements; must read at a 200px thumbnail.
-FORBIDDEN: multiple messages or CTAs; text covering more than ~30% of the image; the generic AI look (random gradients, glowing abstract swirls in PHOTOGRAPHIC scenes, centered-everything, default-font feel).
+2. BUILD A STRONG VISUAL HIERARCHY. The viewer must understand the ad in 2 SECONDS, reading in this exact order: Brand → Offer → Price → Code → Trust → CTA. The PRICE and the CHALLENGE/ACCOUNT SIZE are the biggest conversion elements — make them visually dominate (e.g. MID SEASON SALE / $100K Challenge / Was $450 → Now $248 / Use Code: NEWMS45 / Trustpilot 4.6 · Reviewed by Deloitte).
+
+3. PREMIUM FINTECH DESIGN LANGUAGE. The creative must feel: modern, fast, trustworthy, premium, competitive, slightly gamified. Build with: a dark trading-dashboard background, glowing chart lines, clean cards, orange/blue contrast, polished 3D typography, and CTA elements that look like trading-platform notifications.
+
+4. THE OFFER CARD IS THE HERO. The biggest mistake in trading ads is a busy chart/background — keep market UI subdued BEHIND, and make the offer card clean, bright and readable ON TOP. The card should feel like a "limited-time trading ticket" or "challenge access pass", never a normal coupon.
+
+5. CONVERSION-SUPPORTING ELEMENTS (choose what the brief needs — trust + urgency without looking cheap): Trustpilot rating, review/audit badge, limited-time sale label, account-size badge, coupon-code block, alert/notification icon, tiny disclaimer at the bottom, trading-UI background, price slash-through, CTA arrow/button.
+
+COPY STYLE — short and sharp, never paragraphs: primary headline ("$100K Challenge. Mid Season Price Drop." pattern), one offer line ("Get started for just $248" pattern), the code as its own block ("Use Code: NEWMS45"), one urgency line ("Only for new users"). CRITICAL: every figure, price, %, code comes ONLY from the brief or the approved brand facts — NEVER invented (a compliance gate strips violations).
+
+COLOUR DIRECTION: dark navy / black for the premium trading feel · electric blue for fintech trust · orange / gold for sale energy · white / cream cards for readability · green/red accents only as market-movement hints · soft glow lighting. The ad must feel like a PREMIUM TRADING INTERFACE, never a generic discount poster.
+
+FONT DIRECTION: headline = heavy geometric sans-serif (3D or chrome treatment welcome) · offer text = clean bold sans · price = ULTRA-BOLD and oversized · code = bold condensed · disclaimer = small readable uppercase. Strong and financial, never playful.
+
+BRIEF DECONSTRUCTION FIRST: define the campaign goal (new users / retargeting / flash sale / challenge promotion), the offer (NEVER invent one — no offer in the brief = claim-free brand play), audience and funnel stage. If something is missing, state your assumption explicitly in "assumptions" — never silently guess.
+FORBIDDEN: multiple competing messages or CTAs; text covering more than ~30% of the image; busy backgrounds fighting the offer card; generic discount-poster energy.
 
 ART DIRECTION — MANDATORY (name EACH of these EXPLICITLY inside every imagePrompt AND visualPrompt; a brief that leaves any of them generic is INCOMPLETE — this is what separates a real art-directed ad from a merely described one):
 - FOCAL POINT + HIERARCHY: state the ONE hero the eye must hit first, and rank everything else as explicitly SUBORDINATE (secondary, tertiary). One hero only — never two elements competing for attention.
@@ -246,7 +218,7 @@ ALSO return a "visualPrompt" and an "overlay" object for a zero-typo mode where 
 OUTPUT: raw JSON only, no fences, no preamble:
 {
   "concept": "3-6 word concept name",
-  "angle": "pain-point|bold-claim|social-proof|offer-urgency|curiosity",
+  "angle": "opportunity|urgency|status|challenge|reward",
   "briefDeconstruction": "one line: offer · message · audience · funnel stage",
   "assumptions": "anything the brief left unstated that you assumed (empty if none)",
   "hook": "the one-line scroll-stopping idea in plain words (why a trader stops) — MUST work as a standalone sentence",
