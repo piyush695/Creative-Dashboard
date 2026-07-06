@@ -1153,6 +1153,13 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
         // Fold extracted document text in so an attached brief actually drives
         // the creative (goes through the enhancer + claim gate like all copy).
         if (docContext) rawPrompt = rawPrompt + docContext;
+
+        // ── PLACEMENT RATIO (META ADS workflow): explicit body.ratio or detected
+        //    from the brief. gpt-image-1 sizes: 1:1 feed = 1024x1024; portrait
+        //    1024x1536 is the closest to 4:5 and 9:16 (true 9:16 + safe-zone
+        //    crops are a future iteration — stated, not silently faked). ──
+        const wantsSquare = body.ratio === '1:1' || /\b1:1\b|\bsquare\b|\bfeed post\b/i.test(rawPrompt);
+        const aiSize = (wantsSquare ? '1024x1024' : '1024x1536') as '1024x1024' | '1024x1536';
         if (!process.env.OPENAI_API_KEY) {
           return NextResponse.json(
             { error: 'Image generation requires OPENAI_API_KEY in .env. Add the key and restart the dev server.' },
@@ -1278,7 +1285,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             }
             directResult = await generateImageOpenAI({
               prompt: genPrompt,
-              size: '1024x1536',  // portrait, closest to 9:16
+              size: aiSize,  // ratio-aware (see PLACEMENT RATIO above)
               quality: 'high',
               output_format: 'png',
             });
@@ -1430,7 +1437,12 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             id: `enhanced-${vi + 1}`,
             label: enhanced.concept || `Variation ${vi + 1}`,
             verification,
-            description: 'Prompt auto-enhanced → gpt-image-1' + (logoWillBeComposited ? ' + brand logo' : ''),
+            // META ADS workflow: label what this variant TESTS (the angle), plus
+            // step-1 deconstruction + explicit assumptions for transparency.
+            angle: enhanced.angle || undefined,
+            briefDeconstruction: enhanced.briefDeconstruction || undefined,
+            assumptions: enhanced.assumptions || undefined,
+            description: (enhanced.angle ? `Tests: ${enhanced.angle} angle · ` : '') + 'gpt-image-1' + (logoWillBeComposited ? ' + brand logo' : ''),
             paradigm: 'Enhanced',
             imageUrl: finalImageUrl,
             score: { overall: 9.0, content: 9, design: 9, color: 9, impact: 9 }, // placeholder — unscored

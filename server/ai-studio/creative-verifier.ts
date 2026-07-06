@@ -44,13 +44,18 @@ export interface VerifyResult {
   bakedTextOk: boolean;
   legibilityOk: boolean;
   figuresOk: boolean;
+  /** META ADS quality gate: hook headline is the dominant element. */
+  headlineDominant: boolean;
+  /** META ADS quality gate: exactly one message + one CTA. */
+  oneIdeaOneCta: boolean;
   issues: string[];
   /** One-line feedback usable as a regeneration directive. */
   retryHint?: string;
 }
 
 const PASS_DEFAULT: VerifyResult = {
-  pass: true, subjectOk: true, bakedTextOk: true, legibilityOk: true, figuresOk: true, issues: [],
+  pass: true, subjectOk: true, bakedTextOk: true, legibilityOk: true, figuresOk: true,
+  headlineDominant: true, oneIdeaOneCta: true, issues: [],
 };
 
 export function verifierEnabled(): boolean {
@@ -68,8 +73,11 @@ export async function verifyCreative(imageDataUri: string, exp: VerifyExpectatio
       ? `1. SUBJECT: the concept promised this photographic subject as the dominant hero: "${exp.expectedSubject}". Is a matching human subject/action clearly visible and dominant? (subjectOk)`
       : `1. SUBJECT: no specific subject was promised — set subjectOk=true.`,
     `2. BAKED TEXT: does the IMAGE ITSELF (backgrounds, screens, receipts, documents, signs) contain legible or semi-legible text/digits that is NOT one of the approved copy strings below? Garbled pseudo-text counts as a FAILURE. (bakedTextOk = true only if the scene is clean)`,
-    `3. LEGIBILITY: are the approved copy strings readable — not clipped at the canvas edge, not overlapping each other or the subject's face? (legibilityOk)`,
+    `3. LEGIBILITY: are the approved copy strings readable — not clipped at the canvas edge, not overlapping each other or the subject's face — and would the headline still read at a 200px-wide thumbnail? (legibilityOk)`,
     `4. FIGURES: is every number/%/price visible on the creative present in the ALLOWED FIGURES list? (figuresOk)`,
+    `5. HEADLINE DOMINANCE: is the hook headline the visually LARGEST/most dominant text element, with everything else clearly subordinate? (headlineDominant)`,
+    `6. ONE IDEA, ONE CTA: does the creative land exactly ONE message with exactly ONE call-to-action — no competing offers/messages? (oneIdeaOneCta)`,
+    `7. ADVISORY (report in issues but do not fail): could a viewer state the offer/message within 2 seconds? does it pass as native feed content rather than a cheap banner? does text cover more than ~30% of the image?`,
   ].join('\n');
 
   const user = `You are the final QA agent for an ad-creative pipeline. Judge STRICTLY — a plausible-but-flawed creative must FAIL.
@@ -82,7 +90,7 @@ CHECKS:
 ${checks}
 
 Return RAW JSON only:
-{"subjectOk":bool,"bakedTextOk":bool,"legibilityOk":bool,"figuresOk":bool,"issues":["<specific, visual, one line each>"],"retryHint":"<one directive for the next attempt, empty if all pass>"}`;
+{"subjectOk":bool,"bakedTextOk":bool,"legibilityOk":bool,"figuresOk":bool,"headlineDominant":bool,"oneIdeaOneCta":bool,"issues":["<specific, visual, one line each — include advisory findings>"],"retryHint":"<one directive for the next attempt, empty if all pass>"}`;
 
   try {
     const res = await client().messages.create({
@@ -105,11 +113,13 @@ Return RAW JSON only:
       bakedTextOk: parsed.bakedTextOk !== false,
       legibilityOk: parsed.legibilityOk !== false,
       figuresOk: parsed.figuresOk !== false,
-      issues: Array.isArray(parsed.issues) ? parsed.issues.slice(0, 6) : [],
+      headlineDominant: parsed.headlineDominant !== false,
+      oneIdeaOneCta: parsed.oneIdeaOneCta !== false,
+      issues: Array.isArray(parsed.issues) ? parsed.issues.slice(0, 8) : [],
       retryHint: typeof parsed.retryHint === 'string' ? parsed.retryHint.slice(0, 300) : undefined,
       pass: false,
     };
-    r.pass = r.subjectOk && r.bakedTextOk && r.legibilityOk && r.figuresOk;
+    r.pass = r.subjectOk && r.bakedTextOk && r.legibilityOk && r.figuresOk && r.headlineDominant && r.oneIdeaOneCta;
     return r;
   } catch (e: any) {
     console.warn('[Verifier] failed (non-blocking, treating as pass):', e?.message);

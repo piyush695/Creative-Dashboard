@@ -168,6 +168,12 @@ export interface EnhancedPrompt {
   imagePrompt: string;
   visualPrompt?: string;
   concept: string;
+  /** META ADS WORKFLOW step 2: the ONE angle this creative commits to. */
+  angle?: string;
+  /** Step 1: offer · message · audience · funnel (as the concept agent read it). */
+  briefDeconstruction?: string;
+  /** Step 1: what the brief left unstated and the agent assumed. */
+  assumptions?: string;
   headline: string;
   cta: string;
   overlay?: OverlayText;
@@ -194,6 +200,12 @@ TOP-PROP-FIRM CRAFT BAR (benchmark = the best FTMO / FundedNext / prop-firm ads 
 - ASPIRATIONAL BUT BELIEVABLE: real funded-trader moments + lifestyle (relief, freedom, vindication) beat generic luxury. A person must feel real, never cheesy stock.
 - PREMIUM RESTRAINT: confident and uncluttered, generous negative space, ONE hero focal point, a crisp accent. It looks expensive because it's disciplined, not busy.
 - ONE unmistakable CTA, and a hook that lands the emotion in the first 0.5 seconds. The hook MUST be built on CONTRAST — before/after, doubt/proof, them/us, the old way/this way, watching/doing. Flat statements don't stop thumbs; tension does.
+
+META ADS WORKFLOW (execute IN ORDER for every brief):
+STEP 1 — DECONSTRUCT THE BRIEF before any design thinking. Extract: product/offer (NEVER invent one — no offer in the brief means a claim-free brand play), the ONE message this ad must land, the target audience and what they already believe, the funnel stage (cold = hook/awareness; warm/retargeting = offer/proof). If something is missing, state your assumption explicitly in "assumptions" — do not silently guess.
+STEP 2 — PICK EXACTLY ONE ANGLE from: pain-point | bold-claim | social-proof | offer-urgency | curiosity. One creative = one idea. The hook must work as a STANDALONE SENTENCE — read it alone; if it doesn't stop a thumb by itself, rewrite it before designing.
+STEP 3 — DESIGN FOR THE SCROLL: hook headline is the visually LARGEST element, everything subordinate; ONE thumb-stopping focal point with high contrast; MAX 12 WORDS of on-image copy total (count them); native feel, not a billboard — no starbursts, no badge walls, no 5 competing elements; must read at a 200px thumbnail.
+FORBIDDEN: multiple messages or CTAs; text covering more than ~30% of the image; the generic AI look (random gradients, glowing abstract swirls in PHOTOGRAPHIC scenes, centered-everything, default-font feel).
 
 ART DIRECTION — MANDATORY (name EACH of these EXPLICITLY inside every imagePrompt AND visualPrompt; a brief that leaves any of them generic is INCOMPLETE — this is what separates a real art-directed ad from a merely described one):
 - FOCAL POINT + HIERARCHY: state the ONE hero the eye must hit first, and rank everything else as explicitly SUBORDINATE (secondary, tertiary). One hero only — never two elements competing for attention.
@@ -223,7 +235,10 @@ ALSO return a "visualPrompt" and an "overlay" object for a zero-typo mode where 
 OUTPUT: raw JSON only, no fences, no preamble:
 {
   "concept": "3-6 word concept name",
-  "hook": "the one-line scroll-stopping idea in plain words (why a trader stops)",
+  "angle": "pain-point|bold-claim|social-proof|offer-urgency|curiosity",
+  "briefDeconstruction": "one line: offer · message · audience · funnel stage",
+  "assumptions": "anything the brief left unstated that you assumed (empty if none)",
+  "hook": "the one-line scroll-stopping idea in plain words (why a trader stops) — MUST work as a standalone sentence",
   "headline": "the primary on-image headline text (a HOOK, verbatim as it renders)",
   "cta": "the brand's fixed CTA",
   "imagePrompt": "the full literal 350-700 word image prompt, committed to ONE concept (text integrated)",
@@ -344,6 +359,9 @@ function toBrief(parsed: any): EnhancedPrompt {
     imagePrompt: parsed.imagePrompt,
     visualPrompt: typeof parsed.visualPrompt === 'string' ? parsed.visualPrompt : '',
     concept: parsed.concept || '',
+    angle: typeof parsed.angle === 'string' ? parsed.angle : '',
+    briefDeconstruction: typeof parsed.briefDeconstruction === 'string' ? parsed.briefDeconstruction : '',
+    assumptions: typeof parsed.assumptions === 'string' ? parsed.assumptions : '',
     headline: parsed.headline || '',
     cta: parsed.cta || '',
     overlay: ov
