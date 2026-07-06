@@ -1332,6 +1332,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                   headline: rawOv.headline || enhanced.headline || '',
                   subheadline: rawOv.subheadline || '',
                   price: rawOv.price || '',
+                  wasPrice: rawOv.wasPrice || '',
                   bullets: Array.isArray(rawOv.bullets) ? rawOv.bullets : [],
                   cta: rawOv.cta || enhanced.cta || 'Buy Challenge',
                   urgencyText: rawOv.urgencyText || '',
@@ -1421,7 +1422,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                 // CTA, promo chip, tagline) — subheadline/bullets/urgency are
                 // legitimately skipped by some layouts and were causing false fails.
                 expectedTexts: [
-                  ovr.headline, ovr.price, ovr.cta, ovr.promoCode,
+                  ovr.headline, ovr.price, ovr.wasPrice, ovr.cta, ovr.promoCode, ovr.urgencyText,
                   '#WeAreTraders',
                 ].filter((s): s is string => !!s),
                 allowedFigures: [

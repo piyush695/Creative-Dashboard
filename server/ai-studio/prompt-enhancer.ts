@@ -136,6 +136,8 @@ export interface OverlayText {
   headline?: string;
   subheadline?: string;
   price?: string;
+  /** Original/anchor price ("$450") — rendered struck-through by the overlay. */
+  wasPrice?: string;
   bullets?: string[];
   cta?: string;
   urgencyText?: string;
@@ -226,7 +228,7 @@ OUTPUT: raw JSON only, no fences, no preamble:
   "cta": "the brand's fixed CTA",
   "imagePrompt": "the full literal 350-700 word image prompt, committed to ONE concept (text integrated)",
   "visualPrompt": "a 120-250 word TEXT-FREE plate prompt — FULL-BLEED frame-filling hero, no words/numbers/logo, ZERO letterforms even on screens/receipts (out-of-focus/abstracted), top & bottom naturally DARKENED (not empty) for text legibility",
-  "overlay": { "headline": "", "subheadline": "", "price": "", "bullets": [], "cta": "", "urgencyText": "", "promoCode": "", "disclaimer": "" }
+  "overlay": { "headline": "", "subheadline": "", "price": "", "wasPrice": "the original/anchor price token when the brief gives one (e.g. $450) — empty otherwise", "bullets": [], "cta": "", "urgencyText": "", "promoCode": "", "disclaimer": "" }
 }`;
 
 function effectiveBrand(opts: EnhanceOptions): string {
@@ -352,6 +354,7 @@ function toBrief(parsed: any): EnhancedPrompt {
           headline: ov.headline || parsed.headline || '',
           subheadline: ov.subheadline || '',
           price: ov.price || '',
+          wasPrice: ov.wasPrice || '',
           bullets: Array.isArray(ov.bullets) ? ov.bullets : [],
           cta: ov.cta || parsed.cta || '',
           urgencyText: ov.urgencyText || '',

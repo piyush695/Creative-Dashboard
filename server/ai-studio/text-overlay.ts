@@ -31,6 +31,9 @@ export interface TextOverlayConfig {
   attentionGrabber?: string;
   promoCode?: string;
   urgencyText?: string;
+  /** The original/anchor price ("was $450") — rendered small, red, struck-through
+   *  beside the hero price so the discount magnitude is visually evidenced. */
+  wasPrice?: string;
   /** Archetype name, 'auto' (content-aware pick), or a legacy alias. */
   layout: LayoutArchetype | 'auto' | 'editorial' | 'cinematic' | 'data_native' | 'poster' | 'comparison' | 'storytelling' | 'minimal' | 'collage' | 'standard';
   darkBackground?: boolean;
@@ -220,9 +223,26 @@ function ctaPill(ctx: Ctx, x: number, y: number, anchor: 'start' | 'middle' | 'e
     `<rect x="${left}" y="${y}" width="${w}" height="${h}" rx="${h / 2}" fill="${pillFill}"/>`,
     txt(left + w / 2, y + h / 2 + size * 0.35, cfg.cta, size, { weight: '700', stroke: false, fill: labelFill }),
   ];
+  // GUARANTEED WAS-PRICE: a price-drop ad must evidence the discount (live QA
+  // failure: "$450" from the brief never rendered). Small, red, struck-through,
+  // directly above the CTA in every archetype.
+  if (cfg.wasPrice) {
+    const wSize = Math.round(size * 0.95);
+    const wp = cfg.wasPrice.trim();
+    const ww = wp.length * wSize * CHARW;
+    const wx = anchor === 'start' ? left : anchor === 'end' ? left + w : left + w / 2;
+    const wAnchor = anchor === 'middle' ? 'middle' : anchor === 'end' ? 'end' : 'start';
+    const wy = y - Math.round(wSize * 0.8);
+    const lineX1 = wAnchor === 'start' ? wx - 4 : wAnchor === 'end' ? wx - ww - 4 : wx - ww / 2 - 4;
+    parts.push(
+      txt(wx, wy, wp, wSize, { weight: '700', anchor: wAnchor, fill: '#E0453B' }),
+      `<line x1="${lineX1}" y1="${wy - wSize * 0.32}" x2="${lineX1 + ww + 8}" y2="${wy - wSize * 0.32}" stroke="#E0453B" stroke-width="3"/>`,
+    );
+  }
   // GUARANTEED PROMO CODE: an offer creative must always show its code (live
   // QA failure: PRIME25 was parsed but no archetype rendered it). A compact
   // outlined chip sits directly under the CTA in every archetype.
+  let belowY = y + h + Math.round(size * 0.5);
   if (cfg.promoCode) {
     const cSize = Math.round(size * 0.82);
     // The enhancer sometimes emits "USE CODE: X" as the code value — strip any
@@ -238,6 +258,15 @@ function ctaPill(ctx: Ctx, x: number, y: number, anchor: 'start' | 'middle' | 'e
       `<rect x="${cLeft}" y="${cy}" width="${cw}" height="${ch}" rx="${ch / 2}" fill="rgba(10,10,18,0.55)" stroke="${cfg.accentColor || '#FFFFFF'}" stroke-width="1.5"/>`,
       txt(cLeft + cw / 2, cy + ch / 2 + cSize * 0.35, label, cSize, { weight: '700', stroke: false, fill: cfg.accentColor || '#FFFFFF' }),
     );
+    belowY = cy + ch + Math.round(cSize * 0.6);
+  }
+  // GUARANTEED URGENCY LINE ("New users only", "Ends Sunday") — the team's
+  // element kit requires it when the brief provides one (live QA catch).
+  if (cfg.urgencyText) {
+    const uSize = Math.round(size * 0.72);
+    const ux = anchor === 'start' ? left : anchor === 'end' ? left + w : left + w / 2;
+    const uAnchor = anchor === 'middle' ? 'middle' : anchor === 'end' ? 'end' : 'start';
+    parts.push(txt(ux, belowY + uSize, cfg.urgencyText, uSize, { weight: '600', anchor: uAnchor, fill: '#E8ECF2', opacity: 0.9 }));
   }
   return parts;
 }

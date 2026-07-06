@@ -243,7 +243,7 @@ export function gateCreativeSpec<T extends AnySpec>(spec: T, userPrompt: string)
 export function gateOverlayCopy<T extends AnySpec>(overlay: T, userPrompt: string): { overlay: T; violations: ClaimViolation[] } {
   const v: ClaimViolation[] = [];
   const out: AnySpec = { ...overlay };
-  for (const f of ['headline', 'subheadline', 'price', 'urgencyText', 'promoCode', 'attentionGrabber'] as const) {
+  for (const f of ['headline', 'subheadline', 'price', 'wasPrice', 'urgencyText', 'promoCode', 'attentionGrabber'] as const) {
     const bad = findViolations(out[f], userPrompt);
     if (bad.length) { v.push({ field: f, token: bad.join(', '), action: 'dropped-field' }); out[f] = ''; }
   }
