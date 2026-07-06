@@ -73,11 +73,14 @@ const CHARW = 0.62; // bold Arial average glyph-width factor
 function fitText(text: string, maxW: number, startSize: number, minRatio = 0.6): { size: number; lines: string[] } {
   let size = startSize;
   let lines: string[] = [];
+  // 5% safety margin: CHARW underestimates 900-weight glyphs + letter-spacing
+  // (live QA catch: "BREAKOUT PRICE." clipped at the right canvas edge).
+  const fitW = maxW * 0.95;
   for (let i = 0; i < 12; i++) {
-    const maxChars = Math.max(4, Math.floor(maxW / (size * CHARW)));
+    const maxChars = Math.max(4, Math.floor(fitW / (size * CHARW)));
     lines = wrapText(text, maxChars);
     const longest = lines.reduce((a, b) => Math.max(a, b.length), 0);
-    if (longest * size * CHARW <= maxW || size <= startSize * minRatio) break;
+    if (longest * size * CHARW <= fitW || size <= startSize * minRatio) break;
     size = Math.round(size * 0.92);
   }
   return { size, lines };
@@ -300,7 +303,12 @@ function archLeftColumn(ctx: Ctx): string[] {
 
   for (const ln of hl.lines) { parts.push(txt(x, y, ln, hl.size, { weight: '900', anchor, spacing: 1 })); y += Math.round(hl.size * 1.15); }
   y += Math.round(S.sub * 0.6);
-  if (cfg.subheadline && cfg.subheadline.length < 90) { parts.push(txt(x, y, cfg.subheadline, S.sub, { weight: '500', fill: '#D6DAE2', anchor })); y += Math.round(S.sub * 1.7); }
+  if (cfg.subheadline && cfg.subheadline.length < 90) {
+    // fit like the headline — a raw single line clipped at the column edge (live QA catch ×2)
+    const sub = fitText(cfg.subheadline, colW, S.sub, 0.75);
+    for (const ln of sub.lines) { parts.push(txt(x, y, ln, sub.size, { weight: '500', fill: '#D6DAE2', anchor })); y += Math.round(sub.size * 1.4); }
+    y += Math.round(S.sub * 0.3);
+  }
   if (cfg.price) { y += Math.round(S.price * 0.75); parts.push(txt(x, y, cfg.price, S.price, { weight: '900', anchor, fill: cfg.accentColor || '#FFFFFF' })); y += Math.round(S.price * 0.7); }
   for (const b of bl) { parts.push(txt(x, y, `•  ${b}`, S.bullet, { weight: '400', fill: '#E0E4EA', anchor })); y += Math.round(S.bullet * 1.6); }
   y += Math.round(S.cta * 0.6);
@@ -351,14 +359,23 @@ function archTopEditorial(ctx: Ctx): string[] {
   const hl = fitText((cfg.headline || '').toUpperCase(), W - pad * 2, Math.round(S.headline * 1.35));
   let y = Math.round(H * 0.135);
   for (const ln of hl.lines) { parts.push(txt(pad, y, ln, hl.size, { weight: '900', anchor: 'start', spacing: 1 })); y += Math.round(hl.size * 1.14); }
-  if (cfg.subheadline && cfg.subheadline.length < 90) { y += Math.round(S.sub * 0.4); parts.push(txt(pad, y, cfg.subheadline, S.sub, { weight: '500', fill: '#D6DAE2', anchor: 'start' })); }
+  if (cfg.subheadline && cfg.subheadline.length < 90) {
+    // fit to the canvas — a raw single line clipped at the right edge (live QA catch ×2)
+    const sub = fitText(cfg.subheadline, W - pad * 2, S.sub, 0.75);
+    y += Math.round(S.sub * 0.4);
+    for (const ln of sub.lines) { parts.push(txt(pad, y, ln, sub.size, { weight: '500', fill: '#D6DAE2', anchor: 'start' })); y += Math.round(sub.size * 1.4); }
+  }
 
-  // base: price left, CTA right (or stacked)
+  // base: price left, CTA right — or CTA dropped below when a wide pill would
+  // run into the price (live QA catch: "$549" collided with a long CTA label).
   let by = Math.round(H * 0.78);
   if (cfg.price) { parts.push(txt(pad, by, cfg.price, S.price, { weight: '900', anchor: 'start', fill: cfg.accentColor || '#FFFFFF' })); }
   const bl = bulletsOf(cfg, 3);
   if (bl.length) { let yy = by + Math.round(S.price * 0.4); for (const b of bl) { yy += Math.round(S.bullet * 1.5); parts.push(txt(pad, yy, `•  ${b}`, S.bullet, { weight: '400', fill: '#E0E4EA', anchor: 'start' })); } }
-  parts.push(...ctaPill(ctx, W - pad, by - Math.round(S.cta * 1.4), 'end', S.cta));
+  const pillW = Math.min(Math.round(W * 0.62), Math.round((cfg.cta || 'Buy Challenge').length * S.cta * 0.62 + 70));
+  const priceW = (cfg.price || '').length * S.price * CHARW;
+  const fitsBeside = !cfg.price || pad + priceW + 32 <= W - pad - pillW;
+  parts.push(...ctaPill(ctx, W - pad, fitsBeside ? by - Math.round(S.cta * 1.4) : by + Math.round(S.cta * 1.1), 'end', S.cta));
   return parts;
 }
 
