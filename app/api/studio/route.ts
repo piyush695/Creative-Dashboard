@@ -1259,7 +1259,7 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
             directResult = await editImageOpenAI({
               prompt: editPrompt,
               references: refImagesIn, // multi-reference (mate's chat UI) — all refs ground the edit
-              size: '1024x1536',
+              size: aiSize, // ratio-aware (see PLACEMENT RATIO above)
               quality: 'high',
             });
             if (!directResult) console.warn('[Studio] Edit returned nothing — falling back to text-to-image:', getLastOpenAIError() || '');
