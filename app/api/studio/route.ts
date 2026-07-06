@@ -1357,6 +1357,15 @@ This is a CLEAN VERSION — the brand power comes from typography and layout mas
                 const wasM = rawPrompt.match(/\bwas\s*(\$\s?[\d,]+(?:\.\d+)?\s?[kKmM]?)\b/i);
                 if (wasM) ov.wasPrice = wasM[1].replace(/\s/g, '');
               }
+              // DETERMINISTIC explicit directives: "Headline: X" / "CTA: X" in
+              // the brief are orders, not suggestions (live QA fail 2026-07-06:
+              // brief said "CTA: Start Your Challenge", the model shipped the
+              // default pill). User-typed copy is gate-safe by definition —
+              // same "user owns their claims" policy as the was-price above.
+              const headM = rawPrompt.match(/\bheadline\s*[:=]\s*["“]?([^"”.\n]{3,80})["”]?/i);
+              if (headM) ov.headline = headM[1].trim();
+              const ctaM = rawPrompt.match(/\b(?:cta|button)\s*[:=]\s*["“]?([^"”.\n]{3,40})["”]?/i);
+              if (ctaM) ov.cta = ctaM[1].trim();
               compositedCopy = ov;
               finalImageUrl = await applyTextOverlay(finalImageUrl, {
                 headline: ov.headline,
